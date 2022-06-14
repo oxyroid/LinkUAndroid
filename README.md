@@ -1,7 +1,5 @@
 # Flea Market, by thxbrop
 
----
-
 ####  🙋‍♂️Introduce
 
 This repository is **Jetpack Compose** example and is made for Java-Web experiment.
