@@ -13,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.wzk.oss.ui.MaterialSnackHost
 import com.wzk.domain.LocalSharedPreference
 import com.wzk.oss.R
 import com.wzk.oss.application
@@ -22,19 +21,22 @@ import com.wzk.oss.screen.Screen
 import com.wzk.oss.screen.list.composable.FoodShimmerItem
 import com.wzk.oss.screen.list.composable.ListDrawer
 import com.wzk.oss.screen.list.composable.ListScreenBar
+import com.wzk.oss.ui.MaterialSnackHost
 import kotlinx.coroutines.launch
 
 private val menuItems = listOf(
-    ListEvent.Order(ListOrder.Name()) + R.string.sorted_name,
+    ListEvent.Order(ListOrder.Name(OrderType.Ascending)) + R.string.sorted_name,
     ListEvent.Order(ListOrder.Name(OrderType.Descending)) + R.string.sorted_name_des,
-    ListEvent.Order(ListOrder.Price()) + R.string.sorted_price,
-    ListEvent.Order(ListOrder.Price(OrderType.Descending)) + R.string.sorted_price_des
+    ListEvent.Order(ListOrder.Price(OrderType.Ascending)) + R.string.sorted_price,
+    ListEvent.Order(ListOrder.Price(OrderType.Descending)) + R.string.sorted_price_des,
+    ListEvent.ToggleTheme + R.string.toggle_theme
 )
 
 @Composable
 fun ListScreen(
     navController: NavController,
     viewModel: ListViewModel = hiltViewModel(),
+    toggleTheme: () -> Unit
 ) {
     val state by viewModel.state
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -74,9 +76,20 @@ fun ListScreen(
                         } else scaffoldState.drawerState.open()
                     }
                 },
-                onItemClick = {
-                    selectedMenuItem = it
-                    viewModel.onEvent(menuItems[it].event)
+                onItemClick = { index, item ->
+                    when (item.event) {
+                        is ListEvent.Fetch -> {
+
+                        }
+                        is ListEvent.Order -> {
+                            selectedMenuItem = index
+                            viewModel.onEvent(menuItems[index].event)
+                        }
+                        ListEvent.ToggleTheme -> {
+                            toggleTheme()
+                        }
+                    }
+
                 },
                 items = menuItems,
                 selectedIndex = selectedMenuItem

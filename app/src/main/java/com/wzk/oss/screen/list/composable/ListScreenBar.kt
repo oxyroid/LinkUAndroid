@@ -24,7 +24,7 @@ fun ListScreenBar(
     title: String = stringResource(id = R.string.app_name),
     items: List<MenuItem>,
     onNavClick: () -> Unit,
-    onItemClick: (Int) -> Unit,
+    onItemClick: (Int, MenuItem) -> Unit,
     selectedIndex: Int
 ) {
     var dropdownMenuExpended by remember { mutableStateOf(false) }
@@ -67,7 +67,7 @@ fun ListScreenBar(
                     items.forEachIndexed { index, menuItem ->
                         DropdownMenuItem(
                             onClick = {
-                                onItemClick(index)
+                                onItemClick(index, menuItem)
                                 dropdownMenuExpended = false
                             },
                             modifier = if (selectedIndex == index) Modifier.background(MaterialTheme.colorScheme.primary) else Modifier

@@ -26,9 +26,9 @@ object Constants {
      * This value determines whether this project will use the real server as the data source
      * or fake data for demonstration purposes.
      *
-     * If true - this project will use fake data and you needn't configure your backend
+     * True - this project will use fake data and you needn't configure your backend
      *
-     * Else - config BASE_URL first then it will use the real server
+     * False - config BASE_URL first then it will use the real server
      */
     const val MOCK_MODE = true
 

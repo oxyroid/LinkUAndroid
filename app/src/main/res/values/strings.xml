@@ -25,4 +25,5 @@
     <string name="contract_me_by_follow">通过以下方式联系我👏</string>
     <string name="already_in_cart">已经在购物车中了</string>
     <string name="add_to_cart_success">添加成功</string>
+    <string name="toggle_theme">切换主题</string>
 </resources>
