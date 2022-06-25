@@ -21,9 +21,7 @@ fun LinkText(
 ) {
     Surface(
         shape = RoundedCornerShape(4.dp),
-        onClick = {
-            onClick.invoke(url)
-        }
+        onClick = { onClick.invoke(url) }
     ) {
         Text(
             text = text,

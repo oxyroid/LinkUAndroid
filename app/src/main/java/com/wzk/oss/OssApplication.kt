@@ -10,7 +10,7 @@ val application get() = OssApplication._application
 @HiltAndroidApp
 class OssApplication : Application() {
     companion object {
-        internal lateinit var _application: OssApplication
+        lateinit var _application: OssApplication
     }
 
     override fun onCreate() {

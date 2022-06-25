@@ -20,12 +20,12 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.mukesh.MarkDown
-import com.wzk.oss.ui.LinkText
-import com.wzk.oss.ui.MaterialButton
-import com.wzk.oss.ui.MaterialTopBar
 import com.wzk.oss.R
 import com.wzk.oss.activity
 import com.wzk.oss.application
+import com.wzk.oss.ui.LinkText
+import com.wzk.oss.ui.MaterialButton
+import com.wzk.oss.ui.MaterialTopBar
 import java.util.*
 
 @Composable
@@ -71,7 +71,6 @@ fun InfoScreen(
                     .padding(4.dp)
                     .weight(3f)
             )
-
             MaterialButton(
                 textRes = if (visible) R.string.contract_me_by_follow else R.string.for_source,
                 textColor = MaterialTheme.colorScheme.onPrimary,

@@ -2,6 +2,7 @@ package com.wzk.oss.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -30,12 +31,9 @@ private val LightColorScheme = lightColorScheme(
     outline = Color(0xff71787e),
     surfaceVariant = Color(0xffdde3ea),
     onSurfaceVariant = Color(0xff41484d),
-//    inverseOnSurface = Color(0xff00658a),
-//    inversePrimary = Color(0xff00658a),
-//    inverseSurface = Color(0xff00658a),
 )
 
-private val DarkColorScheme = lightColorScheme(
+private val DarkColorScheme = darkColorScheme(
     primary = Color(0xff7cd0ff),
     onPrimary = Color(0xff00344a),
     primaryContainer = Color(0xff004c69),
@@ -58,10 +56,7 @@ private val DarkColorScheme = lightColorScheme(
     onSurface = Color(0xffe1e2e5),
     outline = Color(0xff8b9297),
     surfaceVariant = Color(0xff41484d),
-    onSurfaceVariant = Color(0xffc0c7cd),
-//    inverseOnSurface = Color(0xff00658a),
-//    inversePrimary = Color(0xff00658a),
-//    inverseSurface = Color(0xff00658a),
+    onSurfaceVariant = Color(0xffc0c7cd)
 )
 
 @Composable

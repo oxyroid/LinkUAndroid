@@ -28,39 +28,41 @@ import com.wzk.oss.screen.profile.AccountScreen
 import com.wzk.oss.ui.theme.OssTheme
 import dagger.hilt.android.AndroidEntryPoint
 
-val activity get() = MainActivity._ins
+val activity get() = MainActivity.lazyActivity
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private var isDarkModeBackup = false
+    private var savedDarkMode = false
 
     companion object {
-        lateinit var _ins: MainActivity
+        lateinit var lazyActivity: MainActivity
         private const val SAVED_DARK_MODE = "saved:dark-mode"
     }
 
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(SAVED_DARK_MODE, isDarkModeBackup)
+        outState.putBoolean(SAVED_DARK_MODE, savedDarkMode)
         super.onSaveInstanceState(outState)
     }
 
     override fun onPause() {
         super.onPause()
-        MMKV.defaultMMKV().putBoolean(SAVED_DARK_MODE, isDarkModeBackup)
+        MMKV.defaultMMKV().putBoolean(SAVED_DARK_MODE, savedDarkMode)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _ins = this
-        isDarkModeBackup = savedInstanceState?.getBoolean(SAVED_DARK_MODE) ?: MMKV.defaultMMKV()
-            .getBoolean(SAVED_DARK_MODE, false)
+        lazyActivity = this
+        savedDarkMode = savedInstanceState
+            ?.getBoolean(SAVED_DARK_MODE)
+            ?: MMKV.defaultMMKV()
+                .getBoolean(SAVED_DARK_MODE, false)
         setContent {
-            var isDarkMode by remember { mutableStateOf(isDarkModeBackup) }
+            var isDarkMode by remember { mutableStateOf(savedDarkMode) }
 
             fun toggleTheme() {
                 isDarkMode = !isDarkMode
-                isDarkModeBackup = isDarkMode
+                savedDarkMode = isDarkMode
             }
 
             OssTheme(isDarkMode) {
