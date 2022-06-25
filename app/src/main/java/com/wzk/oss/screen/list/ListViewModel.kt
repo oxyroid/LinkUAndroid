@@ -65,6 +65,7 @@ class ListViewModel @Inject constructor(
                     }
                 )
             }
+            else -> {}
         }
     }
 }
