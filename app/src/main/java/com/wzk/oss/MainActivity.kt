@@ -20,10 +20,12 @@ import androidx.navigation.compose.rememberNavController
 import com.tencent.mmkv.MMKV
 import com.wzk.oss.screen.Screen
 import com.wzk.oss.screen.cart.CartScreen
+import com.wzk.oss.screen.chat.ChatScreen
 import com.wzk.oss.screen.detail.DetailScreen
 import com.wzk.oss.screen.info.InfoScreen
 import com.wzk.oss.screen.list.ListScreen
 import com.wzk.oss.screen.login.LoginScreen
+import com.wzk.oss.screen.main.MainScreen
 import com.wzk.oss.screen.profile.AccountScreen
 import com.wzk.oss.ui.theme.OssTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -76,9 +78,15 @@ class MainActivity : ComponentActivity() {
                 Scaffold { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = Screen.ListScreen.route,
+                        startDestination = Screen.MainScreen.route,
                         modifier = Modifier.padding(innerPadding)
                     ) {
+                        composable(Screen.MainScreen.route) {
+                            MainScreen(navController, toggleTheme = ::toggleTheme)
+                        }
+                        composable(Screen.ChatScreen.route + "/{cid}/{uid}") {
+                            ChatScreen(navController)
+                        }
                         composable(Screen.ListScreen.route) {
                             ListScreen(navController, toggleTheme = ::toggleTheme)
                         }

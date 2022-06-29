@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
+    id 'org.jetbrains.kotlin.plugin.serialization'
 }
 android {
     namespace 'com.wzk.oss'
@@ -12,8 +13,8 @@ android {
         applicationId "com.wzk.oss"
         minSdk 26
         targetSdk 32
-        versionCode 1
-        versionName "0.1_20220626_patched01"
+        versionCode 3
+        versionName "0.1_20220629"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -92,4 +93,14 @@ dependencies {
 
     // mmkv
     implementation 'com.tencent:mmkv:1.2.13'
+
+    //ktor
+    implementation "io.ktor:ktor-client-core:$ktor_version"
+    implementation "io.ktor:ktor-client-cio:$ktor_version"
+    implementation "io.ktor:ktor-client-serialization:$ktor_version"
+    implementation "io.ktor:ktor-client-websockets:$ktor_version"
+    implementation "io.ktor:ktor-client-logging:$ktor_version"
+    implementation "ch.qos.logback:logback-classic:1.2.6"
+
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2"
 }

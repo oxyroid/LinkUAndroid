@@ -14,7 +14,8 @@ import androidx.compose.ui.unit.dp
 fun MaterialButton(
     textRes: Int,
     modifier: Modifier = Modifier,
-    textColor: Color, enabled: Boolean = true,
+    textColor: Color,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Button(

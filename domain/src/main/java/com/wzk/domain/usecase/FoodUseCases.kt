@@ -16,7 +16,7 @@ data class FoodUseCases @Inject constructor(
     val loadCartUseCase: LoadCartUseCase
 )
 
-data class FetchFoodsUseCase(
+data class FetchFoodsUseCase @Inject constructor(
     private val repository: FoodRepository
 ) {
     operator fun invoke(): Flow<Resource<List<Food>>> = resourceFlow {
@@ -26,7 +26,7 @@ data class FetchFoodsUseCase(
     }
 }
 
-data class FindFoodUseCase(
+data class FindFoodUseCase @Inject constructor(
     private val repository: FoodRepository
 ) {
     operator fun invoke(id: Int): Flow<Resource<Food>> = resourceFlow {
@@ -36,7 +36,7 @@ data class FindFoodUseCase(
     }
 }
 
-data class AddToCartUseCase(
+data class AddToCartUseCase @Inject constructor(
     private val localSharedPreference: LocalSharedPreference
 ) {
     operator fun invoke(foodId: Int): Flow<Resource<Int>> = resourceFlow {
@@ -46,7 +46,7 @@ data class AddToCartUseCase(
     }
 }
 
-data class LoadCartUseCase(
+data class LoadCartUseCase @Inject constructor(
     private val foodRepository: FoodRepository
 ) {
     suspend operator fun invoke(): Flow<Resource<List<Food>>> = resourceFlow {

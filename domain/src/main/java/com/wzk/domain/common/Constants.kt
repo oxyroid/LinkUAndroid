@@ -37,4 +37,6 @@ object Constants {
      */
     const val DB_NAME = "db"
     const val PARAM_FOOD_ID = "foodId"
+
+    const val WSS_URL = "wss://im.rexue.work/ws"
 }

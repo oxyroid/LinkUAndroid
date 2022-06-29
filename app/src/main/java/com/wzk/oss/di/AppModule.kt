@@ -10,12 +10,24 @@ import com.wzk.domain.repository.user.UserRepository
 import com.wzk.domain.repository.user.UserRepositoryImpl
 import com.wzk.domain.repository.user.UserRepositoryMock
 import com.wzk.domain.room.MyDatabase
-import com.wzk.domain.usecase.*
+import com.wzk.domain.service.ChatSocketService
+import com.wzk.domain.service.ChatSocketServiceImpl
+import com.wzk.domain.usecase.FindUserUseCase
+import com.wzk.domain.usecase.LoginUseCase
+import com.wzk.domain.usecase.RegisterUseCase
+import com.wzk.domain.usecase.UserUseCases
 import com.wzk.oss.application
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.json.*
+import io.ktor.client.plugins.kotlinx.serializer.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.plugins.websocket.*
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
@@ -34,7 +46,29 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideService(): Retrofit = Retrofit.Builder()
+    fun provideHttpClient(): HttpClient {
+        return HttpClient(CIO) {
+            install(Logging)
+            install(WebSockets)
+            install(JsonPlugin) {
+                serializer = KotlinxSerializer()
+            }
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatSocketService(client: HttpClient): ChatSocketService {
+        return ChatSocketServiceImpl(client)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient = OkHttpClient()
+
+    @Provides
+    @Singleton
+    fun provideRetrofitService(): Retrofit = Retrofit.Builder()
         .baseUrl(Constants.BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
@@ -54,7 +88,7 @@ object AppModule {
             localSharedPreference
         ) else UserRepositoryImpl(
             userDao = database.userDao(),
-            userService = provideService().create(),
+            userService = provideRetrofitService().create(),
             sharedPreference = localSharedPreference
         )
 
@@ -66,7 +100,7 @@ object AppModule {
         if (Constants.MOCK_MODE) FoodRepositoryMock()
         else FoodRepositoryImpl(
             foodDao = database.foodDao(),
-            foodService = provideService().create()
+            foodService = provideRetrofitService().create()
         )
 
     @Provides
@@ -81,17 +115,4 @@ object AppModule {
         )
     }
 
-    @Provides
-    @Singleton
-    fun provideFoodsUseCases(
-        repository: FoodRepository,
-        localSharedPreference: LocalSharedPreference
-    ): FoodUseCases {
-        return FoodUseCases(
-            fetchListUseCase = FetchFoodsUseCase(repository),
-            findUseCase = FindFoodUseCase(repository),
-            addToCartUseCase = AddToCartUseCase(localSharedPreference),
-            loadCartUseCase = LoadCartUseCase(repository)
-        )
-    }
 }

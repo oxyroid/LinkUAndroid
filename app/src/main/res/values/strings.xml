@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Flea Market</string>
+    <string name="app_name">LinkU</string>
     <string name="shopping_cart">购物车</string>
     <string name="introduce_food">%s元[%s]</string>
     <string name="screen_login_title">电子邮箱登录</string>
@@ -26,4 +26,5 @@
     <string name="already_in_cart">已经在购物车中了</string>
     <string name="add_to_cart_success">添加成功</string>
     <string name="toggle_theme">切换主题</string>
+    <string name="send">发送</string>
 </resources>

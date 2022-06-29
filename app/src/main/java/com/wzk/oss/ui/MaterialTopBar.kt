@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun MaterialTopBar(
@@ -23,7 +24,7 @@ fun MaterialTopBar(
             MaterialIconButton(icon = navIcon, onClick = onNavClick)
         },
         title = {
-            Text(text = title)
+            Text(text = title, fontSize = 16.sp)
         },
         actions = actions ?: {}
     )

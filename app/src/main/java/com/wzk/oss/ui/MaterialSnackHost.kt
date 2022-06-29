@@ -3,17 +3,21 @@ package com.wzk.oss.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wzk.oss.ui.theme.Link
+import com.wzk.oss.ui.theme.SnackHost
 
 @Composable
-fun MaterialSnackHost(state: SnackbarHostState) {
+fun MaterialSnackHost(
+    state: SnackbarHostState
+) {
     SnackbarHost(
         hostState = state,
         modifier = Modifier.padding(vertical = 12.dp)
@@ -25,7 +29,7 @@ fun MaterialSnackHost(state: SnackbarHostState) {
                 .padding(horizontal = 12.dp)
                 .fillMaxWidth()
                 .height(48.dp),
-            backgroundColor = MaterialTheme.colorScheme.surface,
+            backgroundColor = SnackHost,
         ) {
             Row(
                 modifier = Modifier

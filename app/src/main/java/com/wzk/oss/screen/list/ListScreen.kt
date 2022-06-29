@@ -16,6 +16,7 @@ import androidx.navigation.NavController
 import com.wzk.domain.LocalSharedPreference
 import com.wzk.oss.R
 import com.wzk.oss.application
+import com.wzk.oss.extension.toggle
 import com.wzk.oss.screen.OrderType
 import com.wzk.oss.screen.Screen
 import com.wzk.oss.screen.list.composable.FoodShimmerItem
@@ -70,11 +71,7 @@ fun ListScreen(
         topBar = {
             ListScreenBar(
                 onNavClick = {
-                    scope.launch {
-                        if (scaffoldState.drawerState.isOpen) {
-                            scaffoldState.drawerState.close()
-                        } else scaffoldState.drawerState.open()
-                    }
+                    scaffoldState.drawerState.toggle(scope)
                 },
                 onItemClick = { index, item ->
                     when (item.event) {

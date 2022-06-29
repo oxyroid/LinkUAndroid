@@ -29,8 +29,6 @@ class LocalSharedPreference @Inject constructor(
     }
 
 
-    suspend fun getLocalUser() = getLocalUserId().let { userDao.getById(it) }
-
     companion object {
         const val MMKV_USER_ID = "mmkv:userId"
         const val MMKV_MOCK_USER_ID = "mmkv:userId-mock"
