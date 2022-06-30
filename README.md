@@ -24,5 +24,4 @@ Release is an application on Android about **instant messaging**.
 - Install latest **[Android Studio](https://developer.android.com/studio)**
 - Clone this repository
 - Open project and build it, wait for all dependencies syncing finished
-- Make sure a backend server is running and edit `com.wzk.domain.common.Constants.kt`
-- Connect a device and run it
+- Connect a device and install and run it
