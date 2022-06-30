@@ -32,10 +32,9 @@ data class RegisterUseCase(
 ) {
     operator fun invoke(
         email: String,
-        password: String,
-        username: String
+        password: String
     ): Flow<Resource<User>> = resourceFlow {
-        repository.register(email, password, username)
+        repository.register(email, password)
             .handle(::emitResource)
             .catch(::emitResource)
     }

@@ -9,6 +9,7 @@ import com.wzk.domain.entity.TextMessage
 import com.wzk.domain.service.ChatSocketService
 import com.wzk.wrapper.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.ktor.websocket.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.launchIn
@@ -41,7 +42,7 @@ class ChatViewModel @Inject constructor(
                     when (val resource = socketService.initSession(uid.toInt(), cid.toInt())) {
                         Resource.Loading -> {}
                         is Resource.Success -> {
-                            socketService.observeMessages(cid.toInt())
+                            socketService.observeMessages()
                                 .onEach { message ->
                                     val newList = _chatState.value.messages.toMutableList()
                                     newList.add(0, message)
@@ -54,6 +55,15 @@ class ChatViewModel @Inject constructor(
                         is Resource.Failure -> {
                             _toastEvent.emit(resource.message)
                         }
+                    }
+                }
+                viewModelScope.launch {
+                    socketService.observeClose().onEach { close ->
+                        val newList = _chatState.value.messages.toMutableList()
+                        newList.add(0, TextMessage(0, 0, 0, "Closed! [${close.readReason()}]"))
+                        _chatState.value = chatState.value.copy(
+                            messages = newList
+                        )
                     }
                 }
             }

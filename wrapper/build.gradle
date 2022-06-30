@@ -32,5 +32,4 @@ android {
 
 dependencies {
     implementation('org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.3')
-    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
 }

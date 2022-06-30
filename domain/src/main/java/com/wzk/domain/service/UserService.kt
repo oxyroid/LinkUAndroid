@@ -2,25 +2,36 @@ package com.wzk.domain.service
 
 import com.wzk.domain.entity.User
 import com.wzk.wrapper.Result
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
 
 interface UserService {
-    @GET("/user/{id}")
-    suspend fun getById(@Path("id") id: Int): Result<User>
+    suspend fun getById(id: Int): Result<User>
 
-    @GET("/user/register")
     suspend fun register(
-        @Query("email") email: String,
-        @Query("password") password: String,
-        @Query("username") username: String
+        email: String,
+        password: String
     ): Result<User>
 
-    @GET("/user/login")
     suspend fun login(
-        @Query("email") email: String,
-        @Query("password") password: String
+        email: String,
+        password: String
     ): Result<User>
+
+    companion object {
+        private const val BASE_URL = "http://im.rexue.work/auth"
+    }
+
+    sealed class EndPoints(val url: String) {
+        data class GetById(val id: Int) : EndPoints("$BASE_URL/$id")
+        data class Register(
+            val email: String,
+            val password: String
+        ) : EndPoints("$BASE_URL/register?email=$email&password=$password")
+
+        data class Login(
+            val email: String,
+            val password: String
+        ) : EndPoints("$BASE_URL/login?email=$email&password=$password")
+    }
+
 }
 

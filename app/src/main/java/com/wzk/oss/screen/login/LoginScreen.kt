@@ -14,13 +14,13 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.wzk.oss.ui.MaterialButton
-import com.wzk.oss.ui.MaterialSnackHost
-import com.wzk.oss.ui.MaterialTextButton
 import com.wzk.oss.R
 import com.wzk.oss.application
 import com.wzk.oss.screen.login.composable.LoginScreenBar
 import com.wzk.oss.screen.login.composable.LoginTextField
+import com.wzk.oss.ui.MaterialButton
+import com.wzk.oss.ui.MaterialSnackHost
+import com.wzk.oss.ui.MaterialTextButton
 import kotlinx.coroutines.launch
 
 @Composable
@@ -102,7 +102,7 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 48.dp)
                 ) {
-                    viewModel.onEvent(LoginEvent.Register(email, password, email))
+                    viewModel.onEvent(LoginEvent.Register(email, password))
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

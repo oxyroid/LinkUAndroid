@@ -19,11 +19,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.tencent.mmkv.MMKV
 import com.wzk.oss.screen.Screen
-import com.wzk.oss.screen.cart.CartScreen
 import com.wzk.oss.screen.chat.ChatScreen
-import com.wzk.oss.screen.detail.DetailScreen
 import com.wzk.oss.screen.info.InfoScreen
-import com.wzk.oss.screen.list.ListScreen
 import com.wzk.oss.screen.login.LoginScreen
 import com.wzk.oss.screen.main.MainScreen
 import com.wzk.oss.screen.profile.AccountScreen
@@ -40,7 +37,6 @@ class MainActivity : ComponentActivity() {
         lateinit var lazyActivity: MainActivity
         private const val SAVED_DARK_MODE = "saved:dark-mode"
     }
-
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putBoolean(SAVED_DARK_MODE, savedDarkMode)
@@ -87,14 +83,7 @@ class MainActivity : ComponentActivity() {
                         composable(Screen.ChatScreen.route + "/{cid}/{uid}") {
                             ChatScreen(navController)
                         }
-                        composable(Screen.ListScreen.route) {
-                            ListScreen(navController, toggleTheme = ::toggleTheme)
-                        }
-                        composable(Screen.DetailScreen.route + "/{foodId}") {
-                            DetailScreen(navController)
-                        }
                         composable(Screen.LoginScreen.route) { LoginScreen(navController) }
-                        composable(Screen.CartScreen.route) { CartScreen(navController) }
                         composable(Screen.InfoScreen.route) { InfoScreen(navController) }
                         composable(Screen.ProfileScreen.route) { AccountScreen(navController) }
                     }

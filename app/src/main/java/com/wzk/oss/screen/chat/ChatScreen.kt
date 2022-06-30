@@ -24,7 +24,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
 import com.wzk.oss.R
-import com.wzk.oss.screen.chat.composable.Bubble
+import com.wzk.oss.extension.ifTrue
+import com.wzk.oss.screen.chat.composable.ChatBubble
 import com.wzk.oss.ui.MaterialTopBar
 import kotlinx.coroutines.flow.collectLatest
 
@@ -40,7 +41,7 @@ fun ChatScreen(
         }
     }
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(key1 = lifecycleOwner) {
+    DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
                 viewModel.connectToChat()
@@ -59,7 +60,7 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             MaterialTopBar(
-                title = "",
+                title = state.isLoading.ifTrue { "加载中" } ?: "",
                 onNavClick = {
 
                 }
@@ -74,7 +75,7 @@ fun ChatScreen(
                 reverseLayout = true
             ) {
                 items(state.messages) {
-                    Bubble(message = it, isAnother = it.uid != 0)
+                    ChatBubble(message = it, isAnother = it.uid != 1)
                 }
             }
             Row(
@@ -94,7 +95,10 @@ fun ChatScreen(
                     shape = Shapes.Full
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                TextButton(onClick = viewModel::onMessage) {
+                TextButton(onClick = {
+                    viewModel.onMessage()
+                    viewModel.onTextChange("")
+                }) {
                     Text(text = stringResource(id = R.string.send))
                 }
             }

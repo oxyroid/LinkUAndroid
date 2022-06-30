@@ -2,8 +2,10 @@ package com.wzk.domain.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity
+@Serializable
 data class Conversation(
     @PrimaryKey val id: Int,
     val updatedAt: Long,
@@ -14,6 +16,7 @@ data class Conversation(
     val description: String
 )
 
+@Serializable
 data class ConversationSimplify(
     val id: Int,
     val updatedAt: Long

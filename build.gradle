@@ -2,7 +2,6 @@ buildscript {
     ext {
         compose_version = '1.2.0-rc02'
         hilt_version = '2.42'
-        retrofit_version = '2.9.0'
         room_version = "2.4.2"
         coil_version = "2.1.0"
         nav_version = "2.4.2"

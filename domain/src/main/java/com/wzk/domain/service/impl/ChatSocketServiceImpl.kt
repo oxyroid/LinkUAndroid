@@ -1,7 +1,8 @@
-package com.wzk.domain.service
+package com.wzk.domain.service.impl
 
 import com.wzk.domain.entity.Message
 import com.wzk.domain.entity.TextMessage
+import com.wzk.domain.service.ChatSocketService
 import com.wzk.wrapper.Resource
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
@@ -16,18 +17,21 @@ class ChatSocketServiceImpl(
     private val client: HttpClient
 ) : ChatSocketService {
     private var socket: WebSocketSession? = null
+    private var receivedFlow: Flow<Frame>? = null
+
     override suspend fun initSession(uid: Int, cid: Int): Resource<Unit> {
         return try {
             socket = client.webSocketSession {
-//                url("${ChatSocketService.EndPoints.ChatSocket.url}/$cid?uid=$uid")
-                url("${ChatSocketService.EndPoints.ChatSocket.url}")
+                // url("${ChatSocketService.EndPoints.ChatSocket.url}/$cid?uid=$uid")
+                url(ChatSocketService.EndPoints.TestSocket.url)
             }
+            receivedFlow = socket?.incoming?.receiveAsFlow()
             if (socket?.isActive == true) {
                 Resource.Success(Unit)
-            } else Resource.Failure(1, "Couldn't establish a connection.")
+            } else Resource.Failure("Couldn't establish a connection.")
         } catch (e: Exception) {
             e.printStackTrace()
-            Resource.Failure(1, e.localizedMessage ?: "Unknown Error.")
+            Resource.Failure(e.localizedMessage ?: "Unknown Error.")
         }
     }
 
@@ -39,18 +43,29 @@ class ChatSocketServiceImpl(
         }
     }
 
-    override fun observeMessages(cid: Int): Flow<Message> {
+    override fun observeMessages(): Flow<Message> {
         return try {
-            socket?.incoming
-                ?.receiveAsFlow()
-                ?.filter { true }
+            receivedFlow
+                ?.filter { it is Frame.Text }
                 ?.map {
                     val json = (it as Frame.Text).readText()
                     // FIXME
-//                    val message = Json.decodeFromString<Message>(json)
-                    val message = TextMessage(cid = cid, uid = 1, text = json)
+                    // val message = Json.decodeFromString<Message>(json)
+                    val message = TextMessage(cid = 1, uid = 1, text = json)
                     message
                 } ?: flow { }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            flow { }
+        }
+    }
+
+    override fun observeClose(): Flow<Frame.Close> {
+        return try {
+            receivedFlow
+                ?.filter { it is Frame.Close }
+                ?.map { it as Frame.Close }
+                ?: flow { }
         } catch (e: Exception) {
             e.printStackTrace()
             flow { }

@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.wzk.domain.entity.Message
 
 @Composable
-fun Bubble(
+fun ChatBubble(
     message: Message,
     isAnother: Boolean = false
 ) {
