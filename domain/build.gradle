@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace 'com.wzk.domain'
+    namespace 'com.linku.domain'
     compileSdk 32
 
     defaultConfig {

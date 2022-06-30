@@ -6,11 +6,11 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization'
 }
 android {
-    namespace 'com.wzk.oss'
+    namespace 'com.linku.im'
     compileSdk 32
 
     defaultConfig {
-        applicationId "com.wzk.oss"
+        applicationId 'com.linku.im'
         minSdk 26
         targetSdk 32
         versionCode 3

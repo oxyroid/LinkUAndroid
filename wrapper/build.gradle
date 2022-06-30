@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.wzk.wrapper'
+    namespace 'com.linku.wrapper'
     compileSdk 32
 
     defaultConfig {
