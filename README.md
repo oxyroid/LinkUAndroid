@@ -1,12 +1,10 @@
-# Flea Market, by thxbrop
+# LinkU-Android, by thxbrop
 
-####  🙋‍♂️Introduce
+#### 🙋‍♂️Introduce
 
-This repository is **Jetpack Compose** example and is made for Java-Web experiment.
+This repository is **Jetpack Compose** example.
 
-Release is an application on Android about **Online Shopping System**.
-
-For backend repository, visit [oss_spring](https://github.com/thxbrop/oss_spring) .
+Release is an application on Android about **instant messaging**.
 
 #### 📙Project technology stack
 
@@ -14,11 +12,11 @@ For backend repository, visit [oss_spring](https://github.com/thxbrop/oss_spring
 - Building with **MVI** Architecture
 - **[Jetpack Compose](https://developer.android.com/jetpack/compose)** as UI Framework
 - **[Room](https://developer.android.com/training/data-storage/room)** as Data Persistence Framework
-- **[Retrofit](https://square.github.io/retrofit/)** as Network Framework
-- **[MMKV](https://github.com/Tencent/MMKV)** to save preferences
+- **[Ktor-client](https://ktor.io/)** as Network Framework
+- **[Kotlin-serialization](https://kotlinlang.org/docs/serialization.html)** as Serialization Framework
+- **[MMKV](https://github.com/Tencent/MMKV)** as key-value storage framework
 - **[Lottie](https://github.com/airbnb/lottie-android)** to make awesome animations
-- **[Hilt](https://developer.android.com/training/dependency-injection/hilt-android)** as Dependency
-  Injection Framework
+- **[Hilt](https://developer.android.com/training/dependency-injection/hilt-android)** as Dependency Injection Framework
 - Multi-module development
 
 #### 🎉 Build in your environment
