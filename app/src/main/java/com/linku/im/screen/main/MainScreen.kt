@@ -1,77 +1,78 @@
 package com.linku.im.screen.main
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
-import androidx.compose.material.FabPosition
-import androidx.compose.material.Scaffold
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.ScaffoldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.linku.im.extension.toggle
+import com.linku.domain.Auth
+import com.linku.im.NavViewModel
+import com.linku.im.R
 import com.linku.im.screen.Screen
 import com.linku.im.screen.main.composable.MainConversationItem
 import com.linku.im.screen.main.composable.MainDrawer
-import com.linku.im.ui.MaterialSnackHost
-import com.linku.im.ui.MaterialTopBar
 import com.linku.im.ui.verticalScrollbar
 
 @Composable
 fun MainScreen(
     navController: NavController,
     mainViewModel: MainViewModel = hiltViewModel(),
-    toggleTheme: () -> Unit
+    scaffoldState: ScaffoldState,
+    navViewModel: NavViewModel,
+    toggleDrawer: () -> Unit
 ) {
-    val scaffoldState = rememberScaffoldState()
-    val scope = rememberCoroutineScope()
+    with(navViewModel) {
+        rememberedIcon.value = Icons.Default.Menu
+        rememberedTitle.value = stringResource(id = R.string.app_name)
+        rememberedOnNavClick.value = {
+            toggleDrawer()
+        }
+        rememberedActions.value = {
+            IconButton(onClick = { isDarkMode.value = !isDarkMode.value }) {
+                Icon(imageVector = Icons.Default.Settings, contentDescription = "")
+            }
+        }
+    }
     val state by mainViewModel.state
-    Scaffold(
-        topBar = {
-            MaterialTopBar(
-                navIcon = Icons.Default.Menu,
-                title = state.title
-            ) {
-                scaffoldState.drawerState.toggle(scope)
+    MainDrawer(
+        drawerState = scaffoldState.drawerState,
+        onNavigate = {
+            when (it) {
+                Screen.ProfileScreen ->
+                    navController.navigate(if (Auth.current == null) Screen.LoginScreen.route else it.route)
+                else -> navController.navigate(it.route)
             }
-        },
-        snackbarHost = {
-            MaterialSnackHost(scaffoldState.snackbarHostState)
-        },
-        drawerBackgroundColor = MaterialTheme.colorScheme.background,
-        floatingActionButtonPosition = FabPosition.End,
-        scaffoldState = scaffoldState,
-        backgroundColor = MaterialTheme.colorScheme.background
+        }
     ) {
-        MainDrawer(
-            drawerState = scaffoldState.drawerState,
-            onNavigate = {
-                navController.navigate(it.route)
-            }
-        ) {
-            val lazyListState = rememberLazyListState()
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.verticalScrollbar(
+        val lazyListState = rememberLazyListState()
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScrollbar(
                     state = lazyListState,
                     color = MaterialTheme.colorScheme.tertiary
                 )
-            ) {
-                itemsIndexed(state.conversations) { index, conversation ->
-                    MainConversationItem(conversation) {
-                        navController.navigate(Screen.ChatScreen.route + "/0/0")
-                    }
-                    if (index != state.conversations.size - 1) Divider()
+        ) {
+            itemsIndexed(state.conversations) { index, conversation ->
+                MainConversationItem(conversation) {
+                    navController.navigate(Screen.ChatScreen.route + "/${conversation.id}")
                 }
+                Divider()
             }
         }
-
     }
 }

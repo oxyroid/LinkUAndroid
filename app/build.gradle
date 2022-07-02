@@ -13,18 +13,23 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 32
-        versionCode 3
-        versionName "0.1_20220629"
+        versionCode 5
+        versionName "0.1_20220701"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
         }
+
+        Properties properties = new Properties()
+        properties.load(project.rootProject.file("local.properties").newDataInputStream())
+        buildConfigField "String", "API_KEY", "\"${properties.getProperty("API_KEY")}\""
     }
 
     buildTypes {
         release {
             minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -54,12 +59,13 @@ dependencies {
     implementation project(path: ':wrapper')
     implementation project(path: ':domain')
     implementation 'androidx.core:core-ktx:1.8.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
-    implementation 'androidx.activity:activity-compose:1.4.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.0'
+    implementation 'androidx.activity:activity-compose:1.5.0'
     implementation "androidx.compose.ui:ui:$compose_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.compose.material3:material3:1.0.0-alpha13'
+    implementation 'androidx.compose.material3:material3:1.0.0-alpha14'
     implementation 'androidx.compose.material:material:1.1.1'
+    implementation 'com.google.accompanist:accompanist-navigation-animation:0.24.11-rc'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
@@ -95,6 +101,7 @@ dependencies {
     implementation "io.ktor:ktor-client-cio:$ktor_version"
     implementation "io.ktor:ktor-client-websockets:$ktor_version"
     implementation "io.ktor:ktor-client-logging:$ktor_version"
+    implementation "io.ktor:ktor-client-auth:$ktor_version"
     implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
     implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
 

@@ -27,4 +27,9 @@
     <string name="add_to_cart_success">添加成功</string>
     <string name="toggle_theme">切换主题</string>
     <string name="send">发送</string>
+    <string name="code_source">获取源码</string>
+    <string name="logging">登录中</string>
+    <string name="log_in_success">登录成功</string>
+    <string name="registering">注册中</string>
+    <string name="infomation_required">请将信息填写完整</string>
 </resources>

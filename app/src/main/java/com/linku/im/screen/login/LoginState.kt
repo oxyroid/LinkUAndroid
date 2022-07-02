@@ -7,5 +7,6 @@ data class LoginState(
     val registerEvent: Event<User> = Event.Handled(),
     val loginEvent: Event<User> = Event.Handled(),
     val loading: Boolean = false,
-    val error: Event<String> = Event.Handled()
+    val error: Event<String> = Event.Handled(),
+    val title: String = ""
 )

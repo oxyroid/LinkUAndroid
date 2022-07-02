@@ -29,8 +29,16 @@ fun ChatBubble(
     Row(
         modifier = Modifier
             .padding(
-                horizontal = 12.dp,
-                vertical = 4.dp
+                start = 12.let {
+                    if (!isAnother) it * 3
+                    else it
+                }.dp,
+                end = 12.let {
+                    if (isAnother) it * 3
+                    else it
+                }.dp,
+                top = 4.dp,
+                bottom = 4.dp
             )
             .fillMaxWidth(),
         horizontalArrangement = if (isAnother) Arrangement.End else Arrangement.Start

@@ -17,7 +17,7 @@ class ChatSocketServiceImpl(
     private val client: HttpClient
 ) : ChatSocketService {
     private var socket: WebSocketSession? = null
-    private var receivedFlow: Flow<Frame>? = null
+    private var incoming: Flow<Frame>? = null
 
     override suspend fun initSession(uid: Int, cid: Int): Resource<Unit> {
         return try {
@@ -25,12 +25,13 @@ class ChatSocketServiceImpl(
                 // url("${ChatSocketService.EndPoints.ChatSocket.url}/$cid?uid=$uid")
                 url(ChatSocketService.EndPoints.TestSocket.url)
             }
-            receivedFlow = socket?.incoming?.receiveAsFlow()
+            incoming = socket?.incoming?.receiveAsFlow()
             if (socket?.isActive == true) {
                 Resource.Success(Unit)
             } else Resource.Failure("Couldn't establish a connection.")
         } catch (e: Exception) {
             e.printStackTrace()
+
             Resource.Failure(e.localizedMessage ?: "Unknown Error.")
         }
     }
@@ -45,7 +46,7 @@ class ChatSocketServiceImpl(
 
     override fun observeMessages(): Flow<Message> {
         return try {
-            receivedFlow
+            incoming
                 ?.filter { it is Frame.Text }
                 ?.map {
                     val json = (it as Frame.Text).readText()
@@ -62,7 +63,7 @@ class ChatSocketServiceImpl(
 
     override fun observeClose(): Flow<Frame.Close> {
         return try {
-            receivedFlow
+            incoming
                 ?.filter { it is Frame.Close }
                 ?.map { it as Frame.Close }
                 ?: flow { }

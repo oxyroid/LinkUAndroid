@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.linku.domain.entity.Conversation
@@ -27,7 +28,7 @@ fun MainConversationItem(
             .fillMaxWidth()
             .height(64.dp)
             .background(
-                color = MaterialTheme.colorScheme.background
+                color = MaterialTheme.colorScheme.surface
             )
             .clickable { onClick() }
             .padding(horizontal = 12.dp),
@@ -41,7 +42,7 @@ fun MainConversationItem(
                 .aspectRatio(1f)
         ) {
             SubcomposeAsyncImage(
-                model = { conversation.avatar },
+                model = conversation.avatar,
                 contentDescription = conversation.name,
                 modifier = Modifier.fillMaxSize(),
                 loading = {
@@ -68,13 +69,17 @@ fun MainConversationItem(
                 text = conversation.name,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth(),
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = conversation.description,
                 color = MaterialTheme.colorScheme.onSurface * 0.8f,
-                maxLines = 1
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth(),
+                overflow = TextOverflow.Ellipsis
             )
         }
         Spacer(modifier = Modifier.weight(1f))

@@ -11,15 +11,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun MaterialTopBar(
+fun ToolBar(
     navIcon: ImageVector = Icons.Default.ArrowBack,
     title: String = "",
     actions: (@Composable RowScope.() -> Unit)? = null,
     onNavClick: () -> Unit
 ) {
     TopAppBar(
-        backgroundColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        backgroundColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
         navigationIcon = {
             MaterialIconButton(icon = navIcon, onClick = onNavClick)
         },

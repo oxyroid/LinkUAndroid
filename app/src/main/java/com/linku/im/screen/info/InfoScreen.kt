@@ -7,7 +7,13 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Scaffold
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,19 +25,36 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.linku.im.NavViewModel
+import com.linku.im.R
 import com.linku.im.activity
 import com.linku.im.application
+import com.linku.im.extension.debug
+import com.linku.im.extension.release
 import com.linku.im.ui.LinkText
 import com.linku.im.ui.MaterialButton
-import com.linku.im.ui.MaterialTopBar
 import com.mukesh.MarkDown
-import com.linku.im.R
 import java.util.*
 
 @Composable
 fun InfoScreen(
-    navController: NavController
+    navController: NavController,
+    navViewModel: NavViewModel
 ) {
+    with(navViewModel) {
+        rememberedIcon.value = Icons.Default.ArrowBack
+        rememberedTitle.value = stringResource(id = R.string.info)
+        rememberedOnNavClick.value = {
+            navController.popBackStack()
+        }
+        rememberedActions.value = {
+            IconButton(onClick = {
+
+            }) {
+                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "")
+            }
+        }
+    }
     val markdown: String = remember {
         application.assets.open("info.md").use {
             val scanner = Scanner(it).useDelimiter("\\A")
@@ -41,39 +64,38 @@ fun InfoScreen(
         }
     }
     var visible by remember { mutableStateOf(false) }
-    Scaffold(
-        topBar = {
-            MaterialTopBar(title = stringResource(id = R.string.info)) {
-                navController.popBackStack()
-            }
-        },
-        modifier = Modifier.background(MaterialTheme.colorScheme.background)
-    ) { innerPadding ->
-        Column(
+    Column(
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.background)
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.developer))
+        LottieAnimation(
+            composition,
+            iterations = LottieConstants.IterateForever,
             modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(top = 24.dp)
+                .weight(2f)
+                .aspectRatio(3 / 4f)
+        )
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+                .weight(3f),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.developer))
-            LottieAnimation(
-                composition,
-                iterations = LottieConstants.IterateForever,
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .weight(2f)
-                    .aspectRatio(3 / 4f)
-            )
-            MarkDown(
-                text = markdown,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-                    .weight(3f)
-            )
+            Column {
+                Spacer(modifier = Modifier.height(16.dp))
+                MarkDown(text = markdown)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+        release {
             MaterialButton(
                 textRes = if (visible) R.string.contract_me_by_follow else R.string.for_source,
-                textColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
@@ -101,7 +123,21 @@ fun InfoScreen(
                     }
                 }
             }
-
         }
+        debug {
+            MaterialButton(
+                textRes = R.string.code_source,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 48.dp)
+            ) {
+                activity.startActivity(Intent().apply {
+                    action = Intent.ACTION_VIEW
+                    data = Uri.parse("https://github.com/thxbrop/LinkU-Android")
+                })
+            }
+        }
+
+
     }
 }

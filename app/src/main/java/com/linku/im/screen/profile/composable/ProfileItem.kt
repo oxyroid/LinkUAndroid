@@ -15,14 +15,14 @@ import com.linku.im.extension.times
 import com.linku.im.ui.theme.SubTitleFontSize
 import com.linku.im.ui.theme.TitleFontSize
 
-private val DIVIDER = 0.5.dp
+private val DIVIDER = 0.6.dp
 private val PADDING_X = 24.dp
 private val ENTITY_PADDING_Y = 8.dp
 private val FOLDER_PADDING_Y = 16.dp
 private const val TINT_ALPHA = 0.8f
 
 @Composable
-fun AccountItem(
+fun ProfileItem(
     setting: Setting,
     divider: Boolean = true
 ) {
@@ -31,15 +31,15 @@ fun AccountItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
                     .clickable(onClick = setting.onClick)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(
                         start = PADDING_X, top = ENTITY_PADDING_Y
                     )
             ) {
                 Text(
                     text = setting.key,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = TitleFontSize,
                     modifier = Modifier.padding(end = PADDING_X)
                 )
@@ -56,8 +56,8 @@ fun AccountItem(
                 divider.ifTrue {
                     Divider(
                         thickness = DIVIDER,
-                        color = MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.padding(top = ENTITY_PADDING_Y)
+                        color = MaterialTheme.colorScheme.outline * 0.6f,
+                        modifier = Modifier.padding(top = ENTITY_PADDING_Y, end = 8.dp)
                     )
                 }
             }
@@ -66,7 +66,7 @@ fun AccountItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(MaterialTheme.colorScheme.background)
                     .clickable(onClick = {
 
                     })
@@ -85,7 +85,7 @@ fun AccountItem(
                 ) {
                     Text(
                         text = setting.label,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = TitleFontSize,
                         modifier = Modifier.padding(
                             end = PADDING_X,
@@ -95,8 +95,8 @@ fun AccountItem(
                     divider.ifTrue {
                         Divider(
                             thickness = DIVIDER,
-                            color = MaterialTheme.colorScheme.outline,
-                            modifier = Modifier.padding(top = FOLDER_PADDING_Y)
+                            color = MaterialTheme.colorScheme.outline * 0.6f,
+                            modifier = Modifier.padding(top = FOLDER_PADDING_Y, end = 8.dp)
                         )
                     }
                 }

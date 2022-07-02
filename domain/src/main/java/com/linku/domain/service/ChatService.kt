@@ -1,5 +1,6 @@
 package com.linku.domain.service
 
+import com.linku.domain.BuildConfig
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
 import com.linku.wrapper.Resource
@@ -10,7 +11,7 @@ interface ChatService {
     suspend fun getUnreadMessages(cid: Int, uid: Int): Resource<List<Message>>
 
     companion object {
-        const val BASE_URL = "http://im.rexue.work/chat"
+        private const val BASE_URL = "${BuildConfig.BASE_URL}/chat"
     }
 
     sealed class EndPoints(val url: String) {

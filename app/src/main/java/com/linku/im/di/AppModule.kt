@@ -43,7 +43,10 @@ object AppModule {
     @Singleton
     fun provideHttpClient(): HttpClient {
         return HttpClient(CIO) {
-            install(Logging)
+            install(Logging) {
+                logger = Logger.ANDROID
+                level = LogLevel.BODY
+            }
             install(WebSockets)
             install(ContentNegotiation) {
                 json()

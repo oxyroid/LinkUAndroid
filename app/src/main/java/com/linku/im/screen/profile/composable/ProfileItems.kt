@@ -1,5 +1,6 @@
 package com.linku.im.screen.profile.composable
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,13 +13,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun AccountItemGroup(
+fun ProfileItems(
     label: String,
     items: List<Setting>
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
             .padding(top = 18.dp)
     ) {
         Text(
@@ -37,7 +39,7 @@ fun AccountItemGroup(
                 .fillMaxWidth()
         ) {
             items.forEachIndexed { index, settingItem ->
-                AccountItem(settingItem, index != items.size - 1)
+                ProfileItem(settingItem, index != items.size - 1)
             }
         }
     }
