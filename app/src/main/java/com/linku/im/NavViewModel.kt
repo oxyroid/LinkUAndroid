@@ -24,11 +24,10 @@ class NavViewModel : ViewModel() {
 
     override fun onCleared() {
         super.onCleared()
-        MMKV.defaultMMKV().encode(SAVED_DARK_MODE, isDarkMode.value)
     }
 
     companion object {
-        private const val SAVED_DARK_MODE = "saved:dark-mode"
+        const val SAVED_DARK_MODE = "saved:dark-mode"
     }
 
 }

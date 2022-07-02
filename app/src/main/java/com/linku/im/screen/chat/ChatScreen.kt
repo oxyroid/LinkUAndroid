@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TextField
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -77,6 +77,7 @@ fun ChatScreen(
 
     val state by viewModel.chatState
     val text by viewModel.messageTextState
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -96,6 +97,8 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.background)
+                .navigationBarsPadding()
+                .imePadding()
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -112,14 +115,13 @@ fun ChatScreen(
                 )
             }
             Spacer(modifier = Modifier.width(4.dp))
-            TextField(
+            OutlinedTextField(
                 value = text,
                 onValueChange = {
                     viewModel.onTextChange(it)
                 },
                 Modifier
-                    .weight(1f)
-                    .imePadding(),
+                    .weight(1f),
                 placeholder = {
                     Text(text = "Type here..", color = MaterialTheme.colorScheme.onBackground)
                 },

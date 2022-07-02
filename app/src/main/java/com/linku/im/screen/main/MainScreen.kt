@@ -65,14 +65,25 @@ fun MainScreen(
                 .verticalScrollbar(
                     state = lazyListState,
                     color = MaterialTheme.colorScheme.tertiary
-                )
+                ),
+            userScrollEnabled = !state.loading
         ) {
-            itemsIndexed(state.conversations) { index, conversation ->
-                MainConversationItem(conversation) {
-                    navController.navigate(Screen.ChatScreen.route + "/${conversation.id}")
+            if (state.loading) {
+                repeat(6) {
+                    item {
+                        MainConversationItem()
+                        Divider()
+                    }
                 }
-                Divider()
+            } else {
+                itemsIndexed(state.conversations) { index, conversation ->
+                    MainConversationItem(conversation) {
+                        navController.navigate(Screen.ChatScreen.route + "/${conversation.id}")
+                    }
+                    Divider()
+                }
             }
+
         }
     }
 }

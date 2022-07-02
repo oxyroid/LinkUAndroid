@@ -10,6 +10,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.material.rememberScaffoldState
@@ -34,6 +36,7 @@ import com.linku.im.screen.profile.AccountScreen
 import com.linku.im.ui.MaterialSnackHost
 import com.linku.im.ui.ToolBar
 import com.linku.im.ui.theme.OssTheme
+import com.tencent.mmkv.MMKV
 import dagger.hilt.android.AndroidEntryPoint
 
 val activity get() = MainActivity.lazyActivity
@@ -41,15 +44,21 @@ val activity get() = MainActivity.lazyActivity
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+    private val navViewModel: NavViewModel by viewModels()
+
     companion object {
         lateinit var lazyActivity: MainActivity
+    }
+
+    override fun onPause() {
+        MMKV.defaultMMKV().encode(NavViewModel.SAVED_DARK_MODE, navViewModel.isDarkMode.value)
+        super.onPause()
     }
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lazyActivity = this
-        val navViewModel: NavViewModel by viewModels()
         setContent {
             val isDarkMode by navViewModel.isDarkMode
             OssTheme(isDarkMode) {
@@ -57,6 +66,7 @@ class MainActivity : ComponentActivity() {
                     window, LocalView.current
                 ).isAppearanceLightStatusBars = !isDarkMode
 
+                WindowCompat.setDecorFitsSystemWindows(window, false)
                 window.statusBarColor = MaterialTheme.colorScheme.background.toArgb()
                 window.navigationBarColor = MaterialTheme.colorScheme.background.toArgb()
 
@@ -77,79 +87,84 @@ class MainActivity : ComponentActivity() {
                         MaterialSnackHost(scaffoldState.snackbarHostState)
                     },
                     scaffoldState = scaffoldState,
-                    drawerBackgroundColor = MaterialTheme.colorScheme.background
+                    drawerBackgroundColor = MaterialTheme.colorScheme.background,
+                    backgroundColor = MaterialTheme.colorScheme.background
                 ) { innerPadding ->
-                    AnimatedNavHost(
-                        navController = navController,
-                        startDestination = Screen.MainScreen.route,
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .background(MaterialTheme.colorScheme.background),
-                        enterTransition = {
-                            slideIntoContainer(
-                                towards = AnimatedContentScope.SlideDirection.Start,
-                                animationSpec = tween(
-                                    durationMillis = 400
+                    Column {
+                        AnimatedNavHost(
+                            navController = navController,
+                            startDestination = Screen.MainScreen.route,
+                            modifier = Modifier
+                                .padding(innerPadding)
+                                .background(MaterialTheme.colorScheme.background)
+                                .navigationBarsPadding(),
+                            enterTransition = {
+                                slideIntoContainer(
+                                    towards = AnimatedContentScope.SlideDirection.Start,
+                                    animationSpec = tween(
+                                        durationMillis = 400
+                                    )
                                 )
-                            )
-                        },
-                        exitTransition = {
-                            fadeOut(
-                                animationSpec = tween(
-                                    durationMillis = 400
+                            },
+                            exitTransition = {
+                                fadeOut(
+                                    animationSpec = tween(
+                                        durationMillis = 400
+                                    )
                                 )
-                            )
-                        },
-                        popEnterTransition = {
-                            fadeIn(
-                                animationSpec = tween(
-                                    durationMillis = 400
+                            },
+                            popEnterTransition = {
+                                fadeIn(
+                                    animationSpec = tween(
+                                        durationMillis = 400
+                                    )
                                 )
-                            )
-                        },
-                        popExitTransition = {
-                            slideOutOfContainer(
-                                towards = AnimatedContentScope.SlideDirection.End,
-                                animationSpec = tween(
-                                    durationMillis = 400
+                            },
+                            popExitTransition = {
+                                slideOutOfContainer(
+                                    towards = AnimatedContentScope.SlideDirection.End,
+                                    animationSpec = tween(
+                                        durationMillis = 400
+                                    )
                                 )
-                            )
-                        }
-                    ) {
-                        composable(Screen.MainScreen.route) {
-                            MainScreen(
-                                navController = navController,
-                                scaffoldState = scaffoldState,
-                                navViewModel = navViewModel
-                            ) {
-                                scaffoldState.drawerState.toggle(scope)
+                            }
+                        ) {
+                            composable(Screen.MainScreen.route) {
+                                MainScreen(
+                                    navController = navController,
+                                    scaffoldState = scaffoldState,
+                                    navViewModel = navViewModel
+                                ) {
+                                    scaffoldState.drawerState.toggle(scope)
+                                }
+                            }
+                            composable(Screen.ChatScreen.route + "/{cid}") {
+                                ChatScreen(
+                                    navController = navController,
+                                    navViewModel = navViewModel
+                                )
+                            }
+                            composable(Screen.LoginScreen.route) {
+                                LoginScreen(
+                                    navController,
+                                    navViewModel = navViewModel
+                                )
+                            }
+                            composable(Screen.InfoScreen.route) {
+                                InfoScreen(
+                                    navController,
+                                    navViewModel = navViewModel
+                                )
+                            }
+                            composable(Screen.ProfileScreen.route) {
+                                AccountScreen(
+                                    navController,
+                                    navViewModel = navViewModel
+                                )
                             }
                         }
-                        composable(Screen.ChatScreen.route + "/{cid}") {
-                            ChatScreen(
-                                navController = navController,
-                                navViewModel = navViewModel
-                            )
-                        }
-                        composable(Screen.LoginScreen.route) {
-                            LoginScreen(
-                                navController,
-                                navViewModel = navViewModel
-                            )
-                        }
-                        composable(Screen.InfoScreen.route) {
-                            InfoScreen(
-                                navController,
-                                navViewModel = navViewModel
-                            )
-                        }
-                        composable(Screen.ProfileScreen.route) {
-                            AccountScreen(
-                                navController,
-                                navViewModel = navViewModel
-                            )
-                        }
                     }
+
                 }
             }
         }

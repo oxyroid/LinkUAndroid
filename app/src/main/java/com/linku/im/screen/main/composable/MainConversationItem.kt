@@ -10,19 +10,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.placeholder
+import com.google.accompanist.placeholder.shimmer
 import com.linku.domain.entity.Conversation
 import com.linku.im.extension.times
 
 @Composable
 fun MainConversationItem(
-    conversation: Conversation,
+    conversation: Conversation? = null,
     unreadCount: Int = 0,
-    onClick: () -> Unit
+    onClick: () -> Unit = {}
 ) {
+    val shimmerColor = MaterialTheme.colorScheme.outline * 0.3f
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -42,15 +47,10 @@ fun MainConversationItem(
                 .aspectRatio(1f)
         ) {
             SubcomposeAsyncImage(
-                model = conversation.avatar,
-                contentDescription = conversation.name,
-                modifier = Modifier.fillMaxSize(),
-                loading = {
-                    Surface(
-                        color = MaterialTheme.colorScheme.tertiary,
-                        modifier = Modifier.fillMaxSize()
-                    ) {}
-                },
+                model = conversation?.avatar ?: "",
+                contentDescription = conversation?.name ?: "",
+                modifier = Modifier
+                    .fillMaxSize(),
                 error = {
                     Surface(
                         color = MaterialTheme.colorScheme.tertiary,
@@ -66,19 +66,37 @@ fun MainConversationItem(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = conversation.name,
+                text = conversation?.name ?: "",
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .placeholder(
+                        visible = conversation == null,
+                        color = shimmerColor,
+                        shape = RoundedCornerShape(4.dp),
+                        highlight = PlaceholderHighlight.shimmer(
+                            highlightColor = Color.White,
+                        ),
+                    ),
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = conversation.description,
+                text = conversation?.description ?: "",
                 color = MaterialTheme.colorScheme.onSurface * 0.8f,
                 maxLines = 1,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .placeholder(
+                        visible = conversation == null,
+                        color = shimmerColor,
+                        shape = RoundedCornerShape(4.dp),
+                        highlight = PlaceholderHighlight.shimmer(
+                            highlightColor = Color.White,
+                        ),
+                    )
+                    .fillMaxWidth(),
                 overflow = TextOverflow.Ellipsis
             )
         }

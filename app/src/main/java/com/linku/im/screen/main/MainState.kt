@@ -6,5 +6,6 @@ import com.linku.im.application
 
 data class MainState(
     val title: String = application.getString(R.string.app_name),
-    val conversations: List<Conversation> = emptyList()
+    val conversations: List<Conversation> = emptyList(),
+    val loading: Boolean = false
 )

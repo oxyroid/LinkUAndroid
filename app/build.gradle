@@ -65,7 +65,6 @@ dependencies {
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
     implementation 'androidx.compose.material3:material3:1.0.0-alpha14'
     implementation 'androidx.compose.material:material:1.1.1'
-    implementation 'com.google.accompanist:accompanist-navigation-animation:0.24.11-rc'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
@@ -96,15 +95,23 @@ dependencies {
     // mmkv
     implementation 'com.tencent:mmkv:1.2.13'
 
-    //ktor
+    //ktor-client
     implementation "io.ktor:ktor-client-core:$ktor_version"
     implementation "io.ktor:ktor-client-cio:$ktor_version"
     implementation "io.ktor:ktor-client-websockets:$ktor_version"
     implementation "io.ktor:ktor-client-logging:$ktor_version"
     implementation "io.ktor:ktor-client-auth:$ktor_version"
     implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
+
+    // serialization
     implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
 
     implementation "ch.qos.logback:logback-classic:1.2.6"
 
+    // accompanist
+    implementation "com.google.accompanist:accompanist-navigation-animation:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-insets:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-insets-ui:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-permissions:$accompanist_version"
+    implementation "com.google.accompanist:accompanist-placeholder:$accompanist_version"
 }
