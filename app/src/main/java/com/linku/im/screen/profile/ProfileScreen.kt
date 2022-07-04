@@ -10,38 +10,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
-import com.linku.im.NavViewModel
+import com.linku.im.screen.global.GlobalViewModel
+import com.linku.im.R
 import com.linku.im.extension.debug
 import com.linku.im.screen.Screen
 import com.linku.im.screen.profile.composable.ProfileItems
 import com.linku.im.screen.profile.composable.Setting
+import com.linku.im.ui.MaterialButton
 
-
-val itemsIntro = listOf(
-    Setting.Entity(
-        key = "手机号码",
-        value = "+86 130-0000-0000",
-    ) {
-
-    },
-    Setting.Entity(
-        key = "用户名",
-        value = "@test",
-    ) {
-
-    },
-    Setting.Entity(
-        key = "个人简介",
-        value = "测试数据",
-    ) {
-
-    },
-)
 
 val itemsFolder = listOf(
     Setting.Folder(
@@ -64,22 +48,30 @@ val itemsFolder = listOf(
 @Composable
 fun AccountScreen(
     navController: NavController,
-    navViewModel: NavViewModel
+    globalViewModel: GlobalViewModel,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val state by viewModel.state
 
-    with(navViewModel) {
-        rememberedIcon.value = Icons.Default.ArrowBack
-        rememberedTitle.value = ""
-        rememberedOnNavClick.value = {
+    with(globalViewModel) {
+        icon.value = Icons.Default.ArrowBack
+        title.value = state.error ?: ""
+        navClick.value = {
             navController.popBackStack()
         }
-        rememberedActions.value = {
-            IconButton(onClick = {
+        actions.value = {
+            IconButton(
+                onClick = {
 
-            }) {
+                }
+            ) {
                 Icon(imageVector = Icons.Default.MoreVert, contentDescription = "")
             }
         }
+    }
+
+    LaunchedEffect(true) {
+        viewModel.onEvent(ProfileEvent.FetchProfile)
     }
 
     LazyColumn(
@@ -103,7 +95,33 @@ fun AccountScreen(
         }
         item {
             ProfileItems(
-                label = "账号", items = debug { itemsIntro } ?: emptyList()
+                label = "账号",
+                items = listOf(
+                    Setting.Entity(
+                        key = "电子邮箱",
+                        value = state.email,
+                    ) {
+
+                    },
+                    Setting.Entity(
+                        key = "用户名",
+                        value = state.name,
+                    ) {
+
+                    },
+                    Setting.Entity(
+                        key = "真实姓名",
+                        value = state.realName,
+                    ) {
+
+                    },
+                    Setting.Entity(
+                        key = "个人简介",
+                        value = "测试数据",
+                    ) {
+
+                    },
+                )
             )
         }
 
@@ -126,6 +144,14 @@ fun AccountScreen(
                     )
                 } ?: itemsFolder
             )
+        }
+
+        item {
+            Surface {
+                MaterialButton(textRes = R.string.logout) {
+                    viewModel.onEvent(ProfileEvent.Logout)
+                }
+            }
         }
     }
 }

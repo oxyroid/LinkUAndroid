@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 
 @Composable
@@ -27,7 +28,12 @@ fun ToolBar(
                 MaterialIconButton(icon = navIcon, onClick = onNavClick)
             },
             title = {
-                Text(text = title, fontSize = 16.sp)
+                Text(
+                    text = title,
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             },
             actions = actions ?: {}
         )

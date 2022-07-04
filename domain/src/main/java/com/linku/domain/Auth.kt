@@ -15,7 +15,9 @@ import kotlinx.serialization.json.Json
 object Auth {
     private const val AUTH_USER = "auth_user"
     val current: User?
-        get() = MMKV.defaultMMKV().decodeString(AUTH_USER)?.let(Json::decodeFromString)
+        get() = MMKV.defaultMMKV().decodeString(AUTH_USER)
+            .also { println(it) }
+            ?.let(Json::decodeFromString)
 
     private val _observeCurrent = MutableStateFlow(current)
     val observeCurrent: Flow<User?> = _observeCurrent

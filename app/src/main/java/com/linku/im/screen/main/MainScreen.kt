@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.linku.domain.Auth
-import com.linku.im.NavViewModel
+import com.linku.im.screen.global.GlobalViewModel
 import com.linku.im.R
 import com.linku.im.screen.Screen
 import com.linku.im.screen.main.composable.MainConversationItem
@@ -31,16 +31,16 @@ fun MainScreen(
     navController: NavController,
     mainViewModel: MainViewModel = hiltViewModel(),
     scaffoldState: ScaffoldState,
-    navViewModel: NavViewModel,
+    globalViewModel: GlobalViewModel,
     toggleDrawer: () -> Unit
 ) {
-    with(navViewModel) {
-        rememberedIcon.value = Icons.Default.Menu
-        rememberedTitle.value = stringResource(id = R.string.app_name)
-        rememberedOnNavClick.value = {
+    with(globalViewModel) {
+        icon.value = Icons.Default.Menu
+        title.value = stringResource(id = R.string.app_name)
+        navClick.value = {
             toggleDrawer()
         }
-        rememberedActions.value = {
+        actions.value = {
             IconButton(onClick = { isDarkMode.value = !isDarkMode.value }) {
                 Icon(imageVector = Icons.Default.Settings, contentDescription = "")
             }
@@ -52,7 +52,9 @@ fun MainScreen(
         onNavigate = {
             when (it) {
                 Screen.ProfileScreen ->
-                    navController.navigate(if (Auth.current == null) Screen.LoginScreen.route else it.route)
+                    navController.navigate(
+                        if (Auth.current == null) Screen.LoginScreen.route else it.route
+                    )
                 else -> navController.navigate(it.route)
             }
         }
@@ -69,7 +71,7 @@ fun MainScreen(
             userScrollEnabled = !state.loading
         ) {
             if (state.loading) {
-                repeat(6) {
+                repeat(12) {
                     item {
                         MainConversationItem()
                         Divider()
@@ -77,8 +79,14 @@ fun MainScreen(
                 }
             } else {
                 itemsIndexed(state.conversations) { index, conversation ->
-                    MainConversationItem(conversation) {
-                        navController.navigate(Screen.ChatScreen.route + "/${conversation.id}")
+                    MainConversationItem(
+                        conversation,
+                        pinned = index < 1,
+                        unreadCount = index / 2
+                    ) {
+                        navController.navigate(
+                            route = Screen.ChatScreen.withArgs(conversation.id)
+                        )
                     }
                     Divider()
                 }

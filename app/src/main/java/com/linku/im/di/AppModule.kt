@@ -1,21 +1,23 @@
 package com.linku.im.di
 
 import androidx.room.Room
-import com.linku.domain.LocalSharedPreference
 import com.linku.domain.common.Constants
+import com.linku.domain.repository.auth.AuthRepository
+import com.linku.domain.repository.auth.AuthRepositoryImpl
+import com.linku.domain.repository.chat.ChatRepository
+import com.linku.domain.repository.chat.ChatRepositoryImpl
 import com.linku.domain.repository.user.UserRepository
 import com.linku.domain.repository.user.UserRepositoryImpl
 import com.linku.domain.room.ULinkDatabase
+import com.linku.domain.service.AuthService
 import com.linku.domain.service.ChatService
 import com.linku.domain.service.ChatSocketService
 import com.linku.domain.service.UserService
+import com.linku.domain.service.impl.AuthServiceImpl
 import com.linku.domain.service.impl.ChatServiceImpl
 import com.linku.domain.service.impl.ChatSocketServiceImpl
 import com.linku.domain.service.impl.UserServiceImpl
-import com.linku.domain.usecase.FindUserUseCase
-import com.linku.domain.usecase.LoginUseCase
-import com.linku.domain.usecase.RegisterUseCase
-import com.linku.domain.usecase.UserUseCases
+import com.linku.domain.usecase.*
 import com.linku.im.application
 import dagger.Module
 import dagger.Provides
@@ -36,7 +38,9 @@ object AppModule {
     @Singleton
     @Provides
     fun provideDatabase() = Room.databaseBuilder(
-        application, ULinkDatabase::class.java, Constants.DB_NAME
+        application,
+        ULinkDatabase::class.java,
+        Constants.DB_NAME
     ).build()
 
     @Provides
@@ -72,8 +76,9 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideLocalSharedPreference(database: ULinkDatabase) =
-        LocalSharedPreference(database.userDao())
+    fun provideAuthService(client: HttpClient): AuthService {
+        return AuthServiceImpl(client)
+    }
 
     @Provides
     @Singleton
@@ -83,15 +88,44 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun providesAuthRepository(
+        database: ULinkDatabase,
+        client: HttpClient
+    ): AuthRepository = AuthRepositoryImpl(
+        userDao = database.userDao(),
+        authService = provideAuthService(client),
+    )
+
+    @Provides
+    @Singleton
     fun providesUserRepository(
         database: ULinkDatabase,
-        client: HttpClient,
-        localSharedPreference: LocalSharedPreference
+        client: HttpClient
     ): UserRepository = UserRepositoryImpl(
         userDao = database.userDao(),
         userService = provideUserService(client),
-        sharedPreference = localSharedPreference
     )
+
+    @Provides
+    @Singleton
+    fun providesChatRepository(
+        client: HttpClient
+    ): ChatRepository = ChatRepositoryImpl(
+        chatService = provideChatService(client),
+    )
+
+
+    @Provides
+    @Singleton
+    fun provideAuthUseCases(
+        repository: AuthRepository
+    ): AuthUseCases {
+        return AuthUseCases(
+            loginUseCase = LoginUseCase(repository),
+            registerUseCase = RegisterUseCase(repository),
+            logoutUseCase = LogoutUseCase
+        )
+    }
 
     @Provides
     @Singleton
@@ -99,9 +133,17 @@ object AppModule {
         repository: UserRepository
     ): UserUseCases {
         return UserUseCases(
-            loginUseCase = LoginUseCase(repository),
-            registerUseCase = RegisterUseCase(repository),
             findUserUseCase = FindUserUseCase(repository)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatUseCases(
+        repository: ChatRepository
+    ): ChatUseCases {
+        return ChatUseCases(
+            sendTextMessageUseCase = SendTextMessageUseCase(repository)
         )
     }
 

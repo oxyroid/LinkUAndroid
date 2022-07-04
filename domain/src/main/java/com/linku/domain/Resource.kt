@@ -1,4 +1,4 @@
-package com.linku.wrapper
+package com.linku.domain
 
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow

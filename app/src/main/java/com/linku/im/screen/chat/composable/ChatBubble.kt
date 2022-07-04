@@ -41,7 +41,7 @@ fun ChatBubble(
                 bottom = 4.dp
             )
             .fillMaxWidth(),
-        horizontalArrangement = if (isAnother) Arrangement.End else Arrangement.Start
+        horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End
     ) {
         val shape = if (isAnother) RoundedCornerShape(
             topEndPercent = 25,

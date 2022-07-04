@@ -1,4 +1,4 @@
-package com.linku.wrapper
+package com.linku.domain
 
 /**
  * A data wrapper

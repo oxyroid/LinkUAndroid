@@ -3,13 +3,18 @@ package com.linku.im.screen.profile.composable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.placeholder
+import com.google.accompanist.placeholder.shimmer
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.times
 import com.linku.im.ui.theme.SubTitleFontSize
@@ -26,6 +31,7 @@ fun ProfileItem(
     setting: Setting,
     divider: Boolean = true
 ) {
+    val shimmerColor = MaterialTheme.colorScheme.outline * 0.3f
     when (setting) {
         is Setting.Entity -> {
             Column(
@@ -45,13 +51,22 @@ fun ProfileItem(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = setting.value,
+                    text = setting.value ?: "",
                     color = MaterialTheme.colorScheme.outline,
                     fontSize = SubTitleFontSize,
-                    modifier = Modifier.padding(
-                        end = PADDING_X,
-                        bottom = if (divider) 0.dp else ENTITY_PADDING_Y
-                    )
+                    modifier = Modifier
+                        .padding(
+                            end = PADDING_X,
+                            bottom = if (divider) 0.dp else ENTITY_PADDING_Y
+                        )
+                        .placeholder(
+                            visible = setting.value == null,
+                            color = shimmerColor,
+                            shape = RoundedCornerShape(4.dp),
+                            highlight = PlaceholderHighlight.shimmer(
+                                highlightColor = Color.White,
+                            ),
+                        )
                 )
                 divider.ifTrue {
                     Divider(

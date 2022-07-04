@@ -1,7 +1,11 @@
 package com.linku.im.screen.profile
 
-import com.linku.im.screen.profile.dto.UserDetail
-
 data class ProfileState(
-    val userDetail: UserDetail? = null
+    val email: String? = null,
+    val emailVerified: Boolean = false,
+    val name: String? = null,
+    val realName: String? = null,
+    val loading: Boolean = false,
+    val error: String? = null,
+    val logout: Boolean = false
 )

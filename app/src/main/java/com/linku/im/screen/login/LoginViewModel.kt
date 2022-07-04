@@ -1,12 +1,12 @@
 package com.linku.im.screen.login
 
 import androidx.lifecycle.viewModelScope
-import com.linku.domain.usecase.UserUseCases
+import com.linku.domain.Resource
+import com.linku.domain.eventOf
+import com.linku.domain.usecase.AuthUseCases
 import com.linku.im.R
 import com.linku.im.application
 import com.linku.im.screen.BaseViewModel
-import com.linku.wrapper.Resource
-import com.linku.wrapper.eventOf
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val userUseCases: UserUseCases
+    private val authUseCases: AuthUseCases
 ) : BaseViewModel<LoginState, LoginEvent>(LoginState()) {
 
     override fun onEvent(event: LoginEvent) {
@@ -27,7 +27,7 @@ class LoginViewModel @Inject constructor(
                         )
                         return
                     }
-                    userUseCases.loginUseCase(email, password)
+                    authUseCases.loginUseCase(email, password)
                         .onEach { resource ->
                             _state.value = when (resource) {
                                 Resource.Loading -> LoginState(
@@ -52,7 +52,7 @@ class LoginViewModel @Inject constructor(
                         )
                         return
                     }
-                    userUseCases.registerUseCase(email, password)
+                    authUseCases.registerUseCase(email, password, email)
                         .onEach { resource ->
                             _state.value = when (resource) {
                                 Resource.Loading -> LoginState(

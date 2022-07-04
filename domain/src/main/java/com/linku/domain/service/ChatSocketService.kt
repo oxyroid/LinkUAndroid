@@ -1,23 +1,30 @@
 package com.linku.domain.service
 
+import com.linku.domain.BuildConfig
+import com.linku.domain.Resource
+import com.linku.domain.common.buildUrl
 import com.linku.domain.entity.Message
-import com.linku.wrapper.Resource
 import io.ktor.websocket.*
 import kotlinx.coroutines.flow.Flow
 
 interface ChatSocketService {
-    suspend fun initSession(uid: Int, cid: Int): Resource<Unit>
-    suspend fun sendMessage(message: Message)
+    @Deprecated("")
+    suspend fun initSession(): Resource<Unit>
+    suspend fun initSession(uid: Int): Resource<Unit>
     fun observeMessages(): Flow<Message>
     fun observeClose(): Flow<Frame.Close>
     suspend fun closeSession()
 
     companion object {
-        private const val BASE_URL = "wss://im.rexue.work/ws"
+        private const val BASE_URL = BuildConfig.WS_URL
     }
 
     sealed class EndPoints(val url: String) {
-        data class ChatSocket(val cid: Int) : EndPoints("$BASE_URL/$cid")
-        object TestSocket : EndPoints(BASE_URL)
+        object DefaultSocket : EndPoints(BASE_URL)
+        data class UIDSocket(val uid: Int) : EndPoints(
+            buildUrl(BASE_URL) {
+                path(uid)
+            }
+        )
     }
 }

@@ -1,106 +1,75 @@
 package com.linku.im.screen.chat
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linku.domain.LocalSharedPreference
-import com.linku.domain.entity.TextMessage
-import com.linku.domain.service.ChatSocketService
-import com.linku.wrapper.Resource
+import com.linku.domain.Resource
+import com.linku.domain.eventOf
+import com.linku.domain.usecase.ChatUseCases
+import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.ktor.websocket.*
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val socketService: ChatSocketService,
-    private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
-    private val _messageTextState = mutableStateOf("")
-    val messageTextState: State<String> = _messageTextState
+    private val chatUseCases: ChatUseCases
+) : BaseViewModel<ChatState, ChatEvent>(ChatState()) {
 
-    private val _toastEvent = MutableSharedFlow<String>()
-    val toastEvent = _toastEvent.asSharedFlow()
+    private var job: Job? = null
 
-    private val _chatState = mutableStateOf(ChatState())
-    val chatState: State<ChatState> = _chatState
-
-    fun connectToChat() {
-        savedStateHandle.get<String>("cid")?.let { cid ->
-            _chatState.value = _chatState.value.copy(
-                title = "Loading.."
-            )
-            viewModelScope.launch {
-                when (
-                    val resource = socketService.initSession(
-                        uid = LocalSharedPreference.getLocalUserId(),
-                        cid = cid.toInt()
-                    )
-                ) {
-                    Resource.Loading -> {}
-                    is Resource.Success -> {
-                        // FIXME
-                        _chatState.value = _chatState.value.copy(
-                            title = "Just for testing"
-                        )
-                        socketService.observeMessages()
-                            .onEach { message ->
-                                val newList = _chatState.value.messages.toMutableList()
-                                newList.add(0, message)
-                                _chatState.value = chatState.value.copy(
-                                    messages = newList
-                                )
-                            }
-                            .launchIn(viewModelScope)
-                    }
-                    is Resource.Failure -> {
-                        _toastEvent.emit(resource.message)
-                    }
-                }
-            }
-            viewModelScope.launch {
-                socketService.observeClose().onEach { close ->
-                    val newList = _chatState.value.messages.toMutableList()
-                    newList.add(0, TextMessage(0, 0, 0, "Closed! [${close.readReason()}]"))
-                    _chatState.value = chatState.value.copy(
+    override fun onEvent(event: ChatEvent) {
+        when (event) {
+            is ChatEvent.InitChat -> {
+                job?.cancel()
+                val source = event.source
+                _state.value = _state.value.copy(
+                    cid = event.cid,
+                    messages = source.replayCache.filter { it.cid == state.value.cid }
+                )
+                job = source.onEach {
+                    val newList = _state.value.messages.toMutableList()
+                    newList.add(0, it)
+                    _state.value = _state.value.copy(
                         messages = newList
                     )
-                }
+                }.catch {
+                    _state.value = _state.value.copy(event = eventOf(it.localizedMessage ?: "?"))
+                }.launchIn(viewModelScope)
+
             }
+            ChatEvent.SendTextMessage -> {
+                val cid = state.value.cid
+                checkNotNull(cid)
+                if (state.value.text.isBlank()) return
+                chatUseCases.sendTextMessageUseCase(
+                    cid = cid,
+                    content = state.value.text
+                ).onEach { resource ->
+                    _state.value = when (resource) {
+                        Resource.Loading -> {
+                            _state.value.copy(
+                                sending = true
+                            )
+                        }
+                        is Resource.Success -> {
+                            _state.value.copy(
+                                sending = false,
+                                text = ""
+                            )
+                        }
+                        is Resource.Failure -> {
+                            _state.value.copy(
+                                sending = false,
+                                event = eventOf(resource.message)
+                            )
+                        }
+                    }
+                }.launchIn(viewModelScope)
+            }
+            is ChatEvent.TextChange -> _state.value = _state.value.copy(text = event.text)
         }
-    }
-
-    fun onTextChange(text: String) {
-        _messageTextState.value = text
-    }
-
-    fun onMessage() {
-        if (_messageTextState.value.isBlank()) return
-//        _chatState.value = _chatState.value.copy(
-//            isSending = true
-//        )
-        viewModelScope.launch {
-            val message = TextMessage(cid = 1, uid = 0, text = _messageTextState.value)
-            socketService.sendMessage(message)
-        }
-    }
-
-    fun disconnect() {
-        viewModelScope.launch {
-            socketService.closeSession()
-        }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        disconnect()
     }
 
 }

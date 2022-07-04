@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +28,7 @@ import com.linku.im.extension.times
 fun MainConversationItem(
     conversation: Conversation? = null,
     unreadCount: Int = 0,
+    pinned: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     val shimmerColor = MaterialTheme.colorScheme.outline * 0.3f
@@ -32,9 +36,14 @@ fun MainConversationItem(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .background(
-                color = MaterialTheme.colorScheme.surface
-            )
+            .let {
+                if (pinned)
+                    it.background(
+                        color = MaterialTheme.colorScheme.surface
+                    )
+                else it
+
+            }
             .clickable { onClick() }
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -62,7 +71,8 @@ fun MainConversationItem(
         Spacer(modifier = Modifier.width(12.dp))
         Column(
             modifier = Modifier
-                .padding(end = 12.dp, top = 8.dp, bottom = 8.dp),
+                .padding(end = 12.dp, top = 8.dp, bottom = 8.dp)
+                .weight(1f),
             verticalArrangement = Arrangement.Center
         ) {
             Text(
@@ -100,16 +110,30 @@ fun MainConversationItem(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.width(8.dp))
         if (unreadCount != 0) {
             Surface(
                 shape = RoundedCornerShape(100),
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.tertiary
             ) {
                 Text(
                     text = unreadCount.toString(),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    color = MaterialTheme.colorScheme.onTertiary,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        } else if (pinned) {
+            Surface(
+                shape = RoundedCornerShape(100),
+                color = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Lock,
+                    contentDescription = "",
+                    tint = MaterialTheme.colorScheme.onTertiary,
+                    modifier = Modifier.padding(4.dp)
                 )
             }
         }

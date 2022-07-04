@@ -12,7 +12,7 @@ sealed class Setting {
 
     data class Entity(
         val key: String,
-        val value: String,
+        val value: String?,
         val onClick: () -> Unit
     ) : Setting()
 }

@@ -4,12 +4,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.TextButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun MaterialButton(
@@ -43,7 +44,8 @@ fun MaterialTextButton(
     ) {
         Text(
             text = stringResource(id = textRes),
-            color = LocalContentColor.current
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 14.sp
         )
     }
 }

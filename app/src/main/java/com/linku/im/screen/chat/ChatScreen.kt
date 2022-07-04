@@ -12,7 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.rounded.Send
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
@@ -28,24 +27,25 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
-import com.linku.im.NavViewModel
 import com.linku.im.screen.chat.composable.ChatBubble
-import kotlinx.coroutines.flow.collectLatest
+import com.linku.im.screen.global.GlobalViewModel
 
 @Composable
 fun ChatScreen(
     navController: NavController,
     viewModel: ChatViewModel = hiltViewModel(),
-    navViewModel: NavViewModel
+    vm: GlobalViewModel = hiltViewModel(),
+    cid: Int?
 ) {
+    checkNotNull(cid)
     val context = LocalContext.current
-    with(navViewModel) {
-        rememberedIcon.value = Icons.Default.ArrowBack
-        rememberedTitle.value = viewModel.chatState.value.title
-        rememberedOnNavClick.value = {
+    with(vm) {
+        icon.value = Icons.Default.ArrowBack
+        title.value = viewModel.state.value.title
+        navClick.value = {
             navController.popBackStack()
         }
-        rememberedActions.value = {
+        actions.value = {
             IconButton(
                 onClick = {
 
@@ -55,8 +55,10 @@ fun ChatScreen(
             }
         }
     }
-    LaunchedEffect(true) {
-        viewModel.toastEvent.collectLatest {
+
+    val state by viewModel.state
+    LaunchedEffect(state.event) {
+        state.event.handle {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
@@ -64,9 +66,14 @@ fun ChatScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_START) {
-                viewModel.connectToChat()
+                viewModel.onEvent(
+                    ChatEvent.InitChat(
+                        cid = cid,
+                        source = vm.messages
+                    )
+                )
             } else if (event == Lifecycle.Event.ON_STOP) {
-                viewModel.disconnect()
+
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -75,8 +82,6 @@ fun ChatScreen(
         }
     }
 
-    val state by viewModel.chatState
-    val text by viewModel.messageTextState
 
     Column(
         modifier = Modifier
@@ -102,37 +107,24 @@ fun ChatScreen(
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            IconButton(
-                onClick = {
-
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Star,
-                    contentDescription = "Emoji",
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
-            }
             Spacer(modifier = Modifier.width(4.dp))
             OutlinedTextField(
-                value = text,
+                value = state.text,
                 onValueChange = {
-                    viewModel.onTextChange(it)
+                    viewModel.onEvent(ChatEvent.TextChange(it))
                 },
                 Modifier
                     .weight(1f),
                 placeholder = {
                     Text(text = "Type here..", color = MaterialTheme.colorScheme.onBackground)
                 },
-                enabled = !state.isSending
+                enabled = !state.sending
 
             )
             Spacer(modifier = Modifier.width(4.dp))
             IconButton(
                 onClick = {
-                    viewModel.onMessage()
-                    viewModel.onTextChange("")
+                    viewModel.onEvent(ChatEvent.SendTextMessage)
                 }
             ) {
                 Icon(

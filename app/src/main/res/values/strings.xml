@@ -32,4 +32,5 @@
     <string name="log_in_success">登录成功</string>
     <string name="registering">注册中</string>
     <string name="infomation_required">请将信息填写完整</string>
+    <string name="logout">退出登录</string>
 </resources>

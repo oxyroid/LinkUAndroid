@@ -25,7 +25,7 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.linku.im.NavViewModel
+import com.linku.im.screen.global.GlobalViewModel
 import com.linku.im.R
 import com.linku.im.activity
 import com.linku.im.application
@@ -39,15 +39,15 @@ import java.util.*
 @Composable
 fun InfoScreen(
     navController: NavController,
-    navViewModel: NavViewModel
+    globalViewModel: GlobalViewModel
 ) {
-    with(navViewModel) {
-        rememberedIcon.value = Icons.Default.ArrowBack
-        rememberedTitle.value = stringResource(id = R.string.info)
-        rememberedOnNavClick.value = {
+    with(globalViewModel) {
+        icon.value = Icons.Default.ArrowBack
+        title.value = stringResource(id = R.string.info)
+        navClick.value = {
             navController.popBackStack()
         }
-        rememberedActions.value = {
+        actions.value = {
             IconButton(onClick = {
 
             }) {

@@ -1,8 +1,13 @@
-package com.linku.wrapper
+package com.linku.domain
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Result<out T>(
     private val data: T? = null,
     private val code: String = Directory.SUCCESS.code,
+    @SerialName("msg")
     private val message: String? = null
 ) {
     private val isSuccess = code == Directory.SUCCESS.code
@@ -16,8 +21,20 @@ data class Result<out T>(
     }
 
     suspend fun catch(block: suspend (String, String) -> Unit): Result<T> {
-        if (!isSuccess && message != null) block.invoke(code, message)
+        if (!isSuccess && message != null) block.invoke(message, code)
         return this
+    }
+
+    fun <R> map(converter: (T) -> R): Result<R> {
+        if (data == null) return Result(
+            code = code,
+            message = message
+        )
+        return Result(
+            data = converter(data),
+            code = code,
+            message = message
+        )
     }
 
     enum class Directory(val code: String) {

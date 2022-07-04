@@ -1,37 +1,23 @@
 package com.linku.domain.service
 
-import com.linku.domain.entity.User
-import com.linku.wrapper.Result
+import com.linku.domain.BuildConfig
+import com.linku.domain.Result
+import com.linku.domain.common.buildUrl
+import com.linku.domain.entity.UserDTO
 
 interface UserService {
-    suspend fun getById(id: Int): Result<User>
-
-    suspend fun register(
-        email: String,
-        password: String
-    ): Result<User>
-
-    suspend fun login(
-        email: String,
-        password: String
-    ): Result<User>
+    suspend fun getById(id: Int): Result<UserDTO>
 
     companion object {
-        private const val BASE_URL = "http://im.rexue.work/auth"
+        private const val BASE_URL = "${BuildConfig.BASE_URL}/users"
     }
 
     sealed class EndPoints(val url: String) {
-        data class GetById(val id: Int) : EndPoints("$BASE_URL/$id")
-        data class Register(
-            val email: String,
-            val password: String
-        ) : EndPoints("$BASE_URL/register?email=$email&password=$password")
-
-        data class Login(
-            val email: String,
-            val password: String
-        ) : EndPoints("$BASE_URL/login?email=$email&password=$password")
+        // GET
+        data class GetById(val id: Int) : EndPoints(
+            buildUrl(BASE_URL) {
+                path(id)
+            }
+        )
     }
-
 }
-

@@ -18,7 +18,7 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.linku.im.NavViewModel
+import com.linku.im.screen.global.GlobalViewModel
 import com.linku.im.R
 import com.linku.im.screen.login.composable.LoginTextField
 import com.linku.im.ui.MaterialButton
@@ -28,20 +28,20 @@ import com.linku.im.ui.MaterialTextButton
 fun LoginScreen(
     navController: NavController,
     viewModel: LoginViewModel = hiltViewModel(),
-    navViewModel: NavViewModel
+    globalViewModel: GlobalViewModel
 ) {
     val state by viewModel.state
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading))
 
-    with(navViewModel) {
-        rememberedIcon.value = Icons.Default.ArrowBack
-        rememberedTitle.value = state.title
-        rememberedOnNavClick.value = {
+    with(globalViewModel) {
+        icon.value = Icons.Default.ArrowBack
+        title.value = state.title
+        navClick.value = {
             navController.popBackStack()
         }
-        rememberedActions.value = {
+        actions.value = {
             IconButton(
                 onClick = {
 
@@ -60,7 +60,9 @@ fun LoginScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             LottieAnimation(
