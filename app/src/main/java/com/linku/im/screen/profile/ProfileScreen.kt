@@ -3,11 +3,12 @@ package com.linku.im.screen.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,9 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import coil.compose.SubcomposeAsyncImage
-import com.linku.im.screen.global.GlobalViewModel
 import com.linku.im.R
 import com.linku.im.extension.debug
 import com.linku.im.screen.Screen
@@ -47,28 +46,9 @@ val itemsFolder = listOf(
 
 @Composable
 fun AccountScreen(
-    navController: NavController,
-    globalViewModel: GlobalViewModel,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state by viewModel.state
-
-    with(globalViewModel) {
-        icon.value = Icons.Default.ArrowBack
-        title.value = state.error ?: ""
-        navClick.value = {
-            navController.popBackStack()
-        }
-        actions.value = {
-            IconButton(
-                onClick = {
-
-                }
-            ) {
-                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "")
-            }
-        }
-    }
 
     LaunchedEffect(true) {
         viewModel.onEvent(ProfileEvent.FetchProfile)

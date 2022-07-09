@@ -30,21 +30,18 @@ import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.linku.domain.Auth
-import com.linku.im.extension.toggle
 import com.linku.im.screen.Screen
 import com.linku.im.screen.chat.ChatScreen
-import com.linku.im.screen.global.GlobalViewModel
 import com.linku.im.screen.info.InfoScreen
 import com.linku.im.screen.login.LoginScreen
 import com.linku.im.screen.main.MainScreen
+import com.linku.im.screen.overall.OverallEvent
+import com.linku.im.screen.overall.OverallViewModel
 import com.linku.im.screen.profile.AccountScreen
 import com.linku.im.ui.MaterialSnackHost
 import com.linku.im.ui.ToolBar
 import com.linku.im.ui.theme.OssTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 val activity get() = MainActivity.lazyActivity
 
@@ -52,11 +49,6 @@ val activity get() = MainActivity.lazyActivity
 class MainActivity : ComponentActivity() {
     companion object {
         lateinit var lazyActivity: MainActivity
-    }
-
-    override fun onPause() {
-        // MMKV.defaultMMKV().encode(GlobalViewModel.SAVED_DARK_MODE, vm.isDarkMode.value)
-        super.onPause()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,44 +62,43 @@ class MainActivity : ComponentActivity() {
 
 }
 
+lateinit var overall: OverallViewModel
+    private set
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun App(
     window: Window,
-    vm: GlobalViewModel = hiltViewModel()
+    vm: OverallViewModel = hiltViewModel<OverallViewModel>().also {
+        overall = it
+    }
 ) {
-    val isDarkMode by vm.isDarkMode
-    OssTheme(isDarkMode) {
+    val state by overall.state
+    OssTheme(state.isDarkMode) {
         WindowCompat.getInsetsController(
             window, LocalView.current
-        ).isAppearanceLightStatusBars = !isDarkMode
+        ).isAppearanceLightStatusBars = !state.isDarkMode
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = MaterialTheme.colorScheme.background.toArgb()
         window.navigationBarColor = MaterialTheme.colorScheme.background.toArgb()
 
+        val coroutineScope = rememberCoroutineScope()
         val navController = rememberAnimatedNavController()
         val scaffoldState = rememberScaffoldState()
-        val scope = rememberCoroutineScope()
 
-        LaunchedEffect(true, block = {
-            Auth.observeCurrent.onEach { user ->
-                if (user == null) {
-                    vm.disconnect()
-                } else {
-                    vm.connectToChat()
-                }
-            }.launchIn(this)
-        })
+        LaunchedEffect(true) {
+            overall.onEvent(OverallEvent.InitNavController(navController))
+            overall.onEvent(OverallEvent.InitScaffoldState(coroutineScope, scaffoldState))
+        }
 
         Scaffold(
             topBar = {
                 ToolBar(
-                    navIcon = vm.icon.value,
-                    title = vm.title.value,
-                    actions = vm.actions.value,
-                    onNavClick = vm.navClick.value
+                    navIcon = state.icon,
+                    title = state.title,
+                    actions = state.actions,
+                    onNavClick = state.navClick
                 )
             },
             snackbarHost = {
@@ -155,13 +146,7 @@ fun App(
                         )
                     }) {
                     composable(Screen.MainScreen.route) {
-                        MainScreen(
-                            navController = navController,
-                            scaffoldState = scaffoldState,
-                            globalViewModel = vm
-                        ) {
-                            scaffoldState.drawerState.toggle(scope)
-                        }
+                        MainScreen(scaffoldState = scaffoldState)
                     }
                     composable(
                         route = Screen.ChatScreen.args("cid"),
@@ -171,27 +156,17 @@ fun App(
                         })
                     ) { entry ->
                         ChatScreen(
-                            navController = navController,
-                            vm = vm,
-//                            cid = entry.arguments?.getInt("cid")
-                            // FIXME
-                            cid = 1,
+                            cid = entry.arguments?.getInt("cid") ?: -1
                         )
                     }
                     composable(Screen.LoginScreen.route) {
-                        LoginScreen(
-                            navController = navController, globalViewModel = vm
-                        )
+                        LoginScreen()
                     }
                     composable(Screen.InfoScreen.route) {
-                        InfoScreen(
-                            navController = navController, globalViewModel = vm
-                        )
+                        InfoScreen()
                     }
                     composable(Screen.ProfileScreen.route) {
-                        AccountScreen(
-                            navController = navController, globalViewModel = vm
-                        )
+                        AccountScreen()
                     }
                 }
             }

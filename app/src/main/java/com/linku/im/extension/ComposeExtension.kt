@@ -3,6 +3,7 @@ package com.linku.im.extension
 import androidx.compose.material.DrawerState
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 operator fun Color.times(alpha: Float): Color {
@@ -14,8 +15,13 @@ inline fun <R> Boolean?.ifTrue(block: () -> R): R? {
     else null
 }
 
+fun <T> T.nullable(nullableValue: Any?, insteadValue: T): T {
+    return if (nullableValue == null) insteadValue
+    else this
+}
+
 fun DrawerState.toggle(coroutineScope: CoroutineScope) {
-    coroutineScope.launch {
+    coroutineScope.launch(Dispatchers.Main) {
         if (isOpen) close()
         else open()
     }

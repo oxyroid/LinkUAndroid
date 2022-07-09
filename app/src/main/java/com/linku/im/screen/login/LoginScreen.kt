@@ -1,55 +1,38 @@
 package com.linku.im.screen.login
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.linku.im.screen.global.GlobalViewModel
 import com.linku.im.R
+import com.linku.im.overall
+import com.linku.im.screen.overall.OverallEvent
 import com.linku.im.screen.login.composable.LoginTextField
 import com.linku.im.ui.MaterialButton
 import com.linku.im.ui.MaterialTextButton
 
 @Composable
 fun LoginScreen(
-    navController: NavController,
-    viewModel: LoginViewModel = hiltViewModel(),
-    globalViewModel: GlobalViewModel
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val state by viewModel.state
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading))
 
-    with(globalViewModel) {
-        icon.value = Icons.Default.ArrowBack
-        title.value = state.title
-        navClick.value = {
-            navController.popBackStack()
-        }
-        actions.value = {
-            IconButton(
-                onClick = {
-
-                }
-            ) {
-                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "")
-            }
-        }
+    state.error.handle {
+        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
     }
 
     Box(
@@ -121,6 +104,6 @@ fun LoginScreen(
     }
 
     with(state) {
-        loginEvent.handle { navController.popBackStack() }
+        loginEvent.handle { overall.onEvent(OverallEvent.PopBackStack) }
     }
 }

@@ -33,4 +33,6 @@
     <string name="registering">注册中</string>
     <string name="infomation_required">请将信息填写完整</string>
     <string name="logout">退出登录</string>
+    <string name="screen_profile_title" />
+    <string name="screen_info_title">关于我们</string>
 </resources>

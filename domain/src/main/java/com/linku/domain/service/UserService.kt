@@ -1,23 +1,22 @@
 package com.linku.domain.service
 
-import com.linku.domain.BuildConfig
+import androidx.annotation.Keep
 import com.linku.domain.Result
-import com.linku.domain.common.buildUrl
 import com.linku.domain.entity.UserDTO
+import io.ktor.http.*
 
+@Keep
 interface UserService {
     suspend fun getById(id: Int): Result<UserDTO>
 
-    companion object {
-        private const val BASE_URL = "${BuildConfig.BASE_URL}/users"
-    }
-
-    sealed class EndPoints(val url: String) {
-        // GET
+    sealed class EndPoints(
+        override val method: HttpMethod,
+        override val params: Map<String, String?> = emptyMap(),
+        override vararg val path: String = emptyArray()
+    ) : HttpEndPoints(method, params, *path) {
         data class GetById(val id: Int) : EndPoints(
-            buildUrl(BASE_URL) {
-                path(id)
-            }
+            method = HttpMethod.Get,
+            path = arrayOf("users", id.toString()),
         )
     }
 }

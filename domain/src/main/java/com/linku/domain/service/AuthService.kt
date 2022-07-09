@@ -1,12 +1,12 @@
 package com.linku.domain.service
 
-import com.linku.domain.BuildConfig
+import androidx.annotation.Keep
 import com.linku.domain.Result
-import com.linku.domain.common.buildUrl
 import com.linku.domain.entity.UserDTO
+import io.ktor.http.*
 
+@Keep
 interface AuthService {
-
     suspend fun register(
         email: String,
         password: String,
@@ -23,44 +23,40 @@ interface AuthService {
 
     suspend fun resendEmail(): Result<Unit>
 
-    companion object {
-        const val BASE_URL = "${BuildConfig.BASE_URL}/auth"
-    }
-
-    sealed class EndPoints(val url: String) {
-
+    sealed class EndPoints(
+        override val method: HttpMethod,
+        override val params: Map<String, String?> = emptyMap(),
+        override vararg val path: String = emptyArray()
+    ) : HttpEndPoints(method, params, *path) {
         // GET
-        data class VerifyEmail(
-            val code: Int
+        class VerifyEmail(
+            code: Int
         ) : EndPoints(
-            buildUrl(BASE_URL) {
-                path("register")
-                path(code)
-            }
+            method = HttpMethod.Get,
+            path = arrayOf(code.toString())
         )
 
         // GET
         object ResendEmail : EndPoints(
-            buildUrl(BASE_URL) {
-                path("register")
-                path("resend")
-            }
+            method = HttpMethod.Get,
+            path = arrayOf("register", "resend")
         )
 
         // POST
-        data class Register(
-            val email: String,
-            val password: String,
-            val nickName: String,
-            val realName: String?
+        class Register(
+            email: String,
+            password: String,
+            nickName: String,
+            realName: String?
         ) : EndPoints(
-            buildUrl(BASE_URL) {
-                path("register")
-                query("email", email)
-                query("password", password)
-                query("nickName", nickName)
-                query("realName", realName)
-            }
+            method = HttpMethod.Post,
+            path = arrayOf("auth", "register"),
+            params = mapOf(
+                "email" to email,
+                "password" to password,
+                "nickname" to nickName,
+                "realName" to realName,
+            )
         )
 
         // POST
@@ -68,11 +64,12 @@ interface AuthService {
             val email: String,
             val password: String
         ) : EndPoints(
-            buildUrl(BASE_URL) {
-                path("login")
-                query("email", email)
-                query("password", password)
-            }
+            method = HttpMethod.Post,
+            path = arrayOf("auth", "login"),
+            params = mapOf(
+                "email" to email,
+                "password" to password
+            )
         )
     }
 }

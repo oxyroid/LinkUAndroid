@@ -1,10 +1,10 @@
 package com.linku.im.screen.profile
 
 import androidx.lifecycle.viewModelScope
+import com.linku.data.usecase.AuthUseCases
+import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Auth
 import com.linku.domain.Resource
-import com.linku.domain.usecase.AuthUseCases
-import com.linku.domain.usecase.UserUseCases
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn

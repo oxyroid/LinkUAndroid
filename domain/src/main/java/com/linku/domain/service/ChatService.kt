@@ -1,52 +1,54 @@
 package com.linku.domain.service
 
-import com.linku.domain.BuildConfig
+import androidx.annotation.Keep
 import com.linku.domain.Result
-import com.linku.domain.common.buildUrl
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
+import io.ktor.http.*
 
+@Keep
 interface ChatService {
     suspend fun sendTextMessage(cid: Int, content: String): Result<Unit>
     suspend fun getDetail(cid: Int): Result<Conversation>
     suspend fun getAllMessages(cid: Int): Result<List<Message>>
     suspend fun getUnreadMessages(cid: Int, uid: Int): Result<List<Message>>
 
-    companion object {
-        private const val BASE_URL = "${BuildConfig.BASE_URL}/chat"
-    }
+    sealed class EndPoints(
+        override val method: HttpMethod,
+        override val params: Map<String, String?> = emptyMap(),
+        override vararg val path: String = emptyArray()
+    ) : HttpEndPoints(method, params, *path) {
 
-    sealed class EndPoints(val url: String) {
-        data class SendMessage(val cid: Int, val content: String) : EndPoints(
-            buildUrl(BASE_URL) {
-                path("sendMsgAll")
-                query("cid", cid)
-                query("content", content)
-            }
+        data class SendMessage(
+            val cid: Int,
+            val content: String
+        ) : EndPoints(
+            method = HttpMethod.Post,
+            path = arrayOf("chat", "sendMsgAll"),
+            params = mapOf(
+                "cid" to cid.toString(),
+                "content" to content
+            )
         )
 
         data class GetDetail(val cid: Int) : EndPoints(
-            buildUrl(BASE_URL) {
-                path(cid)
-                path("detail")
-            }
+            method = HttpMethod.Get,
+            path = arrayOf("chat", cid.toString(), "detail")
         )
 
         data class GetAllMessages(val cid: Int) : EndPoints(
-            buildUrl(BASE_URL) {
-                path(cid)
-                path("messages")
-            }
+            method = HttpMethod.Get,
+            path = arrayOf("chat", cid.toString(), "messages")
         )
 
         data class GetUnreadMessages(val cid: Int, val uid: Int) :
             EndPoints(
-                buildUrl(BASE_URL) {
-                    path(cid)
-                    path("message")
-                    query("type", "unread")
-                    query("uid", uid)
-                }
+                method = HttpMethod.Get,
+                path = arrayOf("chat", cid.toString(), "message"),
+                params = mapOf(
+                    "type" to "unread",
+                    "uid" to uid.toString()
+                )
             )
     }
 }

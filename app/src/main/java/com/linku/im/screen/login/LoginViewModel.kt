@@ -1,9 +1,9 @@
 package com.linku.im.screen.login
 
 import androidx.lifecycle.viewModelScope
+import com.linku.data.usecase.AuthUseCases
 import com.linku.domain.Resource
 import com.linku.domain.eventOf
-import com.linku.domain.usecase.AuthUseCases
 import com.linku.im.R
 import com.linku.im.application
 import com.linku.im.screen.BaseViewModel
@@ -34,10 +34,12 @@ class LoginViewModel @Inject constructor(
                                     loading = true,
                                     title = application.getString(R.string.logging)
                                 )
-                                is Resource.Success -> LoginState(
-                                    loginEvent = eventOf(resource.data),
-                                    title = application.getString(R.string.log_in_success)
-                                )
+                                is Resource.Success -> {
+                                    LoginState(
+                                        loginEvent = eventOf(resource.data),
+                                        title = application.getString(R.string.log_in_success)
+                                    )
+                                }
                                 is Resource.Failure -> LoginState(
                                     error = eventOf(resource.message),
                                     title = resource.message

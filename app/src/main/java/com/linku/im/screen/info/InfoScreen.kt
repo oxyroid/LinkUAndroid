@@ -8,24 +8,16 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.linku.im.screen.global.GlobalViewModel
 import com.linku.im.R
 import com.linku.im.activity
 import com.linku.im.application
@@ -37,24 +29,7 @@ import com.mukesh.MarkDown
 import java.util.*
 
 @Composable
-fun InfoScreen(
-    navController: NavController,
-    globalViewModel: GlobalViewModel
-) {
-    with(globalViewModel) {
-        icon.value = Icons.Default.ArrowBack
-        title.value = stringResource(id = R.string.info)
-        navClick.value = {
-            navController.popBackStack()
-        }
-        actions.value = {
-            IconButton(onClick = {
-
-            }) {
-                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "")
-            }
-        }
-    }
+fun InfoScreen() {
     val markdown: String = remember {
         application.assets.open("info.md").use {
             val scanner = Scanner(it).useDelimiter("\\A")

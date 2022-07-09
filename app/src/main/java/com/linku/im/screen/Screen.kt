@@ -1,17 +1,11 @@
 package com.linku.im.screen
 
 
-sealed class Screen(
-    val route: String
-) {
+sealed class Screen(val route: String) {
     object MainScreen : Screen(route = "main_screen")
-
     object ChatScreen : Screen(route = "chat_screen")
-
     object LoginScreen : Screen("login_screen")
-
     object ProfileScreen : Screen("profile_screen")
-
     object InfoScreen : Screen("info_screen")
 
     fun args(vararg args: String) = buildString {
@@ -23,9 +17,15 @@ sealed class Screen(
         append(route)
         args.forEach { append("/$it") }
     }
-}
 
-fun main() {
-    println(Screen.ChatScreen.args("cid"))
-    println(Screen.ChatScreen.withArgs("cid"))
+    companion object {
+        fun valueOf(route: String) = when {
+            route.startsWith(MainScreen.route) -> MainScreen
+            route.startsWith(ChatScreen.route) -> ChatScreen
+            route.startsWith(LoginScreen.route) -> LoginScreen
+            route.startsWith(ProfileScreen.route) -> ProfileScreen
+            route.startsWith(InfoScreen.route) -> InfoScreen
+            else -> MainScreen
+        }
+    }
 }

@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 rootProject.name = "LinkU-Android"
 include ':app'
 include ':domain'
+include ':data'

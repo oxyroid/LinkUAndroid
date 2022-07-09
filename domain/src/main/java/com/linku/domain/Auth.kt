@@ -14,17 +14,24 @@ import kotlinx.serialization.json.Json
  */
 object Auth {
     private const val AUTH_USER = "auth_user"
+    private const val AUTH_PASSWORD = "auth_password"
     val current: User?
         get() = MMKV.defaultMMKV().decodeString(AUTH_USER)
-            .also { println(it) }
             ?.let(Json::decodeFromString)
+
+    val currentPassword: String?
+        get() = MMKV.defaultMMKV().decodeString(AUTH_PASSWORD)
 
     private val _observeCurrent = MutableStateFlow(current)
     val observeCurrent: Flow<User?> = _observeCurrent
 
-    suspend fun update(user: User?) {
+    suspend fun update(
+        user: User? = null,
+        password: String? = null
+    ) {
         Json.encodeToString(user).also {
             MMKV.defaultMMKV().encode(AUTH_USER, it)
+            MMKV.defaultMMKV().encode(AUTH_PASSWORD, password)
             _observeCurrent.emit(user)
         }
     }
