@@ -9,7 +9,6 @@ import com.linku.domain.service.ChatService
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 
 class ChatServiceImpl(
@@ -24,8 +23,6 @@ class ChatServiceImpl(
                     v?.also { parameters.append(k, it) }
                 }
             }
-        }.also {
-            it.bodyAsText().also { println("CSSS:$it") }
         }.body()
     }
 
@@ -48,6 +45,11 @@ class ChatServiceImpl(
 
     override suspend fun getUnreadMessages(cid: Int, uid: Int): Result<List<Message>> = sandbox {
         val endPoint = ChatService.EndPoints.GetUnreadMessages(cid, uid)
+        execute(endPoint)
+    }
+
+    override suspend fun subscribe(): Result<Unit> = sandbox {
+        val endPoint = ChatService.EndPoints.Subscribe
         execute(endPoint)
     }
 }

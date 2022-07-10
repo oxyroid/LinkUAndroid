@@ -13,6 +13,7 @@ open class Message(
     open val uid: Int,
     open val content: String,
     val type: String = "text",
+    @SerialName("send_time")
     open val timestamp: Long
 ) {
     fun toReadable(): Message = when (type) {

@@ -9,18 +9,20 @@ import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.linku.domain.Auth
 import com.linku.im.overall
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.screen.overall.OverallEvent
@@ -34,7 +36,7 @@ fun ChatScreen(
     val context = LocalContext.current
 
     LaunchedEffect(true) {
-        viewModel.onEvent(ChatEvent.InitChat(cid, overall.messages))
+        viewModel.onEvent(ChatEvent.InitChat(cid))
     }
     val state by viewModel.state
     LaunchedEffect(state.event) {
@@ -48,15 +50,17 @@ fun ChatScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
     ) {
-        val messages by viewModel.messages.collectAsState(initial = null)
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
             reverseLayout = true
         ) {
-            items(messages ?: emptyList()) {
-                ChatBubble(message = it, isAnother = it.uid != 1)
+            items(state.messages) {
+                ChatBubble(
+                    message = it,
+                    isAnother = it.uid != Auth.current?.id
+                )
             }
         }
         Row(
@@ -79,16 +83,22 @@ fun ChatScreen(
                 placeholder = {
                     Text(text = "Type here..", color = MaterialTheme.colorScheme.onBackground)
                 },
-                enabled = !state.sending
+                enabled = !state.sending,
+                colors = TextFieldDefaults.textFieldColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    cursorColor = MaterialTheme.colorScheme.tertiary
+                )
             )
             Spacer(modifier = Modifier.width(4.dp))
             IconButton(
                 onClick = {
                     viewModel.onEvent(ChatEvent.SendTextMessage)
-                }
+                },
+                enabled = !state.sending
             ) {
+                val imageVector = if (state.sending) Icons.Rounded.Refresh else Icons.Rounded.Send
                 Icon(
-                    imageVector = Icons.Rounded.Send,
+                    imageVector = imageVector,
                     contentDescription = "send",
                     tint = MaterialTheme.colorScheme.surfaceTint
                 )

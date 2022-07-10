@@ -11,4 +11,8 @@ class ChatRepositoryImpl(
     override suspend fun sendTextMessage(cid: Int, content: String): Result<Unit> = sandbox {
         chatService.sendTextMessage(cid, content)
     }
+
+    override suspend fun subscribe(): Result<Unit> = sandbox {
+        chatService.subscribe()
+    }
 }

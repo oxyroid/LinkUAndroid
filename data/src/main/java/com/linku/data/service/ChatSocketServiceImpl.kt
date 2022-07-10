@@ -1,20 +1,19 @@
 package com.linku.data.service
 
+import android.util.Log
+import com.linku.data.TAG
+import com.linku.data.debug
 import com.linku.domain.Resource
 import com.linku.domain.entity.Message
 import com.linku.domain.service.ChatSocketService
 import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.cookies.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.http.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
@@ -22,27 +21,21 @@ class ChatSocketServiceImpl(
     private val client: HttpClient
 ) : ChatSocketService {
     private lateinit var socket: WebSocketSession
+    private var uid: Int = -1
+    private lateinit var incoming: SharedFlow<Frame>
 
-    override suspend fun initSession(): Resource<Unit> {
-        return try {
-            socket = client.webSocketSession {
-                url(ChatSocketService.EndPoints.DefaultSocket.url)
-            }
-            if (socket.isActive) {
-                Resource.Success(Unit)
-            } else Resource.Failure("Couldn't establish a connection.")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Resource.Failure(e.localizedMessage ?: "Unknown Error.")
-        }
-    }
-
-    override suspend fun initSession(uid: Int): Resource<Unit> {
+    override suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit> {
+        this.uid = uid
         return try {
             socket = client.webSocketSession {
                 url(ChatSocketService.EndPoints.UIDSocket(uid).url)
+                contentType(ContentType.Application.Json)
             }
             if (socket.isActive) {
+                incoming = socket.incoming.consumeAsFlow().shareIn(
+                    scope = scope,
+                    started = SharingStarted.WhileSubscribed()
+                )
                 Resource.Success(Unit)
             } else Resource.Failure("Couldn't establish a connection.")
         } catch (e: Exception) {
@@ -53,29 +46,31 @@ class ChatSocketServiceImpl(
 
     override fun observeMessages(): Flow<Message> {
         return try {
-            socket.incoming.receiveAsFlow()
-                .filter { it is Frame.Text }
-                .map {
-                    val json = (it as Frame.Text).readText()
-                    try {
-                        Json.decodeFromString<Message>(json)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        null
+            incoming.filter { it is Frame.Text }.mapNotNull {
+                val jsonText = (it as Frame.Text).readText()
+                try {
+                    val json = Json {
+                        ignoreUnknownKeys = true
                     }
+                    json.decodeFromString<Message>(jsonText)
+                } catch (e: Exception) {
+                    // debug { Log.e(TAG, "Json Error: ", e) }
+                    null
                 }
-                .filterNotNull()
+            }
         } catch (e: Exception) {
-            e.printStackTrace()
+            debug { Log.e(TAG, "Incoming Receive Error: ", e) }
             flow { }
         }
     }
 
     override fun observeClose(): Flow<Frame.Close> {
         return try {
-            socket.incoming.receiveAsFlow()
-                .filter { it is Frame.Close }
-                .map { it as Frame.Close }
+            incoming.filter { it is Frame.Close }.onEach {
+                debug {
+                    Log.e(TAG, "Websocket closed.")
+                }
+            }.map { it as Frame.Close }
         } catch (e: Exception) {
             e.printStackTrace()
             flow { }

@@ -67,6 +67,11 @@ sealed class OverallEvent {
      */
     data class InitSession(val uid: Int) : OverallEvent()
 
+    object SubscribeMqttService : OverallEvent()
+
+    object ObserveMessages : OverallEvent()
+    object ObserveClose : OverallEvent()
+
     /**
      * Observe the current user changed event.
      *

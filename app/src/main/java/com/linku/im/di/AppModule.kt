@@ -25,10 +25,12 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
+import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import javax.inject.Singleton
@@ -49,9 +51,18 @@ object AppModule {
     @Singleton
     fun provideHttpClient(): HttpClient {
         return HttpClient(CIO) {
-            install(Logging)
+            install(Logging) {
+                level = LogLevel.ALL
+                logger = Logger.SIMPLE
+            }
             install(WebSockets) {
-
+                contentConverter = KotlinxWebsocketSerializationConverter(Json)
+                pingInterval = 8000L
+            }
+            install(HttpTimeout) {
+                socketTimeoutMillis = 8000L
+                requestTimeoutMillis = 8000L
+                connectTimeoutMillis = 8000L
             }
             install(ContentNegotiation) {
                 json(
@@ -144,7 +155,8 @@ object AppModule {
         repository: ChatRepository
     ): ChatUseCases {
         return ChatUseCases(
-            sendTextMessageUseCase = SendTextMessageUseCase(repository)
+            sendTextMessageUseCase = SendTextMessageUseCase(repository),
+            subscribeUseCase = SubscribeUseCase(repository)
         )
     }
 

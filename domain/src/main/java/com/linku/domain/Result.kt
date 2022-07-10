@@ -8,9 +8,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Result<out T>(
     private val data: T? = null,
-    private val code: String = "00000",
+    private val code: String = "9999",
     @SerialName("msg")
-    private val message: String? = null
+    private val message: String? = "Unknown Error"
 ) {
     private val isSuccess = code == "00000"
 

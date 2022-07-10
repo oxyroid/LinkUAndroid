@@ -6,4 +6,5 @@ import com.linku.domain.Result
 @Keep
 interface ChatRepository {
     suspend fun sendTextMessage(cid: Int, content: String): Result<Unit>
+    suspend fun subscribe(): Result<Unit>
 }

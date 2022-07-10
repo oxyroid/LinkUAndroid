@@ -1,10 +1,9 @@
-package com.linku.im.extension
+package com.linku.data
 
-import com.linku.im.BuildConfig
+import com.wzk.data.BuildConfig
 
 val <T> T.TAG: String
-    get() = "[LinkU]" + this!!::class.java.name
-
+    get() = "[LinkU]" + this!!::class.java.simpleName
 
 inline fun <R> debug(block: () -> R): R? {
     return try {

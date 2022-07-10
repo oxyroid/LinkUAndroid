@@ -35,4 +35,5 @@
     <string name="logout">退出登录</string>
     <string name="screen_profile_title" />
     <string name="screen_info_title">关于我们</string>
+    <string name="connecting">连接中...</string>
 </resources>

@@ -13,8 +13,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 32
-        versionCode 6
-        versionName "0.3"
+        versionCode 7
+        versionName "0.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,10 +24,6 @@ android {
         Properties properties = new Properties()
         properties.load(project.rootProject.file("local.properties").newDataInputStream())
         buildConfigField "String", "API_KEY", "\"${properties.getProperty("API_KEY")}\""
-        buildConfigField "String", "MQTT_URL", "\"${properties.getProperty("MQTT_URL")}\""
-        buildConfigField "String", "MQTT_USERNAME", "\"${properties.getProperty("MQTT_USERNAME")}\""
-        buildConfigField "String", "MQTT_PASSWORD", "\"${properties.getProperty("MQTT_PASSWORD")}\""
-        buildConfigField "String", "MQTT_TOPIC_CONVERSATION", "\"${properties.getProperty("MQTT_TOPIC_CONVERSATION")}\""
     }
 
     buildTypes {

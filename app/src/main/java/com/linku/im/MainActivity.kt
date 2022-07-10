@@ -7,8 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
+import androidx.compose.animation.slideOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -23,6 +23,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.IntOffset
 import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -124,17 +125,29 @@ fun App(
                         )
                     },
                     exitTransition = {
-                        fadeOut(
+                        slideOut(
                             animationSpec = tween(
                                 durationMillis = 400
-                            )
+                            ),
+                            targetOffset = {
+                                IntOffset(
+                                    -(it.width * 0.3).toInt(),
+                                    0
+                                )
+                            }
                         )
                     },
                     popEnterTransition = {
-                        fadeIn(
+                        slideIn(
                             animationSpec = tween(
                                 durationMillis = 400
-                            )
+                            ),
+                            initialOffset = {
+                                IntOffset(
+                                    -(it.width * 0.3).toInt(),
+                                    0
+                                )
+                            }
                         )
                     },
                     popExitTransition = {
@@ -150,10 +163,12 @@ fun App(
                     }
                     composable(
                         route = Screen.ChatScreen.args("cid"),
-                        arguments = listOf(navArgument("cid") {
-                            type = NavType.IntType
-                            nullable = false
-                        })
+                        arguments = listOf(
+                            navArgument("cid") {
+                                type = NavType.IntType
+                                nullable = false
+                            }
+                        )
                     ) { entry ->
                         ChatScreen(
                             cid = entry.arguments?.getInt("cid") ?: -1

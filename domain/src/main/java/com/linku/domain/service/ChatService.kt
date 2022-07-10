@@ -10,6 +10,7 @@ import io.ktor.http.*
 interface ChatService {
     suspend fun sendTextMessage(cid: Int, content: String): Result<Unit>
     suspend fun getDetail(cid: Int): Result<Conversation>
+    suspend fun subscribe(): Result<Unit>
     suspend fun getAllMessages(cid: Int): Result<List<Message>>
     suspend fun getUnreadMessages(cid: Int, uid: Int): Result<List<Message>>
 
@@ -18,13 +19,12 @@ interface ChatService {
         override val params: Map<String, String?> = emptyMap(),
         override vararg val path: String = emptyArray()
     ) : HttpEndPoints(method, params, *path) {
-
         data class SendMessage(
             val cid: Int,
             val content: String
         ) : EndPoints(
             method = HttpMethod.Post,
-            path = arrayOf("chat", "sendMsgAll"),
+            path = arrayOf("chat", "sendMsg"),
             params = mapOf(
                 "cid" to cid.toString(),
                 "content" to content
@@ -50,5 +50,10 @@ interface ChatService {
                     "uid" to uid.toString()
                 )
             )
+
+        object Subscribe : EndPoints(
+            method = HttpMethod.Get,
+            path = arrayOf("chat", "init")
+        )
     }
 }
