@@ -2,6 +2,7 @@ package com.linku.domain.room.dao
 
 import androidx.room.*
 import com.linku.domain.entity.Message
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MessageDao {
@@ -19,4 +20,11 @@ interface MessageDao {
 
     @Query("SELECT * FROM Message WHERE id = :id")
     suspend fun getById(id: Int): Message?
+
+
+    @Query("SELECT * FROM Message ORDER BY timestamp")
+    fun observeMessages(): Flow<List<Message>>
+
+    @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp")
+    fun observeMessagesByCid(cid: Int): Flow<List<Message>>
 }

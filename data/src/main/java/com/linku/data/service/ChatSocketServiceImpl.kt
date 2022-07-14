@@ -20,9 +20,9 @@ import kotlinx.serialization.json.Json
 class ChatSocketServiceImpl(
     private val client: HttpClient
 ) : ChatSocketService {
-    private lateinit var socket: WebSocketSession
+    private var socket: WebSocketSession? = null
     private var uid: Int = -1
-    private lateinit var incoming: SharedFlow<Frame>
+    private var incoming: SharedFlow<Frame>? = null
 
     override suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit> {
         this.uid = uid
@@ -31,11 +31,14 @@ class ChatSocketServiceImpl(
                 url(ChatSocketService.EndPoints.UIDSocket(uid).url)
                 contentType(ContentType.Application.Json)
             }
-            if (socket.isActive) {
-                incoming = socket.incoming.consumeAsFlow().shareIn(
-                    scope = scope,
-                    started = SharingStarted.WhileSubscribed()
-                )
+            if (socket?.isActive == true) {
+                incoming = socket
+                    ?.incoming
+                    ?.consumeAsFlow()
+                    ?.shareIn(
+                        scope = scope,
+                        started = SharingStarted.WhileSubscribed()
+                    )
                 Resource.Success(Unit)
             } else Resource.Failure("Couldn't establish a connection.")
         } catch (e: Exception) {
@@ -46,18 +49,20 @@ class ChatSocketServiceImpl(
 
     override fun observeMessages(): Flow<Message> {
         return try {
-            incoming.filter { it is Frame.Text }.mapNotNull {
-                val jsonText = (it as Frame.Text).readText()
-                try {
-                    val json = Json {
-                        ignoreUnknownKeys = true
+            incoming
+                ?.filter { it is Frame.Text }
+                ?.mapNotNull {
+                    val jsonText = (it as Frame.Text).readText()
+                    try {
+                        val json = Json {
+                            ignoreUnknownKeys = true
+                        }
+                        json.decodeFromString<Message>(jsonText)
+                    } catch (e: Exception) {
+                        // debug { Log.e(TAG, "Json Error: ", e) }
+                        null
                     }
-                    json.decodeFromString<Message>(jsonText)
-                } catch (e: Exception) {
-                    // debug { Log.e(TAG, "Json Error: ", e) }
-                    null
-                }
-            }
+                } ?: flow { }
         } catch (e: Exception) {
             debug { Log.e(TAG, "Incoming Receive Error: ", e) }
             flow { }
@@ -66,11 +71,15 @@ class ChatSocketServiceImpl(
 
     override fun observeClose(): Flow<Frame.Close> {
         return try {
-            incoming.filter { it is Frame.Close }.onEach {
-                debug {
-                    Log.e(TAG, "Websocket closed.")
+            incoming
+                ?.filter { it is Frame.Close }
+                ?.onEach {
+                    debug {
+                        Log.e(TAG, "Websocket closed.")
+                    }
                 }
-            }.map { it as Frame.Close }
+                ?.map { it as Frame.Close }
+                ?: flow { }
         } catch (e: Exception) {
             e.printStackTrace()
             flow { }
@@ -79,7 +88,7 @@ class ChatSocketServiceImpl(
 
     override suspend fun closeSession() {
         try {
-            socket.close()
+            socket?.close()
         } catch (e: Exception) {
             e.printStackTrace()
         }

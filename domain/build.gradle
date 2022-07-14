@@ -55,4 +55,8 @@ dependencies {
     //ktor
     implementation "io.ktor:ktor-client-websockets:$ktor_version"
     implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
+
+    // retrofit
+    implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
 }

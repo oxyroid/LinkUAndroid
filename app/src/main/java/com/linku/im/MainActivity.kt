@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -13,6 +14,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Scaffold
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +27,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.IntOffset
 import androidx.core.view.WindowCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
@@ -44,41 +45,37 @@ import com.linku.im.ui.ToolBar
 import com.linku.im.ui.theme.OssTheme
 import dagger.hilt.android.AndroidEntryPoint
 
-val activity get() = MainActivity.lazyActivity
+val outsideContent get() = MainActivity.outsideContent
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val vm: OverallViewModel by viewModels()
+
     companion object {
-        lateinit var lazyActivity: MainActivity
+        lateinit var outsideContent: MainActivity
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lazyActivity = this
+        outsideContent = this
 
-        setContent {
-            App(window = window)
-        }
+        overall = vm
+        setContent { App(window = window) }
     }
-
 }
 
 lateinit var overall: OverallViewModel
     private set
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun App(
-    window: Window,
-    vm: OverallViewModel = hiltViewModel<OverallViewModel>().also {
-        overall = it
-    }
+    window: Window
 ) {
     val state by overall.state
+    @OptIn(ExperimentalAnimationApi::class)
     OssTheme(state.isDarkMode) {
-        WindowCompat.getInsetsController(
-            window, LocalView.current
-        ).isAppearanceLightStatusBars = !state.isDarkMode
+        WindowCompat.getInsetsController(window, LocalView.current)
+            .isAppearanceLightStatusBars = !state.isDarkMode
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = MaterialTheme.colorScheme.background.toArgb()
@@ -87,8 +84,9 @@ fun App(
         val coroutineScope = rememberCoroutineScope()
         val navController = rememberAnimatedNavController()
         val scaffoldState = rememberScaffoldState()
+        val listState = rememberLazyListState()
 
-        LaunchedEffect(true) {
+        LaunchedEffect(Unit) {
             overall.onEvent(OverallEvent.InitNavController(navController))
             overall.onEvent(OverallEvent.InitScaffoldState(coroutineScope, scaffoldState))
         }
@@ -98,19 +96,19 @@ fun App(
                 ToolBar(
                     navIcon = state.icon,
                     title = state.title,
-                    actions = state.actions,
-                    onNavClick = state.navClick
+                    onNavClick = state.navClick,
+                    onScroll = listState.isScrollInProgress,
+                    onMenuClick = { overall.onEvent(OverallEvent.ToggleTheme) }
                 )
             },
-            snackbarHost = {
-                MaterialSnackHost(scaffoldState.snackbarHostState)
-            },
+            snackbarHost = { MaterialSnackHost(scaffoldState.snackbarHostState) },
             scaffoldState = scaffoldState,
             drawerBackgroundColor = MaterialTheme.colorScheme.background,
             backgroundColor = MaterialTheme.colorScheme.background
         ) { innerPadding ->
             Column {
-                AnimatedNavHost(navController = navController,
+                AnimatedNavHost(
+                    navController = navController,
                     startDestination = Screen.MainScreen.route,
                     modifier = Modifier
                         .padding(innerPadding)
@@ -119,50 +117,32 @@ fun App(
                     enterTransition = {
                         slideIntoContainer(
                             towards = AnimatedContentScope.SlideDirection.Start,
-                            animationSpec = tween(
-                                durationMillis = 400
-                            )
+                            animationSpec = tween(400)
                         )
                     },
                     exitTransition = {
                         slideOut(
-                            animationSpec = tween(
-                                durationMillis = 400
-                            ),
-                            targetOffset = {
-                                IntOffset(
-                                    -(it.width * 0.3).toInt(),
-                                    0
-                                )
-                            }
+                            animationSpec = tween(400),
+                            targetOffset = { IntOffset((it.width * -0.3).toInt(), 0) }
                         )
                     },
                     popEnterTransition = {
                         slideIn(
-                            animationSpec = tween(
-                                durationMillis = 400
-                            ),
-                            initialOffset = {
-                                IntOffset(
-                                    -(it.width * 0.3).toInt(),
-                                    0
-                                )
-                            }
+                            animationSpec = tween(400),
+                            initialOffset = { IntOffset((it.width * -0.3).toInt(), 0) }
                         )
                     },
                     popExitTransition = {
                         slideOutOfContainer(
                             towards = AnimatedContentScope.SlideDirection.End,
-                            animationSpec = tween(
-                                durationMillis = 400
-                            )
+                            animationSpec = tween(400)
                         )
                     }) {
                     composable(Screen.MainScreen.route) {
-                        MainScreen(scaffoldState = scaffoldState)
+                        MainScreen(scaffoldState = scaffoldState, listState = listState)
                     }
                     composable(
-                        route = Screen.ChatScreen.args("cid"),
+                        route = Screen.ChatScreen.buildArgs("cid"),
                         arguments = listOf(
                             navArgument("cid") {
                                 type = NavType.IntType
@@ -174,18 +154,11 @@ fun App(
                             cid = entry.arguments?.getInt("cid") ?: -1
                         )
                     }
-                    composable(Screen.LoginScreen.route) {
-                        LoginScreen()
-                    }
-                    composable(Screen.InfoScreen.route) {
-                        InfoScreen()
-                    }
-                    composable(Screen.ProfileScreen.route) {
-                        AccountScreen()
-                    }
+                    composable(Screen.LoginScreen.route) { LoginScreen() }
+                    composable(Screen.InfoScreen.route) { InfoScreen() }
+                    composable(Screen.ProfileScreen.route) { AccountScreen() }
                 }
             }
-
         }
     }
 }

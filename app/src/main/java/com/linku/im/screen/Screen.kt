@@ -8,7 +8,7 @@ sealed class Screen(val route: String) {
     object ProfileScreen : Screen("profile_screen")
     object InfoScreen : Screen("info_screen")
 
-    fun args(vararg args: String) = buildString {
+    fun buildArgs(vararg args: String) = buildString {
         append(route)
         args.forEach { append("/{$it}") }
     }

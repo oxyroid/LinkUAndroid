@@ -19,7 +19,8 @@ class ProfileViewModel @Inject constructor(
     override fun onEvent(event: ProfileEvent) {
         when (event) {
             ProfileEvent.FetchProfile -> {
-                val userId = Auth.current!!.id
+                val userId = Auth.currentUID
+                checkNotNull(userId)
                 useCases.findUserUseCase(userId)
                     .onEach { resource ->
                         _state.value = when (resource) {
@@ -54,6 +55,7 @@ class ProfileViewModel @Inject constructor(
                                 )
                         }
                     }
+                    .launchIn(viewModelScope)
             }
         }
     }

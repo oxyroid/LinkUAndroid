@@ -1,37 +1,57 @@
 package com.linku.im.screen.main
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linku.domain.entity.Conversation
-import com.linku.im.BuildConfig
+import com.linku.data.usecase.ConversationUseCases
+import com.linku.data.usecase.OneWordUseCases
+import com.linku.domain.Resource
+import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor() : ViewModel() {
-    val state = mutableStateOf(MainState(loading = true))
+class MainViewModel @Inject constructor(
+    private val conversationUseCases: ConversationUseCases,
+    private val oneWordUseCases: OneWordUseCases
+) : BaseViewModel<MainState, MainEvent>(MainState()) {
 
     init {
-        viewModelScope.launch {
-            delay(1200)
-            state.value = MainState(
-                conversations = buildList {
-                    Conversation(
-                        id = 1,
-                        updatedAt = 1,
-                        name = "构筑版本",
-                        avatar = "",
-                        member = emptyList(),
-                        owner = 1,
-                        description = BuildConfig.VERSION_NAME
-                    ).also(::add)
+        onEvent(MainEvent.OneWord)
+        conversationUseCases.observeConversationsUseCase()
+            .onEach {
+                delay(2000)
+                _state.value = state.value.copy(
+                    conversations = it,
+                    loading = false
+                )
+            }
+            .launchIn(viewModelScope)
+    }
 
-                }
-            )
+    override fun onEvent(event: MainEvent) {
+        when (event) {
+            is MainEvent.CreateConversation -> {
+                conversationUseCases
+            }
+            MainEvent.OneWord -> {
+                oneWordUseCases.neteaseUseCase()
+                    .onEach { resource ->
+                        _state.value = when (resource) {
+                            Resource.Loading -> state.value.copy(
+                                drawerTitle = null
+                            )
+                            is Resource.Success -> state.value.copy(
+                                drawerTitle = resource.data
+                            )
+                            is Resource.Failure -> state.value.copy(
+                                drawerTitle = resource.message
+                            )
+                        }
+                    }
+                    .launchIn(viewModelScope)
+            }
         }
-
     }
 }

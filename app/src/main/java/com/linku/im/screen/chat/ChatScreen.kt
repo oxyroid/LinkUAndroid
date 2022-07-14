@@ -1,10 +1,11 @@
 package com.linku.im.screen.chat
 
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
@@ -27,6 +28,7 @@ import com.linku.im.overall
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.screen.overall.OverallEvent
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
@@ -54,12 +56,18 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            reverseLayout = true
+            horizontalAlignment = Alignment.CenterHorizontally,
+            reverseLayout = true,
         ) {
-            items(state.messages) {
+            itemsIndexed(state.messages) { index, it ->
+                val next = if (index == state.messages.size - 1) null else state.messages[index + 1]
+                val showTimeLabel =
+                    next == null || it.timestamp - next.timestamp >= 1000 * 60 * 5
                 ChatBubble(
                     message = it,
-                    isAnother = it.uid != Auth.current?.id
+                    isAnother = it.uid != Auth.currentUID,
+                    isShowTime = showTimeLabel,
+                    modifier = Modifier.animateItemPlacement()
                 )
             }
         }

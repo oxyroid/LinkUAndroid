@@ -3,20 +3,15 @@ package com.linku.domain.service
 import androidx.annotation.Keep
 import com.linku.domain.Result
 import com.linku.domain.entity.UserDTO
-import io.ktor.http.*
+import retrofit2.http.GET
+import retrofit2.http.Path
 
 @Keep
 interface UserService {
-    suspend fun getById(id: Int): Result<UserDTO>
+    @GET("users/{id}")
+    suspend fun getById(@Path("id") id: Int): Result<UserDTO>
 
-    sealed class EndPoints(
-        override val method: HttpMethod,
-        override val params: Map<String, String?> = emptyMap(),
-        override vararg val path: String = emptyArray()
-    ) : HttpEndPoints(method, params, *path) {
-        data class GetById(val id: Int) : EndPoints(
-            method = HttpMethod.Get,
-            path = arrayOf("users", id.toString()),
-        )
-    }
+    @GET("users/")
+    suspend fun getAll(): Result<List<UserDTO>>
+
 }

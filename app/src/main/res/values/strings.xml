@@ -31,9 +31,13 @@
     <string name="logging">登录中</string>
     <string name="log_in_success">登录成功</string>
     <string name="registering">注册中</string>
-    <string name="infomation_required">请将信息填写完整</string>
+    <string name="information_required">请将信息填写完整</string>
     <string name="logout">退出登录</string>
     <string name="screen_profile_title" />
     <string name="screen_info_title">关于我们</string>
-    <string name="connecting">连接中...</string>
+    <string name="connecting">连接中…</string>
+    <string name="settings">设置</string>
+    <string name="inbox">消息</string>
+    <string name="exception_json_syntax_1">反序列化错误</string>
+    <string name="exception_json_syntax_2">请将应用升级至最新版本再试</string>
 </resources>

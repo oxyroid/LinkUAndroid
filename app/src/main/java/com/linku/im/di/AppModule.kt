@@ -2,22 +2,20 @@ package com.linku.im.di
 
 import androidx.room.Room
 import com.linku.data.repository.AuthRepositoryImpl
-import com.linku.data.repository.ChatRepositoryImpl
+import com.linku.data.repository.ConversationRepositoryImpl
+import com.linku.data.repository.MessageRepositoryImpl
 import com.linku.data.repository.UserRepositoryImpl
-import com.linku.data.service.AuthServiceImpl
-import com.linku.data.service.ChatServiceImpl
 import com.linku.data.service.ChatSocketServiceImpl
-import com.linku.data.service.UserServiceImpl
 import com.linku.data.usecase.*
+import com.linku.domain.Auth
 import com.linku.domain.common.Constants
 import com.linku.domain.repository.AuthRepository
-import com.linku.domain.repository.ChatRepository
+import com.linku.domain.repository.ConversationRepository
+import com.linku.domain.repository.MessageRepository
 import com.linku.domain.repository.UserRepository
-import com.linku.domain.room.ULinkDatabase
-import com.linku.domain.service.AuthService
-import com.linku.domain.service.ChatService
-import com.linku.domain.service.ChatSocketService
-import com.linku.domain.service.UserService
+import com.linku.domain.room.LinkUDatabase
+import com.linku.domain.service.*
+import com.linku.im.BuildConfig
 import com.linku.im.application
 import dagger.Module
 import dagger.Provides
@@ -27,25 +25,51 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.cookies.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.create
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
     @Provides
     @Singleton
     fun provideDatabase() = Room.databaseBuilder(
         application,
-        ULinkDatabase::class.java,
+        LinkUDatabase::class.java,
         Constants.DB_NAME
     ).build()
+
+    @Provides
+    @Singleton
+    fun provideRetrofitClient(): Retrofit {
+        val client = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val request = original.newBuilder()
+                    .also { builder ->
+                        Auth.token?.let { token ->
+                            builder.header("Auth", token)
+                        }
+                    }
+                    .method(original.method, original.body)
+                    .build()
+                chain.proceed(request)
+            }
+            .build()
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
 
     @Provides
     @Singleton
@@ -71,15 +95,12 @@ object AppModule {
                     }
                 )
             }
-            install(HttpCookies)
         }
     }
 
     @Provides
     @Singleton
-    fun provideChatService(client: HttpClient): ChatService {
-        return ChatServiceImpl(client)
-    }
+    fun provideChatService(retrofit: Retrofit): ChatService = retrofit.create()
 
     @Provides
     @Singleton
@@ -89,42 +110,58 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideAuthService(client: HttpClient): AuthService {
-        return AuthServiceImpl(client)
-    }
+    fun provideAuthService(retrofit: Retrofit): AuthService = retrofit.create()
 
     @Provides
     @Singleton
-    fun provideUserService(client: HttpClient): UserService {
-        return UserServiceImpl(client)
-    }
+    fun provideUserService(retrofit: Retrofit): UserService = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideProfileService(retrofit: Retrofit): ProfileService = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideThreePartService(retrofit: Retrofit): OneWordService = retrofit.create()
+
 
     @Provides
     @Singleton
     fun providesAuthRepository(
-        database: ULinkDatabase,
-        client: HttpClient
+        authService: AuthService
     ): AuthRepository = AuthRepositoryImpl(
-        userDao = database.userDao(),
-        authService = provideAuthService(client),
+        authService = authService
     )
 
     @Provides
     @Singleton
     fun providesUserRepository(
-        database: ULinkDatabase,
-        client: HttpClient
+        database: LinkUDatabase,
+        userService: UserService
     ): UserRepository = UserRepositoryImpl(
         userDao = database.userDao(),
-        userService = provideUserService(client),
+        userService = userService,
     )
 
     @Provides
     @Singleton
-    fun providesChatRepository(
-        client: HttpClient
-    ): ChatRepository = ChatRepositoryImpl(
-        chatService = provideChatService(client),
+    fun providesMessageRepository(
+        chatService: ChatService,
+        socketService: ChatSocketService,
+        database: LinkUDatabase
+    ): MessageRepository = MessageRepositoryImpl(
+        chatService = chatService,
+        socketService = socketService,
+        messageDao = database.messageDao(),
+        conversationDao = database.conversationDao()
+    )
+
+    @Provides
+    @Singleton
+    fun provideConversationRepository(
+        database: LinkUDatabase
+    ): ConversationRepository = ConversationRepositoryImpl(
+        conversationDao = database.conversationDao()
     )
 
     @Provides
@@ -133,9 +170,9 @@ object AppModule {
         repository: AuthRepository
     ): AuthUseCases {
         return AuthUseCases(
-            loginUseCase = LoginUseCase(repository),
-            registerUseCase = RegisterUseCase(repository),
-            logoutUseCase = LogoutUseCase
+            signInUseCase = SignInUseCase(repository),
+            signUpUseCase = SignUpUseCase(repository),
+            logoutUseCase = LogoutUseCase,
         )
     }
 
@@ -152,11 +189,36 @@ object AppModule {
     @Provides
     @Singleton
     fun provideChatUseCases(
-        repository: ChatRepository
-    ): ChatUseCases {
-        return ChatUseCases(
-            sendTextMessageUseCase = SendTextMessageUseCase(repository),
-            subscribeUseCase = SubscribeUseCase(repository)
+        repository: MessageRepository
+    ): MessageUseCases {
+        return MessageUseCases(
+            textMessageUseCase = TextMessageUseCase(repository),
+            dispatcherUseCase = DispatcherUseCase(repository),
+            initSessionUseCase = InitSessionUseCase(repository),
+            observeMessagesUseCase = ObserveMessagesUseCase(repository),
+            closeSessionUseCase = CloseSessionUseCase(repository),
+            observeMessagesByCIDUseCase = ObserveMessagesByCidUseCase(repository)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideConversationUseCases(
+        repository: ConversationRepository
+    ): ConversationUseCases {
+        return ConversationUseCases(
+            observeConversationsUseCase = ObserveConversationsUseCase(repository)
+        )
+    }
+
+    @Provides
+    @Singleton
+    fun provideOneWordUseCases(
+        service: OneWordService
+    ): OneWordUseCases {
+        return OneWordUseCases(
+            hitokotoUseCase = HitokotoUseCase(service),
+            neteaseUseCase = NeteaseUseCase(service)
         )
     }
 

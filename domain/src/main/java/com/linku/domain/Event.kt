@@ -47,3 +47,6 @@ sealed class Event<out T> private constructor(
  * @see Event.Regular
  */
 fun <T> eventOf(data: T) = Event.Regular(data)
+
+fun <T> eventOfFailedResource(resource: Resource.Failure<T>) =
+    Event.Regular("[${resource.code}]${resource.message}")

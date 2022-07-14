@@ -1,6 +1,10 @@
 package com.linku.domain
 
+import android.util.Log
 import androidx.annotation.Keep
+import com.google.gson.JsonSyntaxException
+import com.google.gson.annotations.SerializedName
+import com.linku.domain.extension.debug
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -8,11 +12,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Result<out T>(
     private val data: T? = null,
-    private val code: String = "9999",
+    private val code: String = "?",
     @SerialName("msg")
-    private val message: String? = "Unknown Error"
+    @SerializedName("msg")
+    private val message: String? = null
 ) {
-    private val isSuccess = code == "00000"
+    private val isSuccess get() = code.trim() == "00000"
 
     fun peek() = data!!
     fun peekOrNull() = data
@@ -28,7 +33,7 @@ data class Result<out T>(
     }
 
     suspend fun catch(block: suspend (String, String) -> Unit): Result<T> {
-        if (!isSuccess && message != null) block.invoke(message, code)
+        if (!isSuccess) block.invoke(message ?: "Unknown Error", code)
         return this
     }
 
@@ -47,15 +52,24 @@ data class Result<out T>(
     fun toResource(defMessage: String = "Unknown Error"): Resource<T> =
         if (isSuccess) Resource.Success(data!!)
         else Resource.Failure(message ?: defMessage, code)
+
+    fun toUnitResource(defMessage: String = "Unknown Error"): Resource<Unit> =
+        if (isSuccess) Resource.Success(Unit)
+        else Resource.Failure(message ?: defMessage, code)
 }
 
 inline fun <T> sandbox(block: () -> Result<T>): Result<T> {
     return try {
         block.invoke()
-    } catch (e: Exception) {
-        e.printStackTrace()
+    } catch (e: JsonSyntaxException) {
         Result(
-            code = "9999",
+            code = "反序列化错误",
+            message = "请将应用升级至最新版本再试！"
+        )
+    } catch (e: Exception) {
+        debug { Log.e("Result Wrapper", "sandbox:", e) }
+        Result(
+            code = "?",
             message = e.message ?: "sandbox exception"
         )
     }

@@ -2,7 +2,6 @@ package com.linku.im.screen.overall
 
 import androidx.compose.material.ScaffoldState
 import androidx.navigation.NavController
-import com.linku.domain.entity.User
 import com.linku.im.screen.Screen
 import kotlinx.coroutines.CoroutineScope
 
@@ -13,11 +12,6 @@ import kotlinx.coroutines.CoroutineScope
  * @see OverallViewModel
  */
 sealed class OverallEvent {
-    /**
-     * Login with saved token to restore the session cookie.
-     */
-    object RestoreCookie : OverallEvent()
-
     /**
      * Restore the application is in dark mode or not last time.
      */
@@ -67,10 +61,9 @@ sealed class OverallEvent {
      */
     data class InitSession(val uid: Int) : OverallEvent()
 
-    object SubscribeMqttService : OverallEvent()
+    object Dispatcher : OverallEvent()
 
     object ObserveMessages : OverallEvent()
-    object ObserveClose : OverallEvent()
 
     /**
      * Observe the current user changed event.
@@ -79,7 +72,7 @@ sealed class OverallEvent {
      *
      * In fact, you can collect the observer and add custom event: RemoveObserve to achieve multi-observer
      */
-    data class ObserveCurrentUser(val observer: (User?) -> Unit) : OverallEvent()
+    data class ObserveCurrentUser(val observer: (Int?) -> Unit) : OverallEvent()
     data class Navigate(val screen: Screen) : OverallEvent()
-    data class NavigateSpecial(val route: String) : OverallEvent()
+    data class NavigateWithArgs(val route: String) : OverallEvent()
 }

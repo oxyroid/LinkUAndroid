@@ -2,40 +2,35 @@ package com.linku.data.repository
 
 import com.linku.domain.Auth
 import com.linku.domain.Result
-import com.linku.domain.entity.User
 import com.linku.domain.repository.AuthRepository
-import com.linku.domain.room.dao.UserDao
 import com.linku.domain.sandbox
 import com.linku.domain.service.AuthService
 
 class AuthRepositoryImpl(
     private val authService: AuthService,
-    private val userDao: UserDao
 ) : AuthRepository {
-    override suspend fun login(email: String, password: String): Result<User> =
+    override suspend fun signIn(email: String, password: String): Result<Unit> =
         sandbox {
-            authService.login(email, password)
-                .map { it.toUser() }
+            authService.signIn(email, password)
                 .handle {
-                    userDao.insert(it)
-                    Auth.update(it, password)
-                }
+                    Auth.update(uid = it.id, token = it.token)
+                }.map {}
         }
 
-    override suspend fun register(
+    override suspend fun signUp(
         email: String,
         password: String,
         nickName: String,
         realName: String?
     ): Result<Unit> = sandbox {
-        authService.register(email, password, nickName, realName)
+        authService.signUp(email, password, nickName, realName)
     }
 
-    override suspend fun verifyEmail(code: Int) = sandbox {
-        authService.verifyEmail(code)
+    override suspend fun verifyEmail(code: String) = sandbox {
+        authService.verifyEmailCode(code)
     }
 
     override suspend fun resendEmail() = sandbox {
-        authService.resendEmail()
+        authService.verifyEmail()
     }
 }

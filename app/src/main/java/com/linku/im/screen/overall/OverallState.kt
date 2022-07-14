@@ -17,7 +17,6 @@ data class OverallState(
     val icon: ImageVector = Icons.Default.Menu,
     val title: String = application.getString(R.string.connecting),
     val navClick: Content = {},
-    val actions: @Composable RowScope.() -> Unit = @Composable {},
     val isDarkMode: Boolean = false,
     val currentScreen: Screen = Screen.MainScreen
 )

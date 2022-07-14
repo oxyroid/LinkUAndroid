@@ -20,7 +20,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.linku.im.R
 import com.linku.im.extension.debug
+import com.linku.im.overall
 import com.linku.im.screen.Screen
+import com.linku.im.screen.overall.OverallEvent
 import com.linku.im.screen.profile.composable.ProfileItems
 import com.linku.im.screen.profile.composable.Setting
 import com.linku.im.ui.MaterialButton
@@ -52,6 +54,10 @@ fun AccountScreen(
 
     LaunchedEffect(true) {
         viewModel.onEvent(ProfileEvent.FetchProfile)
+    }
+    LaunchedEffect(state.logout) {
+        if (state.logout)
+            overall.onEvent(OverallEvent.PopBackStack)
     }
 
     LazyColumn(

@@ -1,5 +1,9 @@
 package com.linku.im.screen.main.composable
 
+import androidx.compose.animation.core.InfiniteRepeatableSpec
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -32,6 +36,13 @@ fun MainConversationItem(
     onClick: () -> Unit = {}
 ) {
     val shimmerColor = MaterialTheme.colorScheme.outline * 0.3f
+    val onShimmerColor = Color.White
+    val shimmerAnimationSpec: InfiniteRepeatableSpec<Float> by lazy {
+        infiniteRepeatable(
+            animation = tween(durationMillis = 2000, delayMillis = 400),
+            repeatMode = RepeatMode.Restart
+        )
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -87,8 +98,9 @@ fun MainConversationItem(
                         color = shimmerColor,
                         shape = RoundedCornerShape(4.dp),
                         highlight = PlaceholderHighlight.shimmer(
-                            highlightColor = Color.White,
-                        ),
+                            highlightColor = onShimmerColor,
+                            animationSpec = shimmerAnimationSpec,
+                        )
                     ),
                 overflow = TextOverflow.Ellipsis
             )
@@ -103,7 +115,8 @@ fun MainConversationItem(
                         color = shimmerColor,
                         shape = RoundedCornerShape(4.dp),
                         highlight = PlaceholderHighlight.shimmer(
-                            highlightColor = Color.White,
+                            highlightColor = onShimmerColor,
+                            animationSpec = shimmerAnimationSpec
                         ),
                     )
                     .fillMaxWidth(),

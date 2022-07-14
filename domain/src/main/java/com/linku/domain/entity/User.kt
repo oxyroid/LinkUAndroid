@@ -2,6 +2,7 @@ package com.linku.domain.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -19,12 +20,14 @@ data class User(
 data class UserDTO(
     val id: Int,
     @SerialName("nickname")
+    @SerializedName("nickname")
     val name: String,
     val email: String,
     val password: String,
     val salt: String,
     val role: String,
     @SerialName("is_verified")
+    @SerializedName("is_verified")
     val verified: Boolean,
     val realName: String? = null
 ) {

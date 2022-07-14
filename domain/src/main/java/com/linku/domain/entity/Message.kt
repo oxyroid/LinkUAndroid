@@ -2,6 +2,7 @@ package com.linku.domain.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -14,6 +15,7 @@ open class Message(
     open val content: String,
     val type: String = "text",
     @SerialName("send_time")
+    @SerializedName("send_time")
     open val timestamp: Long
 ) {
     fun toReadable(): Message = when (type) {

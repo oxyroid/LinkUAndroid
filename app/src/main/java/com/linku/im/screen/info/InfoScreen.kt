@@ -19,7 +19,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.linku.im.R
-import com.linku.im.activity
+import com.linku.im.outsideContent
 import com.linku.im.application
 import com.linku.im.extension.debug
 import com.linku.im.extension.release
@@ -85,13 +85,13 @@ fun InfoScreen() {
             ) {
                 Row {
                     LinkText(text = "Github:thxbrop", url = "https://github.com/thxbrop") {
-                        activity.startActivity(Intent().apply {
+                        outsideContent.startActivity(Intent().apply {
                             action = Intent.ACTION_VIEW
                             data = Uri.parse(it)
                         })
                     }
                     LinkText(text = "Telegram:sortBy", url = "https://t.me/sortBy") {
-                        activity.startActivity(Intent().apply {
+                        outsideContent.startActivity(Intent().apply {
                             action = Intent.ACTION_VIEW
                             data = Uri.parse(it)
                         })
@@ -106,7 +106,7 @@ fun InfoScreen() {
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
             ) {
-                activity.startActivity(Intent().apply {
+                outsideContent.startActivity(Intent().apply {
                     action = Intent.ACTION_VIEW
                     data = Uri.parse("https://github.com/thxbrop/LinkU-Android")
                 })

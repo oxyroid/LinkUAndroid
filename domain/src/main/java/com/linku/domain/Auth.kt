@@ -1,10 +1,8 @@
 package com.linku.domain
 
-import com.linku.domain.entity.User
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -13,26 +11,37 @@ import kotlinx.serialization.json.Json
  *
  */
 object Auth {
-    private const val AUTH_USER = "auth_user"
-    private const val AUTH_PASSWORD = "auth_password"
-    val current: User?
-        get() = MMKV.defaultMMKV().decodeString(AUTH_USER)
-            ?.let(Json::decodeFromString)
+    private const val AUTH_UID = "auth_uid"
+    private const val AUTH_TOKEN = "auth_token"
+    val currentUID: Int?
+        get() = MMKV.defaultMMKV().decodeString(AUTH_UID)?.toInt()
 
-    val currentPassword: String?
-        get() = MMKV.defaultMMKV().decodeString(AUTH_PASSWORD)
 
-    private val _observeCurrent = MutableStateFlow(current)
-    val observeCurrent: Flow<User?> = _observeCurrent
+    val token: String?
+        get() {
+            if (currentUID == null) {
+                val nullString: String? = null
+                MMKV.defaultMMKV().encode(AUTH_TOKEN, nullString)
+            }
+            return MMKV.defaultMMKV().decodeString(AUTH_TOKEN)
+        }
+
+    private val _observeCurrent = MutableStateFlow(currentUID)
+    val observeCurrent: Flow<Int?> = _observeCurrent
 
     suspend fun update(
-        user: User? = null,
-        password: String? = null
+        uid: Int? = null,
+        token: String? = null
     ) {
-        Json.encodeToString(user).also {
-            MMKV.defaultMMKV().encode(AUTH_USER, it)
-            MMKV.defaultMMKV().encode(AUTH_PASSWORD, password)
-            _observeCurrent.emit(user)
+        Json.encodeToString(uid).also {
+            MMKV.defaultMMKV().encode(AUTH_UID, it)
+            MMKV.defaultMMKV().encode(AUTH_TOKEN, token)
+            _observeCurrent.emit(uid)
         }
     }
+
+    data class Token(
+        val id: Int,
+        val token: String
+    )
 }

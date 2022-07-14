@@ -16,8 +16,8 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.linku.im.R
 import com.linku.im.overall
-import com.linku.im.screen.overall.OverallEvent
 import com.linku.im.screen.login.composable.LoginTextField
+import com.linku.im.screen.overall.OverallEvent
 import com.linku.im.ui.MaterialButton
 import com.linku.im.ui.MaterialTextButton
 
