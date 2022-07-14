@@ -24,6 +24,7 @@ class MessageRepositoryImpl(
     private val conversationDao: ConversationDao
 ) : MessageRepository {
     override suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit> {
+        isSyncing = false
         return socketService.initSession(uid, scope)
     }
 
