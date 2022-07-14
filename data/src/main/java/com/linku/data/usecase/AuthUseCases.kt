@@ -11,7 +11,7 @@ import javax.inject.Inject
 data class AuthUseCases @Inject constructor(
     val signInUseCase: SignInUseCase,
     val signUpUseCase: SignUpUseCase,
-    val logoutUseCase: LogoutUseCase,
+    val logoutUseCase: SignOutUseCase,
 )
 
 data class SignInUseCase(
@@ -42,9 +42,12 @@ data class SignUpUseCase(
     }
 }
 
-object LogoutUseCase {
+data class SignOutUseCase(
+    private val repository: AuthRepository
+) {
     operator fun invoke(): Flow<Resource<Unit>> = resourceFlow {
         Auth.update()
+        repository.clearLocal()
         emitResource(Unit)
     }
 }

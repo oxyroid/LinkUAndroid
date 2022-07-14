@@ -15,9 +15,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.linku.im.R
-import com.linku.im.overall
 import com.linku.im.screen.login.composable.LoginTextField
-import com.linku.im.screen.overall.OverallEvent
 import com.linku.im.ui.MaterialButton
 import com.linku.im.ui.MaterialTextButton
 
@@ -87,7 +85,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
             ) {
-                viewModel.onEvent(LoginEvent.Login(email, password))
+                viewModel.onEvent(LoginEvent.SignIn(email, password))
             }
             MaterialTextButton(
                 textRes = R.string.screen_login_btn_register,
@@ -96,14 +94,11 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
             ) {
-                viewModel.onEvent(LoginEvent.Register(email, password))
+                viewModel.onEvent(LoginEvent.SignUp(email, password))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
-    with(state) {
-        loginEvent.handle { overall.onEvent(OverallEvent.PopBackStack) }
-    }
 }

@@ -27,4 +27,7 @@ interface MessageDao {
 
     @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC")
     fun observeMessagesByCid(cid: Int): Flow<List<Message>>
+
+    @Query("DELETE FROM Message")
+    suspend fun clear()
 }

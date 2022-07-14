@@ -140,9 +140,13 @@ object AppModule {
     @Provides
     @Singleton
     fun providesAuthRepository(
-        authService: AuthService
+        authService: AuthService,
+        database: LinkUDatabase
     ): AuthRepository = AuthRepositoryImpl(
-        authService = authService
+        authService = authService,
+        userDao = database.userDao(),
+        conversationDao = database.conversationDao(),
+        messageDao = database.messageDao()
     )
 
     @Provides
@@ -184,7 +188,7 @@ object AppModule {
         return AuthUseCases(
             signInUseCase = SignInUseCase(repository),
             signUpUseCase = SignUpUseCase(repository),
-            logoutUseCase = LogoutUseCase,
+            logoutUseCase = SignOutUseCase(repository),
         )
     }
 

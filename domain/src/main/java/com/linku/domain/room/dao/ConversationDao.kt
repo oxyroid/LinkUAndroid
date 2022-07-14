@@ -23,4 +23,7 @@ interface ConversationDao {
 
     @Query("SELECT * FROM Conversation ORDER BY updatedAt")
     fun observeConversations(): Flow<List<Conversation>>
+
+    @Query("DELETE FROM Conversation")
+    suspend fun clear()
 }

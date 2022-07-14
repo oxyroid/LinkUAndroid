@@ -16,4 +16,6 @@ interface AuthRepository {
     suspend fun verifyEmail(code: String): Result<Unit>
 
     suspend fun resendEmail(): Result<Unit>
+
+    suspend fun clearLocal()
 }

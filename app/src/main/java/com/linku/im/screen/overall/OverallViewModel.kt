@@ -45,65 +45,15 @@ class OverallViewModel @Inject constructor(
 
     override fun onEvent(event: OverallEvent) {
         when (event) {
-            is OverallEvent.InitSession -> {
-                viewModelScope.launch {
-                    val userId = Auth.currentUID
-                    checkNotNull(userId)
-                    debug { Log.v(TAG, "The message channel is initializing...") }
-                    val resource = messageUseCases.initSessionUseCase(
-                        uid = userId,
-                        scope = viewModelScope
-                    )
-                    when (resource) {
-                        Resource.Loading -> {}
-                        is Resource.Success -> {
-                            debug {
-                                Log.d(TAG, "Message channel initialized successfully.")
-                            }
-                            messageUseCases.observeMessagesUseCase(viewModelScope).launchIn(this)
-                            onEvent(OverallEvent.Dispatcher)
-                        }
-                        is Resource.Failure -> {
-                            debug {
-                                Log.e(
-                                    TAG, "Message channel initialization failed" +
-                                            "(${resource.message})."
-                                )
-                            }
-                            launch {
-                                delay(3000)
-                                debug { Log.v(TAG, "Retrying...") }
-                                onEvent(OverallEvent.InitSession(userId))
-                            }
-                        }
-                    }
-                }
-            }
-            OverallEvent.Dispatcher -> {
-                viewModelScope.launch {
-                    when (messageUseCases.dispatcherUseCase()) {
-                        Resource.Loading -> debug { Log.v(TAG, "Dispatcher subscribing...") }
-                        is Resource.Success -> {
-                            debug { Log.d(TAG, "Dispatcher subscribed successfully.") }
-                            _state.value = state.value.copy(
-                                online = true,
-                                title = application.getString(R.string.app_name)
-                            )
-                        }
-                        is Resource.Failure -> debug {
-                            Log.e(TAG, "Failed to subscribe Dispatcher.")
-                        }
-                    }
-                }
-            }
-
+            is OverallEvent.InitSession -> initSession()
+            OverallEvent.Dispatcher -> subscribeDispatcher()
             OverallEvent.RestoreDarkMode -> {
                 val isDarkMode = MMKV.defaultMMKV().getBoolean(SAVED_DARK_MODE, false)
                 _state.value = state.value.copy(
                     isDarkMode = isDarkMode
                 )
             }
-            OverallEvent.PopBackStack -> navController.popBackStack()
+            OverallEvent.PopBackStack -> navController.navigateUp()
 
             OverallEvent.ToggleTheme -> _state.value =
                 state.value.copy(isDarkMode = !state.value.isDarkMode)
@@ -164,4 +114,69 @@ class OverallViewModel @Inject constructor(
         }
     }
 
+    private sealed class Title(val text: String) {
+        object Default : Title(application.getString(R.string.app_name))
+        object Connecting : Title(application.getString(R.string.connecting))
+        object ConnectedFailed : Title(application.getString(R.string.connected_failed))
+        object Subscribing : Title(application.getString(R.string.subscribing))
+        object SubscribeFailed : Title(application.getString(R.string.subscribe_failed))
+    }
+
+    private fun updateTitle(title: Title) {
+        _state.value = state.value.copy(
+            title = title.text
+        )
+    }
+
+    private fun initSession() {
+        viewModelScope.launch {
+            val userId = Auth.currentUID
+            checkNotNull(userId)
+            updateTitle(Title.Connecting)
+
+            val resource = messageUseCases.initSessionUseCase(
+                uid = userId,
+                scope = viewModelScope
+            )
+            when (resource) {
+                Resource.Loading -> {}
+                is Resource.Success -> {
+                    updateTitle(Title.Default)
+                    messageUseCases.observeMessagesUseCase(viewModelScope).launchIn(this)
+                    onEvent(OverallEvent.Dispatcher)
+                }
+                is Resource.Failure -> {
+                    updateTitle(Title.ConnectedFailed)
+                    launch {
+                        delay(3000)
+                        debug { Log.v(TAG, "Retrying...") }
+                        onEvent(OverallEvent.InitSession(userId))
+                    }
+                }
+            }
+        }
+    }
+
+    private fun subscribeDispatcher() {
+        viewModelScope.launch {
+            when (messageUseCases.dispatcherUseCase()) {
+                Resource.Loading -> {
+                    updateTitle(Title.Subscribing)
+                    debug { Log.v(TAG, "Dispatcher subscribing...") }
+                }
+                is Resource.Success -> {
+                    updateTitle(Title.Default)
+                    debug { Log.d(TAG, "Dispatcher subscribed successfully.") }
+                    _state.value = state.value.copy(
+                        online = true,
+                        title = application.getString(R.string.app_name)
+                    )
+                }
+                is Resource.Failure -> {
+                    updateTitle(Title.SubscribeFailed)
+                    debug { Log.e(TAG, "Failed to subscribe Dispatcher.") }
+                }
+            }
+        }
+    }
 }

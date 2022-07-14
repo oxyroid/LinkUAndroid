@@ -135,7 +135,7 @@ fun AccountScreen(
         item {
             Surface {
                 MaterialButton(textRes = R.string.logout) {
-                    viewModel.onEvent(ProfileEvent.Logout)
+                    viewModel.onEvent(ProfileEvent.SignOut)
                 }
             }
         }

@@ -40,4 +40,8 @@
     <string name="inbox">消息</string>
     <string name="exception_json_syntax_1">反序列化错误</string>
     <string name="exception_json_syntax_2">请将应用升级至最新版本再试</string>
+    <string name="subscribing">订阅中…</string>
+    <string name="connected_failed">连接失败</string>
+    <string name="subscribe_failed">订阅失败</string>
+    <string name="signout_failed">退出登录失败</string>
 </resources>

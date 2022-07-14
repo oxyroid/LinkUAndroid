@@ -1,12 +1,12 @@
 package com.linku.im.screen.login
 
 sealed class LoginEvent {
-    data class Login(
+    data class SignIn(
         val email: String,
         val password: String
     ) : LoginEvent()
 
-    data class Register(
+    data class SignUp(
         val email: String,
         val password: String
     ) : LoginEvent()
