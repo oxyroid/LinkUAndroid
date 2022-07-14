@@ -17,6 +17,7 @@ import com.linku.domain.room.LinkUDatabase
 import com.linku.domain.service.*
 import com.linku.im.BuildConfig
 import com.linku.im.application
+import com.linku.im.extension.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,10 +30,11 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
 import javax.inject.Singleton
 
@@ -49,7 +51,16 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideRetrofitClient(): Retrofit {
+    fun provideJson(): Json = Json {
+        ignoreUnknownKeys = true
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Provides
+    @Singleton
+    fun provideRetrofitClient(
+        json: Json
+    ): Retrofit {
         val client = OkHttpClient.Builder()
             .addInterceptor { chain ->
                 val original = chain.request()
@@ -64,10 +75,11 @@ object AppModule {
                 chain.proceed(request)
             }
             .build()
+        val contentType = "application/json".toMediaType()
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(json.asConverterFactory(contentType))
             .build()
     }
 

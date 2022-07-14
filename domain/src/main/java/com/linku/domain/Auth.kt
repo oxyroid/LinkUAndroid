@@ -3,6 +3,7 @@ package com.linku.domain
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -14,7 +15,11 @@ object Auth {
     private const val AUTH_UID = "auth_uid"
     private const val AUTH_TOKEN = "auth_token"
     val currentUID: Int?
-        get() = MMKV.defaultMMKV().decodeString(AUTH_UID)?.toInt()
+        get() = try {
+            MMKV.defaultMMKV().decodeString(AUTH_UID)?.toInt()
+        } catch (e: NumberFormatException) {
+            null
+        }
 
 
     val token: String?
@@ -40,6 +45,7 @@ object Auth {
         }
     }
 
+    @Serializable
     data class Token(
         val id: Int,
         val token: String

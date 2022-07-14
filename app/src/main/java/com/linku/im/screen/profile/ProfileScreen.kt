@@ -52,7 +52,7 @@ fun AccountScreen(
 ) {
     val state by viewModel.state
 
-    LaunchedEffect(true) {
+    LaunchedEffect(Unit) {
         viewModel.onEvent(ProfileEvent.FetchProfile)
     }
     LaunchedEffect(state.logout) {

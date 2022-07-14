@@ -55,7 +55,7 @@ fun MainConversationItem(
                 else it
 
             }
-            .clickable { onClick() }
+            .clickable(enabled = conversation != null, onClick = onClick)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

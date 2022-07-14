@@ -13,8 +13,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 32
-        versionCode 7
-        versionName "0.4"
+        versionCode 9
+        versionName "0.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -110,8 +110,6 @@ dependencies {
 
     // retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
-    implementation "com.squareup.retrofit2:converter-gson:$retrofit_version"
-
 
     // serialization
     implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"

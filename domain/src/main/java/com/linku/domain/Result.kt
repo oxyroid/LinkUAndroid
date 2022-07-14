@@ -2,11 +2,10 @@ package com.linku.domain
 
 import android.util.Log
 import androidx.annotation.Keep
-import com.google.gson.JsonSyntaxException
-import com.google.gson.annotations.SerializedName
 import com.linku.domain.extension.debug
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 
 @Keep
 @Serializable
@@ -14,7 +13,6 @@ data class Result<out T>(
     private val data: T? = null,
     private val code: String = "?",
     @SerialName("msg")
-    @SerializedName("msg")
     private val message: String? = null
 ) {
     private val isSuccess get() = code.trim() == "00000"
@@ -61,7 +59,7 @@ data class Result<out T>(
 inline fun <T> sandbox(block: () -> Result<T>): Result<T> {
     return try {
         block.invoke()
-    } catch (e: JsonSyntaxException) {
+    } catch (e: SerializationException) {
         Result(
             code = "反序列化错误",
             message = "请将应用升级至最新版本再试！"

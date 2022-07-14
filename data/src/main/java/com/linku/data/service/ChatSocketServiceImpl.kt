@@ -5,6 +5,7 @@ import com.linku.data.TAG
 import com.linku.data.debug
 import com.linku.domain.Resource
 import com.linku.domain.entity.Message
+import com.linku.domain.entity.MessageDTO
 import com.linku.domain.service.ChatSocketService
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
@@ -22,7 +23,7 @@ class ChatSocketServiceImpl(
 ) : ChatSocketService {
     private var socket: WebSocketSession? = null
     private var uid: Int = -1
-    private var incoming: SharedFlow<Frame>? = null
+    private var incoming: Flow<Frame>? = null
 
     override suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit> {
         this.uid = uid
@@ -35,10 +36,6 @@ class ChatSocketServiceImpl(
                 incoming = socket
                     ?.incoming
                     ?.consumeAsFlow()
-                    ?.shareIn(
-                        scope = scope,
-                        started = SharingStarted.WhileSubscribed()
-                    )
                 Resource.Success(Unit)
             } else Resource.Failure("Couldn't establish a connection.")
         } catch (e: Exception) {
@@ -47,19 +44,17 @@ class ChatSocketServiceImpl(
         }
     }
 
-    override fun observeMessages(): Flow<Message> {
+    override fun incoming(): Flow<Message> {
         return try {
             incoming
                 ?.filter { it is Frame.Text }
                 ?.mapNotNull {
-                    val jsonText = (it as Frame.Text).readText()
+                    val text = (it as Frame.Text).readText()
+                    val json = Json { ignoreUnknownKeys = true }
                     try {
-                        val json = Json {
-                            ignoreUnknownKeys = true
-                        }
-                        json.decodeFromString<Message>(jsonText)
+                        json.decodeFromString<Socket<MessageDTO>>(text).data.toMessage()
                     } catch (e: Exception) {
-                        // debug { Log.e(TAG, "Json Error: ", e) }
+                        debug { Log.e(TAG, "Json Error: ", e) }
                         null
                     }
                 } ?: flow { }

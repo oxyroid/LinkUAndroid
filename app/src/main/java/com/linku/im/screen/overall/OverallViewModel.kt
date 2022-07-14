@@ -3,16 +3,13 @@ package com.linku.im.screen.overall
 import android.util.Log
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.linku.data.usecase.MessageUseCases
 import com.linku.domain.Auth
 import com.linku.domain.Resource
-import com.linku.domain.entity.Message
 import com.linku.im.Contract.SAVED_DARK_MODE
 import com.linku.im.R
 import com.linku.im.application
@@ -25,8 +22,6 @@ import com.tencent.mmkv.MMKV
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -43,9 +38,6 @@ class OverallViewModel @Inject constructor(
             else onEvent(OverallEvent.InitSession(userId))
         })
     }
-
-    private val _messages = MutableStateFlow<List<Message>>(emptyList())
-    val messages get() = _messages.asStateFlow()
 
     private lateinit var navController: NavController
     private lateinit var scaffoldState: ScaffoldState
@@ -68,6 +60,7 @@ class OverallViewModel @Inject constructor(
                             debug {
                                 Log.d(TAG, "Message channel initialized successfully.")
                             }
+                            messageUseCases.observeMessagesUseCase(viewModelScope).launchIn(this)
                             onEvent(OverallEvent.Dispatcher)
                         }
                         is Resource.Failure -> {
@@ -92,26 +85,16 @@ class OverallViewModel @Inject constructor(
                         Resource.Loading -> debug { Log.v(TAG, "Dispatcher subscribing...") }
                         is Resource.Success -> {
                             debug { Log.d(TAG, "Dispatcher subscribed successfully.") }
-                            onEvent(OverallEvent.ObserveMessages)
+                            _state.value = state.value.copy(
+                                online = true,
+                                title = application.getString(R.string.app_name)
+                            )
                         }
                         is Resource.Failure -> debug {
                             Log.e(TAG, "Failed to subscribe Dispatcher.")
                         }
                     }
                 }
-            }
-
-            OverallEvent.ObserveMessages -> {
-                _state.value = state.value.copy(
-                    online = true,
-                    title = application.getString(R.string.app_name)
-                )
-                messageUseCases.observeMessagesUseCase(viewModelScope)
-                    .onEach {
-                        _messages.value = it
-                        debug { Log.v(TAG, "Message Received: ${it.lastOrNull()?.content}") }
-                    }
-                    .launchIn(viewModelScope)
             }
 
             OverallEvent.RestoreDarkMode -> {

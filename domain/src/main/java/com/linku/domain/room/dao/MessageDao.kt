@@ -22,9 +22,9 @@ interface MessageDao {
     suspend fun getById(id: Int): Message?
 
 
-    @Query("SELECT * FROM Message ORDER BY timestamp")
-    fun observeMessages(): Flow<List<Message>>
+    @Query("SELECT * FROM Message ORDER BY timestamp DESC")
+    fun incoming(): Flow<List<Message>>
 
-    @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp")
+    @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC")
     fun observeMessagesByCid(cid: Int): Flow<List<Message>>
 }

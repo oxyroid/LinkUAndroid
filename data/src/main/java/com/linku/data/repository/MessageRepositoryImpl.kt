@@ -1,5 +1,8 @@
 package com.linku.data.repository
 
+import android.util.Log
+import com.linku.data.TAG
+import com.linku.data.debug
 import com.linku.domain.Resource
 import com.linku.domain.Result
 import com.linku.domain.entity.Message
@@ -10,7 +13,9 @@ import com.linku.domain.sandbox
 import com.linku.domain.service.ChatService
 import com.linku.domain.service.ChatSocketService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class MessageRepositoryImpl(
     private val socketService: ChatSocketService,
@@ -22,46 +27,48 @@ class MessageRepositoryImpl(
         return socketService.initSession(uid, scope)
     }
 
-    override fun observeMessages(scope: CoroutineScope): Flow<List<Message>> {
-        return try {
-            flow {
-                emitAll(messageDao.observeMessages())
-                socketService.observeMessages()
-                    .onEach { message ->
-                        messageDao.insert(message)
-                        val cid = message.cid
-                        if (conversationDao.getById(cid) == null) {
-                            chatService.getById(cid).handle { conversation ->
-                                conversationDao.insert(conversation)
-                            }
+    private var _incoming: Flow<List<Message>>? = null
+    override fun incoming(): Flow<List<Message>> = _incoming
+        ?: messageDao
+            .incoming()
+            .onEach {
+                debug {
+                    Log.e(TAG, "Room Messages Update, size = ${it.size}")
+                }
+            }
+            .also {
+                _incoming = it
+            }
+
+    private var isSyncing = false
+    override fun persistence(scope: CoroutineScope) {
+        if (isSyncing) return
+        try {
+            socketService.incoming()
+                .onEach { message ->
+                    debug {
+                        Log.e(TAG, "Message Received: ${message.content}")
+                    }
+                    messageDao.insert(message)
+                    val cid = message.cid
+                    if (conversationDao.getById(cid) == null) {
+                        chatService.getById(cid).handle { conversation ->
+                            conversationDao.insert(conversation)
                         }
                     }
-                    .launchIn(scope)
-            }
-        }catch (e:Exception){
+                }
+                .launchIn(scope)
+            isSyncing = true
+        } catch (e: Exception) {
             e.printStackTrace()
-            flow {  }
         }
     }
 
-    override fun observeMessagesByCid(cid: Int): Flow<List<Message>> {
-        return try {
-            flow {
-                emitAll(messageDao.observeMessagesByCid(cid))
-            }
-        }catch (e: Exception){
-            e.printStackTrace()
-            flow {  }
-        }
-    }
-
-    override suspend fun closeSession() {
-        socketService.closeSession()
-    }
+    override suspend fun closeSession() = socketService.closeSession()
 
     override suspend fun sendTextMessage(cid: Int, content: String): Result<Unit> = sandbox {
         chatService.sendMessage(cid, content, "text")
     }
 
-    override suspend fun subscribe(): Result<Unit> = sandbox {  chatService.subscribe() }
+    override suspend fun subscribe(): Result<Unit> = sandbox { chatService.subscribe() }
 }

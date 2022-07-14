@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,7 +19,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linku.im.screen.overall.OverallEvent
 import com.linku.im.ui.theme.Typography
 
 @Composable
@@ -27,7 +26,7 @@ fun ToolBar(
     navIcon: ImageVector = Icons.Default.ArrowBack,
     title: String = "",
     onScroll: Boolean = false,
-    onMenuClick: ()->Unit,
+    onMenuClick: () -> Unit,
     onNavClick: () -> Unit
 ) {
     val elevation by animateDpAsState(if (onScroll) 16.dp else 4.dp)
@@ -62,7 +61,7 @@ fun ToolBar(
                     onClick = onMenuClick
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Icons.Default.Settings,
                         contentDescription = "",
                         tint = MaterialTheme.colorScheme.onSurface
                     )

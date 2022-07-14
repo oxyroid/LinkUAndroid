@@ -5,6 +5,7 @@ import com.linku.domain.entity.Message
 import com.linku.domain.repository.MessageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 data class MessageUseCases @Inject constructor(
@@ -44,13 +45,22 @@ data class ObserveMessagesUseCase(
 ) {
     operator fun invoke(
         scope: CoroutineScope
-    ): Flow<List<Message>> = repository.observeMessages(scope)
+    ): Flow<List<Message>> {
+        repository.persistence(scope)
+        return repository.incoming()
+    }
 }
 
 data class ObserveMessagesByCidUseCase(
     private val repository: MessageRepository
 ) {
-    operator fun invoke(cid: Int): Flow<List<Message>> = repository.observeMessagesByCid(cid)
+    operator fun invoke(scope: CoroutineScope, cid: Int): Flow<List<Message>> {
+        repository.persistence(scope)
+        return repository.incoming()
+            .map {
+                it.filter { message -> message.cid == cid }.toList()
+            }
+    }
 }
 
 data class CloseSessionUseCase(

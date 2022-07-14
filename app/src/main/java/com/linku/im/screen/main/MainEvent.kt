@@ -5,5 +5,7 @@ sealed class MainEvent {
         val name: String
     ) : MainEvent()
 
-    object OneWord: MainEvent()
+    object GetConversations : MainEvent()
+
+    object OneWord : MainEvent()
 }

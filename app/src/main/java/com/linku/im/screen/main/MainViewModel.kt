@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.OneWordUseCases
 import com.linku.domain.Resource
+import com.linku.domain.entity.Conversation
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -19,6 +20,32 @@ class MainViewModel @Inject constructor(
 
     init {
         onEvent(MainEvent.OneWord)
+        onEvent(MainEvent.GetConversations)
+    }
+
+    override fun onEvent(event: MainEvent) {
+        when (event) {
+            is MainEvent.CreateConversation -> {}
+            MainEvent.OneWord -> fetchOneWord()
+            MainEvent.GetConversations -> getAllLocalConversations()
+        }
+    }
+
+    private fun getAllLocalConversations() {
+        _state.value = state.value.copy(
+            conversations = listOf(
+                Conversation(
+                    id = 1,
+                    updatedAt = System.currentTimeMillis(),
+                    name = "1000",
+                    avatar = "",
+                    owner = 1,
+                    member = listOf(),
+                    description = ""
+                )
+            ),
+            loading = false
+        )
         conversationUseCases.observeConversationsUseCase()
             .onEach {
                 delay(2000)
@@ -27,31 +54,24 @@ class MainViewModel @Inject constructor(
                     loading = false
                 )
             }
-            .launchIn(viewModelScope)
+        //.launchIn(viewModelScope)
     }
 
-    override fun onEvent(event: MainEvent) {
-        when (event) {
-            is MainEvent.CreateConversation -> {
-                conversationUseCases
+    private fun fetchOneWord() {
+        oneWordUseCases.neteaseUseCase()
+            .onEach { resource ->
+                _state.value = when (resource) {
+                    Resource.Loading -> state.value.copy(
+                        drawerTitle = null
+                    )
+                    is Resource.Success -> state.value.copy(
+                        drawerTitle = resource.data
+                    )
+                    is Resource.Failure -> state.value.copy(
+                        drawerTitle = resource.message
+                    )
+                }
             }
-            MainEvent.OneWord -> {
-                oneWordUseCases.neteaseUseCase()
-                    .onEach { resource ->
-                        _state.value = when (resource) {
-                            Resource.Loading -> state.value.copy(
-                                drawerTitle = null
-                            )
-                            is Resource.Success -> state.value.copy(
-                                drawerTitle = resource.data
-                            )
-                            is Resource.Failure -> state.value.copy(
-                                drawerTitle = resource.message
-                            )
-                        }
-                    }
-                    .launchIn(viewModelScope)
-            }
-        }
+            .launchIn(viewModelScope)
     }
 }

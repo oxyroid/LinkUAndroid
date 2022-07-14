@@ -63,8 +63,6 @@ sealed class OverallEvent {
 
     object Dispatcher : OverallEvent()
 
-    object ObserveMessages : OverallEvent()
-
     /**
      * Observe the current user changed event.
      *

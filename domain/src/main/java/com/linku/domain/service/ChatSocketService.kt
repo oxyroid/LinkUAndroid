@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 @Keep
 interface ChatSocketService {
     suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit>
-    fun observeMessages(): Flow<Message>
+    fun incoming(): Flow<Message>
     fun observeClose(): Flow<Frame.Close>
     suspend fun closeSession()
 

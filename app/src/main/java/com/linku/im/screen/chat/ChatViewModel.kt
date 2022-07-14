@@ -27,13 +27,13 @@ class ChatViewModel @Inject constructor(
                 )
                 viewModelScope.launch {
                     // overall.message 是 SharedFlow<Message>, replay = 16
-                    messageUseCases.observeMessagesUseCase(this)
+                    messageUseCases.observeMessagesByCIDUseCase(viewModelScope, event.cid)
                         .onEach {
                             _state.value = state.value.copy(
                                 messages = it
                             )
                         }
-                        .launchIn(this)
+                        .launchIn(viewModelScope)
                 }
             }
             ChatEvent.SendTextMessage -> {

@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
     suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit>
-    fun observeMessages(scope: CoroutineScope): Flow<List<Message>>
-    fun observeMessagesByCid(cid: Int): Flow<List<Message>>
+    fun persistence(scope: CoroutineScope)
+    fun incoming(): Flow<List<Message>>
     suspend fun closeSession()
     suspend fun sendTextMessage(cid: Int, content: String): Result<Unit>
     suspend fun subscribe(): Result<Unit>

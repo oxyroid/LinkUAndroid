@@ -1,6 +1,7 @@
 package com.linku.im.screen.chat
 
 import android.widget.Toast
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -37,7 +38,7 @@ fun ChatScreen(
     if (cid == -1) overall.onEvent(OverallEvent.PopBackStack)
     val context = LocalContext.current
 
-    LaunchedEffect(true) {
+    LaunchedEffect(Unit) {
         viewModel.onEvent(ChatEvent.InitChat(cid))
     }
     val state by viewModel.state
@@ -59,7 +60,7 @@ fun ChatScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             reverseLayout = true,
         ) {
-            itemsIndexed(state.messages) { index, it ->
+            itemsIndexed(state.messages, key = { _, item -> item.id }) { index, it ->
                 val next = if (index == state.messages.size - 1) null else state.messages[index + 1]
                 val showTimeLabel =
                     next == null || it.timestamp - next.timestamp >= 1000 * 60 * 5
@@ -67,7 +68,9 @@ fun ChatScreen(
                     message = it,
                     isAnother = it.uid != Auth.currentUID,
                     isShowTime = showTimeLabel,
-                    modifier = Modifier.animateItemPlacement()
+                    modifier = Modifier.animateItemPlacement(
+                        animationSpec = spring()
+                    )
                 )
             }
         }

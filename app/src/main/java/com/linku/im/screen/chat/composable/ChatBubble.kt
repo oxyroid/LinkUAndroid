@@ -22,16 +22,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
 import com.linku.domain.entity.Message
+import com.linku.im.extension.ifTrue
 import java.util.*
 
-private const val HORIZONTAL_IN_PADDING = 12
-private const val VERTICAL_IN_PADDING = 8
-private const val HORIZONTAL_OUT_PADDING = 18
+private val HORIZONTAL_IN_PADDING = 12.dp
+private val VERTICAL_IN_PADDING = 8.dp
+private val HORIZONTAL_OUT_PADDING = 18.dp
 private const val HORIZONTAL_OUT_PADDING_TIMES = 3
-private const val VERTICAL_OUT_PADDING = HORIZONTAL_OUT_PADDING / HORIZONTAL_OUT_PADDING_TIMES
-private const val BUBBLE_CORNER = 12
-private const val BUBBLE_SPECIAL_CORNER = 0
-private const val FONT_SIZE = 14
+private val VERTICAL_OUT_PADDING = HORIZONTAL_OUT_PADDING / HORIZONTAL_OUT_PADDING_TIMES
+private val BUBBLE_CORNER = 12.dp
+private val BUBBLE_SPECIAL_CORNER = 0.dp
+private val FONT_SIZE = 14.sp
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -43,19 +44,19 @@ fun ChatBubble(
     onClick: () -> Unit = {}
 ) {
     val color: Color =
-        if (isAnother) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary
+        if (isAnother) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
     val contentColor: Color =
-        if (isAnother) MaterialTheme.colorScheme.onTertiary else MaterialTheme.colorScheme.onPrimary
+        if (isAnother) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
     ) {
-        if (isShowTime) {
+        isShowTime.ifTrue {
             Card(
                 backgroundColor = MaterialTheme.colorScheme.background,
                 contentColor = MaterialTheme.colorScheme.onBackground,
                 onClick = onClick,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(BUBBLE_CORNER)
             ) {
                 val calender = Calendar.getInstance()
                 calender.time = Date(message.timestamp)
@@ -79,64 +80,87 @@ fun ChatBubble(
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
-        Row(
-            modifier = Modifier
-                .padding(
-                    start = HORIZONTAL_OUT_PADDING.let {
-                        if (!isAnother) it * HORIZONTAL_OUT_PADDING_TIMES
-                        else it
-                    }.dp,
-                    end = HORIZONTAL_OUT_PADDING.let {
-                        if (isAnother) it * HORIZONTAL_OUT_PADDING_TIMES
-                        else it
-                    }.dp,
-                    top = VERTICAL_OUT_PADDING.dp,
-                    bottom = VERTICAL_OUT_PADDING.dp
-                )
-                .fillMaxWidth(),
-            horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End
-        ) {
 
-            val shape = if (isAnother) RoundedCornerShape(
-                topEnd = BUBBLE_CORNER.dp,
-                bottomStart = BUBBLE_SPECIAL_CORNER.dp,
-                bottomEnd = BUBBLE_CORNER.dp,
-                topStart = BUBBLE_CORNER.dp
-            ) else RoundedCornerShape(
-                topEnd = BUBBLE_CORNER.dp,
-                bottomStart = BUBBLE_CORNER.dp,
-                bottomEnd = BUBBLE_SPECIAL_CORNER.dp,
-                topStart = BUBBLE_CORNER.dp
+        Box(
+            modifier = Modifier.padding(
+                top = VERTICAL_OUT_PADDING,
+                bottom = VERTICAL_OUT_PADDING
             )
-            Surface(
-                shape = shape,
-                color = color,
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(
+                        start = HORIZONTAL_OUT_PADDING.let {
+                            if (!isAnother) it * HORIZONTAL_OUT_PADDING_TIMES
+                            else it
+                        },
+                        end = HORIZONTAL_OUT_PADDING.let {
+                            if (isAnother) it * HORIZONTAL_OUT_PADDING_TIMES
+                            else it
+                        },
+                    )
+                    .fillMaxWidth(),
+                horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End
             ) {
-                val customTextSelectionColors = TextSelectionColors(
-                    handleColor = color,
-                    backgroundColor = ColorUtils.blendARGB(
-                        color.toArgb(),
-                        contentColor.toArgb(),
-                        0.6f
-                    ).let(::Color)
+                BubbleTextField(
+                    text = message.content,
+                    isAnother = isAnother,
+                    color = color,
+                    contentColor = contentColor
                 )
-                CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
-                    SelectionContainer {
-                        Text(
-                            text = message.content,
-                            color = contentColor,
-                            modifier = Modifier
-                                .padding(
-                                    vertical = VERTICAL_IN_PADDING.dp,
-                                    horizontal = HORIZONTAL_IN_PADDING.dp
-                                ),
-                            textAlign = TextAlign.Start,
-                            fontSize = FONT_SIZE.sp
-                        )
-                    }
-                }
+            }
+            // tail
+        }
 
+    }
+}
+
+@Composable
+private fun BubbleTextField(
+    text: String,
+    isAnother: Boolean,
+    color: Color,
+    contentColor: Color
+) {
+    val shape = if (isAnother) RoundedCornerShape(
+        topEnd = BUBBLE_CORNER,
+        bottomStart = BUBBLE_SPECIAL_CORNER,
+        bottomEnd = BUBBLE_CORNER,
+        topStart = BUBBLE_CORNER
+    ) else RoundedCornerShape(
+        topEnd = BUBBLE_CORNER,
+        bottomStart = BUBBLE_CORNER,
+        bottomEnd = BUBBLE_SPECIAL_CORNER,
+        topStart = BUBBLE_CORNER
+    )
+    Surface(
+        shape = shape,
+        color = color,
+        elevation = 1.dp
+    ) {
+        val customTextSelectionColors = TextSelectionColors(
+            handleColor = color,
+            backgroundColor = ColorUtils.blendARGB(
+                color.toArgb(),
+                contentColor.toArgb(),
+                0.6f
+            ).let(::Color)
+        )
+        CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
+            SelectionContainer {
+                Text(
+                    text = text,
+                    color = contentColor,
+                    modifier = Modifier
+                        .padding(
+                            vertical = VERTICAL_IN_PADDING,
+                            horizontal = HORIZONTAL_IN_PADDING
+                        ),
+                    textAlign = TextAlign.Start,
+                    fontSize = FONT_SIZE
+                )
             }
         }
+
     }
 }
