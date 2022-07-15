@@ -66,45 +66,51 @@ class MessageRepositoryImpl(
         cid: Int,
         content: String
     ): Flow<Resource<Unit>> = flow {
-        val userId = Auth.currentUID
-        checkNotNull(userId) { "Please sign in first." }
         val uuid = UUID.randomUUID().toString()
-        val stagingMessage =
-            Message(
-                id = System.currentTimeMillis().toInt(),
-                cid = cid,
-                uid = userId,
-                content = content,
-                type = "text",
-                timestamp = System.currentTimeMillis(),
-                uuid = uuid,
-                sendState = Message.STATE_PENDING
-            )
-        messageDao.insert(stagingMessage)
-        emit(Resource.Loading)
-        chatService.sendMessage(cid, content, "text", uuid)
-            .handle { message ->
-                val serverUUID = message.uuid
-                val findByUUID = messageDao.findByUUID(serverUUID)
-                if (findByUUID != null && serverUUID == uuid) {
-                    messageDao.levelStagingMessage(
-                        uuid = uuid,
-                        id = message.id,
-                        cid = message.cid,
-                        timestamp = message.timestamp
-                    )
-                    emitResource(Unit)
-                } else {
-                    emitResource(
-                        message = "",
-                        code = ""
-                    )
+        try {
+            val userId = Auth.currentUID
+            checkNotNull(userId) { "Please sign in first." }
+            val stagingMessage =
+                Message(
+                    id = System.currentTimeMillis().toInt(),
+                    cid = cid,
+                    uid = userId,
+                    content = content,
+                    type = "text",
+                    timestamp = System.currentTimeMillis(),
+                    uuid = uuid,
+                    sendState = Message.STATE_PENDING
+                )
+            messageDao.insert(stagingMessage)
+            emit(Resource.Loading)
+            chatService.sendMessage(cid, content, "text", uuid)
+                .handle { message ->
+                    val serverUUID = message.uuid
+                    val findByUUID = messageDao.findByUUID(serverUUID)
+                    if (findByUUID != null && serverUUID == uuid) {
+                        messageDao.levelStagingMessage(
+                            uuid = uuid,
+                            id = message.id,
+                            cid = message.cid,
+                            timestamp = message.timestamp
+                        )
+                        emitResource(Unit)
+                    } else {
+                        emitResource(
+                            message = "",
+                            code = ""
+                        )
+                    }
                 }
-            }
-            .failure { message, code ->
-                messageDao.failedStagingMessage(uuid)
-                emitResource(message, code)
-            }
-            .map { }
+                .failure { message, code ->
+                    messageDao.failedStagingMessage(uuid)
+                    emitResource(message, code)
+                }
+                .map { }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            messageDao.failedStagingMessage(uuid)
+            emitResource(e.message ?: "Unknown Error", "?")
+        }
     }
 }

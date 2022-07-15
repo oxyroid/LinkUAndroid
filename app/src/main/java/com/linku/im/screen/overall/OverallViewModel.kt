@@ -120,8 +120,6 @@ class OverallViewModel @Inject constructor(
         object Default : Title(application.getString(R.string.app_name))
         object Connecting : Title(application.getString(R.string.connecting))
         object ConnectedFailed : Title(application.getString(R.string.connected_failed))
-        object Subscribing : Title(application.getString(R.string.subscribing))
-        object SubscribeFailed : Title(application.getString(R.string.subscribe_failed))
     }
 
     private fun updateTitle(title: Title) {

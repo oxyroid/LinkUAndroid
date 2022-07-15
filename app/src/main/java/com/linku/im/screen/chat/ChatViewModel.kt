@@ -47,7 +47,8 @@ class ChatViewModel @Inject constructor(
                                         Log.v(TAG, "Text Message is sending...(content:$content).")
                                     }
                                     _state.value = state.value.copy(
-                                        scrollToBottom = eventOf(Unit)
+                                        scrollToBottom = eventOf(Unit),
+                                        text = ""
                                     )
                                 }
                                 is Resource.Success -> {
@@ -57,7 +58,6 @@ class ChatViewModel @Inject constructor(
                                             "Text Message sent successfully(content:$content)."
                                         )
                                     }
-                                    _state.value = _state.value.copy(text = "")
                                 }
                                 is Resource.Failure -> {
                                     debug {
