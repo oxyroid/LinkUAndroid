@@ -19,3 +19,73 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Keep `Companion` object fields of serializable classes.
+# This avoids serializer lookup through `getDeclaredClasses` as done for named companion objects.
+-if @kotlinx.serialization.Serializable class **
+-keepclassmembers class <1> {
+    static <1>$Companion Companion;
+}
+
+# Keep `serializer()` on companion objects (both default and named) of serializable classes.
+-if @kotlinx.serialization.Serializable class ** {
+    static **$* *;
+}
+-keepclassmembers class <2>$<3> {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# Keep `INSTANCE.serializer()` of serializable objects.
+-if @kotlinx.serialization.Serializable class ** {
+    public static ** INSTANCE;
+}
+-keepclassmembers class <1> {
+    public static <1> INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
+}
+
+# @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+# Serializer for classes with named companion objects are retrieved using `getDeclaredClasses`.
+# If you have any, uncomment and replace classes with those containing named companion objects.
+#-keepattributes InnerClasses # Needed for `getDeclaredClasses`.
+#-if @kotlinx.serialization.Serializable class
+#com.example.myapplication.HasNamedCompanion, # <-- List serializable classes with named companions.
+#com.example.myapplication.HasNamedCompanion2
+#{
+#    static **$* *;
+#}
+#-keepnames class <1>$$serializer { # -keepnames suffices; class is kept when serializer() is kept.
+#    static <1>$$serializer INSTANCE;
+#}
+-dontwarn groovy.lang.GroovyObject
+-dontwarn groovy.lang.MetaClass
+-dontwarn java.lang.management.ManagementFactory
+-dontwarn javax.management.InstanceNotFoundException
+-dontwarn javax.management.MBeanRegistrationException
+-dontwarn javax.management.MBeanServer
+-dontwarn javax.management.MalformedObjectNameException
+-dontwarn javax.management.ObjectInstance
+-dontwarn javax.management.ObjectName
+-dontwarn javax.naming.Context
+-dontwarn javax.naming.InitialContext
+-dontwarn javax.naming.NamingException
+-dontwarn javax.servlet.ServletContainerInitializer
+-dontwarn org.bouncycastle.jsse.BCSSLParameters
+-dontwarn org.bouncycastle.jsse.BCSSLSocket
+-dontwarn org.bouncycastle.jsse.provider.BouncyCastleJsseProvider
+-dontwarn org.codehaus.groovy.reflection.ClassInfo
+-dontwarn org.codehaus.groovy.runtime.BytecodeInterface8
+-dontwarn org.codehaus.groovy.runtime.ScriptBytecodeAdapter
+-dontwarn org.codehaus.groovy.runtime.callsite.CallSite
+-dontwarn org.codehaus.groovy.runtime.callsite.CallSiteArray
+-dontwarn org.codehaus.janino.ClassBodyEvaluator
+-dontwarn org.codehaus.janino.ScriptEvaluator
+-dontwarn org.conscrypt.Conscrypt$Version
+-dontwarn org.conscrypt.Conscrypt
+-dontwarn org.conscrypt.ConscryptHostnameVerifier
+-dontwarn org.openjsse.javax.net.ssl.SSLParameters
+-dontwarn org.openjsse.javax.net.ssl.SSLSocket
+-dontwarn org.openjsse.net.ssl.OpenJSSE
+-dontwarn sun.reflect.Reflection

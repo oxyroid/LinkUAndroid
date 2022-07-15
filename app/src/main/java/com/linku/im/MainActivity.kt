@@ -74,12 +74,16 @@ fun App(
     val state by overall.state
     @OptIn(ExperimentalAnimationApi::class)
     OssTheme(state.isDarkMode) {
+        val color = if (!state.isDarkMode) MaterialTheme.colorScheme.primary
+        else MaterialTheme.colorScheme.surface
+        val contentColor = if (!state.isDarkMode) MaterialTheme.colorScheme.onPrimary
+        else MaterialTheme.colorScheme.onSurface
         WindowCompat.getInsetsController(window, LocalView.current)
-            .isAppearanceLightStatusBars = !state.isDarkMode
+            .isAppearanceLightStatusBars = false
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = MaterialTheme.colorScheme.background.toArgb()
-        window.navigationBarColor = MaterialTheme.colorScheme.background.toArgb()
+        window.statusBarColor = color.toArgb()
+        window.navigationBarColor = if (state.isDarkMode) color.toArgb() else contentColor.toArgb()
 
         val coroutineScope = rememberCoroutineScope()
         val navController = rememberAnimatedNavController()
@@ -97,8 +101,9 @@ fun App(
                     navIcon = state.icon,
                     title = state.title,
                     onNavClick = state.navClick,
+                    isDarkMode = state.isDarkMode,
                     onScroll = listState.isScrollInProgress,
-                    onMenuClick = { overall.onEvent(OverallEvent.ToggleTheme) }
+                    onMenuClick = { overall.onEvent(OverallEvent.ToggleDarkMode) }
                 )
             },
             snackbarHost = { MaterialSnackHost(scaffoldState.snackbarHostState) },

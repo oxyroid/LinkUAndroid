@@ -29,7 +29,7 @@ import com.linku.domain.entity.Conversation
 import com.linku.im.extension.times
 
 @Composable
-fun MainConversationItem(
+fun ConversationItem(
     conversation: Conversation? = null,
     unreadCount: Int = 0,
     pinned: Boolean = false,
@@ -73,7 +73,7 @@ fun MainConversationItem(
                     .fillMaxSize(),
                 error = {
                     Surface(
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.fillMaxSize()
                     ) {}
                 }

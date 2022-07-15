@@ -7,11 +7,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -19,6 +19,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -42,23 +43,25 @@ fun ChatScreen(
         viewModel.onEvent(ChatEvent.InitChat(cid))
     }
     val state by viewModel.state
+    val scope = rememberCoroutineScope()
     LaunchedEffect(state.event) {
         state.event.handle {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
 
+    val listState = rememberLazyListState()
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+        modifier = Modifier.fillMaxSize()
     ) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .background(MaterialTheme.colorScheme.background),
             horizontalAlignment = Alignment.CenterHorizontally,
             reverseLayout = true,
+            state = listState
         ) {
             itemsIndexed(state.messages, key = { _, item -> item.id }) { index, it ->
                 val next = if (index == state.messages.size - 1) null else state.messages[index + 1]
@@ -77,7 +80,7 @@ fun ChatScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.surface)
                 .navigationBarsPadding()
                 .imePadding()
                 .padding(8.dp),
@@ -94,10 +97,9 @@ fun ChatScreen(
                 placeholder = {
                     Text(text = "Type here..", color = MaterialTheme.colorScheme.onBackground)
                 },
-                enabled = !state.sending,
                 colors = TextFieldDefaults.textFieldColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    cursorColor = MaterialTheme.colorScheme.tertiary
+                    containerColor = MaterialTheme.colorScheme.background,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 )
             )
             Spacer(modifier = Modifier.width(4.dp))
@@ -105,9 +107,8 @@ fun ChatScreen(
                 onClick = {
                     viewModel.onEvent(ChatEvent.SendTextMessage)
                 },
-                enabled = !state.sending
             ) {
-                val imageVector = if (state.sending) Icons.Rounded.Refresh else Icons.Rounded.Send
+                val imageVector = Icons.Rounded.Send
                 Icon(
                     imageVector = imageVector,
                     contentDescription = "send",
@@ -116,5 +117,10 @@ fun ChatScreen(
             }
         }
 
+    }
+    LaunchedEffect(state.scrollToBottom) {
+        state.scrollToBottom.handle {
+            listState.animateScrollToItem(0)
+        }
     }
 }

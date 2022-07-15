@@ -13,10 +13,11 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 32
-        versionCode 12
-        versionName "0.6.5"
+        versionCode 13
+        versionName "0.7.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
         vectorDrawables {
             useSupportLibrary true
         }
@@ -29,8 +30,13 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            // shrinkResources true
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

@@ -20,16 +20,17 @@ class AuthRepositoryImpl(
             authService.signIn(email, password)
                 .handle {
                     Auth.update(uid = it.id, token = it.token)
-                }.map {}
+                }
+                .map {}
         }
 
     override suspend fun signUp(
         email: String,
         password: String,
-        nickName: String,
+        name: String,
         realName: String?
     ): Result<Unit> = sandbox {
-        authService.signUp(email, password, nickName, realName)
+        authService.signUp(email, password, name, realName)
     }
 
     override suspend fun verifyEmail(code: String) = sandbox {
@@ -40,7 +41,7 @@ class AuthRepositoryImpl(
         authService.verifyEmail()
     }
 
-    override suspend fun clearLocal() {
+    override suspend fun signOut() {
         userDao.clear()
         conversationDao.clear()
         messageDao.clear()

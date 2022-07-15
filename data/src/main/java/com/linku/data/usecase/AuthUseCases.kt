@@ -23,7 +23,7 @@ data class SignInUseCase(
     ): Flow<Resource<Unit>> = resourceFlow {
         repository.signIn(email, password)
             .handle(::emitResource)
-            .catch(::emitResource)
+            .failure(::emitResource)
     }
 }
 
@@ -38,7 +38,7 @@ data class SignUpUseCase(
     ): Flow<Resource<Unit>> = resourceFlow {
         repository.signUp(email, password, nickName, realName)
             .handleUnit(::emitResource)
-            .catch(::emitResource)
+            .failure(::emitResource)
     }
 }
 
@@ -47,7 +47,7 @@ data class SignOutUseCase(
 ) {
     operator fun invoke(): Flow<Resource<Unit>> = resourceFlow {
         Auth.update()
-        repository.clearLocal()
+        repository.signOut()
         emitResource(Unit)
     }
 }

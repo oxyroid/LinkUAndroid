@@ -18,6 +18,6 @@ data class FindUserUseCase(
     operator fun invoke(id: Int): Flow<Resource<User>> = resourceFlow {
         repository.getById(id)
             .handle(::emitResource)
-            .catch(::emitResource)
+            .failure(::emitResource)
     }
 }

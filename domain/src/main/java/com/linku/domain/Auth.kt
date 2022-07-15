@@ -1,5 +1,6 @@
 package com.linku.domain
 
+import androidx.annotation.Keep
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +46,7 @@ object Auth {
         }
     }
 
+    @Keep
     @Serializable
     data class Token(
         val id: Int,

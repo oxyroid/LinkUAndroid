@@ -6,8 +6,11 @@ import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.Card
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,14 +38,12 @@ private val BUBBLE_CORNER = 12.dp
 private val BUBBLE_SPECIAL_CORNER = 0.dp
 private val FONT_SIZE = 14.sp
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ChatBubble(
     message: Message,
     modifier: Modifier = Modifier,
     isAnother: Boolean = false,
-    isShowTime: Boolean = false,
-    onClick: () -> Unit = {}
+    isShowTime: Boolean = false
 ) {
     val color: Color =
         if (isAnother) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
@@ -52,35 +54,8 @@ fun ChatBubble(
         modifier = modifier
     ) {
         isShowTime.ifTrue {
-            Card(
-                backgroundColor = MaterialTheme.colorScheme.background,
-                contentColor = MaterialTheme.colorScheme.onBackground,
-                onClick = onClick,
-                shape = RoundedCornerShape(BUBBLE_CORNER)
-            ) {
-                val calender = Calendar.getInstance()
-                calender.time = Date(message.timestamp)
-                val hour = calender.get(Calendar.HOUR_OF_DAY)
-                val minute = calender.get(Calendar.MINUTE)
-                val text = buildString {
-                    if (hour < 10) append("0$hour") else append(hour.toString())
-                    append(":")
-                    if (minute < 10) append("0$minute") else append(minute.toString())
-                }
-                Text(
-                    text = text,
-                    modifier = Modifier.padding(
-                        horizontal = 8.dp,
-                        vertical = 4.dp
-                    ),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily.SansSerif
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
+            TimestampCard(timestamp = message.timestamp)
         }
-
         Box(
             modifier = Modifier.padding(
                 top = VERTICAL_OUT_PADDING,
@@ -102,6 +77,27 @@ fun ChatBubble(
                     .fillMaxWidth(),
                 horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End
             ) {
+                when (message.sendState) {
+                    Message.STATE_PENDING -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .align(Alignment.Bottom)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
+                    Message.STATE_FAILED -> {
+                        Icon(
+                            imageVector = Icons.Rounded.Warning,
+                            contentDescription = "",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .align(Alignment.Bottom)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
+                }
                 BubbleTextField(
                     text = message.content,
                     isAnother = isAnother,
@@ -161,6 +157,37 @@ private fun BubbleTextField(
                 )
             }
         }
-
     }
+}
+
+@Composable
+private fun TimestampCard(timestamp: Long) {
+    Card(
+        backgroundColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        shape = RoundedCornerShape(BUBBLE_CORNER),
+        modifier = Modifier.padding(top = VERTICAL_IN_PADDING)
+    ) {
+        val calender = Calendar.getInstance()
+        calender.time = Date(timestamp)
+        val hour = calender.get(Calendar.HOUR_OF_DAY)
+        val minute = calender.get(Calendar.MINUTE)
+        val text = buildString {
+            if (hour < 10) append("0$hour") else append(hour.toString())
+            append(":")
+            if (minute < 10) append("0$minute") else append(minute.toString())
+        }
+        Text(
+            text = text,
+            modifier = Modifier.padding(
+                horizontal = 8.dp,
+                vertical = 4.dp
+            ),
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 14.sp,
+            fontFamily = FontFamily.SansSerif,
+            fontWeight = FontWeight.Bold
+        )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
 }

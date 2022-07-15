@@ -46,7 +46,6 @@ class OverallViewModel @Inject constructor(
     override fun onEvent(event: OverallEvent) {
         when (event) {
             is OverallEvent.InitSession -> initSession()
-            OverallEvent.Dispatcher -> subscribeDispatcher()
             OverallEvent.RestoreDarkMode -> {
                 val isDarkMode = MMKV.defaultMMKV().getBoolean(SAVED_DARK_MODE, false)
                 _state.value = state.value.copy(
@@ -55,8 +54,11 @@ class OverallViewModel @Inject constructor(
             }
             OverallEvent.PopBackStack -> navController.navigateUp()
 
-            OverallEvent.ToggleTheme -> _state.value =
-                state.value.copy(isDarkMode = !state.value.isDarkMode)
+            OverallEvent.ToggleDarkMode -> {
+                MMKV.defaultMMKV().encode(SAVED_DARK_MODE, !state.value.isDarkMode)
+                _state.value =
+                    state.value.copy(isDarkMode = !state.value.isDarkMode)
+            }
 
             OverallEvent.Disconnect -> viewModelScope.launch { messageUseCases.closeSessionUseCase() }
             is OverallEvent.Navigate -> navController.navigate(event.screen.route)
@@ -142,8 +144,8 @@ class OverallViewModel @Inject constructor(
                 Resource.Loading -> {}
                 is Resource.Success -> {
                     updateTitle(Title.Default)
-                    messageUseCases.observeMessagesUseCase(viewModelScope).launchIn(this)
-                    onEvent(OverallEvent.Dispatcher)
+                    messageUseCases.observeMessagesUseCase()
+                        .launchIn(this)
                 }
                 is Resource.Failure -> {
                     updateTitle(Title.ConnectedFailed)
@@ -157,26 +159,4 @@ class OverallViewModel @Inject constructor(
         }
     }
 
-    private fun subscribeDispatcher() {
-        viewModelScope.launch {
-            when (messageUseCases.dispatcherUseCase()) {
-                Resource.Loading -> {
-                    updateTitle(Title.Subscribing)
-                    debug { Log.v(TAG, "Dispatcher subscribing...") }
-                }
-                is Resource.Success -> {
-                    updateTitle(Title.Default)
-                    debug { Log.d(TAG, "Dispatcher subscribed successfully.") }
-                    _state.value = state.value.copy(
-                        online = true,
-                        title = application.getString(R.string.app_name)
-                    )
-                }
-                is Resource.Failure -> {
-                    updateTitle(Title.SubscribeFailed)
-                    debug { Log.e(TAG, "Failed to subscribe Dispatcher.") }
-                }
-            }
-        }
-    }
 }

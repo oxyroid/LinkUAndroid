@@ -16,8 +16,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.Auth
 import com.linku.im.overall
 import com.linku.im.screen.Screen
-import com.linku.im.screen.main.composable.MainConversationItem
-import com.linku.im.screen.main.composable.MainDrawer
+import com.linku.im.screen.main.composable.ConversationItem
+import com.linku.im.screen.main.composable.Drawer
 import com.linku.im.screen.overall.OverallEvent
 import com.linku.im.ui.drawVerticalScrollbar
 
@@ -28,7 +28,7 @@ fun MainScreen(
     listState: LazyListState
 ) {
     val state by mainViewModel.state
-    MainDrawer(
+    Drawer(
         title = state.drawerTitle,
         drawerState = scaffoldState.drawerState,
         onNavigate = { screen ->
@@ -64,13 +64,13 @@ fun MainScreen(
             if (state.loading) {
                 repeat(12) {
                     item {
-                        MainConversationItem()
+                        ConversationItem()
                         Divider()
                     }
                 }
             } else {
                 itemsIndexed(state.conversations) { index, conversation ->
-                    MainConversationItem(
+                    ConversationItem(
                         conversation,
                         pinned = index < 1,
                         unreadCount = index / 2

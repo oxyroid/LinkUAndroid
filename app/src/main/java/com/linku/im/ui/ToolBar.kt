@@ -26,24 +26,29 @@ fun ToolBar(
     navIcon: ImageVector = Icons.Default.ArrowBack,
     title: String = "",
     onScroll: Boolean = false,
+    isDarkMode: Boolean = false,
     onMenuClick: () -> Unit,
     onNavClick: () -> Unit
 ) {
     val elevation by animateDpAsState(if (onScroll) 16.dp else 4.dp)
+    val color = if (!isDarkMode) MaterialTheme.colorScheme.primary
+    else MaterialTheme.colorScheme.surface
+    val contentColor = if (!isDarkMode) MaterialTheme.colorScheme.onPrimary
+    else MaterialTheme.colorScheme.onSurface
     Column {
         Spacer(
             modifier = Modifier
                 .windowInsetsTopHeight(WindowInsets.statusBars)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(color)
         )
         TopAppBar(
-            backgroundColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurface,
+            backgroundColor = color,
+            contentColor = contentColor,
             navigationIcon = {
                 MaterialIconButton(
                     icon = navIcon,
                     onClick = onNavClick,
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = contentColor
                 )
             },
             title = {
@@ -63,7 +68,7 @@ fun ToolBar(
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "",
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = contentColor
                     )
                 }
             },

@@ -58,14 +58,14 @@ class MainViewModel @Inject constructor(
     }
 
     private fun fetchOneWord() {
-        oneWordUseCases.neteaseUseCase()
+        oneWordUseCases.hitokotoUseCase()
             .onEach { resource ->
                 _state.value = when (resource) {
                     Resource.Loading -> state.value.copy(
                         drawerTitle = null
                     )
                     is Resource.Success -> state.value.copy(
-                        drawerTitle = resource.data
+                        drawerTitle = resource.data.hitokoto
                     )
                     is Resource.Failure -> state.value.copy(
                         drawerTitle = resource.message

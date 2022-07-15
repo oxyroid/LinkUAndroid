@@ -18,7 +18,6 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases
 ) : BaseViewModel<ChatState, ChatEvent>(ChatState()) {
-
     override fun onEvent(event: ChatEvent) {
         when (event) {
             is ChatEvent.InitChat -> {
@@ -26,8 +25,7 @@ class ChatViewModel @Inject constructor(
                     cid = event.cid,
                 )
                 viewModelScope.launch {
-                    // overall.message 是 SharedFlow<Message>, replay = 16
-                    messageUseCases.observeMessagesByCIDUseCase(viewModelScope, event.cid)
+                    messageUseCases.observeMessagesByCIDUseCase(event.cid)
                         .onEach {
                             _state.value = state.value.copy(
                                 messages = it
@@ -41,27 +39,36 @@ class ChatViewModel @Inject constructor(
                 val content = state.value.text
                 if (content.isBlank()) return
                 viewModelScope.launch {
-                    val resource = messageUseCases.textMessageUseCase(cid, content)
-                    _state.value = when (resource) {
-                        Resource.Loading -> {
-                            debug {
-                                Log.v(TAG, "Text Message is sending...(content:$content).")
+                    messageUseCases.textMessageUseCase(cid, content)
+                        .onEach { resource ->
+                            when (resource) {
+                                Resource.Loading -> {
+                                    debug {
+                                        Log.v(TAG, "Text Message is sending...(content:$content).")
+                                    }
+                                    _state.value = state.value.copy(
+                                        scrollToBottom = eventOf(Unit)
+                                    )
+                                }
+                                is Resource.Success -> {
+                                    debug {
+                                        Log.d(
+                                            TAG,
+                                            "Text Message sent successfully(content:$content)."
+                                        )
+                                    }
+                                    _state.value = _state.value.copy(text = "")
+                                }
+                                is Resource.Failure -> {
+                                    debug {
+                                        Log.e(TAG, "Failed to send text message(content:$content).")
+                                    }
+                                    _state.value =
+                                        _state.value.copy(event = eventOf(resource.message))
+                                }
                             }
-                            _state.value.copy(sending = true)
                         }
-                        is Resource.Success -> {
-                            debug {
-                                Log.d(TAG, "Text Message sent successfully(content:$content).")
-                            }
-                            _state.value.copy(sending = false, text = "")
-                        }
-                        is Resource.Failure -> {
-                            debug {
-                                Log.e(TAG, "Failed to send text message(content:$content).")
-                            }
-                            _state.value.copy(sending = false, event = eventOf(resource.message))
-                        }
-                    }
+                        .launchIn(viewModelScope)
                 }
             }
             is ChatEvent.TextChange -> _state.value = _state.value.copy(text = event.text)

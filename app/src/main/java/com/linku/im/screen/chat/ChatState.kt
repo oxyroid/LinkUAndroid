@@ -8,7 +8,7 @@ data class ChatState(
     val cid: Int = -1,
     val text: String = "",
     val loading: Boolean = false,
-    val sending: Boolean = false,
     val event: Event<String> = Event.Handled(),
-    val messages: List<Message> = emptyList()
+    val messages: List<Message> = emptyList(),
+    val scrollToBottom: Event<Unit> = Event.Handled()
 )

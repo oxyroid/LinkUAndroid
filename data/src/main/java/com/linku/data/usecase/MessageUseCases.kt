@@ -5,12 +5,10 @@ import com.linku.domain.entity.Message
 import com.linku.domain.repository.MessageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 data class MessageUseCases @Inject constructor(
     val textMessageUseCase: TextMessageUseCase,
-    val dispatcherUseCase: DispatcherUseCase,
     val initSessionUseCase: InitSessionUseCase,
     val observeMessagesUseCase: ObserveMessagesUseCase,
     val observeMessagesByCIDUseCase: ObserveMessagesByCidUseCase,
@@ -22,13 +20,7 @@ data class TextMessageUseCase(
 ) {
     suspend operator fun invoke(
         cid: Int, content: String
-    ): Resource<Unit> = repository.sendTextMessage(cid, content).toUnitResource()
-}
-
-data class DispatcherUseCase(
-    private val repository: MessageRepository
-) {
-    suspend operator fun invoke(): Resource<Unit> = repository.subscribe().toUnitResource()
+    ): Flow<Resource<Unit>> = repository.sendTextMessage(cid, content)
 }
 
 data class InitSessionUseCase(
@@ -43,10 +35,7 @@ data class InitSessionUseCase(
 data class ObserveMessagesUseCase(
     private val repository: MessageRepository
 ) {
-    operator fun invoke(
-        scope: CoroutineScope
-    ): Flow<List<Message>> {
-        repository.persistence(scope)
+    operator fun invoke(): Flow<List<Message>> {
         return repository.incoming()
     }
 }
@@ -54,12 +43,8 @@ data class ObserveMessagesUseCase(
 data class ObserveMessagesByCidUseCase(
     private val repository: MessageRepository
 ) {
-    operator fun invoke(scope: CoroutineScope, cid: Int): Flow<List<Message>> {
-        repository.persistence(scope)
-        return repository.incoming()
-            .map {
-                it.filter { message -> message.cid == cid }.toList()
-            }
+    operator fun invoke(cid: Int): Flow<List<Message>> {
+        return repository.incoming(cid)
     }
 }
 

@@ -1,5 +1,6 @@
 package com.linku.domain
 
+import androidx.annotation.Keep
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
@@ -11,12 +12,15 @@ import kotlinx.serialization.Serializable
  */
 sealed class Resource<out T> {
     @Serializable
+    @Keep
     object Loading : Resource<Nothing>()
 
     @Serializable
+    @Keep
     data class Success<T>(val data: T) : Resource<T>()
 
     @Serializable
+    @Keep
     data class Failure<T>(
         val message: String,
         val code: String = "?"

@@ -36,6 +36,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.create
+import java.time.Duration
 import javax.inject.Singleton
 
 @Module
@@ -53,6 +54,7 @@ object AppModule {
     @Singleton
     fun provideJson(): Json = Json {
         ignoreUnknownKeys = true
+        coerceInputValues = true
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -67,15 +69,16 @@ object AppModule {
                 val request = original.newBuilder()
                     .also { builder ->
                         Auth.token?.let { token ->
-                            builder.header("Auth", token)
+                            builder.header(Constants.HEADER_JWT, token)
                         }
                     }
                     .method(original.method, original.body)
                     .build()
                 chain.proceed(request)
             }
+            .callTimeout(Duration.ofMillis(Constants.RETROFIT_CALL_TIMEOUT))
             .build()
-        val contentType = "application/json".toMediaType()
+        val contentType = Constants.MEDIA_TYPE_JSON.toMediaType()
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
             .client(client)
@@ -93,12 +96,12 @@ object AppModule {
             }
             install(WebSockets) {
                 contentConverter = KotlinxWebsocketSerializationConverter(Json)
-                pingInterval = 8000L
+                pingInterval = Constants.KTOR_CALL_TIMEOUT
             }
             install(HttpTimeout) {
-                socketTimeoutMillis = 8000L
-                requestTimeoutMillis = 8000L
-                connectTimeoutMillis = 8000L
+                socketTimeoutMillis = Constants.KTOR_CALL_TIMEOUT
+                requestTimeoutMillis = Constants.KTOR_CALL_TIMEOUT
+                connectTimeoutMillis = Constants.KTOR_CALL_TIMEOUT
             }
             install(ContentNegotiation) {
                 json(
@@ -123,6 +126,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAuthService(retrofit: Retrofit): AuthService = retrofit.create()
+
 
     @Provides
     @Singleton
@@ -209,7 +213,6 @@ object AppModule {
     ): MessageUseCases {
         return MessageUseCases(
             textMessageUseCase = TextMessageUseCase(repository),
-            dispatcherUseCase = DispatcherUseCase(repository),
             initSessionUseCase = InitSessionUseCase(repository),
             observeMessagesUseCase = ObserveMessagesUseCase(repository),
             closeSessionUseCase = CloseSessionUseCase(repository),
@@ -234,8 +237,6 @@ object AppModule {
     ): OneWordUseCases {
         return OneWordUseCases(
             hitokotoUseCase = HitokotoUseCase(service),
-            neteaseUseCase = NeteaseUseCase(service)
         )
     }
-
 }

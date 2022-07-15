@@ -9,13 +9,14 @@ interface AuthRepository {
     suspend fun signUp(
         email: String,
         password: String,
-        nickName: String,
+        name: String,
         realName: String?
     ): Result<Unit>
+
+    suspend fun signOut()
 
     suspend fun verifyEmail(code: String): Result<Unit>
 
     suspend fun resendEmail(): Result<Unit>
 
-    suspend fun clearLocal()
 }

@@ -21,24 +21,17 @@ interface AuthService {
         @Field("password") password: String
     ): Result<Auth.Token>
 
-
-    @GET("auth/signout")
-    suspend fun signOut(): Result<Unit>
-
     @POST("auth/token")
-    suspend fun token(
-        @Header("Auth") token: String = Auth.token ?: ""
-    ): Result<String>
-
-
-    @GET("auth/email/{code}")
-    suspend fun verifyEmailCode(@Path("code") code: String): Result<Unit>
+    suspend fun token(): Result<String>
 
     @GET("auth/email")
     suspend fun verifyEmail(): Result<Unit>
 
+    @GET("auth/email/{code}")
+    suspend fun verifyEmailCode(@Path("code") code: String): Result<Unit>
+
     @GET("auth/forget")
-    suspend fun forgetPassword(code: String): Result<Unit>
+    suspend fun forgetPassword(): Result<Unit>
 
     @FormUrlEncoded
     @POST("auth/forget/{code}")

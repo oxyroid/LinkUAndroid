@@ -7,8 +7,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 
-@Keep
 @Serializable
+@Keep
 data class Result<out T>(
     private val data: T? = null,
     private val code: String = "?",
@@ -30,7 +30,7 @@ data class Result<out T>(
         return this
     }
 
-    suspend fun catch(block: suspend (String, String) -> Unit): Result<T> {
+    suspend fun failure(block: suspend (String, String) -> Unit): Result<T> {
         if (!isSuccess) block.invoke(message ?: "Unknown Error", code)
         return this
     }
@@ -60,6 +60,7 @@ inline fun <T> sandbox(block: () -> Result<T>): Result<T> {
     return try {
         block.invoke()
     } catch (e: SerializationException) {
+        debug { Log.e("SerializationException", "", e) }
         Result(
             code = "反序列化错误",
             message = "请将应用升级至最新版本再试！"

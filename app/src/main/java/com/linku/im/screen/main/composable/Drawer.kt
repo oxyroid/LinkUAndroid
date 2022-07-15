@@ -1,23 +1,21 @@
 package com.linku.im.screen.main.composable
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.*
+import androidx.compose.material.DrawerState
+import androidx.compose.material.ModalDrawer
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.AccountCircle
 import androidx.compose.material.icons.sharp.Info
 import androidx.compose.material.icons.sharp.Settings
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
@@ -32,19 +30,19 @@ import com.linku.im.ui.Inbox
 import com.linku.im.ui.theme.Typography
 import kotlinx.coroutines.launch
 
-private val listDrawerItems = listOf(
-    MainDrawerItemDTO(R.string.inbox, Screen.ProfileScreen, Icons.Inbox),
-    MainDrawerItemDTO(R.string.account, Screen.ProfileScreen, Icons.Sharp.AccountCircle),
-    MainDrawerItemDTO(R.string.settings, Screen.ProfileScreen, Icons.Sharp.Settings),
-    MainDrawerItemDTO(R.string.info, Screen.InfoScreen, Icons.Sharp.Info)
+private val drawerItems = listOf(
+    DrawerItem(R.string.inbox, Screen.ProfileScreen, Icons.Inbox),
+    DrawerItem(R.string.account, Screen.ProfileScreen, Icons.Sharp.AccountCircle),
+    DrawerItem(R.string.settings, Screen.ProfileScreen, Icons.Sharp.Settings),
+    DrawerItem(R.string.info, Screen.InfoScreen, Icons.Sharp.Info)
 )
 
 @Composable
-fun MainDrawer(
+fun Drawer(
     title: String?,
     drawerState: DrawerState,
     onNavigate: (Screen) -> Unit,
-    onHeaderClick: ()->Unit,
+    onHeaderClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -69,7 +67,7 @@ fun MainDrawer(
                     modifier = Modifier.padding(24.dp)
                 ) {
                     ClickableText(
-                        text = AnnotatedString(title?:""),
+                        text = AnnotatedString(title ?: ""),
                         onClick = { onHeaderClick() },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -86,13 +84,17 @@ fun MainDrawer(
                         )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    MainDrawerBody(
-                        items = listDrawerItems,
-                        selectedIndex = 0,
+                    val selectedIndex = remember {
+                        mutableStateOf(0)
+                    }
+                    DrawerBody(
+                        items = drawerItems,
+                        selectedIndex = selectedIndex,
                         modifier = Modifier
                     ) {
                         scope.launch { drawerState.close() }
                         onNavigate(it.screen)
+                        selectedIndex.value = drawerItems.indexOf(it)
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     debug {
@@ -114,52 +116,20 @@ fun MainDrawer(
 }
 
 @Composable
-fun MainDrawerBody(
-    items: List<MainDrawerItemDTO>,
-    selectedIndex: Int,
+private fun DrawerBody(
+    items: List<DrawerItem>,
+    selectedIndex: State<Int>,
     modifier: Modifier,
-    onItemClick: (MainDrawerItemDTO) -> Unit
+    onItemClick: (DrawerItem) -> Unit
 ) {
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
         items.forEachIndexed { index, item ->
             Spacer(modifier = Modifier.height(8.dp))
-            MainDrawerItem(selected = index == selectedIndex, item = item) { onItemClick(item) }
+            DrawerItem(selected = index == selectedIndex.value, item = item) {
+                onItemClick(item)
+            }
         }
     }
-}
-
-@Composable
-private fun MainDrawerItem(
-    item: MainDrawerItemDTO,
-    selected: Boolean = false,
-    onClick: () -> Unit
-) {
-    Surface(
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer
-        else Color.Unspecified,
-        contentColor = MaterialTheme.colorScheme.primary,
-        shape = RoundedCornerShape(25)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(
-                    vertical = 12.dp,
-                    horizontal = 18.dp
-                )
-        ) {
-            Icon(imageVector = item.icon, contentDescription = item.icon.name)
-            Text(
-                text = stringResource(item.titleRes),
-                modifier = Modifier.padding(start = 12.dp),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
-    }
-
 }

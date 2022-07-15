@@ -20,7 +20,7 @@ sealed class OverallEvent {
     /**
      * Change theme state to effect composable.
      */
-    object ToggleTheme : OverallEvent()
+    object ToggleDarkMode : OverallEvent()
 
     /**
      * Disconnect the websocket flow.
@@ -60,8 +60,6 @@ sealed class OverallEvent {
      * @param uid The user ID.
      */
     data class InitSession(val uid: Int) : OverallEvent()
-
-    object Dispatcher : OverallEvent()
 
     /**
      * Observe the current user changed event.
