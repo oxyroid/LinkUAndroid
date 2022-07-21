@@ -1,13 +1,13 @@
-package com.linku.im.screen.login
+package com.linku.im.screen.sign
 
-sealed class LoginEvent {
+sealed class SignEvent {
     data class SignIn(
         val email: String,
         val password: String
-    ) : LoginEvent()
+    ) : SignEvent()
 
     data class SignUp(
         val email: String,
         val password: String
-    ) : LoginEvent()
+    ) : SignEvent()
 }

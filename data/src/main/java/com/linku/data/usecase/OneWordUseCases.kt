@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 data class OneWordUseCases @Inject constructor(
-    val hitokotoUseCase: HitokotoUseCase,
+    val hitokoto: HitokotoUseCase,
 )
 
 data class HitokotoUseCase(

@@ -44,4 +44,7 @@ interface MessageDao {
 
     @Query("DELETE FROM Message WHERE sendState = 0 OR sendState = 2")
     suspend fun clearStagingMessages()
+
+    @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC LIMIT 1")
+    fun getLatestMessageByCid(cid: Int): Flow<Message?>
 }

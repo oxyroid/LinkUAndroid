@@ -1,4 +1,4 @@
-package com.linku.im.screen.login.composable
+package com.linku.im.screen.sign.composable
 
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton

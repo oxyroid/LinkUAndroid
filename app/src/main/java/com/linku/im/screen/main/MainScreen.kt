@@ -1,26 +1,34 @@
 package com.linku.im.screen.main
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.ScaffoldState
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.Auth
-import com.linku.im.overall
+import com.linku.im.global.LinkUEvent
 import com.linku.im.screen.Screen
 import com.linku.im.screen.main.composable.ConversationItem
 import com.linku.im.screen.main.composable.Drawer
-import com.linku.im.screen.overall.OverallEvent
+import com.linku.im.ui.ToolBarAction
 import com.linku.im.ui.drawVerticalScrollbar
+import com.linku.im.vm
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainScreen(
     mainViewModel: MainViewModel = hiltViewModel(),
@@ -28,6 +36,12 @@ fun MainScreen(
     listState: LazyListState
 ) {
     val state by mainViewModel.state
+    vm.onActions {
+        ToolBarAction(
+            onClick = { vm.onEvent(LinkUEvent.ToggleDarkMode) },
+            imageVector = Icons.Default.Settings
+        )
+    }
     Drawer(
         title = state.drawerTitle,
         drawerState = scaffoldState.drawerState,
@@ -36,55 +50,60 @@ fun MainScreen(
                 Screen.ProfileScreen -> {
                     val screenActual =
                         Screen.LoginScreen.takeIf { Auth.currentUID == null } ?: screen
-                    overall.onEvent(OverallEvent.Navigate(screenActual))
+                    vm.onEvent(LinkUEvent.Navigate(screenActual))
                 }
-
-                else -> overall.onEvent(OverallEvent.Navigate(screen))
+                Screen.MainScreen -> {}
+                else -> vm.onEvent(LinkUEvent.Navigate(screen))
             }
         },
         onHeaderClick = {
             mainViewModel.onEvent(MainEvent.OneWord)
         }
     ) {
-        FloatingActionButton(
-            onClick = { /*TODO*/ },
+        Surface(
+            shape = RoundedCornerShape(topStartPercent = 5, topEndPercent = 5),
+            modifier = Modifier.padding(
+                start = 8.dp,
+                end = 8.dp,
+                top = 8.dp,
+            )
         ) {
-
-        }
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .drawVerticalScrollbar(
-                    state = listState
-                ),
-            userScrollEnabled = !state.loading
-        ) {
-            if (state.loading) {
-                repeat(12) {
-                    item {
-                        ConversationItem()
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+                    .drawVerticalScrollbar(
+                        state = listState
+                    ),
+                userScrollEnabled = !state.loading
+            ) {
+                if (state.loading) {
+                    repeat(12) {
+                        item {
+                            ConversationItem()
+                            Divider()
+                        }
+                    }
+                } else {
+                    itemsIndexed(state.conversations) { index, conversation ->
+                        ConversationItem(
+                            conversation = conversation,
+                            pinned = index < 1,
+                            unreadCount = index / 2,
+                            modifier = Modifier.animateItemPlacement()
+                        ) {
+                            vm.onEvent(
+                                LinkUEvent.NavigateWithArgs(
+                                    Screen.ChatScreen.withArgs(conversation.id)
+                                )
+                            )
+                        }
                         Divider()
                     }
                 }
-            } else {
-                itemsIndexed(state.conversations) { index, conversation ->
-                    ConversationItem(
-                        conversation,
-                        pinned = index < 1,
-                        unreadCount = index / 2
-                    ) {
-                        overall.onEvent(
-                            OverallEvent.NavigateWithArgs(
-                                Screen.ChatScreen.withArgs(conversation.id)
-                            )
-                        )
-                    }
-                    Divider()
-                }
-            }
 
+            }
         }
     }
 }

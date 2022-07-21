@@ -1,4 +1,4 @@
-package com.linku.im.screen.profile.composable
+package com.linku.im.screen.introduce.composable
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -8,38 +8,42 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
-fun ProfileItems(
+fun ProfileList(
     label: String,
-    items: List<Setting>
+    items: List<Property>,
+    onItemClick: (Property) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
-            .padding(top = 18.dp)
+            .padding(top = 12.dp)
     ) {
         Text(
             text = label,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(
                 start = 24.dp,
                 end = 24.dp,
-                bottom = 8.dp
-            ),
-            fontSize = 16.sp
+                bottom = 4.dp
+            )
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
             items.forEachIndexed { index, settingItem ->
-                ProfileItem(settingItem, index != items.size - 1)
+                IntroduceItem(
+                    property = settingItem,
+                    onClick = {
+                        onItemClick(settingItem)
+                    },
+                    divider = index != items.size - 1
+                )
             }
         }
     }

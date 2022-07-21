@@ -12,7 +12,5 @@ class UserRepositoryImpl(
 
     override suspend fun getById(id: Int) = sandbox {
         userService.getById(id)
-            .map { it.toUser() }
-            .handle(userDao::insert)
     }
 }

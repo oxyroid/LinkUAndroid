@@ -1,6 +1,5 @@
 package com.linku.domain.entity
 
-import androidx.annotation.Keep
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
@@ -10,10 +9,19 @@ import kotlinx.serialization.Serializable
 
 @Entity
 @TypeConverters(IntListConverter::class)
-@Serializable
-@Keep
 data class Conversation(
     @PrimaryKey
+    val id: Int,
+    val updatedAt: Long = 0L,
+    val name: String = "",
+    val avatar: String = "",
+    val owner: Int,
+    val member: List<Int> = emptyList(),
+    val description: String = ""
+)
+
+@Serializable
+data class ConversationDTO(
     @SerialName("id")
     val id: Int,
     @SerialName("updatedAt")
@@ -28,4 +36,8 @@ data class Conversation(
     val member: List<Int> = emptyList(),
     @SerialName("description")
     val description: String = ""
+)
+
+fun ConversationDTO.toConversation() = Conversation(
+    id, updatedAt, name, avatar, owner, member, description
 )

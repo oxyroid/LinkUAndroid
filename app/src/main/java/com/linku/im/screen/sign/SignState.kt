@@ -1,8 +1,8 @@
-package com.linku.im.screen.login
+package com.linku.im.screen.sign
 
 import com.linku.domain.Event
 
-data class LoginState(
+data class SignState(
     val registerEvent: Event<Unit> = Event.Handled(),
     val loginEvent: Event<Unit> = Event.Handled(),
     val loading: Boolean = false,

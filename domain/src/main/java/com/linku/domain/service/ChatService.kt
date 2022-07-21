@@ -1,7 +1,7 @@
 package com.linku.domain.service
 
 import com.linku.domain.Result
-import com.linku.domain.entity.Conversation
+import com.linku.domain.entity.ConversationDTO
 import com.linku.domain.entity.Member
 import com.linku.domain.entity.MessageDTO
 import retrofit2.http.*
@@ -13,7 +13,7 @@ interface ChatService {
     suspend fun sendMessage(
         @Path("cid") cid: Int,
         @Field("content") content: String,
-        @Field("type") type: String,
+        @Field("type") type: String?,
         @Field("uuid") uuid: String
     ): Result<MessageDTO>
 
@@ -62,7 +62,7 @@ interface ChatService {
 
 
     @GET("chats/{cid}")
-    suspend fun getById(@Path("cid") cid: Int): Result<Conversation>
+    suspend fun getById(@Path("cid") cid: Int): Result<ConversationDTO>
 
     @GET("chats/{cid}/members")
     suspend fun getMembersByCid(@Path("cid") cid: Int): Result<List<Member>>
@@ -81,4 +81,15 @@ interface ChatService {
 
     @GET("chats/mqtt")
     suspend fun subscribe(): Result<Unit>
+
+    @GET("chats/self")
+    suspend fun getConversationsBySelf(
+        @Query("type") type: Int? = null,
+        @Query("owner") owner: Boolean? = null
+    ): Result<List<ConversationDTO>>
+
+    companion object {
+        const val TYPE_PM = 0
+        const val TYPE_GROUP = 1
+    }
 }

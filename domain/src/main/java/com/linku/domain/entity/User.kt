@@ -21,7 +21,7 @@ data class User(
 data class UserDTO(
     @SerialName("id")
     val id: Int,
-    @SerialName("name")
+    @SerialName("nickname")
     val name: String = "",
     @SerialName("email")
     val email: String = "",
@@ -33,7 +33,7 @@ data class UserDTO(
     val role: String = "",
     @SerialName("is_verified")
     val verified: Boolean,
-    @SerialName("realName")
+    @SerialName("real_name")
     val realName: String? = null
 ) {
     fun toUser() = User(

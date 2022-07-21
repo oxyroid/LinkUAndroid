@@ -1,4 +1,4 @@
-package com.linku.im.screen.login
+package com.linku.im.screen.sign
 
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.airbnb.lottie.compose.LottieAnimation
@@ -15,13 +16,13 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.linku.im.R
-import com.linku.im.screen.login.composable.LoginTextField
+import com.linku.im.screen.sign.composable.LoginTextField
 import com.linku.im.ui.MaterialButton
 import com.linku.im.ui.MaterialTextButton
 
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = hiltViewModel()
+    viewModel: SignViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val state by viewModel.state
@@ -60,7 +61,8 @@ fun LoginScreen(
                 },
                 titleRes = R.string.screen_login_tag_email,
                 enabled = !state.loading,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                type = KeyboardType.Email
             )
             LoginTextField(
                 value = password,
@@ -69,7 +71,8 @@ fun LoginScreen(
                 },
                 titleRes = R.string.screen_login_tag_password,
                 enabled = !state.loading,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                type = KeyboardType.Password
             )
 
             Spacer(
@@ -85,7 +88,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
             ) {
-                viewModel.onEvent(LoginEvent.SignIn(email, password))
+                viewModel.onEvent(SignEvent.SignIn(email, password))
             }
             MaterialTextButton(
                 textRes = R.string.screen_login_btn_register,
@@ -94,7 +97,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
             ) {
-                viewModel.onEvent(LoginEvent.SignUp(email, password))
+                viewModel.onEvent(SignEvent.SignUp(email, password))
             }
 
             Spacer(modifier = Modifier.height(24.dp))

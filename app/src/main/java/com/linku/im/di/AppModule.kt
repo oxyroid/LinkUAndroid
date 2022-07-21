@@ -1,5 +1,9 @@
 package com.linku.im.di
 
+import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.SoundPool
 import androidx.room.Room
 import com.linku.data.repository.AuthRepositoryImpl
 import com.linku.data.repository.ConversationRepositoryImpl
@@ -168,20 +172,25 @@ object AppModule {
     fun providesMessageRepository(
         chatService: ChatService,
         socketService: ChatSocketService,
-        database: LinkUDatabase
+        database: LinkUDatabase,
+        notificationService: NotificationService
     ): MessageRepository = MessageRepositoryImpl(
         chatService = chatService,
         socketService = socketService,
         messageDao = database.messageDao(),
-        conversationDao = database.conversationDao()
+        conversationDao = database.conversationDao(),
+        notificationService = notificationService
     )
 
     @Provides
     @Singleton
     fun provideConversationRepository(
-        database: LinkUDatabase
+        database: LinkUDatabase,
+        chatService: ChatService
     ): ConversationRepository = ConversationRepositoryImpl(
-        conversationDao = database.conversationDao()
+        conversationDao = database.conversationDao(),
+        chatService = chatService,
+        messageDao = database.messageDao()
     )
 
     @Provides
@@ -190,9 +199,11 @@ object AppModule {
         repository: AuthRepository
     ): AuthUseCases {
         return AuthUseCases(
-            signInUseCase = SignInUseCase(repository),
-            signUpUseCase = SignUpUseCase(repository),
-            logoutUseCase = SignOutUseCase(repository),
+            signIn = SignInUseCase(repository),
+            signUp = SignUpUseCase(repository),
+            logout = SignOutUseCase(repository),
+            verifiedEmail = VerifiedEmailUseCase(repository),
+            verifiedEmailCode = VerifiedEmailCodeUseCase(repository)
         )
     }
 
@@ -202,7 +213,7 @@ object AppModule {
         repository: UserRepository
     ): UserUseCases {
         return UserUseCases(
-            findUserUseCase = FindUserUseCase(repository)
+            findUser = FindUserUseCase(repository)
         )
     }
 
@@ -212,11 +223,11 @@ object AppModule {
         repository: MessageRepository
     ): MessageUseCases {
         return MessageUseCases(
-            textMessageUseCase = TextMessageUseCase(repository),
-            initSessionUseCase = InitSessionUseCase(repository),
-            observeMessagesUseCase = ObserveMessagesUseCase(repository),
-            closeSessionUseCase = CloseSessionUseCase(repository),
-            observeMessagesByCIDUseCase = ObserveMessagesByCidUseCase(repository)
+            textMessage = TextMessageUseCase(repository),
+            initSession = InitSessionUseCase(repository),
+            observeMessages = ObserveMessagesUseCase(repository),
+            closeSession = CloseSessionUseCase(repository),
+            observeMessagesByCID = ObserveMessagesByCidUseCase(repository)
         )
     }
 
@@ -226,7 +237,9 @@ object AppModule {
         repository: ConversationRepository
     ): ConversationUseCases {
         return ConversationUseCases(
-            observeConversationsUseCase = ObserveConversationsUseCase(repository)
+            observeConversations = ObserveConversationsUseCase(repository),
+            observeLatestContent = ObserveLatestMessagesUseCase(repository),
+            fetchConversationsUseCase = FetchConversationsUseCase(repository)
         )
     }
 
@@ -236,7 +249,30 @@ object AppModule {
         service: OneWordService
     ): OneWordUseCases {
         return OneWordUseCases(
-            hitokotoUseCase = HitokotoUseCase(service),
+            hitokoto = HitokotoUseCase(service),
         )
     }
+
+
+    @Provides
+    @Singleton
+    fun provideSoundPool(): SoundPool {
+        val attributes = AudioAttributes.Builder()
+            .setLegacyStreamType(AudioManager.STREAM_NOTIFICATION)
+            .build()
+        return SoundPool.Builder()
+            .setMaxStreams(1)
+            .setAudioAttributes(attributes)
+            .build().also {
+                it.setOnLoadCompleteListener { soundPool, sampleId, status ->
+                    if (status == 0) {
+                        soundPool.play(sampleId, 1f, 1f, 1, 0, 1f)
+                    }
+                }
+            }
+    }
+
+    @Provides
+    @Singleton
+    fun provideApplicationContext(): Context = application
 }

@@ -1,7 +1,8 @@
-package com.linku.im.screen.login.composable
+package com.linku.im.screen.sign.composable
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -10,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -18,7 +20,8 @@ fun LoginTextField(
     onValueChange: (String) -> Unit,
     @StringRes titleRes: Int,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    type: KeyboardType = KeyboardType.Text
 ) {
     OutlinedTextField(
         value = value,
@@ -30,6 +33,9 @@ fun LoginTextField(
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
         ),
-        enabled = enabled
+        enabled = enabled,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = type
+        )
     )
 }

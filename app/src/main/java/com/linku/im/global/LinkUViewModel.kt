@@ -1,16 +1,18 @@
-package com.linku.im.screen.overall
+package com.linku.im.global
 
 import android.util.Log
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.ScaffoldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.linku.data.usecase.MessageUseCases
 import com.linku.domain.Auth
 import com.linku.domain.Resource
-import com.linku.im.Contract.SAVED_DARK_MODE
+import com.linku.im.Constants.SAVED_DARK_MODE
 import com.linku.im.R
 import com.linku.im.application
 import com.linku.im.extension.TAG
@@ -28,14 +30,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class OverallViewModel @Inject constructor(
+class LinkUViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases
-) : BaseViewModel<OverallState, OverallEvent>(OverallState()) {
+) : BaseViewModel<LinkUState, LinkUEvent>(LinkUState()) {
     init {
-        onEvent(OverallEvent.RestoreDarkMode)
-        onEvent(OverallEvent.ObserveCurrentUser { userId ->
-            if (userId == null) OverallEvent.Disconnect
-            else onEvent(OverallEvent.InitSession(userId))
+        onEvent(LinkUEvent.RestoreDarkMode)
+        onEvent(LinkUEvent.ObserveCurrentUser { userId ->
+            if (userId == null) LinkUEvent.Disconnect
+            else onEvent(LinkUEvent.InitSession(userId))
         })
     }
 
@@ -43,28 +45,33 @@ class OverallViewModel @Inject constructor(
     private lateinit var scaffoldState: ScaffoldState
     private lateinit var coroutineScope: CoroutineScope
 
-    override fun onEvent(event: OverallEvent) {
+    override fun onEvent(event: LinkUEvent) {
         when (event) {
-            is OverallEvent.InitSession -> initSession()
-            OverallEvent.RestoreDarkMode -> {
+            is LinkUEvent.InitSession -> initSession()
+            LinkUEvent.RestoreDarkMode -> {
                 val isDarkMode = MMKV.defaultMMKV().getBoolean(SAVED_DARK_MODE, false)
                 _state.value = state.value.copy(
                     isDarkMode = isDarkMode
                 )
             }
-            OverallEvent.PopBackStack -> navController.navigateUp()
+            LinkUEvent.PopBackStack -> navController.navigateUp()
 
-            OverallEvent.ToggleDarkMode -> {
+            LinkUEvent.ToggleDarkMode -> {
                 MMKV.defaultMMKV().encode(SAVED_DARK_MODE, !state.value.isDarkMode)
                 _state.value =
-                    state.value.copy(isDarkMode = !state.value.isDarkMode)
+                    state.value.copy(
+                        isDarkMode = !state.value.isDarkMode
+                    )
             }
 
-            OverallEvent.Disconnect -> viewModelScope.launch { messageUseCases.closeSessionUseCase() }
-            is OverallEvent.Navigate -> navController.navigate(event.screen.route)
+            LinkUEvent.Disconnect -> {
+                updateTitle(Title.NoAuth)
+                viewModelScope.launch { messageUseCases.closeSession() }
+            }
+            is LinkUEvent.Navigate -> navController.navigate(event.screen.route)
 
-            is OverallEvent.NavigateWithArgs -> navController.navigate(event.route)
-            is OverallEvent.InitNavController -> {
+            is LinkUEvent.NavigateWithArgs -> navController.navigate(event.route)
+            is LinkUEvent.InitNavController -> {
                 navController = event.navController
                 navController.addOnDestinationChangedListener { _, destination, _ ->
                     _state.value = state.value.copy(
@@ -73,16 +80,22 @@ class OverallViewModel @Inject constructor(
                     deliverNavigationUI(state.value.currentScreen)
                 }
             }
-            is OverallEvent.ObserveCurrentUser -> {
+            is LinkUEvent.ObserveCurrentUser -> {
                 Auth.observeCurrent
                     .onEach { event.observer(it) }
                     .launchIn(viewModelScope)
             }
-            is OverallEvent.InitScaffoldState -> {
+            is LinkUEvent.InitScaffoldState -> {
                 coroutineScope = event.coroutineScope
                 scaffoldState = event.scaffoldState
             }
         }
+    }
+
+    fun onActions(actions: @Composable RowScope.() -> Unit) {
+        _state.value = state.value.copy(
+            actions = actions
+        )
     }
 
     private fun deliverNavigationUI(screen: Screen) {
@@ -120,6 +133,7 @@ class OverallViewModel @Inject constructor(
         object Default : Title(application.getString(R.string.app_name))
         object Connecting : Title(application.getString(R.string.connecting))
         object ConnectedFailed : Title(application.getString(R.string.connected_failed))
+        object NoAuth : Title(application.getString(R.string.no_auth))
     }
 
     private fun updateTitle(title: Title) {
@@ -134,7 +148,7 @@ class OverallViewModel @Inject constructor(
             checkNotNull(userId)
             updateTitle(Title.Connecting)
 
-            val resource = messageUseCases.initSessionUseCase(
+            val resource = messageUseCases.initSession(
                 uid = userId,
                 scope = viewModelScope
             )
@@ -142,7 +156,7 @@ class OverallViewModel @Inject constructor(
                 Resource.Loading -> {}
                 is Resource.Success -> {
                     updateTitle(Title.Default)
-                    messageUseCases.observeMessagesUseCase()
+                    messageUseCases.observeMessages()
                         .launchIn(this)
                 }
                 is Resource.Failure -> {
@@ -150,7 +164,7 @@ class OverallViewModel @Inject constructor(
                     launch {
                         delay(3000)
                         debug { Log.v(TAG, "Retrying...") }
-                        onEvent(OverallEvent.InitSession(userId))
+                        onEvent(LinkUEvent.InitSession(userId))
                     }
                 }
             }

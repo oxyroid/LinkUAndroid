@@ -22,20 +22,15 @@ class ChatSocketServiceImpl(
     private val client: HttpClient
 ) : ChatSocketService {
     private var socket: WebSocketSession? = null
-    private var uid: Int = -1
-    private var incoming: Flow<Frame>? = null
 
     override suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit> {
-        this.uid = uid
         return try {
             socket = client.webSocketSession {
                 url(ChatSocketService.EndPoints.UIDSocket(uid).url)
                 contentType(ContentType.Application.Json)
             }
             if (socket?.isActive == true) {
-                incoming = socket
-                    ?.incoming
-                    ?.consumeAsFlow()
+                incoming = socket?.incoming?.consumeAsFlow()?.stateIn(scope)
                 Resource.Success(Unit)
             } else Resource.Failure("Couldn't establish a connection.")
         } catch (e: Exception) {
@@ -43,6 +38,8 @@ class ChatSocketServiceImpl(
             Resource.Failure(e.localizedMessage ?: "Unknown Error.")
         }
     }
+
+    private var incoming: Flow<Frame>? = null
 
     override fun incoming(): Flow<Message> {
         return try {
@@ -64,20 +61,14 @@ class ChatSocketServiceImpl(
         }
     }
 
-    override fun observeClose(): Flow<Frame.Close> {
-        return try {
+    override suspend fun onClosed(handler: suspend () -> Unit) {
+        try {
             incoming
                 ?.filter { it is Frame.Close }
-                ?.onEach {
-                    debug {
-                        Log.e(TAG, "Websocket closed.")
-                    }
-                }
-                ?.map { it as Frame.Close }
-                ?: flow { }
+                ?.onEach { handler() }
+                ?.collect()
         } catch (e: Exception) {
             e.printStackTrace()
-            flow { }
         }
     }
 

@@ -1,7 +1,5 @@
 package com.linku.im.screen.info
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -19,23 +17,22 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.linku.im.R
-import com.linku.im.outsideContent
 import com.linku.im.application
 import com.linku.im.extension.debug
 import com.linku.im.extension.release
 import com.linku.im.ui.LinkText
 import com.linku.im.ui.MaterialButton
+import com.linku.im.vm
 import com.mukesh.MarkDown
 import java.util.*
 
 @Composable
 fun InfoScreen() {
+    vm.onActions { }
     val markdown: String = remember {
         application.assets.open("info.md").use {
             val scanner = Scanner(it).useDelimiter("\\A")
-            if (scanner.hasNext()) {
-                scanner.next()
-            } else ""
+            if (scanner.hasNext()) scanner.next() else ""
         }
     }
     var visible by remember { mutableStateOf(false) }
@@ -69,8 +66,11 @@ fun InfoScreen() {
             }
         }
         release {
+            val text by derivedStateOf {
+                if (visible) R.string.contract_me_by_follow else R.string.for_source
+            }
             MaterialButton(
-                textRes = if (visible) R.string.contract_me_by_follow else R.string.for_source,
+                textRes = text,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
@@ -85,16 +85,16 @@ fun InfoScreen() {
             ) {
                 Row {
                     LinkText(text = "Github:thxbrop", url = "https://github.com/thxbrop") {
-                        outsideContent.startActivity(Intent().apply {
-                            action = Intent.ACTION_VIEW
-                            data = Uri.parse(it)
-                        })
+//                        outsideContent.startActivity(Intent().apply {
+//                            action = Intent.ACTION_VIEW
+//                            data = Uri.parse(it)
+//                        })
                     }
                     LinkText(text = "Telegram:sortBy", url = "https://t.me/sortBy") {
-                        outsideContent.startActivity(Intent().apply {
-                            action = Intent.ACTION_VIEW
-                            data = Uri.parse(it)
-                        })
+//                        outsideContent.startActivity(Intent().apply {
+//                            action = Intent.ACTION_VIEW
+//                            data = Uri.parse(it)
+//                        })
                     }
                 }
             }
@@ -106,10 +106,10 @@ fun InfoScreen() {
                     .fillMaxWidth()
                     .padding(horizontal = 48.dp)
             ) {
-                outsideContent.startActivity(Intent().apply {
-                    action = Intent.ACTION_VIEW
-                    data = Uri.parse("https://github.com/thxbrop/LinkU-Android")
-                })
+//                outsideContent.startActivity(Intent().apply {
+//                    action = Intent.ACTION_VIEW
+//                    data = Uri.parse("https://github.com/thxbrop/LinkU-Android")
+//                })
             }
         }
 

@@ -33,11 +33,11 @@ class AuthRepositoryImpl(
         authService.signUp(email, password, name, realName)
     }
 
-    override suspend fun verifyEmail(code: String) = sandbox {
+    override suspend fun verifyEmailCode(code: String) = sandbox {
         authService.verifyEmailCode(code)
     }
 
-    override suspend fun resendEmail() = sandbox {
+    override suspend fun verifyEmail() = sandbox {
         authService.verifyEmail()
     }
 

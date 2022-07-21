@@ -9,9 +9,11 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 data class AuthUseCases @Inject constructor(
-    val signInUseCase: SignInUseCase,
-    val signUpUseCase: SignUpUseCase,
-    val logoutUseCase: SignOutUseCase,
+    val signIn: SignInUseCase,
+    val signUp: SignUpUseCase,
+    val logout: SignOutUseCase,
+    val verifiedEmail: VerifiedEmailUseCase,
+    val verifiedEmailCode: VerifiedEmailCodeUseCase
 )
 
 data class SignInUseCase(
@@ -23,7 +25,7 @@ data class SignInUseCase(
     ): Flow<Resource<Unit>> = resourceFlow {
         repository.signIn(email, password)
             .handle(::emitResource)
-            .failure(::emitResource)
+            .catch(::emitResource)
     }
 }
 
@@ -33,12 +35,12 @@ data class SignUpUseCase(
     operator fun invoke(
         email: String,
         password: String,
-        nickName: String,
+        name: String,
         realName: String? = null
     ): Flow<Resource<Unit>> = resourceFlow {
-        repository.signUp(email, password, nickName, realName)
+        repository.signUp(email, password, name, realName)
             .handleUnit(::emitResource)
-            .failure(::emitResource)
+            .catch(::emitResource)
     }
 }
 
@@ -49,5 +51,25 @@ data class SignOutUseCase(
         Auth.update()
         repository.signOut()
         emitResource(Unit)
+    }
+}
+
+data class VerifiedEmailUseCase(
+    private val repository: AuthRepository
+) {
+    operator fun invoke(): Flow<Resource<Unit>> = resourceFlow {
+        repository.verifyEmail()
+            .handleUnit(::emitResource)
+            .catch(::emitResource)
+    }
+}
+
+data class VerifiedEmailCodeUseCase(
+    private val repository: AuthRepository
+) {
+    operator fun invoke(code: String): Flow<Resource<Unit>> = resourceFlow {
+        repository.verifyEmailCode(code)
+            .handleUnit(::emitResource)
+            .catch(::emitResource)
     }
 }

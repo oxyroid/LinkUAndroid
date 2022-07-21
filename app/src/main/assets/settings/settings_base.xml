@@ -1,0 +1,23 @@
+<root>
+    <group label="account">
+        <entity key="email" type="string">
+            <sheet args="email" required="false" />
+            <sheet args="email" />
+        </entity>
+        <entity key="name" type="string">
+            <sheet args="name" />
+        </entity>
+        <entity bool_type_false="" bool_type_true="" defValue="false" key="real" type="boolean" />
+    </group>
+    <group label="settings">
+        <folder icon="notification" label="settings_notification">
+
+        </folder>
+        <folder icon="safe" label="settings_safe">
+
+        </folder>
+        <folder icon="data" label="settings_data">
+
+        </folder>
+    </group>
+</root>

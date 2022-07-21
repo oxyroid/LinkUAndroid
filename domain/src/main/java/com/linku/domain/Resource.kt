@@ -36,8 +36,10 @@ sealed class Resource<out T> {
 suspend inline fun <T> FlowCollector<Resource<T>>.emitResource(data: T) =
     emit(Resource.Success(data))
 
-suspend inline fun <T> FlowCollector<Resource<T>>.emitResource(message: String, code: String) =
-    emit(Resource.Failure(message, code))
+suspend inline fun <T> FlowCollector<Resource<T>>.emitResource(
+    message: String = "Unknown Error",
+    code: String = "?"
+) = emit(Resource.Failure(message, code))
 
 fun <T> resourceFlow(flowCollector: suspend FlowCollector<Resource<T>>.() -> Unit) = flow {
     emit(Resource.Loading)

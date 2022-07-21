@@ -33,9 +33,10 @@ internal fun DrawerItem(
     onClick: () -> Unit
 ) {
     Surface(
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer
+        color = if (selected) MaterialTheme.colorScheme.primary
         else Color.Unspecified,
-        contentColor = MaterialTheme.colorScheme.primary,
+        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
+        else MaterialTheme.colorScheme.primary,
         shape = RoundedCornerShape(25)
     ) {
         Row(
@@ -48,12 +49,14 @@ internal fun DrawerItem(
                     horizontal = 18.dp
                 )
         ) {
-            Icon(imageVector = item.icon, contentDescription = item.icon.name)
+            Icon(
+                imageVector = item.icon,
+                contentDescription = item.icon.name
+            )
             Text(
                 text = stringResource(item.titleRes),
                 modifier = Modifier.padding(start = 12.dp),
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
             )
         }
     }

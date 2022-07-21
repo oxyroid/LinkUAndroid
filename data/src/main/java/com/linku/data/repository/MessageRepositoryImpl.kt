@@ -7,12 +7,15 @@ import com.linku.domain.Auth
 import com.linku.domain.Resource
 import com.linku.domain.emitResource
 import com.linku.domain.entity.Message
+import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.MessageRepository
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ChatService
 import com.linku.domain.service.ChatSocketService
+import com.linku.domain.service.NotificationService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
@@ -23,9 +26,18 @@ class MessageRepositoryImpl(
     private val socketService: ChatSocketService,
     private val chatService: ChatService,
     private val messageDao: MessageDao,
-    private val conversationDao: ConversationDao
+    private val conversationDao: ConversationDao,
+    private val notificationService: NotificationService
 ) : MessageRepository {
     override suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit> {
+        socketService.onClosed {
+            debug { Log.e(TAG, "Message Channel Closed!") }
+            if (Auth.currentUID != null) {
+                delay(3_000)
+                debug { Log.e(TAG, "Reconnecting...") }
+                initSession(uid, scope)
+            }
+        }
         return socketService.initSession(uid, scope).also {
             messageDao.clearStagingMessages()
             socketService.incoming()
@@ -33,11 +45,12 @@ class MessageRepositoryImpl(
                     debug {
                         Log.e(TAG, "Message Received: ${message.content}")
                     }
+                    notificationService.onReceived(message)
                     messageDao.insert(message)
                     val cid = message.cid
                     if (conversationDao.getById(cid) == null) {
                         chatService.getById(cid).handle { conversation ->
-                            conversationDao.insert(conversation)
+                            conversationDao.insert(conversation.toConversation())
                         }
                     }
                 }
@@ -102,7 +115,7 @@ class MessageRepositoryImpl(
                         )
                     }
                 }
-                .failure { message, code ->
+                .catch { message, code ->
                     messageDao.failedStagingMessage(uuid)
                     emitResource(message, code)
                 }

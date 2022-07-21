@@ -7,7 +7,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -15,11 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.linku.im.ui.theme.Typography
+import com.linku.im.vm
 
 @Composable
 fun ToolBar(
@@ -27,10 +24,10 @@ fun ToolBar(
     title: String = "",
     onScroll: Boolean = false,
     isDarkMode: Boolean = false,
-    onMenuClick: () -> Unit,
-    onNavClick: () -> Unit
+    onNavClick: () -> Unit,
+    actions: @Composable RowScope.() -> Unit
 ) {
-    val elevation by animateDpAsState(if (onScroll) 16.dp else 4.dp)
+    val elevation by animateDpAsState(if (onScroll) 16.dp else 0.dp)
     val color = if (!isDarkMode) MaterialTheme.colorScheme.primary
     else MaterialTheme.colorScheme.surface
     val contentColor = if (!isDarkMode) MaterialTheme.colorScheme.onPrimary
@@ -54,26 +51,32 @@ fun ToolBar(
             title = {
                 Text(
                     text = title,
-                    fontSize = 16.sp,
                     maxLines = 1,
-                    style = Typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     overflow = TextOverflow.Ellipsis,
-                    fontWeight = FontWeight.Bold
                 )
             },
-            actions = {
-                IconButton(
-                    onClick = onMenuClick
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "",
-                        tint = contentColor
-                    )
-                }
-            },
+            actions = actions,
             elevation = elevation
         )
     }
 
+}
+
+@Composable
+fun ToolBarAction(
+    onClick: () -> Unit,
+    imageVector: ImageVector,
+    contentDescription: String = imageVector.name
+) {
+    IconButton(
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = contentDescription,
+            tint = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onPrimary
+        )
+    }
 }

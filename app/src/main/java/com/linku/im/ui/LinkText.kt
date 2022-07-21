@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.linku.im.ui.theme.Link
+import com.linku.im.ui.theme.seed
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -27,7 +27,7 @@ fun LinkText(
             text = text,
             fontWeight = FontWeight.Bold,
             textDecoration = TextDecoration.Underline,
-            color = Link,
+            color = seed,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
         )
     }

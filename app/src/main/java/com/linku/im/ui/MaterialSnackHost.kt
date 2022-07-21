@@ -3,14 +3,14 @@ package com.linku.im.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.linku.im.ui.theme.Link
-import com.linku.im.ui.theme.SnackHost
+import com.linku.im.ui.theme.seed
 
 @Composable
 fun MaterialSnackHost(
@@ -27,7 +27,7 @@ fun MaterialSnackHost(
                 .padding(horizontal = 12.dp)
                 .fillMaxWidth()
                 .height(48.dp),
-            backgroundColor = SnackHost,
+            backgroundColor = MaterialTheme.colorScheme.background,
         ) {
             Row(
                 modifier = Modifier
@@ -47,7 +47,7 @@ fun MaterialSnackHost(
                     }) {
                         Text(
                             text = it,
-                            color = Link
+                            color = seed
                         )
                     }
                 }

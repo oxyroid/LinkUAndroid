@@ -1,0 +1,8 @@
+<lang>
+    <item name="email">电子邮箱</item>
+    <item name="name">昵称</item>
+    <item name="real">实名信息</item>
+    <item name="real_0">未实名</item>
+    <item name="real_1">已实名</item>
+    <item name="notification">昵称</item>
+</lang>

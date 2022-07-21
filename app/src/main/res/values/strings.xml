@@ -15,6 +15,7 @@
     <string name="sorted_name_des">名称排序（逆序）</string>
     <string name="sorted_price">价格排序（顺序）</string>
     <string name="sorted_price_des">价格排序（逆序）</string>
+    <string name="screen_chat_input">输入消息…</string>
     <string name="add_to_cart">加入购物车</string>
     <string name="cart">购物车</string>
     <string name="account">账户</string>
@@ -32,7 +33,7 @@
     <string name="log_in_success">登录成功</string>
     <string name="registering">注册中</string>
     <string name="information_required">请将信息填写完整</string>
-    <string name="logout">退出登录</string>
+    <string name="sign_out">退出登录</string>
     <string name="screen_profile_title" />
     <string name="screen_info_title">关于我们</string>
     <string name="connecting">连接中…</string>
@@ -43,5 +44,21 @@
     <string name="subscribing">订阅中…</string>
     <string name="connected_failed">连接失败</string>
     <string name="subscribe_failed">订阅失败</string>
-    <string name="signout_failed">退出登录失败</string>
+    <string name="sign_out_failed">退出登录失败</string>
+    <string name="no_auth">未登录</string>
+    <string name="profile_settings_notification">通知和声音</string>
+    <string name="profile_settings_safe">隐私和安全</string>
+    <string name="profile_settings_datasource">数据和存储</string>
+    <string name="profile_data_name">昵称</string>
+    <string name="profile_data_realName">实名信息</string>
+    <string name="profile_data_realName_true">已实名</string>
+    <string name="profile_data_realName_false">未实名</string>
+    <string name="profile_data_email">电子邮箱</string>
+    <string name="profile_data_description">个人简介</string>
+    <string name="email_verified">验证</string>
+    <string name="email_verified_dialog_title">验证您的邮箱</string>
+    <string name="unknown"><![CDATA[<未知>]]></string>
+    <string name="verified">验证</string>
+    <string name="cancel">取消</string>
+    <string name="verifing">验证中</string>
 </resources>

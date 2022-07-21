@@ -5,7 +5,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material.Card
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Warning
@@ -19,8 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,9 +43,9 @@ fun ChatBubble(
     isShowTime: Boolean = false
 ) {
     val color: Color =
-        if (isAnother) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+        if (isAnother) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.tertiary
     val contentColor: Color =
-        if (isAnother) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
+        if (isAnother) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onTertiary
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -162,11 +159,12 @@ private fun BubbleTextField(
 
 @Composable
 private fun TimestampCard(timestamp: Long) {
-    Card(
-        backgroundColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        shape = RoundedCornerShape(BUBBLE_CORNER),
-        modifier = Modifier.padding(top = VERTICAL_IN_PADDING)
+    Row(
+        modifier = Modifier
+            .padding(top = VERTICAL_IN_PADDING)
+            .fillMaxWidth()
+            .padding(vertical = VERTICAL_IN_PADDING),
+        horizontalArrangement = Arrangement.Center
     ) {
         val calender = Calendar.getInstance()
         calender.time = Date(timestamp)
@@ -180,13 +178,10 @@ private fun TimestampCard(timestamp: Long) {
         Text(
             text = text,
             modifier = Modifier.padding(
-                horizontal = 8.dp,
-                vertical = 4.dp
+                horizontal = 4.dp
             ),
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 14.sp,
-            fontFamily = FontFamily.SansSerif,
-            fontWeight = FontWeight.Bold
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            style = MaterialTheme.typography.titleSmall,
         )
     }
     Spacer(modifier = Modifier.height(8.dp))

@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 data class MessageUseCases @Inject constructor(
-    val textMessageUseCase: TextMessageUseCase,
-    val initSessionUseCase: InitSessionUseCase,
-    val observeMessagesUseCase: ObserveMessagesUseCase,
-    val observeMessagesByCIDUseCase: ObserveMessagesByCidUseCase,
-    val closeSessionUseCase: CloseSessionUseCase
+    val textMessage: TextMessageUseCase,
+    val initSession: InitSessionUseCase,
+    val observeMessages: ObserveMessagesUseCase,
+    val observeMessagesByCID: ObserveMessagesByCidUseCase,
+    val closeSession: CloseSessionUseCase
 )
 
 data class TextMessageUseCase(

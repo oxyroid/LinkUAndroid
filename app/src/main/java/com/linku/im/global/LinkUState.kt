@@ -1,4 +1,4 @@
-package com.linku.im.screen.overall
+package com.linku.im.global
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
@@ -11,12 +11,13 @@ import com.linku.im.screen.Screen
 
 typealias Content = () -> Unit
 
-data class OverallState(
+data class LinkUState(
     val loading: Boolean = false,
     val online: Boolean = false,
     val icon: ImageVector = Icons.Default.Menu,
     val title: String = application.getString(R.string.connecting),
     val navClick: Content = {},
+    val actions: @Composable RowScope.() -> Unit = {},
     val isDarkMode: Boolean = false,
     val currentScreen: Screen = Screen.MainScreen
 )
