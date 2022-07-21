@@ -13,8 +13,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 32
-        versionCode 24
-        versionName "0.8.11"
+        versionCode 26
+        versionName "0.8.13"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 

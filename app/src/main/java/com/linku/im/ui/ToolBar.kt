@@ -1,6 +1,5 @@
 package com.linku.im.ui
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Text
@@ -11,7 +10,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
@@ -22,12 +20,10 @@ import com.linku.im.vm
 fun ToolBar(
     navIcon: ImageVector = Icons.Default.ArrowBack,
     title: String = "",
-    onScroll: Boolean = false,
     isDarkMode: Boolean = false,
     onNavClick: () -> Unit,
     actions: @Composable RowScope.() -> Unit
 ) {
-    val elevation by animateDpAsState(if (onScroll) 16.dp else 0.dp)
     val color = if (!isDarkMode) MaterialTheme.colorScheme.primary
     else MaterialTheme.colorScheme.surface
     val contentColor = if (!isDarkMode) MaterialTheme.colorScheme.onPrimary
@@ -57,7 +53,7 @@ fun ToolBar(
                 )
             },
             actions = actions,
-            elevation = elevation
+            elevation = 0.dp
         )
     }
 

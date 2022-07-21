@@ -5,8 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.ScaffoldState
@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.Auth
@@ -33,9 +35,9 @@ import com.linku.im.vm
 fun MainScreen(
     mainViewModel: MainViewModel = hiltViewModel(),
     scaffoldState: ScaffoldState,
-    listState: LazyListState
 ) {
     val state by mainViewModel.state
+    val listState = rememberLazyListState()
     vm.onActions {
         ToolBarAction(
             onClick = { vm.onEvent(LinkUEvent.ToggleDarkMode) },
@@ -72,7 +74,15 @@ fun MainScreen(
                 state = listState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                MaterialTheme.colorScheme.surface
+                            ),
+                            end = Offset(0.0f, Float.POSITIVE_INFINITY)
+                        )
+                    )
                     .drawVerticalScrollbar(
                         state = listState
                     ),

@@ -10,7 +10,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Scaffold
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.MaterialTheme
@@ -68,7 +67,7 @@ fun App(
         val color = if (!state.isDarkMode) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.surface
         val contentColor = if (!state.isDarkMode) MaterialTheme.colorScheme.onPrimary
-        else MaterialTheme.colorScheme.onSurface
+        else MaterialTheme.colorScheme.surface
         WindowCompat.getInsetsController(window, LocalView.current)
             .isAppearanceLightStatusBars = false
 
@@ -79,7 +78,6 @@ fun App(
         val coroutineScope = rememberCoroutineScope()
         val navController = rememberAnimatedNavController()
         val scaffoldState = rememberScaffoldState()
-        val listState = rememberLazyListState()
 
         LaunchedEffect(Unit) {
             vm.onEvent(LinkUEvent.InitNavController(navController))
@@ -93,7 +91,6 @@ fun App(
                     title = state.title,
                     onNavClick = state.navClick,
                     isDarkMode = state.isDarkMode,
-                    onScroll = listState.isScrollInProgress,
                     actions = state.actions
                 )
             },
@@ -110,9 +107,12 @@ fun App(
                     .padding(innerPadding)
                     .background(
                         brush = Brush.linearGradient(
-                            colors = listOf(color, MaterialTheme.colorScheme.background),
-                            start = Offset.Zero,
-                            end = Offset(0f, 800f)
+                            colors = listOf(
+                                color,
+                                MaterialTheme.colorScheme.background,
+                                MaterialTheme.colorScheme.surface
+                            ),
+                            end = Offset(0.0f, Float.POSITIVE_INFINITY)
                         )
                     )
                     .navigationBarsPadding(),
@@ -153,7 +153,7 @@ fun App(
                         )
                     }
                 ) {
-                    MainScreen(scaffoldState = scaffoldState, listState = listState)
+                    MainScreen(scaffoldState = scaffoldState)
                 }
                 composable(
                     route = Screen.ChatScreen.buildArgs("cid"),

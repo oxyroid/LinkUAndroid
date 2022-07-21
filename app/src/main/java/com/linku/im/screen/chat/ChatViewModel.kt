@@ -5,9 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.MessageUseCases
 import com.linku.domain.Resource
 import com.linku.domain.eventOf
+import com.linku.domain.service.NotificationService
 import com.linku.im.extension.TAG
 import com.linku.im.extension.debug
-import com.linku.domain.service.NotificationService
+import com.linku.im.extension.ifTrue
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
@@ -30,7 +31,10 @@ class ChatViewModel @Inject constructor(
                     messageUseCases.observeMessagesByCID(event.cid)
                         .onEach {
                             _state.value = state.value.copy(
-                                messages = it
+                                messages = it,
+                                scrollToBottom = (state.value.firstVisibleIndex == 0)
+                                    .ifTrue { eventOf(Unit) }
+                                    ?: state.value.scrollToBottom
                             )
                         }
                         .launchIn(viewModelScope)
@@ -38,6 +42,14 @@ class ChatViewModel @Inject constructor(
             }
             ChatEvent.SendTextMessage -> sendTextMessage()
             is ChatEvent.TextChange -> _state.value = _state.value.copy(text = event.text)
+            is ChatEvent.FirstVisibleIndex -> {
+                _state.value = state.value.copy(
+                    firstVisibleIndex = event.index
+                )
+            }
+            ChatEvent.ReadAll -> {
+
+            }
         }
     }
 

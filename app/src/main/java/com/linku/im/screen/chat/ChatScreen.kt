@@ -1,48 +1,41 @@
 package com.linku.im.screen.chat
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.Auth
 import com.linku.im.Constants
-import com.linku.im.R
 import com.linku.im.global.LinkUEvent
+import com.linku.im.screen.chat.composable.ChatBottomBar
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.vm
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
     cid: Int
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val state by viewModel.state
     val listState = rememberLazyListState()
 
@@ -57,17 +50,24 @@ fun ChatScreen(
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
         }
     }
-
+    val firstVisibleItemIndex by derivedStateOf {
+        listState.firstVisibleItemIndex
+    }
+    LaunchedEffect(firstVisibleItemIndex) {
+        viewModel.onEvent(ChatEvent.FirstVisibleIndex(listState.firstVisibleItemIndex))
+    }
     Surface(
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-        modifier = Modifier.padding(
-            top = 8.dp,
-            start = 8.dp,
-            end = 8.dp,
-        )
+        modifier = Modifier
+            .padding(
+                top = 8.dp,
+                start = 8.dp,
+                end = 8.dp,
+            )
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -77,7 +77,8 @@ fun ChatScreen(
                         brush = Brush.linearGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.background
+                                MaterialTheme.colorScheme.background,
+                                MaterialTheme.colorScheme.surface
                             ),
                             end = Offset(0.0f, Float.POSITIVE_INFINITY)
                         )
@@ -99,56 +100,14 @@ fun ChatScreen(
                     )
                 }
             }
-            Surface(
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .imePadding(),
-                color = MaterialTheme.colorScheme.background,
-                elevation = 8.dp
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Spacer(modifier = Modifier.width(4.dp))
-                    OutlinedTextField(
-                        value = state.text,
-                        onValueChange = {
-                            viewModel.onEvent(ChatEvent.TextChange(it))
-                        },
-                        Modifier.weight(1f),
-                        placeholder = {
-                            Text(
-                                text = stringResource(id = R.string.screen_chat_input),
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        },
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            cursorColor = MaterialTheme.colorScheme.primary
-                        )
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    AnimatedVisibility(visible = state.text.isNotBlank()) {
-                        IconButton(
-                            onClick = {
-                                viewModel.onEvent(ChatEvent.SendTextMessage)
-                            },
-                        ) {
-                            val imageVector = Icons.Rounded.Send
-                            Icon(
-                                imageVector = imageVector,
-                                contentDescription = "send",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
-            }
-
+            ChatBottomBar(
+                text = state.text,
+                firstVisibleItemIndex = firstVisibleItemIndex,
+                listState = listState,
+                onAction = { viewModel.onEvent(ChatEvent.ReadAll) },
+                onSend = { viewModel.onEvent(ChatEvent.SendTextMessage) },
+                onText = { viewModel.onEvent(ChatEvent.TextChange(it)) }
+            )
         }
     }
     LaunchedEffect(state.scrollToBottom) {

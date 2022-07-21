@@ -39,7 +39,7 @@ fun IntroduceItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onClick)
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(
                         start = PADDING_X, top = ENTITY_PADDING_Y
                     )
@@ -48,7 +48,7 @@ fun IntroduceItem(
                     is String -> {
                         Text(
                             text = property.value,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.titleSmall,
                             modifier = Modifier.padding(end = PADDING_X)
                         )
@@ -56,7 +56,7 @@ fun IntroduceItem(
                     is AnnotatedString -> {
                         Text(
                             text = property.value,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.titleSmall,
                             modifier = Modifier.padding(end = PADDING_X)
                         )
@@ -64,7 +64,7 @@ fun IntroduceItem(
                     null -> {
                         Text(
                             text = "",
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontSize = TitleFontSize,
                             modifier = Modifier
                                 .padding(end = PADDING_X)
@@ -105,7 +105,7 @@ fun IntroduceItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colorScheme.surface)
                     .clickable(onClick = {
 
                     })
@@ -124,7 +124,7 @@ fun IntroduceItem(
                 ) {
                     Text(
                         text = property.label,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(
                             end = PADDING_X,

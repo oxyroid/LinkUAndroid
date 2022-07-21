@@ -19,7 +19,7 @@ fun ProfileList(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(top = 12.dp)
     ) {
         Text(

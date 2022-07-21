@@ -10,5 +10,6 @@ data class ChatState(
     val loading: Boolean = false,
     val event: Event<String> = Event.Handled(),
     val messages: List<Message> = emptyList(),
-    val scrollToBottom: Event<Unit> = Event.Handled()
+    val scrollToBottom: Event<Unit> = Event.Handled(),
+    val firstVisibleIndex: Int = 0
 )

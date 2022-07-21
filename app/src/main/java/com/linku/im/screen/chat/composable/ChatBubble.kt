@@ -1,5 +1,6 @@
 package com.linku.im.screen.chat.composable
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
 import com.linku.domain.entity.Message
 import com.linku.im.extension.ifTrue
+import com.linku.im.ui.theme.seed
 import java.util.*
 
 private val HORIZONTAL_IN_PADDING = 12.dp
@@ -43,9 +45,15 @@ fun ChatBubble(
     isShowTime: Boolean = false
 ) {
     val color: Color =
-        if (isAnother) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.tertiary
+        if (isAnother)
+            if (!isSystemInDarkTheme()) MaterialTheme.colorScheme.background
+            else MaterialTheme.colorScheme.onBackground
+        else MaterialTheme.colorScheme.tertiary
     val contentColor: Color =
-        if (isAnother) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onTertiary
+        if (isAnother)
+            if (!isSystemInDarkTheme()) MaterialTheme.colorScheme.onBackground
+            else MaterialTheme.colorScheme.background
+        else MaterialTheme.colorScheme.onTertiary
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
@@ -132,11 +140,11 @@ private fun BubbleTextField(
         elevation = 1.dp
     ) {
         val customTextSelectionColors = TextSelectionColors(
-            handleColor = color,
+            handleColor = seed,
             backgroundColor = ColorUtils.blendARGB(
                 color.toArgb(),
-                contentColor.toArgb(),
-                0.6f
+                Color.Black.toArgb(),
+                0.2f
             ).let(::Color)
         )
         CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
