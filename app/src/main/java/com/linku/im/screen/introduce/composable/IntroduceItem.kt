@@ -4,11 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Divider
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -18,11 +21,10 @@ import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.times
-import com.linku.im.ui.theme.TitleFontSize
 
 private val DIVIDER = 0.6.dp
 private val PADDING_X = 24.dp
-private val ENTITY_PADDING_Y = 4.dp
+private val ENTITY_PADDING_Y = 8.dp
 private val FOLDER_PADDING_Y = 16.dp
 private const val TINT_ALPHA = 0.8f
 
@@ -65,7 +67,7 @@ fun IntroduceItem(
                         Text(
                             text = "",
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontSize = TitleFontSize,
+                            style = MaterialTheme.typography.titleSmall,
                             modifier = Modifier
                                 .padding(end = PADDING_X)
                                 .placeholder(
@@ -82,16 +84,18 @@ fun IntroduceItem(
                 }
 
                 Spacer(modifier = Modifier.height(ENTITY_PADDING_Y))
-                Text(
-                    text = property.key,
-                    color = MaterialTheme.colorScheme.outline,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .padding(
-                            end = PADDING_X,
-                            bottom = if (divider) 0.dp else ENTITY_PADDING_Y
-                        )
-                )
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                    Text(
+                        text = property.key,
+                        color = MaterialTheme.colorScheme.outline,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .padding(
+                                end = PADDING_X,
+                                bottom = if (divider) 0.dp else ENTITY_PADDING_Y
+                            )
+                    )
+                }
                 Spacer(modifier = Modifier.height(ENTITY_PADDING_Y))
             }
             divider.ifTrue {

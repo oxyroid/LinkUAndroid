@@ -9,7 +9,7 @@ import com.linku.im.R
 import com.linku.im.application
 import com.linku.im.vm
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.global.LinkUEvent
+import com.linku.im.linku.LinkUEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach

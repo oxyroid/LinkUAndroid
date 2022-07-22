@@ -7,9 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,23 +19,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linku.im.screen.Screen
 
-internal data class DrawerItem(
+internal data class Route(
     @StringRes val titleRes: Int,
     val screen: Screen,
     val icon: ImageVector
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DrawerItem(
-    item: DrawerItem,
+    item: Route,
     selected: Boolean = false,
     onClick: () -> Unit
 ) {
-    Surface(
-        color = if (selected) MaterialTheme.colorScheme.primary
-        else Color.Unspecified,
-        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
-        else MaterialTheme.colorScheme.primary,
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primary
+            else Color.Unspecified,
+            contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.primary
+        ),
         shape = RoundedCornerShape(25)
     ) {
         Row(
@@ -51,12 +53,14 @@ internal fun DrawerItem(
         ) {
             Icon(
                 imageVector = item.icon,
-                contentDescription = item.icon.name
+                contentDescription = item.icon.name,
+                tint = LocalContentColor.current
             )
             Text(
                 text = stringResource(item.titleRes),
                 modifier = Modifier.padding(start = 12.dp),
                 fontWeight = FontWeight.Bold,
+                color = LocalContentColor.current
             )
         }
     }

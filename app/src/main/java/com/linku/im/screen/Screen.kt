@@ -3,10 +3,10 @@ package com.linku.im.screen
 
 sealed class Screen(val route: String) {
     object MainScreen : Screen(route = "main_screen")
+    object QueryScreen : Screen(route = "query_screen")
     object ChatScreen : Screen(route = "chat_screen")
     object LoginScreen : Screen("login_screen")
     object ProfileScreen : Screen("profile_screen")
-    object InfoScreen : Screen("info_screen")
 
     fun buildArgs(vararg args: String) = buildString {
         append(route)
@@ -21,10 +21,10 @@ sealed class Screen(val route: String) {
     companion object {
         fun valueOf(route: String) = when {
             route.startsWith(MainScreen.route) -> MainScreen
+            route.startsWith(QueryScreen.route) -> QueryScreen
             route.startsWith(ChatScreen.route) -> ChatScreen
             route.startsWith(LoginScreen.route) -> LoginScreen
             route.startsWith(ProfileScreen.route) -> ProfileScreen
-            route.startsWith(InfoScreen.route) -> InfoScreen
             else -> MainScreen
         }
     }

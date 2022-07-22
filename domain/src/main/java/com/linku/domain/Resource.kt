@@ -42,6 +42,11 @@ suspend inline fun <T> FlowCollector<Resource<T>>.emitResource(
 ) = emit(Resource.Failure(message, code))
 
 fun <T> resourceFlow(flowCollector: suspend FlowCollector<Resource<T>>.() -> Unit) = flow {
-    emit(Resource.Loading)
-    flowCollector.invoke(this)
+    try {
+        emit(Resource.Loading)
+        flowCollector.invoke(this)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        emit(Resource.Failure(message = e.message ?: "Unknown Error"))
+    }
 }

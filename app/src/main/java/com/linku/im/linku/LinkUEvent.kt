@@ -1,6 +1,7 @@
-package com.linku.im.global
+package com.linku.im.linku
 
-import androidx.compose.material.ScaffoldState
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.navigation.NavController
 import com.linku.im.screen.Screen
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,11 @@ sealed class LinkUEvent {
      * Change theme state to effect composable.
      */
     object ToggleDarkMode : LinkUEvent()
+
+    /**
+     * Change dynamic theme state to effect composable.
+     */
+    object ToggleDynamic : LinkUEvent()
 
     /**
      * Disconnect the websocket flow.
@@ -47,11 +53,11 @@ sealed class LinkUEvent {
      * Initialize scaffoldState.
      * @suppress This event must be called before other Navigation Event.
      * @param coroutineScope Toggle state need scope.
-     * @param scaffoldState The remembered scaffoldState in your root composable.
+     * @param drawerState The remembered scaffoldState in your root composable.
      */
-    data class InitScaffoldState(
+    data class InitScaffoldState @OptIn(ExperimentalMaterial3Api::class) constructor(
         val coroutineScope: CoroutineScope,
-        val scaffoldState: ScaffoldState
+        val drawerState: DrawerState
     ) : LinkUEvent()
 
     /**

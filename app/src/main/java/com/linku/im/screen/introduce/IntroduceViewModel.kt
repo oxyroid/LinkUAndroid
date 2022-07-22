@@ -173,7 +173,7 @@ class IntroduceViewModel @Inject constructor(
                 else application.getString(R.string.profile_data_realName_true)
             ).also(::add)
             // FIXME
-            Property.Data(description, userDTO.salt.checkEmpty()).also(::add)
+            Property.Data(description, "".checkEmpty()).also(::add)
         }
     }
 

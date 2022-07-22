@@ -76,6 +76,12 @@ interface ChatService {
     @GET("chats/msg")
     suspend fun getUnreadMessages(): Result<List<MessageDTO>>
 
+    @GET("chats/query")
+    suspend fun queryConversations(
+        @Query("name") name: String? = null,
+        @Query("description") description: String? = null,
+    ): Result<List<ConversationDTO>>
+
     @GET("chats/msg/pre")
     suspend fun getMessageAfter(@Query("date") timestamp: String)
 

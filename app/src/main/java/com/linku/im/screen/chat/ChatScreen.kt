@@ -1,7 +1,6 @@
 package com.linku.im.screen.chat
 
 import android.widget.Toast
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +10,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Surface
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,12 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.Auth
 import com.linku.im.Constants
-import com.linku.im.global.LinkUEvent
+import com.linku.im.linku.LinkUEvent
 import com.linku.im.screen.chat.composable.ChatBottomBar
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.vm
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
@@ -38,6 +38,10 @@ fun ChatScreen(
     val scope = rememberCoroutineScope()
     val state by viewModel.state
     val listState = rememberLazyListState()
+
+    vm.onActions {
+
+    }
 
     SideEffect {
         if (cid == -1) vm.onEvent(LinkUEvent.PopBackStack)
@@ -56,7 +60,7 @@ fun ChatScreen(
     LaunchedEffect(firstVisibleItemIndex) {
         viewModel.onEvent(ChatEvent.FirstVisibleIndex(listState.firstVisibleItemIndex))
     }
-    Surface(
+    Card(
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         modifier = Modifier
             .padding(

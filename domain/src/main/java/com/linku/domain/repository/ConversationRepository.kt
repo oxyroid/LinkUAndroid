@@ -9,4 +9,5 @@ interface ConversationRepository {
     fun observeConversations(): Flow<List<Conversation>>
     fun observeLatestMessages(cid: Int): Flow<Message>
     fun fetchConversations(): Flow<Resource<Unit>>
+    fun queryConversations(name: String?, description: String?): Flow<Resource<List<Conversation>>>
 }

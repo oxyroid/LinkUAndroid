@@ -9,20 +9,19 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
-import androidx.compose.material.ScaffoldState
-import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.Auth
-import com.linku.im.global.LinkUEvent
+import com.linku.im.linku.LinkUEvent
 import com.linku.im.screen.Screen
 import com.linku.im.screen.main.composable.ConversationItem
 import com.linku.im.screen.main.composable.Drawer
@@ -30,23 +29,35 @@ import com.linku.im.ui.ToolBarAction
 import com.linku.im.ui.drawVerticalScrollbar
 import com.linku.im.vm
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     mainViewModel: MainViewModel = hiltViewModel(),
-    scaffoldState: ScaffoldState,
+    drawerState: DrawerState
 ) {
     val state by mainViewModel.state
     val listState = rememberLazyListState()
     vm.onActions {
         ToolBarAction(
-            onClick = { vm.onEvent(LinkUEvent.ToggleDarkMode) },
-            imageVector = Icons.Default.Settings
+            onClick = { vm.onEvent(LinkUEvent.Navigate(Screen.QueryScreen)) },
+            imageVector = Icons.Rounded.Search,
+            tint = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onPrimary
+        )
+    }
+    vm.onTitle {
+        Text(
+            text = vm.state.value.label,
+            maxLines = 1,
+            style = MaterialTheme.typography.titleMedium,
+            overflow = TextOverflow.Ellipsis,
+            color = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onPrimary
         )
     }
     Drawer(
         title = state.drawerTitle,
-        drawerState = scaffoldState.drawerState,
+        drawerState = drawerState,
         onNavigate = { screen ->
             when (screen) {
                 Screen.ProfileScreen -> {
@@ -62,7 +73,7 @@ fun MainScreen(
             mainViewModel.onEvent(MainEvent.OneWord)
         }
     ) {
-        Surface(
+        Card(
             shape = RoundedCornerShape(topStartPercent = 5, topEndPercent = 5),
             modifier = Modifier.padding(
                 start = 8.dp,

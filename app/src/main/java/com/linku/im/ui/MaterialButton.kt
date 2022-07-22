@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun MaterialButton(
-    textRes: Int, modifier: Modifier = Modifier, enabled: Boolean = true, onClick: () -> Unit
+    textRes: Int,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit
 ) {
     Button(
         shape = RoundedCornerShape(8.dp),

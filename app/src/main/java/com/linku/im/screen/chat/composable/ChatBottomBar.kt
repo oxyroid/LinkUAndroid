@@ -2,9 +2,12 @@ package com.linku.im.screen.chat.composable
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
@@ -19,9 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.linku.im.R
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -66,11 +71,12 @@ fun ChatBottomBar(
                         pressedElevation = (-8).dp,
                         focusedElevation = 0.dp,
                         hoveredElevation = (-4).dp
-                    )
+                    ),
+                    interactionSource = MutableInteractionSource()
                 ) {
                     Text(
-                        text = firstVisibleItemIndex.toString(),
-                        style = MaterialTheme.typography.titleMedium,
+                        text = (max(firstVisibleItemIndex, 1)).toString(),
+                        style = MaterialTheme.typography.displaySmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
@@ -83,17 +89,26 @@ fun ChatBottomBar(
                 },
                 Modifier
                     .weight(1f)
-                    .animateContentSize { initialValue, targetValue -> },
+                    .animateContentSize { _, _ -> },
                 placeholder = {
                     Text(
                         text = stringResource(id = R.string.screen_chat_input),
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 },
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color.Transparent,
                     unfocusedBorderColor = Color.Transparent,
                     cursorColor = MaterialTheme.colorScheme.primary
+                ),
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Send
+                ),
+                keyboardActions = KeyboardActions(
+                    onSend = {
+                        onSend()
+                    }
                 )
             )
             Spacer(modifier = Modifier.width(4.dp))

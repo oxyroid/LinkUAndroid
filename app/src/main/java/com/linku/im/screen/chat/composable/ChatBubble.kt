@@ -6,25 +6,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.font.toFontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
 import com.linku.domain.entity.Message
 import com.linku.im.extension.ifTrue
+import com.linku.im.ui.theme.Fonts
 import com.linku.im.ui.theme.seed
 import java.util.*
 
@@ -48,18 +46,18 @@ fun ChatBubble(
         if (isAnother)
             if (!isSystemInDarkTheme()) MaterialTheme.colorScheme.background
             else MaterialTheme.colorScheme.onBackground
-        else MaterialTheme.colorScheme.tertiary
+        else MaterialTheme.colorScheme.secondary
     val contentColor: Color =
         if (isAnother)
             if (!isSystemInDarkTheme()) MaterialTheme.colorScheme.onBackground
             else MaterialTheme.colorScheme.background
-        else MaterialTheme.colorScheme.onTertiary
+        else MaterialTheme.colorScheme.onSecondary
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
         isShowTime.ifTrue {
-            TimestampCard(timestamp = message.timestamp)
+            Timestamp(timestamp = message.timestamp)
         }
         Box(
             modifier = Modifier.padding(
@@ -103,7 +101,7 @@ fun ChatBubble(
                         Spacer(modifier = Modifier.width(12.dp))
                     }
                 }
-                BubbleTextField(
+                BubbleText(
                     text = message.content,
                     isAnother = isAnother,
                     color = color,
@@ -116,8 +114,9 @@ fun ChatBubble(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BubbleTextField(
+private fun BubbleText(
     text: String,
     isAnother: Boolean,
     color: Color,
@@ -134,10 +133,11 @@ private fun BubbleTextField(
         bottomEnd = BUBBLE_SPECIAL_CORNER,
         topStart = BUBBLE_CORNER
     )
-    Surface(
+    ElevatedCard(
         shape = shape,
-        color = color,
-        elevation = 1.dp
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = color
+        ),
     ) {
         val customTextSelectionColors = TextSelectionColors(
             handleColor = seed,
@@ -166,7 +166,7 @@ private fun BubbleTextField(
 }
 
 @Composable
-private fun TimestampCard(timestamp: Long) {
+private fun Timestamp(timestamp: Long) {
     Row(
         modifier = Modifier
             .padding(top = VERTICAL_IN_PADDING)
@@ -190,6 +190,7 @@ private fun TimestampCard(timestamp: Long) {
             ),
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             style = MaterialTheme.typography.titleSmall,
+            fontFamily = Fonts.Medium.toFontFamily()
         )
     }
     Spacer(modifier = Modifier.height(8.dp))

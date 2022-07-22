@@ -1,10 +1,10 @@
 package com.linku.im.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 
 
 private val LightColors = lightColorScheme(
@@ -68,19 +68,23 @@ private val DarkColors = darkColorScheme(
     primary = md_theme_dark_primary,
 )
 
+val supportDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
 @Composable
 fun AppTheme(
-  useDarkTheme: Boolean = isSystemInDarkTheme(),
-  content: @Composable() () -> Unit
+    useDarkTheme: Boolean = isSystemInDarkTheme(),
+    enableDynamic: Boolean = supportDynamic,
+    content: @Composable () -> Unit
 ) {
-  val colors = if (!useDarkTheme) {
-    LightColors
-  } else {
-    DarkColors
-  }
+    val colors = if (!useDarkTheme)
+        if (enableDynamic and supportDynamic) dynamicLightColorScheme(LocalContext.current)
+        else LightColors
+    else
+        if (enableDynamic and supportDynamic) dynamicDarkColorScheme(LocalContext.current)
+        else DarkColors
 
-  MaterialTheme(
-    colorScheme = colors,
-    content = content
-  )
+    MaterialTheme(
+        colorScheme = colors,
+        content = content
+    )
 }

@@ -12,15 +12,17 @@ import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -29,7 +31,7 @@ import coil.compose.SubcomposeAsyncImage
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.times
-import com.linku.im.global.LinkUEvent
+import com.linku.im.linku.LinkUEvent
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.ui.ToolBarAction
@@ -53,14 +55,17 @@ fun ProfileScreen(
 
     vm.onActions {
         ToolBarAction(
-            onClick = { dropdownMenuExpended = true }, imageVector = Icons.Default.MoreVert
+            onClick = { dropdownMenuExpended = true },
+            imageVector = Icons.Default.MoreVert,
+            tint = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onPrimary
         )
         DropdownMenu(
             expanded = dropdownMenuExpended,
             onDismissRequest = { dropdownMenuExpended = false }) {
-            DropdownMenuItem(onClick = { viewModel.onEvent(IntroduceEvent.SignOut) }) {
+            DropdownMenuItem(onClick = { viewModel.onEvent(IntroduceEvent.SignOut) }, text = {
                 Text(text = stringResource(R.string.sign_out))
-            }
+            })
         }
     }
 
@@ -81,55 +86,58 @@ fun ProfileScreen(
     state.verifiedEmailStarting.ifTrue {
         AlertDialog(
             onDismissRequest = { },
-            buttons = { Spacer(modifier = Modifier.height(24.dp)) },
+//            buttons = { Spacer(modifier = Modifier.height(24.dp)) },
             title = {
                 CircularProgressIndicator()
-            }
+            },
+            confirmButton = {}
         )
     }
 
     state.verifiedEmailDialogShowing.ifTrue {
         var code by remember { mutableStateOf("") }
-        AlertDialog(onDismissRequest = { }, buttons = {
-            Column(
-                modifier = Modifier.padding(12.dp)
-            ) {
-                OutlinedTextField(
-                    value = code,
-                    onValueChange = { code = it },
-                    colors = TextFieldDefaults.outlinedTextFieldColors(),
-                    enabled = !state.verifiedEmailCodeVerifying,
-                    maxLines = 1
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
+        AlertDialog(
+            onDismissRequest = { },
+            confirmButton = {
+                Column(
+                    modifier = Modifier.padding(12.dp)
                 ) {
-                    TextButton(
-                        onClick = { viewModel.onEvent(IntroduceEvent.CancelVerifiedEmail) },
-                        enabled = !state.verifiedEmailCodeVerifying
+                    OutlinedTextField(
+                        value = code,
+                        onValueChange = { code = it },
+                        colors = TextFieldDefaults.outlinedTextFieldColors(),
+                        enabled = !state.verifiedEmailCodeVerifying,
+                        maxLines = 1
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
                     ) {
-                        Text(text = stringResource(id = R.string.cancel))
-                    }
-                    TextButton(
-                        onClick = {
-                            viewModel.onEvent(IntroduceEvent.VerifiedEmailCode(code))
-                            code = ""
-                        },
-                        enabled = code.isNotBlank() and !state.verifiedEmailCodeVerifying
-                    ) {
-                        Text(
-                            text = stringResource(
-                                id = if (state.verifiedEmailCodeVerifying) R.string.verifing
-                                else R.string.verified
+                        TextButton(
+                            onClick = { viewModel.onEvent(IntroduceEvent.CancelVerifiedEmail) },
+                            enabled = !state.verifiedEmailCodeVerifying
+                        ) {
+                            Text(text = stringResource(id = R.string.cancel))
+                        }
+                        TextButton(
+                            onClick = {
+                                viewModel.onEvent(IntroduceEvent.VerifiedEmailCode(code))
+                                code = ""
+                            },
+                            enabled = code.isNotBlank() and !state.verifiedEmailCodeVerifying
+                        ) {
+                            Text(
+                                text = stringResource(
+                                    id = if (state.verifiedEmailCodeVerifying) R.string.verifying
+                                    else R.string.verified
+                                )
                             )
-                        )
+                        }
                     }
                 }
+            }, title = {
+                val title = stringResource(id = R.string.email_verified_dialog_title)
+                Text(text = title, style = MaterialTheme.typography.titleMedium)
             }
-        }, title = {
-            val title = stringResource(id = R.string.email_verified_dialog_title)
-            Text(text = title, style = MaterialTheme.typography.titleMedium)
-        }
 
         )
     }
@@ -184,7 +192,7 @@ fun ProfileScreen(
                     contentColor = MaterialTheme.colorScheme.onSecondary
                 ) {
                     SubcomposeAsyncImage(
-                        model = Color.Blue,
+                        model = "",
                         contentDescription = "",
                         modifier = Modifier
                             .fillMaxWidth()

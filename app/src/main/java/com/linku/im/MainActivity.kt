@@ -5,14 +5,16 @@ import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.animation.*
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Scaffold
-import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,22 +24,21 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.IntOffset
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
-import com.linku.im.global.LinkUEvent
-import com.linku.im.global.LinkUViewModel
+import com.linku.im.extension.ifTrue
+import com.linku.im.linku.LinkUEvent
+import com.linku.im.linku.LinkUViewModel
 import com.linku.im.screen.Screen
 import com.linku.im.screen.chat.ChatScreen
-import com.linku.im.screen.info.InfoScreen
 import com.linku.im.screen.introduce.ProfileScreen
 import com.linku.im.screen.main.MainScreen
+import com.linku.im.screen.query.QueryScreen
 import com.linku.im.screen.sign.LoginScreen
-import com.linku.im.ui.MaterialSnackHost
 import com.linku.im.ui.ToolBar
 import com.linku.im.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -57,13 +58,17 @@ class MainActivity : ComponentActivity() {
 lateinit var vm: LinkUViewModel
     private set
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
     window: Window
 ) {
     val state by vm.state
     @OptIn(ExperimentalAnimationApi::class)
-    AppTheme(state.isDarkMode) {
+    AppTheme(
+        useDarkTheme = state.isDarkMode,
+        enableDynamic = state.dynamicEnabled
+    ) {
         val color = if (!state.isDarkMode) MaterialTheme.colorScheme.primary
         else MaterialTheme.colorScheme.surface
         val contentColor = if (!state.isDarkMode) MaterialTheme.colorScheme.onPrimary
@@ -77,28 +82,26 @@ fun App(
 
         val coroutineScope = rememberCoroutineScope()
         val navController = rememberAnimatedNavController()
-        val scaffoldState = rememberScaffoldState()
+        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
         LaunchedEffect(Unit) {
             vm.onEvent(LinkUEvent.InitNavController(navController))
-            vm.onEvent(LinkUEvent.InitScaffoldState(coroutineScope, scaffoldState))
+            vm.onEvent(LinkUEvent.InitScaffoldState(coroutineScope, drawerState))
         }
 
         Scaffold(
             topBar = {
                 ToolBar(
-                    navIcon = state.icon,
+                    navIcon = (state.currentScreen == Screen.MainScreen && drawerState.isOpen)
+                        .ifTrue { Icons.Rounded.Close }
+                        ?: state.icon,
                     title = state.title,
                     onNavClick = state.navClick,
-                    isDarkMode = state.isDarkMode,
-                    actions = state.actions
+                    actions = state.actions,
+                    isDarkMode = state.isDarkMode
                 )
-            },
-            snackbarHost = { MaterialSnackHost(scaffoldState.snackbarHostState) },
-            scaffoldState = scaffoldState,
-            drawerBackgroundColor = MaterialTheme.colorScheme.background,
+            }
         ) { innerPadding ->
-            val specIntOffset = tween<IntOffset>(400)
             val specFloat = tween<Float>(400)
             AnimatedNavHost(
                 navController = navController,
@@ -116,44 +119,11 @@ fun App(
                         )
                     )
                     .navigationBarsPadding(),
-                enterTransition = {
-                    slideIntoContainer(
-                        towards = AnimatedContentScope.SlideDirection.Up,
-                        animationSpec = specIntOffset
-                    )
-                },
-                exitTransition = {
-                    slideOut(
-                        animationSpec = specIntOffset,
-                        targetOffset = { IntOffset(0, (it.height * -0.3).toInt()) }
-                    ) + fadeOut(
-                        animationSpec = specFloat
-                    )
-                },
-                popEnterTransition = {
-                    slideIn(
-                        animationSpec = specIntOffset,
-                        initialOffset = { IntOffset(0, (it.height * -0.3).toInt()) }
-                    )
-                },
-                popExitTransition = {
-                    slideOutOfContainer(
-                        towards = AnimatedContentScope.SlideDirection.Down,
-                        animationSpec = specIntOffset
-                    ) + fadeOut(
-                        animationSpec = specFloat
-                    )
-                }) {
-                composable(
-                    route = Screen.MainScreen.route,
-                    enterTransition = {
-                        slideIntoContainer(
-                            AnimatedContentScope.SlideDirection.Up,
-                            animationSpec = specIntOffset
-                        )
-                    }
-                ) {
-                    MainScreen(scaffoldState = scaffoldState)
+                enterTransition = { fadeIn(animationSpec = specFloat) },
+                exitTransition = { fadeOut(animationSpec = specFloat) }
+            ) {
+                composable(route = Screen.MainScreen.route) {
+                    MainScreen(drawerState = drawerState)
                 }
                 composable(
                     route = Screen.ChatScreen.buildArgs("cid"),
@@ -169,8 +139,8 @@ fun App(
                     )
                 }
                 composable(Screen.LoginScreen.route) { LoginScreen() }
-                composable(Screen.InfoScreen.route) { InfoScreen() }
                 composable(Screen.ProfileScreen.route) { ProfileScreen() }
+                composable(Screen.QueryScreen.route) { QueryScreen() }
             }
         }
     }

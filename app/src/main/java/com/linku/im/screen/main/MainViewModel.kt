@@ -72,7 +72,7 @@ class MainViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
-        conversationUseCases.fetchConversationsUseCase()
+        conversationUseCases.fetchConversations()
             .onEach { resource ->
                 _state.value = when (resource) {
                     Resource.Loading -> state.value.copy(

@@ -1,4 +1,4 @@
-package com.linku.im.global
+package com.linku.im.linku
 
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
@@ -15,9 +15,11 @@ data class LinkUState(
     val loading: Boolean = false,
     val online: Boolean = false,
     val icon: ImageVector = Icons.Default.Menu,
-    val title: String = application.getString(R.string.connecting),
+    val label: String = application.getString(R.string.connecting),
     val navClick: Content = {},
+    val title: @Composable () -> Unit = {},
     val actions: @Composable RowScope.() -> Unit = {},
     val isDarkMode: Boolean = false,
+    val dynamicEnabled: Boolean = false,
     val currentScreen: Screen = Screen.MainScreen
 )

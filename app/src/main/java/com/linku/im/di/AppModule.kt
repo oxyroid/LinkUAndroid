@@ -239,7 +239,8 @@ object AppModule {
         return ConversationUseCases(
             observeConversations = ObserveConversationsUseCase(repository),
             observeLatestContent = ObserveLatestMessagesUseCase(repository),
-            fetchConversationsUseCase = FetchConversationsUseCase(repository)
+            fetchConversations = FetchConversationsUseCase(repository),
+            queryConversations = QueryConversationsUseCase(repository)
         )
     }
 

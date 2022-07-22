@@ -8,13 +8,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -98,24 +98,27 @@ fun ConversationItem(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = conversation?.content ?: "",
-                maxLines = 1,
-                color = MaterialTheme.colorScheme.outline,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .placeholder(
-                        visible = (conversation == null),
-                        color = shimmerColor,
-                        shape = RoundedCornerShape(4.dp),
-                        highlight = PlaceholderHighlight.shimmer(
-                            highlightColor = onShimmerColor,
-                            animationSpec = shimmerAnimationSpec
-                        ),
-                    )
-                    .fillMaxWidth(),
-                overflow = TextOverflow.Ellipsis
-            )
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                Text(
+                    text = conversation?.content ?: "",
+                    maxLines = 1,
+                    color = MaterialTheme.colorScheme.outline,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .placeholder(
+                            visible = (conversation == null),
+                            color = shimmerColor,
+                            shape = RoundedCornerShape(4.dp),
+                            highlight = PlaceholderHighlight.shimmer(
+                                highlightColor = onShimmerColor,
+                                animationSpec = shimmerAnimationSpec
+                            ),
+                        )
+                        .fillMaxWidth(),
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
         }
         Spacer(modifier = Modifier.width(8.dp))
         when {
@@ -150,6 +153,7 @@ fun ConversationItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CircleHeadPicture(
     model: Any?,
@@ -157,7 +161,7 @@ private fun CircleHeadPicture(
     modifier: Modifier = Modifier,
     placeholder: @Composable (String?) -> Unit = {}
 ) {
-    Surface(
+    Card(
         shape = RoundedCornerShape(100),
         modifier = modifier
             .padding(vertical = 8.dp)

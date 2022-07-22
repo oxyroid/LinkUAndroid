@@ -15,6 +15,7 @@ abstract class BaseViewModel<S, E>(emptyState: S) : ViewModel() {
      * Observe this to update UI
      */
     protected val _state = mutableStateOf(emptyState)
+    protected val readableState: S get() = _state.value
     val state: State<S> = _state
 
     /**

@@ -47,4 +47,14 @@ class ConversationRepositoryImpl(
     override fun observeLatestMessages(cid: Int): Flow<Message> {
         return messageDao.getLatestMessageByCid(cid).filterNotNull()
     }
+
+    override fun queryConversations(
+        name: String?,
+        description: String?
+    ): Flow<Resource<List<Conversation>>> =
+        resourceFlow {
+            chatService.queryConversations(name, description)
+                .handle { conversations -> emitResource(conversations.map { it.toConversation() }) }
+                .catch(::emitResource)
+        }
 }
