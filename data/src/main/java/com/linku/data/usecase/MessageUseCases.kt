@@ -29,7 +29,10 @@ data class InitSessionUseCase(
     suspend operator fun invoke(
         uid: Int,
         scope: CoroutineScope
-    ): Resource<Unit> = repository.initSession(uid, scope)
+    ): Resource<Unit> = run {
+        repository.fetchUnreadMessages()
+        repository.initSession(uid, scope)
+    }
 }
 
 data class ObserveMessagesUseCase(

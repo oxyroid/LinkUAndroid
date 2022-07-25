@@ -9,10 +9,11 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import com.linku.data.usecase.MessageUseCases
 import com.linku.domain.Auth
 import com.linku.domain.Resource
+import com.linku.domain.eventOf
 import com.linku.im.Constants.SAVED_DARK_MODE
 import com.linku.im.Constants.SAVED_DYNAMIC_MODE
 import com.linku.im.R
@@ -37,14 +38,12 @@ class LinkUViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases
 ) : BaseViewModel<LinkUState, LinkUEvent>(LinkUState()) {
     init {
-        onEvent(LinkUEvent.RestoreDarkMode)
+        onEvent(LinkUEvent.InitConfig)
         onEvent(LinkUEvent.ObserveCurrentUser { userId ->
             if (userId == null) LinkUEvent.Disconnect
             else onEvent(LinkUEvent.InitSession(userId))
         })
     }
-
-    private lateinit var navController: NavController
 
     @OptIn(ExperimentalMaterial3Api::class)
     private lateinit var drawerState: DrawerState
@@ -54,16 +53,10 @@ class LinkUViewModel @Inject constructor(
     override fun onEvent(event: LinkUEvent) {
         when (event) {
             is LinkUEvent.InitSession -> initSession()
-            LinkUEvent.RestoreDarkMode -> {
-                val isDarkMode = MMKV.defaultMMKV().getBoolean(SAVED_DARK_MODE, false)
-                val enableDynamic =
-                    MMKV.defaultMMKV().getBoolean(SAVED_DYNAMIC_MODE, supportDynamic)
-                _state.value = readable.copy(
-                    isDarkMode = isDarkMode,
-                    dynamicEnabled = enableDynamic
-                )
-            }
-            LinkUEvent.PopBackStack -> navController.navigateUp()
+            LinkUEvent.InitConfig -> initConfig()
+            LinkUEvent.PopBackStack -> _state.value = readable.copy(
+                navigateUp = eventOf(Unit)
+            )
 
             LinkUEvent.ToggleDarkMode -> {
                 MMKV.defaultMMKV().encode(SAVED_DARK_MODE, !readable.isDarkMode)
@@ -76,17 +69,19 @@ class LinkUViewModel @Inject constructor(
                 updateTitle(Label.NoAuth)
                 viewModelScope.launch { messageUseCases.closeSession() }
             }
-            is LinkUEvent.Navigate -> navController.navigate(event.screen.route)
+            is LinkUEvent.Navigate -> {
+                _state.value = readable.copy(
+                    navigate = eventOf(event.screen.route)
+                )
+            }
 
-            is LinkUEvent.NavigateWithArgs -> navController.navigate(event.route)
+            is LinkUEvent.NavigateWithArgs -> {
+                _state.value = readable.copy(
+                    navigate = eventOf(event.route)
+                )
+            }
             is LinkUEvent.InitNavController -> {
-                navController = event.navController
-                navController.addOnDestinationChangedListener { _, destination, _ ->
-                    _state.value = readable.copy(
-                        currentScreen = Screen.valueOf(destination.route ?: "")
-                    )
-                    deliverNavigationUI(readable.currentScreen)
-                }
+
             }
             is LinkUEvent.ObserveCurrentUser -> {
                 Auth.observeCurrent
@@ -128,22 +123,22 @@ class LinkUViewModel @Inject constructor(
             )
             Screen.ChatScreen -> readable.copy(
                 icon = Icons.Default.ArrowBack,
-                navClick = navController::navigateUp,
+                navClick = ::navigateUp,
                 currentScreen = screen
             )
             Screen.LoginScreen -> readable.copy(
                 icon = Icons.Default.ArrowBack,
-                navClick = navController::navigateUp,
+                navClick = ::navigateUp,
                 currentScreen = screen
             )
             Screen.ProfileScreen -> readable.copy(
                 icon = Icons.Default.ArrowBack,
-                navClick = navController::navigateUp,
+                navClick = ::navigateUp,
                 currentScreen = screen
             )
             Screen.QueryScreen -> readable.copy(
                 icon = Icons.Default.ArrowBack,
-                navClick = navController::navigateUp,
+                navClick = ::navigateUp,
                 currentScreen = screen
             )
         }
@@ -189,6 +184,29 @@ class LinkUViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun initConfig() {
+        val isDarkMode = MMKV.defaultMMKV().getBoolean(SAVED_DARK_MODE, false)
+        val enableDynamic =
+            MMKV.defaultMMKV().getBoolean(SAVED_DYNAMIC_MODE, supportDynamic)
+        _state.value = readable.copy(
+            isDarkMode = isDarkMode,
+            dynamicEnabled = enableDynamic
+        )
+    }
+
+    private fun navigateUp() {
+        _state.value = readable.copy(
+            navigateUp = eventOf(Unit)
+        )
+    }
+
+    fun currentScreen(destination: NavDestination) {
+        _state.value = readable.copy(
+            currentScreen = Screen.valueOf(destination.route ?: "")
+        )
+        deliverNavigationUI(readable.currentScreen)
     }
 
 }

@@ -16,7 +16,7 @@ sealed class LinkUEvent {
     /**
      * Restore the application is in dark mode or not last time.
      */
-    object RestoreDarkMode : LinkUEvent()
+    object InitConfig : LinkUEvent()
 
     /**
      * Change theme state to effect composable.

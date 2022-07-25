@@ -7,6 +7,7 @@ import com.linku.domain.Resource
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -47,7 +48,7 @@ class MainViewModel @Inject constructor(
                 getAllConversationsJob = viewModelScope.launch {
                     conversations.forEach { conversation ->
                         conversationUseCases.observeLatestContent(conversation.id)
-                            .collect { message ->
+                            .collectLatest { message ->
                                 val oldList = state.value.conversations.toMutableList()
                                 val oldConversation = oldList.find { it.id == message.cid }
                                 if (oldConversation != null) {
@@ -58,7 +59,6 @@ class MainViewModel @Inject constructor(
                                     oldList.add(copy)
                                 } else {
                                     // TODO
-
                                 }
                                 _state.value = state.value.copy(
                                     conversations = oldList

@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
@@ -78,54 +77,64 @@ fun App() {
         val coroutineScope = rememberCoroutineScope()
         val navController = rememberAnimatedNavController()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-
         LaunchedEffect(Unit) {
+            navController.addOnDestinationChangedListener { _, destination, _ ->
+                vm.currentScreen(destination)
+            }
             vm.onEvent(LinkUEvent.InitNavController(navController))
             vm.onEvent(LinkUEvent.InitScaffoldState(coroutineScope, drawerState))
         }
 
-        ProvideWindowInsets {
-            Scaffold(
-                topBar = {
-                    ToolBar(
-                        navIcon = (state.currentScreen == Screen.MainScreen && drawerState.isOpen)
-                            .ifTrue { Icons.Rounded.Close }
-                            ?: state.icon,
-                        title = state.title,
-                        onNavClick = state.navClick,
-                        actions = state.actions,
-                        isDarkMode = state.isDarkMode
+        Scaffold(
+            topBar = {
+                ToolBar(
+                    navIcon = (state.currentScreen == Screen.MainScreen && drawerState.isOpen)
+                        .ifTrue { Icons.Rounded.Close }
+                        ?: state.icon,
+                    onNavClick = state.navClick,
+                    actions = state.actions,
+                    isDarkMode = state.isDarkMode,
+                    title = state.title
+                )
+            }
+        ) { innerPadding ->
+            val specFloat = tween<Float>(400)
+            AnimatedNavHost(
+                navController = navController,
+                startDestination = Screen.MainScreen.route,
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = { fadeIn(animationSpec = specFloat) },
+                exitTransition = { fadeOut(animationSpec = specFloat) }
+            ) {
+                composable(route = Screen.MainScreen.route) {
+                    MainScreen(drawerState = drawerState)
+                }
+                composable(
+                    route = Screen.ChatScreen.buildArgs("cid"),
+                    arguments = listOf(
+                        navArgument("cid") {
+                            type = NavType.IntType
+                            nullable = false
+                        }
+                    )
+                ) { entry ->
+                    ChatScreen(
+                        cid = entry.arguments?.getInt("cid") ?: -1
                     )
                 }
-            ) { innerPadding ->
-                val specFloat = tween<Float>(400)
-                AnimatedNavHost(
-                    navController = navController,
-                    startDestination = Screen.MainScreen.route,
-                    modifier = Modifier.padding(innerPadding),
-                    enterTransition = { fadeIn(animationSpec = specFloat) },
-                    exitTransition = { fadeOut(animationSpec = specFloat) }
-                ) {
-                    composable(route = Screen.MainScreen.route) {
-                        MainScreen(drawerState = drawerState)
-                    }
-                    composable(
-                        route = Screen.ChatScreen.buildArgs("cid"),
-                        arguments = listOf(
-                            navArgument("cid") {
-                                type = NavType.IntType
-                                nullable = false
-                            }
-                        )
-                    ) { entry ->
-                        ChatScreen(
-                            cid = entry.arguments?.getInt("cid") ?: -1
-                        )
-                    }
-                    composable(Screen.LoginScreen.route) { LoginScreen() }
-                    composable(Screen.ProfileScreen.route) { ProfileScreen() }
-                    composable(Screen.QueryScreen.route) { QueryScreen() }
-                }
+                composable(Screen.LoginScreen.route) { LoginScreen() }
+                composable(Screen.ProfileScreen.route) { ProfileScreen() }
+                composable(Screen.QueryScreen.route) { QueryScreen() }
+            }
+        }
+        LaunchedEffect(state.navigateUp) {
+            state.navigateUp.handle {
+                navController.navigateUp()
+            }
+        }
+        LaunchedEffect(state.navigate) {
+            state.navigate.handle { route ->
+                navController.navigate(route)
             }
         }
     }

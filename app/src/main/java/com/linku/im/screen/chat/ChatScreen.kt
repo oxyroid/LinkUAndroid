@@ -16,11 +16,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
-import com.linku.domain.Auth
+import com.linku.domain.entity.Conversation
 import com.linku.im.Constants
 import com.linku.im.extension.ifTrue
 import com.linku.im.linku.LinkUEvent
@@ -31,8 +30,7 @@ import com.linku.im.vm
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = hiltViewModel(),
-    cid: Int
+    viewModel: ChatViewModel = hiltViewModel(), cid: Int
 ) {
     val context = LocalContext.current
     val state by viewModel.state
@@ -50,14 +48,9 @@ fun ChatScreen(
     vm.onTitle {
         Text(
             text = state.title,
-            maxLines = 1,
-            style = MaterialTheme.typography.titleMedium,
-            overflow = TextOverflow.Ellipsis,
-            color = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onPrimary
+            style = MaterialTheme.typography.titleMedium
         )
     }
-
     SideEffect {
         if (cid == -1) vm.onEvent(LinkUEvent.PopBackStack)
     }
@@ -76,8 +69,7 @@ fun ChatScreen(
         viewModel.onEvent(ChatEvent.FirstVisibleIndex(listState.firstVisibleItemIndex))
     }
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         LazyColumn(
             modifier = Modifier
@@ -88,27 +80,29 @@ fun ChatScreen(
             state = listState
         ) {
             val minDuration = Constants.CHAT_LABEL_MIN_DURATION
-            itemsIndexed(state.messages, key = { _, item -> item.id }) { index, it ->
+            itemsIndexed(state.messages) { index, it ->
                 val next = if (index == state.messages.size - 1) null
                 else state.messages[index + 1]
-                val showTimeLabel =
-                    next == null || it.timestamp - next.timestamp >= minDuration
+                val showTimeLabel = next == null || it.timestamp - next.timestamp >= minDuration
                 ChatBubble(
-                    message = it,
-                    isAnother = it.uid != Auth.currentUID,
-                    isShowTime = showTimeLabel
+                    content = it.content,
+                    isAnother = it.isAnother,
+                    isShowTime = showTimeLabel,
+                    sendState = it.sendState,
+                    timestamp = it.timestamp,
+                    avatar = it.avatar,
+                    name = it.name,
+                    isShowName = it.isShowName,
+                    isMultiGroup = state.type == Conversation.TYPE_GROUP
                 )
             }
         }
-        ChatBottomBar(
-            text = state.text,
+        ChatBottomBar(text = state.text,
             image = state.image,
-            firstVisibleItemIndex = firstVisibleItemIndex,
-            listState = listState,
-            onAction = { viewModel.onEvent(ChatEvent.ReadAll) },
             onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
             onText = { viewModel.onEvent(ChatEvent.TextChange(it)) },
-            onFile = { permissionState.launchPermissionRequest() }
+            onFile = { permissionState.launchPermissionRequest() },
+            clearUri = { viewModel.onEvent(ChatEvent.OnFileUriChange(null)) }
         )
     }
 

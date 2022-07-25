@@ -158,6 +158,7 @@ object AppModule {
         userService: UserService
     ): UserRepository = UserRepositoryImpl(
         userService = userService,
+        userDao = database.userDao()
     )
 
     @Provides

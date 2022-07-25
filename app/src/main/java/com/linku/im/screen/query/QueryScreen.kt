@@ -1,11 +1,11 @@
 package com.linku.im.screen.query
 
 import android.widget.Toast
-import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -26,7 +25,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.im.R
-import com.linku.im.extension.ifTrue
 import com.linku.im.linku.LinkUEvent
 import com.linku.im.screen.Screen
 import com.linku.im.screen.query.composable.QueryItem
@@ -43,36 +41,28 @@ fun QueryScreen(
 
     }
     vm.onTitle {
-        Row {
-            OutlinedTextField(
-                value = state.text,
-                onValueChange = { viewModel.onEvent(QueryEvent.OnText(it)) },
-                Modifier
-                    .weight(1f),
-                placeholder = {
-                    Text(
-                        text = stringResource(id = R.string.query_input),
-                        color = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
-                        else MaterialTheme.colorScheme.onPrimary,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                    cursorColor = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onPrimary,
-                    textColor = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
-                    else MaterialTheme.colorScheme.onPrimary
-                ),
-                keyboardOptions = KeyboardOptions(
-                    imeAction = ImeAction.Search
-                ),
-                keyboardActions = KeyboardActions(
-                    onSearch = { viewModel.onEvent(QueryEvent.Query) }
-                )
+        OutlinedTextField(
+            textStyle = MaterialTheme.typography.titleMedium,
+            value = state.text,
+            onValueChange = { viewModel.onEvent(QueryEvent.OnText(it)) },
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = Color.Transparent,
+                cursorColor = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onPrimary,
+                textColor = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onPrimary
+            ),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(
+                onSearch = {
+                    viewModel.onEvent(QueryEvent.Query)
+                }
             )
-        }
+        )
     }
     LazyColumn(
         modifier = Modifier

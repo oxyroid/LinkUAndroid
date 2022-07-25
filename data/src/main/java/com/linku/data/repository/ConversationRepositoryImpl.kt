@@ -59,7 +59,9 @@ class ConversationRepositoryImpl(
 //                            return@handle
 //                        }
 //                    }
-                    conversationDao.insert(conversation.toConversation())
+                    if (conversationDao.getById(conversation.id) == null) {
+                        conversationDao.insert(conversation.toConversation())
+                    }
                     emitResource(Unit)
                 }
                 .catch(::emitResource)

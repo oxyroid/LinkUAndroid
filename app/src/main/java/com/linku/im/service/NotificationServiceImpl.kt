@@ -12,7 +12,7 @@ class NotificationServiceImpl @Inject constructor(
     private val soundPool: SoundPool,
     @ApplicationContext private val context: Context
 ) : NotificationService {
-    override fun onReceived(message: Message) {
+    override fun onCollected(message: Message) {
         soundPool.load(context, R.raw.sound_in, 1)
     }
 

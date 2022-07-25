@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
 import com.linku.domain.entity.Message
 import com.linku.im.extension.ifTrue
+import com.linku.im.ui.TextImage
 import com.linku.im.ui.theme.Fonts
 import com.linku.im.ui.theme.seed
 import java.util.*
@@ -37,10 +38,16 @@ private val FONT_SIZE = 14.sp
 
 @Composable
 fun ChatBubble(
-    message: Message,
+    content: String,
+    timestamp: Long,
+    sendState: Int,
     modifier: Modifier = Modifier,
     isAnother: Boolean = false,
-    isShowTime: Boolean = false
+    isShowTime: Boolean = false,
+    avatar: String? = null,
+    name: String? = null,
+    isShowName: Boolean,
+    isMultiGroup: Boolean
 ) {
     val color: Color =
         if (isAnother)
@@ -57,7 +64,7 @@ fun ChatBubble(
         modifier = modifier
     ) {
         isShowTime.ifTrue {
-            Timestamp(timestamp = message.timestamp)
+            Timestamp(timestamp = timestamp)
         }
         Box(
             modifier = Modifier.padding(
@@ -78,9 +85,10 @@ fun ChatBubble(
                         },
                     )
                     .fillMaxWidth(),
-                horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End
+                horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End,
+                verticalAlignment = Alignment.Bottom
             ) {
-                when (message.sendState) {
+                when (sendState) {
                     Message.STATE_PENDING -> {
                         CircularProgressIndicator(
                             modifier = Modifier
@@ -101,11 +109,28 @@ fun ChatBubble(
                         Spacer(modifier = Modifier.width(12.dp))
                     }
                 }
+                if (isMultiGroup) {
+                    if (avatar != null) {
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            TextImage(text = name, fontSize = 24.sp)
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                    } else {
+                        Surface(modifier = Modifier.size(32.dp)) {}
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
+                }
+
                 BubbleText(
-                    text = message.content,
+                    text = content,
                     isAnother = isAnother,
                     color = color,
-                    contentColor = contentColor
+                    contentColor = contentColor,
+                    name = name,
+                    isShowName = isShowName
                 )
             }
             // tail
@@ -120,7 +145,9 @@ private fun BubbleText(
     text: String,
     isAnother: Boolean,
     color: Color,
-    contentColor: Color
+    contentColor: Color,
+    name: String?,
+    isShowName: Boolean
 ) {
     val shape = if (isAnother) RoundedCornerShape(
         topEnd = BUBBLE_CORNER,
@@ -147,6 +174,18 @@ private fun BubbleText(
                 0.2f
             ).let(::Color)
         )
+        if (isShowName) {
+            Text(
+                text = name ?: "",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(
+                    start = HORIZONTAL_IN_PADDING,
+                    end = HORIZONTAL_IN_PADDING,
+                    top = VERTICAL_IN_PADDING
+                )
+            )
+        }
         CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
             SelectionContainer {
                 Text(
@@ -154,8 +193,10 @@ private fun BubbleText(
                     color = contentColor,
                     modifier = Modifier
                         .padding(
-                            vertical = VERTICAL_IN_PADDING,
-                            horizontal = HORIZONTAL_IN_PADDING
+                            start = HORIZONTAL_IN_PADDING,
+                            end = HORIZONTAL_IN_PADDING,
+                            top = if (isShowName) VERTICAL_IN_PADDING / 2 else VERTICAL_IN_PADDING,
+                            bottom = VERTICAL_IN_PADDING,
                         ),
                     textAlign = TextAlign.Start,
                     fontSize = FONT_SIZE

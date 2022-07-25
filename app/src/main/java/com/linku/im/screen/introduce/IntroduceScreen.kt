@@ -57,8 +57,6 @@ fun ProfileScreen(
         ToolBarAction(
             onClick = { dropdownMenuExpended = true },
             imageVector = Icons.Default.MoreVert,
-            tint = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onPrimary
         )
         DropdownMenu(
             expanded = dropdownMenuExpended,

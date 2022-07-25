@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import com.linku.domain.Event
 import com.linku.domain.entity.Conversation
-import com.linku.domain.entity.Message
+import com.linku.im.screen.chat.vo.MessageVO
 
 data class ChatState(
     val title: String = "",
@@ -15,7 +15,7 @@ data class ChatState(
     val image: Bitmap? = null,
     val loading: Boolean = false,
     val event: Event<String> = Event.Handled(),
-    val messages: List<Message> = emptyList(),
+    val messages: List<MessageVO> = emptyList(),
     val scrollToBottom: Event<Unit> = Event.Handled(),
     val firstVisibleIndex: Int = 0
 )

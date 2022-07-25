@@ -45,7 +45,7 @@ class MessageRepositoryImpl(
                     debug {
                         Log.e(TAG, "Message Received: ${message.content}")
                     }
-                    notificationService.onReceived(message)
+                    notificationService.onCollected(message)
                     messageDao.insert(message)
                     val cid = message.cid
                     if (conversationDao.getById(cid) == null) {
@@ -124,6 +124,20 @@ class MessageRepositoryImpl(
             e.printStackTrace()
             messageDao.failedStagingMessage(uuid)
             emitResource(e.message ?: "Unknown Error", "?")
+        }
+    }
+
+    override suspend fun fetchUnreadMessages() {
+        chatService.getUnreadMessages().handle { messages ->
+            messages.forEach {
+                messageDao.insert(it.toMessage())
+                val cid = it.cid
+                if (conversationDao.getById(cid) == null) {
+                    chatService.getById(cid).handle { conversation ->
+                        conversationDao.insert(conversation.toConversation())
+                    }
+                }
+            }
         }
     }
 }

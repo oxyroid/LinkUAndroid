@@ -15,7 +15,7 @@ import com.linku.data.usecase.AuthUseCases
 import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Auth
 import com.linku.domain.Resource
-import com.linku.domain.entity.UserDTO
+import com.linku.domain.entity.User
 import com.linku.domain.eventOf
 import com.linku.im.R
 import com.linku.im.applicationContext
@@ -24,6 +24,7 @@ import com.linku.im.screen.introduce.composable.Property
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -93,21 +94,14 @@ class IntroduceViewModel @Inject constructor(
     private fun fetchProfile() {
         val userId = Auth.currentUID
         checkNotNull(userId)
-        useCases.findUser(userId)
-            .onEach { resource ->
-                _state.value = when (resource) {
-                    Resource.Loading -> loadingState
-                    is Resource.Success -> state.value.copy(
-                        loading = false,
-                        dataProperties = makeDataProperties(resource.data),
-                        settingsProperties = makeSettingsProperties()
-                    )
-                    is Resource.Failure -> state.value.copy(
-                        loading = false,
-                        error = eventOf(resource.message)
-                    )
-                }
-            }.launchIn(viewModelScope)
+        viewModelScope.launch {
+            val resource = useCases.findUser(userId)
+            _state.value = readable.copy(
+                loading = false,
+                dataProperties = makeDataProperties(resource),
+                settingsProperties = makeSettingsProperties()
+            )
+        }
     }
 
     private fun signOut() {
@@ -132,19 +126,19 @@ class IntroduceViewModel @Inject constructor(
         )
     }
 
-    private fun makeDataProperties(userDTO: UserDTO?): List<Property> = buildList {
+    private fun makeDataProperties(user: User?): List<Property> = buildList {
         val email = getString(R.string.profile_data_email)
         val name = getString(R.string.profile_data_name)
         val realName = getString(R.string.profile_data_realName)
         val description = getString(R.string.profile_data_description)
-        if (userDTO == null) {
+        if (user == null) {
             Property.Data(email, null).also(::add)
             Property.Data(name, null).also(::add)
             Property.Data(realName, null).also(::add)
             Property.Data(description, null).also(::add)
         } else {
             val emailActions = buildList {
-                if (!userDTO.verified) {
+                if (!user.verified) {
                     Property.Data.Action(
                         text = getString(R.string.email_verified),
                         icon = Icons.Rounded.Email,
@@ -154,22 +148,22 @@ class IntroduceViewModel @Inject constructor(
                     ).also(::add)
                 }
             }
-            val emailText = if (userDTO.verified) userDTO.email
+            val emailText = if (user.verified) user.email
             else buildAnnotatedString {
                 withStyle(
                     style = SpanStyle(
                         textDecoration = TextDecoration.LineThrough
                     )
                 ) {
-                    append(userDTO.email)
+                    append(user.email)
                 }
             }
 
             Property.Data(email, emailText.checkEmpty(), emailActions).also(::add)
-            Property.Data(name, userDTO.name.checkEmpty()).also(::add)
+            Property.Data(name, user.name.checkEmpty()).also(::add)
             Property.Data(
                 realName,
-                if (userDTO.realName == null) applicationContext.getString(R.string.profile_data_realName_false)
+                if (user.realName == null) applicationContext.getString(R.string.profile_data_realName_false)
                 else applicationContext.getString(R.string.profile_data_realName_true)
             ).also(::add)
             // FIXME

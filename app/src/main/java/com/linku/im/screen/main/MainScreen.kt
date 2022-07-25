@@ -15,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.Auth
 import com.linku.im.linku.LinkUEvent
@@ -38,18 +37,12 @@ fun MainScreen(
         ToolBarAction(
             onClick = { vm.onEvent(LinkUEvent.Navigate(Screen.QueryScreen)) },
             imageVector = Icons.Rounded.Search,
-            tint = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onPrimary
         )
     }
     vm.onTitle {
         Text(
             text = vm.state.value.label,
-            maxLines = 1,
-            style = MaterialTheme.typography.titleMedium,
-            overflow = TextOverflow.Ellipsis,
-            color = if (vm.state.value.isDarkMode) MaterialTheme.colorScheme.onSurface
-            else MaterialTheme.colorScheme.onPrimary
+            style = MaterialTheme.typography.titleMedium
         )
     }
     Drawer(

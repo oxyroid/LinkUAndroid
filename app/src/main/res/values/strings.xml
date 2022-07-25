@@ -48,4 +48,5 @@
     <string name="toggle_dynamic">动态主题</string>
     <string name="query_input">输入关键字…</string>
     <string name="query_filter_description">仅查询简介</string>
+    <string name="screen_chat_input_image">输入描述信息…</string>
 </resources>

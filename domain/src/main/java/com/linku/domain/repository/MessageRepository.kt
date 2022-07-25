@@ -12,4 +12,5 @@ interface MessageRepository {
     fun incoming(cid: Int): Flow<List<Message>>
     suspend fun closeSession()
     suspend fun sendTextMessage(cid: Int, content: String): Flow<Resource<Unit>>
+    suspend fun fetchUnreadMessages()
 }
