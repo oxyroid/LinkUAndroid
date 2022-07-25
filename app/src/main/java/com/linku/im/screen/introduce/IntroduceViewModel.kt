@@ -18,7 +18,7 @@ import com.linku.domain.Resource
 import com.linku.domain.entity.UserDTO
 import com.linku.domain.eventOf
 import com.linku.im.R
-import com.linku.im.application
+import com.linku.im.applicationContext
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -169,8 +169,8 @@ class IntroduceViewModel @Inject constructor(
             Property.Data(name, userDTO.name.checkEmpty()).also(::add)
             Property.Data(
                 realName,
-                if (userDTO.realName == null) application.getString(R.string.profile_data_realName_false)
-                else application.getString(R.string.profile_data_realName_true)
+                if (userDTO.realName == null) applicationContext.getString(R.string.profile_data_realName_false)
+                else applicationContext.getString(R.string.profile_data_realName_true)
             ).also(::add)
             // FIXME
             Property.Data(description, "".checkEmpty()).also(::add)
@@ -186,7 +186,7 @@ class IntroduceViewModel @Inject constructor(
         Property.Folder(dataSource, Icons.Rounded.DateRange).also(::add)
     }
 
-    private fun getString(@StringRes resId: Int): String = application.getString(resId)
+    private fun getString(@StringRes resId: Int): String = applicationContext.getString(resId)
 
     private val loadingState get() = state.value.copy(loading = true)
 

@@ -1,5 +1,6 @@
 package com.linku.im.screen.chat.composable
 
+import android.graphics.Bitmap
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -21,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -32,11 +34,13 @@ import kotlin.math.max
 @Composable
 fun ChatBottomBar(
     text: String,
+    image: Bitmap?,
     firstVisibleItemIndex: Int,
     listState: LazyListState,
     onAction: () -> Unit,
     onSend: () -> Unit,
-    onText: (String) -> Unit
+    onFile: () -> Unit,
+    onText: (String) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     val elevation by animateDpAsState(targetValue = if (listState.isScrollInProgress) 16.dp else 0.dp)
@@ -87,7 +91,8 @@ fun ChatBottomBar(
                 onValueChange = {
                     onText(it)
                 },
-                Modifier
+                enabled = image == null,
+                modifier = Modifier
                     .weight(1f)
                     .animateContentSize { _, _ -> },
                 placeholder = {
@@ -112,16 +117,30 @@ fun ChatBottomBar(
                 )
             )
             Spacer(modifier = Modifier.width(4.dp))
-            AnimatedVisibility(visible = text.isNotBlank()) {
+            AnimatedContent(
+                targetState = text.isNotBlank() || image == null,
+                transitionSpec = { scaleIn() with scaleOut() }
+            ) {
                 IconButton(
-                    onClick = { onSend() },
+                    onClick = {
+                        if (text.isNotBlank() || image != null) onSend()
+                        else onFile()
+                    },
                 ) {
-                    val imageVector = Icons.Rounded.Send
-                    Icon(
-                        imageVector = imageVector,
-                        contentDescription = "send",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    if (text.isNotBlank() || image != null) {
+                        val imageVector = Icons.Rounded.Send
+                        Icon(
+                            imageVector = imageVector,
+                            contentDescription = "send",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_sharp_attach_file_24),
+                            contentDescription = "file",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
         }

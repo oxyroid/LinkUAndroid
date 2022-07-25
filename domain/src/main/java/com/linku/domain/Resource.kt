@@ -41,6 +41,9 @@ suspend inline fun <T> FlowCollector<Resource<T>>.emitResource(
     code: String = "?"
 ) = emit(Resource.Failure(message, code))
 
+suspend inline fun <T> FlowCollector<Resource<T>>.emitOldVersionResource() =
+    emit(Resource.Failure("This is available in latest version.", "Unsupported Feature"))
+
 fun <T> resourceFlow(flowCollector: suspend FlowCollector<Resource<T>>.() -> Unit) = flow {
     try {
         emit(Resource.Loading)

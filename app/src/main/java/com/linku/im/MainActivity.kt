@@ -1,7 +1,6 @@
 package com.linku.im
 
 import android.os.Bundle
-import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -9,27 +8,25 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.im.extension.ifTrue
 import com.linku.im.linku.LinkUEvent
 import com.linku.im.linku.LinkUViewModel
@@ -51,7 +48,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         vm = _vm
-        setContent { App(window = window) }
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        setContent { App() }
     }
 }
 
@@ -60,25 +58,22 @@ lateinit var vm: LinkUViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun App(
-    window: Window
-) {
+fun App() {
     val state by vm.state
     @OptIn(ExperimentalAnimationApi::class)
     AppTheme(
         useDarkTheme = state.isDarkMode,
         enableDynamic = state.dynamicEnabled
     ) {
-        val color = if (!state.isDarkMode) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.surface
-        val contentColor = if (!state.isDarkMode) MaterialTheme.colorScheme.onPrimary
-        else MaterialTheme.colorScheme.surface
-        WindowCompat.getInsetsController(window, LocalView.current)
-            .isAppearanceLightStatusBars = false
+        val systemUiController = rememberSystemUiController()
+        val useDarkIcons = isSystemInDarkTheme()
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        window.statusBarColor = color.toArgb()
-        window.navigationBarColor = contentColor.toArgb()
+        SideEffect {
+            systemUiController.setSystemBarsColor(
+                color = Color.Transparent,
+                darkIcons = useDarkIcons
+            )
+        }
 
         val coroutineScope = rememberCoroutineScope()
         val navController = rememberAnimatedNavController()
@@ -89,58 +84,48 @@ fun App(
             vm.onEvent(LinkUEvent.InitScaffoldState(coroutineScope, drawerState))
         }
 
-        Scaffold(
-            topBar = {
-                ToolBar(
-                    navIcon = (state.currentScreen == Screen.MainScreen && drawerState.isOpen)
-                        .ifTrue { Icons.Rounded.Close }
-                        ?: state.icon,
-                    title = state.title,
-                    onNavClick = state.navClick,
-                    actions = state.actions,
-                    isDarkMode = state.isDarkMode
-                )
-            }
-        ) { innerPadding ->
-            val specFloat = tween<Float>(400)
-            AnimatedNavHost(
-                navController = navController,
-                startDestination = Screen.MainScreen.route,
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                color,
-                                MaterialTheme.colorScheme.background,
-                                MaterialTheme.colorScheme.surface
-                            ),
-                            end = Offset(0.0f, Float.POSITIVE_INFINITY)
+        ProvideWindowInsets {
+            Scaffold(
+                topBar = {
+                    ToolBar(
+                        navIcon = (state.currentScreen == Screen.MainScreen && drawerState.isOpen)
+                            .ifTrue { Icons.Rounded.Close }
+                            ?: state.icon,
+                        title = state.title,
+                        onNavClick = state.navClick,
+                        actions = state.actions,
+                        isDarkMode = state.isDarkMode
+                    )
+                }
+            ) { innerPadding ->
+                val specFloat = tween<Float>(400)
+                AnimatedNavHost(
+                    navController = navController,
+                    startDestination = Screen.MainScreen.route,
+                    modifier = Modifier.padding(innerPadding),
+                    enterTransition = { fadeIn(animationSpec = specFloat) },
+                    exitTransition = { fadeOut(animationSpec = specFloat) }
+                ) {
+                    composable(route = Screen.MainScreen.route) {
+                        MainScreen(drawerState = drawerState)
+                    }
+                    composable(
+                        route = Screen.ChatScreen.buildArgs("cid"),
+                        arguments = listOf(
+                            navArgument("cid") {
+                                type = NavType.IntType
+                                nullable = false
+                            }
                         )
-                    )
-                    .navigationBarsPadding(),
-                enterTransition = { fadeIn(animationSpec = specFloat) },
-                exitTransition = { fadeOut(animationSpec = specFloat) }
-            ) {
-                composable(route = Screen.MainScreen.route) {
-                    MainScreen(drawerState = drawerState)
+                    ) { entry ->
+                        ChatScreen(
+                            cid = entry.arguments?.getInt("cid") ?: -1
+                        )
+                    }
+                    composable(Screen.LoginScreen.route) { LoginScreen() }
+                    composable(Screen.ProfileScreen.route) { ProfileScreen() }
+                    composable(Screen.QueryScreen.route) { QueryScreen() }
                 }
-                composable(
-                    route = Screen.ChatScreen.buildArgs("cid"),
-                    arguments = listOf(
-                        navArgument("cid") {
-                            type = NavType.IntType
-                            nullable = false
-                        }
-                    )
-                ) { entry ->
-                    ChatScreen(
-                        cid = entry.arguments?.getInt("cid") ?: -1
-                    )
-                }
-                composable(Screen.LoginScreen.route) { LoginScreen() }
-                composable(Screen.ProfileScreen.route) { ProfileScreen() }
-                composable(Screen.QueryScreen.route) { QueryScreen() }
             }
         }
     }

@@ -25,14 +25,14 @@ class QueryViewModel @Inject constructor(
     }
 
     private fun toggleIncludeDescription() {
-        _state.value = readableState.copy(
-            includeDescription = !readableState.includeDescription
+        _state.value = readable.copy(
+            isDescription = !readable.isDescription
         )
         hasQuery.ifTrue { query() }
     }
 
     private fun onText(text: String) {
-        _state.value = readableState.copy(
+        _state.value = readable.copy(
             text = text
         )
     }
@@ -41,19 +41,19 @@ class QueryViewModel @Inject constructor(
     private fun query() {
         hasQuery = true
         useCases.queryConversations(
-            name = readableState.includeDescription.ifFalse { readableState.text },
-            description = readableState.includeDescription.ifTrue { readableState.text }
+            name = readable.isDescription.ifFalse { readable.text },
+            description = readable.isDescription.ifTrue { readable.text }
         )
             .onEach { resource ->
                 _state.value = when (resource) {
-                    Resource.Loading -> readableState.copy(
+                    Resource.Loading -> readable.copy(
                         querying = true
                     )
-                    is Resource.Success -> readableState.copy(
+                    is Resource.Success -> readable.copy(
                         querying = false,
                         conversations = resource.data
                     )
-                    is Resource.Failure -> readableState.copy(
+                    is Resource.Failure -> readable.copy(
                         querying = false,
                         message = eventOf(resource.message)
                     )

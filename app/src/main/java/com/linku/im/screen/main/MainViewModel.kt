@@ -2,7 +2,6 @@ package com.linku.im.screen.main
 
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ConversationUseCases
-import com.linku.data.usecase.OneWordUseCases
 import com.linku.domain.Auth
 import com.linku.domain.Resource
 import com.linku.im.screen.BaseViewModel
@@ -16,10 +15,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val conversationUseCases: ConversationUseCases,
-    private val oneWordUseCases: OneWordUseCases
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
     init {
-        onEvent(MainEvent.OneWord)
         Auth.observeCurrent
             .onEach {
                 if (it != null) {
@@ -34,7 +31,6 @@ class MainViewModel @Inject constructor(
     override fun onEvent(event: MainEvent) {
         when (event) {
             is MainEvent.CreateConversation -> {}
-            MainEvent.OneWord -> fetchOneWord()
             MainEvent.GetConversations -> getAllConversations()
         }
     }
@@ -83,24 +79,6 @@ class MainViewModel @Inject constructor(
                     )
                     is Resource.Failure -> state.value.copy(
                         loading = false
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
-    }
-
-    private fun fetchOneWord() {
-        oneWordUseCases.hitokoto()
-            .onEach { resource ->
-                _state.value = when (resource) {
-                    Resource.Loading -> state.value.copy(
-                        drawerTitle = null
-                    )
-                    is Resource.Success -> state.value.copy(
-                        drawerTitle = resource.data.hitokoto
-                    )
-                    is Resource.Failure -> state.value.copy(
-                        drawerTitle = resource.message
                     )
                 }
             }

@@ -7,7 +7,6 @@ import com.linku.domain.service.UserService
 
 class UserRepositoryImpl(
     private val userService: UserService,
-    private val userDao: UserDao
 ) : UserRepository {
 
     override suspend fun getById(id: Int) = sandbox {

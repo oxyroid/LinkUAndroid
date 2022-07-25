@@ -6,7 +6,7 @@ import com.linku.domain.Resource
 import com.linku.domain.eventOf
 import com.linku.domain.eventOfFailedResource
 import com.linku.im.R
-import com.linku.im.application
+import com.linku.im.applicationContext
 import com.linku.im.vm
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.linku.LinkUEvent
@@ -30,7 +30,7 @@ class SignViewModel @Inject constructor(
     private fun signIn(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
             _state.value = SignState(
-                title = application.getString(R.string.information_required)
+                title = applicationContext.getString(R.string.information_required)
             )
             return
         }
@@ -39,13 +39,13 @@ class SignViewModel @Inject constructor(
                 _state.value = when (resource) {
                     Resource.Loading -> SignState(
                         loading = true,
-                        title = application.getString(R.string.logging)
+                        title = applicationContext.getString(R.string.logging)
                     )
                     is Resource.Success -> {
                         vm.onEvent(LinkUEvent.PopBackStack)
                         SignState(
                             loginEvent = eventOf(Unit),
-                            title = application.getString(R.string.log_in_success)
+                            title = applicationContext.getString(R.string.log_in_success)
                         )
                     }
                     is Resource.Failure -> SignState(
@@ -60,7 +60,7 @@ class SignViewModel @Inject constructor(
     private fun signUp(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
             _state.value = SignState(
-                title = application.getString(R.string.information_required)
+                title = applicationContext.getString(R.string.information_required)
             )
             return
         }
@@ -69,11 +69,11 @@ class SignViewModel @Inject constructor(
                 _state.value = when (resource) {
                     Resource.Loading -> SignState(
                         loading = true,
-                        title = application.getString(R.string.registering)
+                        title = applicationContext.getString(R.string.registering)
                     )
                     is Resource.Success -> SignState(
                         registerEvent = eventOf(resource.data),
-                        title = application.getString(R.string.register_success)
+                        title = applicationContext.getString(R.string.register_success)
                     )
                     is Resource.Failure -> SignState(
                         error = eventOfFailedResource(resource),

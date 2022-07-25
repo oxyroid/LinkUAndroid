@@ -1,34 +1,18 @@
 <resources>
     <string name="app_name">LinkU</string>
-    <string name="shopping_cart">购物车</string>
-    <string name="introduce_food">%s元[%s]</string>
     <string name="screen_login_title">电子邮箱登录</string>
     <string name="screen_login_tag_email">Email</string>
     <string name="screen_login_tag_password">密码</string>
     <string name="screen_login_btn_login">登录</string>
     <string name="screen_login_btn_register">注册</string>
     <string name="warn_account_required">请先登录</string>
-    <string name="screen_detail_title">商品详情</string>
-    <string name="screen_detail_introduce">商品介绍</string>
     <string name="warn_account_required_action">Go</string>
-    <string name="sorted_name">名称排序（顺序）</string>
-    <string name="sorted_name_des">名称排序（逆序）</string>
-    <string name="sorted_price">价格排序（顺序）</string>
-    <string name="sorted_price_des">价格排序（逆序）</string>
     <string name="screen_chat_input">输入消息…</string>
-    <string name="add_to_cart">加入购物车</string>
-    <string name="cart">购物车</string>
     <string name="account">账户</string>
     <string name="info">关于</string>
-    <string name="info_me">开发者信息</string>
-    <string name="for_source">打赏获取源码</string>
     <string name="register_success">注册成功</string>
-    <string name="contract_me_by_follow">通过以下方式联系我</string>
-    <string name="already_in_cart">已经在购物车中了</string>
-    <string name="add_to_cart_success">添加成功</string>
     <string name="toggle_theme">切换主题</string>
     <string name="send">发送</string>
-    <string name="code_source">获取源码</string>
     <string name="logging">登录中</string>
     <string name="log_in_success">登录成功</string>
     <string name="registering">注册中</string>
@@ -62,6 +46,6 @@
     <string name="cancel">取消</string>
     <string name="verifying">验证中</string>
     <string name="toggle_dynamic">动态主题</string>
-    <string name="screen_query_input">输入关键字…</string>
-    <string name="include_description">查询简介</string>
+    <string name="query_input">输入关键字…</string>
+    <string name="query_filter_description">仅查询简介</string>
 </resources>

@@ -1,7 +1,6 @@
 package com.linku.im.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -31,11 +30,12 @@ fun ToolBar(
         if (isDarkMode) MaterialTheme.colorScheme.onSurface
         else MaterialTheme.colorScheme.onPrimary
 
-    Column {
+    Column(
+        modifier = Modifier.background(toolbarColor)
+    ) {
         Spacer(
             modifier = Modifier
                 .windowInsetsTopHeight(WindowInsets.statusBars)
-                .background(toolbarColor)
         )
         TopAppBar(
             title = title,

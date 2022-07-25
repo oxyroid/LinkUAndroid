@@ -5,7 +5,7 @@ import com.tencent.mmkv.MMKV
 import dagger.hilt.android.HiltAndroidApp
 
 
-val application get() = MyApplication._application
+val applicationContext get() = MyApplication._application
 
 @HiltAndroidApp
 class MyApplication : Application() {

@@ -11,7 +11,7 @@ data class MessageUseCases @Inject constructor(
     val textMessage: TextMessageUseCase,
     val initSession: InitSessionUseCase,
     val observeMessages: ObserveMessagesUseCase,
-    val observeMessagesByCID: ObserveMessagesByCidUseCase,
+    val observeMessagesFromConversation: ObserveMessagesFromConversationUseCase,
     val closeSession: CloseSessionUseCase
 )
 
@@ -40,7 +40,7 @@ data class ObserveMessagesUseCase(
     }
 }
 
-data class ObserveMessagesByCidUseCase(
+data class ObserveMessagesFromConversationUseCase(
     private val repository: MessageRepository
 ) {
     operator fun invoke(cid: Int): Flow<List<Message>> {

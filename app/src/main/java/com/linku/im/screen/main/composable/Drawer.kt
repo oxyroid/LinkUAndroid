@@ -29,10 +29,8 @@ private val routes = listOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Drawer(
-    title: String?,
     drawerState: DrawerState,
     onNavigate: (Screen) -> Unit,
-    onHeaderClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -88,9 +86,7 @@ fun Drawer(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = stringResource(
-                                id = R.string.toggle_dynamic
-                            ),
+                            text = stringResource(id = R.string.toggle_dynamic),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurface
                         )

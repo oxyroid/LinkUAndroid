@@ -2,10 +2,10 @@ package com.linku.im.screen.main
 
 import com.linku.domain.entity.Conversation
 import com.linku.im.R
-import com.linku.im.application
+import com.linku.im.applicationContext
 
 data class MainState(
-    val title: String = application.getString(R.string.app_name),
+    val title: String = applicationContext.getString(R.string.app_name),
     val conversations: List<ConversationMainUI> = emptyList(),
     val loading: Boolean = true,
     val drawerTitle: String? = null

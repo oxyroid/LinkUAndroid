@@ -93,9 +93,4 @@ interface ChatService {
         @Query("type") type: Int? = null,
         @Query("owner") owner: Boolean? = null
     ): Result<List<ConversationDTO>>
-
-    companion object {
-        const val TYPE_PM = 0
-        const val TYPE_GROUP = 1
-    }
 }

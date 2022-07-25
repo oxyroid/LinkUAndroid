@@ -1,24 +1,21 @@
 package com.linku.im.screen.main
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.*
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.Auth
 import com.linku.im.linku.LinkUEvent
@@ -56,7 +53,6 @@ fun MainScreen(
         )
     }
     Drawer(
-        title = state.drawerTitle,
         drawerState = drawerState,
         onNavigate = { screen ->
             when (screen) {
@@ -68,63 +64,42 @@ fun MainScreen(
                 Screen.MainScreen -> {}
                 else -> vm.onEvent(LinkUEvent.Navigate(screen))
             }
-        },
-        onHeaderClick = {
-            mainViewModel.onEvent(MainEvent.OneWord)
         }
     ) {
-        Card(
-            shape = RoundedCornerShape(topStartPercent = 5, topEndPercent = 5),
-            modifier = Modifier.padding(
-                start = 8.dp,
-                end = 8.dp,
-                top = 8.dp,
-            )
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .drawVerticalScrollbar(
+                    state = listState
+                ),
+            userScrollEnabled = !state.loading
         ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.background,
-                                MaterialTheme.colorScheme.surface
-                            ),
-                            end = Offset(0.0f, Float.POSITIVE_INFINITY)
-                        )
-                    )
-                    .drawVerticalScrollbar(
-                        state = listState
-                    ),
-                userScrollEnabled = !state.loading
-            ) {
-                if (state.loading) {
-                    repeat(12) {
-                        item {
-                            ConversationItem()
-                            Divider()
-                        }
-                    }
-                } else {
-                    itemsIndexed(state.conversations) { index, conversation ->
-                        ConversationItem(
-                            conversation = conversation,
-                            pinned = index < 1,
-                            unreadCount = index / 2,
-                            modifier = Modifier.animateItemPlacement()
-                        ) {
-                            vm.onEvent(
-                                LinkUEvent.NavigateWithArgs(
-                                    Screen.ChatScreen.withArgs(conversation.id)
-                                )
-                            )
-                        }
+            if (state.loading) {
+                repeat(12) {
+                    item {
+                        ConversationItem()
                         Divider()
                     }
                 }
-
+            } else {
+                itemsIndexed(state.conversations) { index, conversation ->
+                    ConversationItem(
+                        conversation = conversation,
+                        pinned = index < 1,
+                        unreadCount = index / 2,
+                        modifier = Modifier.animateItemPlacement()
+                    ) {
+                        vm.onEvent(
+                            LinkUEvent.NavigateWithArgs(
+                                Screen.ChatScreen.withArgs(conversation.id)
+                            )
+                        )
+                    }
+                    Divider()
+                }
             }
+
         }
     }
 }

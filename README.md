@@ -2,26 +2,29 @@
 
 #### 🙋‍♂️Introduce
 
-This repository is **Jetpack Compose** example.
+This repository is **Jetpack Compose** instant messaging example.
 
-Release is an application on Android about **instant messaging**.
+> UI design reference [Telegram](https://github.com/DrKLO/Telegram).
 
 #### 📙Project technology stack
 
-- Coding with **[Kotlin](https://kotlinlang.org/)** Language
-- Building with **MVI** Architecture
+- Coding entirely in **[Kotlin](https://kotlinlang.org/)** Language
+- Building with **[MVI](https://developer.android.com/jetpack/compose/architecture#udf)** Architecture
 - **[Jetpack Compose](https://developer.android.com/jetpack/compose)** as UI Framework
 - **[Room](https://developer.android.com/training/data-storage/room)** as Data Persistence Framework
-- **[Ktor-client](https://ktor.io/)** as Network Framework
+- **[Ktor-client](https://ktor.io/)** as Websocket Framework
+- **[Retrofit](https://square.github.io/retrofit/)** as HTTP Framework
+- **[Okio](https://square.github.io/okio/)** as IO Framework
+- **[Leakcanary](https://square.github.io/leakcanary/)** as Memory Leak Detection Framework
 - **[Kotlin-serialization](https://kotlinlang.org/docs/serialization.html)** as Serialization Framework
 - **[MMKV](https://github.com/Tencent/MMKV)** as key-value storage framework
-- **[Lottie](https://github.com/airbnb/lottie-android)** to make awesome animations
+- **[Lottie](https://github.com/airbnb/lottie-android)** to render after effects animations natively
 - **[Hilt](https://developer.android.com/training/dependency-injection/hilt-android)** as Dependency Injection Framework
 - Multi-module development
 
 #### 🎉 Build in your environment
 
-- Install latest **[Android Studio](https://developer.android.com/studio)**
+- Install latest **[Android Studio (Dolphin at least)](https://developer.android.com/studio/preview)**
 - Clone this repository
 - Open project and build it, wait for all dependencies syncing finished
-- Connect a device and install and run it
+- Connect a device, install and run it

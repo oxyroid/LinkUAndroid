@@ -16,7 +16,7 @@ import com.linku.domain.Resource
 import com.linku.im.Constants.SAVED_DARK_MODE
 import com.linku.im.Constants.SAVED_DYNAMIC_MODE
 import com.linku.im.R
-import com.linku.im.application
+import com.linku.im.applicationContext
 import com.linku.im.extension.TAG
 import com.linku.im.extension.debug
 import com.linku.im.extension.toggle
@@ -58,7 +58,7 @@ class LinkUViewModel @Inject constructor(
                 val isDarkMode = MMKV.defaultMMKV().getBoolean(SAVED_DARK_MODE, false)
                 val enableDynamic =
                     MMKV.defaultMMKV().getBoolean(SAVED_DYNAMIC_MODE, supportDynamic)
-                _state.value = readableState.copy(
+                _state.value = readable.copy(
                     isDarkMode = isDarkMode,
                     dynamicEnabled = enableDynamic
                 )
@@ -66,9 +66,9 @@ class LinkUViewModel @Inject constructor(
             LinkUEvent.PopBackStack -> navController.navigateUp()
 
             LinkUEvent.ToggleDarkMode -> {
-                MMKV.defaultMMKV().encode(SAVED_DARK_MODE, !readableState.isDarkMode)
-                _state.value = readableState.copy(
-                    isDarkMode = !readableState.isDarkMode
+                MMKV.defaultMMKV().encode(SAVED_DARK_MODE, !readable.isDarkMode)
+                _state.value = readable.copy(
+                    isDarkMode = !readable.isDarkMode
                 )
             }
 
@@ -82,10 +82,10 @@ class LinkUViewModel @Inject constructor(
             is LinkUEvent.InitNavController -> {
                 navController = event.navController
                 navController.addOnDestinationChangedListener { _, destination, _ ->
-                    _state.value = readableState.copy(
+                    _state.value = readable.copy(
                         currentScreen = Screen.valueOf(destination.route ?: "")
                     )
-                    deliverNavigationUI(readableState.currentScreen)
+                    deliverNavigationUI(readable.currentScreen)
                 }
             }
             is LinkUEvent.ObserveCurrentUser -> {
@@ -98,8 +98,8 @@ class LinkUViewModel @Inject constructor(
                 drawerState = event.drawerState
             }
             LinkUEvent.ToggleDynamic -> {
-                MMKV.defaultMMKV().encode(SAVED_DYNAMIC_MODE, !readableState.dynamicEnabled)
-                _state.value = readableState.copy(
+                MMKV.defaultMMKV().encode(SAVED_DYNAMIC_MODE, !readable.dynamicEnabled)
+                _state.value = readable.copy(
                     dynamicEnabled = !state.value.dynamicEnabled
                 )
             }
@@ -107,13 +107,13 @@ class LinkUViewModel @Inject constructor(
     }
 
     fun onActions(actions: @Composable RowScope.() -> Unit) {
-        _state.value = readableState.copy(
+        _state.value = readable.copy(
             actions = actions
         )
     }
 
     fun onTitle(title: @Composable () -> Unit) {
-        _state.value = readableState.copy(
+        _state.value = readable.copy(
             title = title
         )
     }
@@ -121,43 +121,43 @@ class LinkUViewModel @Inject constructor(
     @OptIn(ExperimentalMaterial3Api::class)
     private fun deliverNavigationUI(screen: Screen) {
         _state.value = when (screen) {
-            Screen.MainScreen -> readableState.copy(
+            Screen.MainScreen -> readable.copy(
                 icon = Icons.Default.Menu,
                 navClick = { drawerState.toggle(coroutineScope) },
                 currentScreen = screen
             )
-            Screen.ChatScreen -> readableState.copy(
+            Screen.ChatScreen -> readable.copy(
                 icon = Icons.Default.ArrowBack,
-                navClick = navController::popBackStack,
+                navClick = navController::navigateUp,
                 currentScreen = screen
             )
-            Screen.LoginScreen -> readableState.copy(
+            Screen.LoginScreen -> readable.copy(
                 icon = Icons.Default.ArrowBack,
-                navClick = navController::popBackStack,
+                navClick = navController::navigateUp,
                 currentScreen = screen
             )
-            Screen.ProfileScreen -> readableState.copy(
+            Screen.ProfileScreen -> readable.copy(
                 icon = Icons.Default.ArrowBack,
-                navClick = navController::popBackStack,
+                navClick = navController::navigateUp,
                 currentScreen = screen
             )
-            Screen.QueryScreen -> readableState.copy(
+            Screen.QueryScreen -> readable.copy(
                 icon = Icons.Default.ArrowBack,
-                navClick = navController::popBackStack,
+                navClick = navController::navigateUp,
                 currentScreen = screen
             )
         }
     }
 
     private sealed class Label(val text: String) {
-        object Default : Label(application.getString(R.string.app_name))
-        object Connecting : Label(application.getString(R.string.connecting))
-        object ConnectedFailed : Label(application.getString(R.string.connected_failed))
-        object NoAuth : Label(application.getString(R.string.no_auth))
+        object Default : Label(applicationContext.getString(R.string.app_name))
+        object Connecting : Label(applicationContext.getString(R.string.connecting))
+        object ConnectedFailed : Label(applicationContext.getString(R.string.connected_failed))
+        object NoAuth : Label(applicationContext.getString(R.string.no_auth))
     }
 
     private fun updateTitle(label: Label) {
-        _state.value = readableState.copy(
+        _state.value = readable.copy(
             label = label.text
         )
     }

@@ -5,26 +5,21 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.SoundPool
 import androidx.room.Room
-import com.linku.data.repository.AuthRepositoryImpl
-import com.linku.data.repository.ConversationRepositoryImpl
-import com.linku.data.repository.MessageRepositoryImpl
-import com.linku.data.repository.UserRepositoryImpl
+import com.linku.data.repository.*
 import com.linku.data.service.ChatSocketServiceImpl
 import com.linku.data.usecase.*
 import com.linku.domain.Auth
 import com.linku.domain.common.Constants
-import com.linku.domain.repository.AuthRepository
-import com.linku.domain.repository.ConversationRepository
-import com.linku.domain.repository.MessageRepository
-import com.linku.domain.repository.UserRepository
+import com.linku.domain.repository.*
 import com.linku.domain.room.LinkUDatabase
 import com.linku.domain.service.*
 import com.linku.im.BuildConfig
-import com.linku.im.application
+import com.linku.im.applicationContext
 import com.linku.im.extension.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -49,7 +44,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase() = Room.databaseBuilder(
-        application,
+        applicationContext,
         LinkUDatabase::class.java,
         Constants.DB_NAME
     ).build()
@@ -142,8 +137,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideThreePartService(retrofit: Retrofit): OneWordService = retrofit.create()
-
+    fun provideFileService(retrofit: Retrofit): FileService = retrofit.create()
 
     @Provides
     @Singleton
@@ -163,7 +157,6 @@ object AppModule {
         database: LinkUDatabase,
         userService: UserService
     ): UserRepository = UserRepositoryImpl(
-        userDao = database.userDao(),
         userService = userService,
     )
 
@@ -186,11 +179,23 @@ object AppModule {
     @Singleton
     fun provideConversationRepository(
         database: LinkUDatabase,
-        chatService: ChatService
+        chatService: ChatService,
+        userService: UserService
     ): ConversationRepository = ConversationRepositoryImpl(
         conversationDao = database.conversationDao(),
         chatService = chatService,
-        messageDao = database.messageDao()
+        messageDao = database.messageDao(),
+        userService = userService
+    )
+
+    @Provides
+    @Singleton
+    fun provideFileRepository(
+        @ApplicationContext context: Context,
+        fileService: FileService
+    ): FileRepository = FileRepositoryImpl(
+        context = context,
+        fileService = fileService
     )
 
     @Provides
@@ -227,7 +232,7 @@ object AppModule {
             initSession = InitSessionUseCase(repository),
             observeMessages = ObserveMessagesUseCase(repository),
             closeSession = CloseSessionUseCase(repository),
-            observeMessagesByCID = ObserveMessagesByCidUseCase(repository)
+            observeMessagesFromConversation = ObserveMessagesFromConversationUseCase(repository)
         )
     }
 
@@ -238,7 +243,9 @@ object AppModule {
     ): ConversationUseCases {
         return ConversationUseCases(
             observeConversations = ObserveConversationsUseCase(repository),
+            observeConversation = ObserveConversationUseCase(repository),
             observeLatestContent = ObserveLatestMessagesUseCase(repository),
+            fetchConversation = FetchConversationUseCase(repository),
             fetchConversations = FetchConversationsUseCase(repository),
             queryConversations = QueryConversationsUseCase(repository)
         )
@@ -246,14 +253,13 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOneWordUseCases(
-        service: OneWordService
-    ): OneWordUseCases {
-        return OneWordUseCases(
-            hitokoto = HitokotoUseCase(service),
+    fun provideFileUseCases(
+        repository: FileRepository
+    ): FileUseCases {
+        return FileUseCases(
+            upload = UploadUseCase(repository)
         )
     }
-
 
     @Provides
     @Singleton
@@ -264,7 +270,8 @@ object AppModule {
         return SoundPool.Builder()
             .setMaxStreams(1)
             .setAudioAttributes(attributes)
-            .build().also {
+            .build()
+            .also {
                 it.setOnLoadCompleteListener { soundPool, sampleId, status ->
                     if (status == 0) {
                         soundPool.play(sampleId, 1f, 1f, 1, 0, 1f)
@@ -272,8 +279,4 @@ object AppModule {
                 }
             }
     }
-
-    @Provides
-    @Singleton
-    fun provideApplicationContext(): Context = application
 }

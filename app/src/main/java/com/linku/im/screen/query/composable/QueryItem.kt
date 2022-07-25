@@ -1,42 +1,37 @@
-package com.linku.im.screen.main.composable
+package com.linku.im.screen.query.composable
 
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
-import com.linku.im.extension.ifTrue
+import com.linku.domain.entity.Conversation
 import com.linku.im.extension.times
-import com.linku.im.screen.main.MainState
 import com.linku.im.ui.TextImage
 
 @Composable
-fun ConversationItem(
+fun QueryItem(
     modifier: Modifier = Modifier,
-    conversation: MainState.ConversationMainUI? = null,
-    unreadCount: Int = 0,
-    pinned: Boolean = false,
+    conversation: Conversation? = null,
     onClick: () -> Unit = {}
 ) {
     val shimmerColor = MaterialTheme.colorScheme.outline * 0.3f
@@ -54,7 +49,6 @@ fun ConversationItem(
         modifier = modifier
             .fillMaxWidth()
             .height(64.dp)
-            .let { pinned.ifTrue { it.background(MaterialTheme.colorScheme.surface) } ?: it }
             .clickable(
                 enabled = (conversation != null),
                 onClick = onClick
@@ -65,7 +59,7 @@ fun ConversationItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         CircleHeadPicture(
-            model = conversation?.image,
+            model = conversation?.avatar,
             name = conversation?.name,
             placeholder = { TextImage(text = conversation?.name) }
         )
@@ -101,7 +95,7 @@ fun ConversationItem(
             Spacer(modifier = Modifier.weight(1f))
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
-                    text = conversation?.content ?: "",
+                    text = conversation?.description ?: "",
                     maxLines = 1,
                     color = MaterialTheme.colorScheme.outline,
                     style = MaterialTheme.typography.bodyMedium,
@@ -122,35 +116,6 @@ fun ConversationItem(
 
         }
         Spacer(modifier = Modifier.width(8.dp))
-        when {
-            (unreadCount != 0) -> {
-                Surface(
-                    shape = RoundedCornerShape(100),
-                    color = MaterialTheme.colorScheme.tertiary
-                ) {
-                    Text(
-                        text = unreadCount.toString(),
-                        color = MaterialTheme.colorScheme.onTertiary,
-                        modifier = Modifier.padding(horizontal = 8.dp),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-            pinned -> {
-                Surface(
-                    shape = RoundedCornerShape(100),
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Lock,
-                        contentDescription = "",
-                        tint = MaterialTheme.colorScheme.onTertiary,
-                        modifier = Modifier.padding(4.dp)
-                    )
-                }
-            }
-        }
     }
 }
 
