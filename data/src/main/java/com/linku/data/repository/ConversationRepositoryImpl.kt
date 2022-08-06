@@ -40,49 +40,24 @@ class ConversationRepositoryImpl(
     }
 
     override fun fetchConversation(cid: Int): Flow<Resource<Unit>> = resourceFlow {
-        try {
-            chatService.getById(cid)
-                .handle { conversation ->
-                    /*
-                     * Determine the name of the Conversation in the local database
-                     * based on the [type] field.
-                     */
-                    // TODO
-//                    val saved: Conversation = when (conversation.type) {
-//                        Conversation.TYPE_PM -> {
-//
-//                        }
-//                        Conversation.TYPE_GROUP -> {}
-//                        Conversation.TYPE_BANNED -> {}
-//                        else -> {
-//                            emitOldVersionResource()
-//                            return@handle
-//                        }
-//                    }
-                    if (conversationDao.getById(conversation.id) == null) {
-                        conversationDao.insert(conversation.toConversation())
-                    }
-                    emitResource(Unit)
+        chatService.getById(cid)
+            .handle { conversation ->
+                // TODO save different type conversations
+                if (conversationDao.getById(conversation.id) == null) {
+                    conversationDao.insert(conversation.toConversation())
                 }
-                .catch(::emitResource)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emitResource()
-        }
+                emitResource(Unit)
+            }
+            .catch(::emitResource)
     }
 
     override fun fetchConversations(): Flow<Resource<Unit>> = resourceFlow {
-        try {
-            chatService.getConversationsBySelf()
-                .handle { conversations ->
-                    conversations.forEach { conversationDao.insert(it.toConversation()) }
-                    emitResource(Unit)
-                }
-                .catch(::emitResource)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emitResource()
-        }
+        chatService.getConversationsBySelf()
+            .handle { conversations ->
+                conversations.forEach { conversationDao.insert(it.toConversation()) }
+                emitResource(Unit)
+            }
+            .catch(::emitResource)
     }
 
     override fun observeLatestMessages(cid: Int): Flow<Message> {
@@ -92,10 +67,9 @@ class ConversationRepositoryImpl(
     override fun queryConversations(
         name: String?,
         description: String?
-    ): Flow<Resource<List<Conversation>>> =
-        resourceFlow {
-            chatService.queryConversations(name, description)
-                .handle { conversations -> emitResource(conversations.map { it.toConversation() }) }
-                .catch(::emitResource)
-        }
+    ): Flow<Resource<List<Conversation>>> = resourceFlow {
+        chatService.queryConversations(name, description)
+            .handle { conversations -> emitResource(conversations.map { it.toConversation() }) }
+            .catch(::emitResource)
+    }
 }

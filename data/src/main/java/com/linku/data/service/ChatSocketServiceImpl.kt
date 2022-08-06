@@ -12,7 +12,6 @@ import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.websocket.*
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import kotlinx.serialization.decodeFromString
@@ -23,20 +22,20 @@ class ChatSocketServiceImpl(
 ) : ChatSocketService {
     private var socket: WebSocketSession? = null
 
-    override suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit> {
-        return try {
-            socket = client.webSocketSession {
+    override suspend fun initSession(uid: Int): Flow<Resource<Unit>> = channelFlow {
+        send(Resource.Loading)
+        socket = try {
+            client.webSocketSession {
                 url(ChatSocketService.EndPoints.UIDSocket(uid).url)
                 contentType(ContentType.Application.Json)
             }
-            if (socket?.isActive == true) {
-                incoming = socket?.incoming?.consumeAsFlow()?.stateIn(scope)
-                Resource.Success(Unit)
-            } else Resource.Failure("Couldn't establish a connection.")
         } catch (e: Exception) {
-            e.printStackTrace()
-            Resource.Failure(e.localizedMessage ?: "Unknown Error.")
+            null
         }
+        if (socket?.isActive == true) {
+            send(Resource.Success(Unit))
+            incoming = socket?.incoming?.consumeAsFlow()?.stateIn(this)
+        } else send(Resource.Failure("Couldn't establish a connection."))
     }
 
     private var incoming: Flow<Frame>? = null

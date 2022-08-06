@@ -11,5 +11,5 @@ interface FileService {
     @POST("file/upload")
     suspend fun upload(
         @Part file: MultipartBody.Part
-    ): Result<Unit>
+    ): Result<String>
 }

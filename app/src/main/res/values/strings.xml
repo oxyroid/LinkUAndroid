@@ -49,4 +49,12 @@
     <string name="query_input">输入关键字…</string>
     <string name="query_filter_description">仅查询简介</string>
     <string name="screen_chat_input_image">输入描述信息…</string>
+    <string name="unknown_message_type">[未知消息类型]</string>
+    <string name="image_message">[图片消息]</string>
+    <string name="version_label">版本号：</string>
+    <string name="graphics_message">[图文消息]</string>
+    <string name="tab_notification">消息</string>
+    <string name="tab_contact">联系人</string>
+    <string name="load_image_failed">加载图片失败</string>
+    <string name="load_image_loading">加载中…</string>
 </resources>

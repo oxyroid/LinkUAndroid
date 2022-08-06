@@ -13,7 +13,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.AuthUseCases
 import com.linku.data.usecase.UserUseCases
-import com.linku.domain.Auth
+import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.entity.User
 import com.linku.domain.eventOf
@@ -92,7 +92,7 @@ class IntroduceViewModel @Inject constructor(
     }
 
     private fun fetchProfile() {
-        val userId = Auth.currentUID
+        val userId = Authenticator.currentUID
         checkNotNull(userId)
         viewModelScope.launch {
             val resource = useCases.findUser(userId)
@@ -175,6 +175,9 @@ class IntroduceViewModel @Inject constructor(
         val notification = getString(R.string.profile_settings_notification)
         val safe = getString(R.string.profile_settings_safe)
         val dataSource = getString(R.string.profile_settings_datasource)
+        Property.Folder(notification, Icons.Rounded.Notifications).also(::add)
+        Property.Folder(safe, Icons.Rounded.Lock).also(::add)
+        Property.Folder(dataSource, Icons.Rounded.DateRange).also(::add)
         Property.Folder(notification, Icons.Rounded.Notifications).also(::add)
         Property.Folder(safe, Icons.Rounded.Lock).also(::add)
         Property.Folder(dataSource, Icons.Rounded.DateRange).also(::add)

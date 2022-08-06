@@ -4,12 +4,11 @@ import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.AuthUseCases
 import com.linku.domain.Resource
 import com.linku.domain.eventOf
-import com.linku.domain.eventOfFailedResource
+import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.applicationContext
-import com.linku.im.vm
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.linku.LinkUEvent
+import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -22,62 +21,75 @@ class SignViewModel @Inject constructor(
 
     override fun onEvent(event: SignEvent) {
         when (event) {
-            is SignEvent.SignIn -> signIn(event.email, event.password)
-            is SignEvent.SignUp -> signUp(event.email, event.password)
+            SignEvent.SignIn -> signIn()
+            SignEvent.SignUp -> signUp()
+            is SignEvent.OnEmail -> _state.value = readable.copy(
+                email = event.email
+            )
+            is SignEvent.OnPassword -> _state.value = readable.copy(
+                password = event.password
+            )
         }
     }
 
-    private fun signIn(email: String, password: String) {
+    private fun signIn() {
+        val email = readable.email
+        val password = readable.password
         if (email.isBlank() || password.isBlank()) {
-            _state.value = SignState(
-                title = applicationContext.getString(R.string.information_required)
+            _state.value = readable.copy(
+                error = eventOf(applicationContext.getString(R.string.information_required)),
+                loading = false
             )
             return
         }
         authUseCases.signIn(email, password)
             .onEach { resource ->
                 _state.value = when (resource) {
-                    Resource.Loading -> SignState(
+                    Resource.Loading -> readable.copy(
                         loading = true,
-                        title = applicationContext.getString(R.string.logging)
                     )
                     is Resource.Success -> {
                         vm.onEvent(LinkUEvent.PopBackStack)
-                        SignState(
+                        readable.copy(
                             loginEvent = eventOf(Unit),
-                            title = applicationContext.getString(R.string.log_in_success)
+                            error = eventOf(applicationContext.getString(R.string.log_in_success)),
+                            loading = false
                         )
                     }
-                    is Resource.Failure -> SignState(
-                        error = eventOfFailedResource(resource),
-                        title = resource.message
+                    is Resource.Failure -> readable.copy(
+                        error = eventOf(resource.message),
+                        loading = false
                     )
                 }
-            }.launchIn(viewModelScope)
+            }
+            .launchIn(viewModelScope)
 
     }
 
-    private fun signUp(email: String, password: String) {
+    private fun signUp() {
+        val email = readable.email
+        val password = readable.password
         if (email.isBlank() || password.isBlank()) {
-            _state.value = SignState(
-                title = applicationContext.getString(R.string.information_required)
+            _state.value = readable.copy(
+                error = eventOf(applicationContext.getString(R.string.information_required)),
+                loading = false
             )
             return
         }
         authUseCases.signUp(email, password, email)
             .onEach { resource ->
                 _state.value = when (resource) {
-                    Resource.Loading -> SignState(
+                    Resource.Loading -> readable.copy(
                         loading = true,
-                        title = applicationContext.getString(R.string.registering)
                     )
-                    is Resource.Success -> SignState(
+                    is Resource.Success -> readable.copy(
                         registerEvent = eventOf(resource.data),
-                        title = applicationContext.getString(R.string.register_success)
+                        error = eventOf(applicationContext.getString(R.string.register_success)),
+                        loading = false
                     )
-                    is Resource.Failure -> SignState(
-                        error = eventOfFailedResource(resource),
-                        title = resource.message
+                    is Resource.Failure -> readable.copy(
+                        error = eventOf(resource.message),
+                        loading = false
                     )
                 }
             }.launchIn(viewModelScope)

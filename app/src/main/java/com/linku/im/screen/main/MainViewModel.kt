@@ -2,8 +2,14 @@ package com.linku.im.screen.main
 
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ConversationUseCases
-import com.linku.domain.Auth
+import com.linku.domain.Authenticator
 import com.linku.domain.Resource
+import com.linku.domain.entity.Conversation
+import com.linku.domain.entity.GraphicsMessage
+import com.linku.domain.entity.ImageMessage
+import com.linku.domain.entity.TextMessage
+import com.linku.im.R
+import com.linku.im.applicationContext
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -18,13 +24,10 @@ class MainViewModel @Inject constructor(
     private val conversationUseCases: ConversationUseCases,
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
     init {
-        Auth.observeCurrent
+        Authenticator.observeCurrent
             .onEach {
-                if (it != null) {
-                    onEvent(MainEvent.GetConversations)
-                } else {
-                    getAllConversationsJob?.cancel()
-                }
+                if (it != null) onEvent(MainEvent.GetConversations)
+                else getAllConversationsJob?.cancel()
             }
             .launchIn(viewModelScope)
     }
@@ -41,7 +44,12 @@ class MainViewModel @Inject constructor(
         conversationUseCases.observeConversations()
             .onEach { conversations ->
                 _state.value = state.value.copy(
-                    conversations = conversations.map { it.toMainUI() },
+                    conversations = conversations
+                        .filter { it.type == Conversation.TYPE_GROUP }
+                        .map { it.toMainUI() },
+                    contracts = conversations
+                        .filter { it.type == Conversation.TYPE_PM }
+                        .map { it.toMainUI() },
                     loading = false
                 )
                 getAllConversationsJob?.cancel()
@@ -49,19 +57,38 @@ class MainViewModel @Inject constructor(
                     conversations.forEach { conversation ->
                         conversationUseCases.observeLatestContent(conversation.id)
                             .collectLatest { message ->
-                                val oldList = state.value.conversations.toMutableList()
-                                val oldConversation = oldList.find { it.id == message.cid }
+                                val oldConversations = state.value.conversations.toMutableList()
+                                val oldContracts = state.value.contracts.toMutableList()
+                                val oldConversation = oldConversations.find { it.id == message.cid }
+                                val oldContract = oldContracts.find { it.id == message.cid }
                                 if (oldConversation != null) {
-                                    oldList.remove(oldConversation)
+                                    oldConversations.remove(oldConversation)
                                     val copy = oldConversation.copy(
-                                        content = message.content
+                                        content = when (message.toReadable()) {
+                                            is TextMessage -> message.content
+                                            is ImageMessage -> applicationContext.getString(R.string.image_message)
+                                            is GraphicsMessage -> applicationContext.getString(R.string.graphics_message)
+                                            else -> applicationContext.getString(R.string.unknown_message_type)
+                                        }
                                     )
-                                    oldList.add(copy)
+                                    oldConversations.add(copy)
+                                } else if (oldContract != null) {
+                                    oldContracts.remove(oldContract)
+                                    val copy = oldContract.copy(
+                                        content = when (message.toReadable()) {
+                                            is TextMessage -> message.content
+                                            is ImageMessage -> applicationContext.getString(R.string.image_message)
+                                            is GraphicsMessage -> applicationContext.getString(R.string.graphics_message)
+                                            else -> applicationContext.getString(R.string.unknown_message_type)
+                                        }
+                                    )
+                                    oldConversations.add(copy)
                                 } else {
                                     // TODO
                                 }
                                 _state.value = state.value.copy(
-                                    conversations = oldList
+                                    conversations = oldConversations,
+                                    contracts = oldContracts
                                 )
                             }
                     }

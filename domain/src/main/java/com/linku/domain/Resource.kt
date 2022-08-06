@@ -44,12 +44,13 @@ suspend inline fun <T> FlowCollector<Resource<T>>.emitResource(
 suspend inline fun <T> FlowCollector<Resource<T>>.emitOldVersionResource() =
     emit(Resource.Failure("This is available in latest version.", "Unsupported Feature"))
 
-fun <T> resourceFlow(flowCollector: suspend FlowCollector<Resource<T>>.() -> Unit) = flow {
-    try {
-        emit(Resource.Loading)
-        flowCollector.invoke(this)
-    } catch (e: Exception) {
-        e.printStackTrace()
-        emit(Resource.Failure(message = e.message ?: "Unknown Error"))
+fun <T> resourceFlow(flowCollector: suspend FlowCollector<Resource<T>>.() -> Unit) =
+    flow<Resource<T>> {
+        try {
+            emit(Resource.Loading)
+            flowCollector.invoke(this)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emitOldVersionResource()
+        }
     }
-}

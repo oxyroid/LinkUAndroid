@@ -2,9 +2,7 @@ package com.linku.im.extension
 
 import com.linku.im.BuildConfig
 
-val <T> T.TAG: String
-    get() = "[LinkU]" + this!!::class.java.name
-
+val <T> T.TAG: String get() = "[LinkU]" + this!!::class.java.name
 
 inline fun <R> debug(block: () -> R): R? {
     return try {

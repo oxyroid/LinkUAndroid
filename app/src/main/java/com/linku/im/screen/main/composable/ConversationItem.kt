@@ -8,8 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.*
@@ -19,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
@@ -29,7 +26,7 @@ import com.google.accompanist.placeholder.shimmer
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.times
 import com.linku.im.screen.main.MainState
-import com.linku.im.ui.TextImage
+import com.linku.im.ui.components.TextImage
 
 @Composable
 fun ConversationItem(
@@ -54,7 +51,11 @@ fun ConversationItem(
         modifier = modifier
             .fillMaxWidth()
             .height(64.dp)
-            .let { pinned.ifTrue { it.background(MaterialTheme.colorScheme.surface) } ?: it }
+            .let {
+                pinned.ifTrue {
+                    it.background(MaterialTheme.colorScheme.surface * 0.8f)
+                } ?: it
+            }
             .clickable(
                 enabled = (conversation != null),
                 onClick = onClick
@@ -99,11 +100,10 @@ fun ConversationItem(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.weight(1f))
-            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.outline) {
                 Text(
                     text = conversation?.content ?: "",
                     maxLines = 1,
-                    color = MaterialTheme.colorScheme.outline,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .placeholder(
@@ -154,7 +154,6 @@ fun ConversationItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CircleHeadPicture(
     model: Any?,

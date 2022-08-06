@@ -1,22 +1,21 @@
 package com.linku.im.screen.chat
 
-import android.graphics.BitmapFactory
-import android.widget.Toast
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ConversationUseCases
-import com.linku.data.usecase.FileUseCases
+import com.linku.data.usecase.EmojiUseCases
 import com.linku.data.usecase.MessageUseCases
 import com.linku.data.usecase.UserUseCases
-import com.linku.domain.Auth
+import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.Conversation
 import com.linku.domain.eventOf
 import com.linku.domain.service.NotificationService
-import com.linku.im.applicationContext
+import com.linku.im.Constants
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.screen.chat.vo.toMessageVO
+import com.linku.im.screen.chat.composable.BubbleConfig
+import com.linku.im.screen.chat.vo.MessageVO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -29,12 +28,12 @@ class ChatViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases,
     private val userUseCases: UserUseCases,
     private val notificationService: NotificationService,
-    private val fileUseCases: FileUseCases
+    private val emojiUseCases: EmojiUseCases
 ) : BaseViewModel<ChatState, ChatEvent>(ChatState()) {
     override fun onEvent(event: ChatEvent) {
         when (event) {
             is ChatEvent.Initial -> {
-                _state.value = _state.value.copy(
+                _state.value = readable.copy(
                     cid = event.cid
                 )
                 conversationUseCases.observeConversation(event.cid)
@@ -47,19 +46,25 @@ class ChatViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
 
-                messageUseCases.observeMessagesFromConversation(event.cid)
-                    .onEach { messages ->
-                        _state.value = readable.copy(
-                            messages = messages.mapIndexedNotNull { index, message ->
-                                val isAnother = Auth.currentUID != message.uid
+                messageUseCases.observeMessages(event.cid).onEach { messages ->
+                    _state.value = readable.copy(
+                        messages = messages
+                            .map { it.toReadable() }
+                            .mapIndexedNotNull { index, message ->
+                                val next = if (index == messages.size - 1) null
+                                else messages[index + 1]
+                                val showTimeLabel =
+                                    next == null || message.timestamp - next.timestamp >= Constants.CHAT_LABEL_MIN_DURATION
+                                val isAnother = Authenticator.currentUID != message.uid
                                 when (readable.type) {
                                     Conversation.TYPE_PM -> {
-                                        message.toMessageVO(
-                                            content = message.content,
-                                            isAnother = isAnother,
-                                            avatar = null,
-                                            name = null,
-                                            isShowName = false
+                                        MessageVO(
+                                            message = message,
+                                            config = BubbleConfig.Pair(
+                                                sendState = message.sendState,
+                                                another = isAnother,
+                                                isShowTime = showTimeLabel
+                                            )
                                         )
                                     }
                                     Conversation.TYPE_GROUP -> {
@@ -78,31 +83,43 @@ class ChatViewModel @Inject constructor(
                                         // or one level higher than it and this message is not sent by one person.
                                         val isShowName =
                                             isAnother && (index == messages.size - 1 || messages[index + 1].uid != message.uid)
-                                        message.toMessageVO(
-                                            content = message.content,
-                                            isAnother = isAnother,
-                                            avatar = isShowAvatar.ifTrue { user?.name },
-                                            name = user?.name,
-                                            isShowName = isShowName
+
+                                        MessageVO(
+                                            message = message,
+                                            config = BubbleConfig.Multi(
+                                                sendState = message.sendState,
+                                                other = isAnother,
+                                                isShowTime = showTimeLabel,
+                                                avatarVisibility = isShowAvatar,
+                                                nameVisibility = isShowName,
+                                                name = user?.name
+                                            )
                                         )
                                     }
                                     else -> null
                                 }
                             },
-                            scrollToBottom = (readable.firstVisibleIndex == 0)
-                                .ifTrue { eventOf(Unit) }
-                                ?: readable.scrollToBottom,
-                        )
-                    }
-                    .launchIn(viewModelScope)
+                        scrollToBottomEvent = (readable.firstVisibleIndex == 0 && !readable.loading).ifTrue {
+                            eventOf(
+                                Unit
+                            )
+                        } ?: readable.scrollToBottomEvent,
+                        loading = false
+                    )
+                }.launchIn(viewModelScope)
 
-                conversationUseCases.fetchConversation(event.cid)
-                    .launchIn(viewModelScope)
+                conversationUseCases.fetchConversation(event.cid).launchIn(viewModelScope)
+
+
+                _state.value = readable.copy(
+                    emojis = emojiUseCases.getAll()
+                )
             }
             ChatEvent.SendMessage -> {
-                when (readable.uri) {
-                    null -> sendTextMessage()
-                    else -> sendImageMessage()
+                when {
+                    readable.uri == null -> sendTextMessage()
+                    readable.text.isBlank() -> sendImageMessage()
+                    else -> sendGraphicsMessage()
                 }
             }
             is ChatEvent.TextChange -> onTextChange(event.text)
@@ -115,18 +132,45 @@ class ChatViewModel @Inject constructor(
 
             }
             is ChatEvent.OnFileUriChange -> {
-                val uri = event.uri
-                val bitmap = if (uri != null) {
-                    applicationContext.contentResolver.openInputStream(event.uri).use {
-                        BitmapFactory.decodeStream(it)
-                    }
-                } else null
                 _state.value = readable.copy(
                     uri = event.uri,
-                    image = bitmap
                 )
             }
+            is ChatEvent.EmojiChange -> {
+                _state.value = readable.copy(
+                    text = readable.text.plus(event.emoji)
+                )
+            }
+            is ChatEvent.Expanded -> _state.value = readable.copy(
+                expended = event.value
+            )
         }
+    }
+
+    private fun sendGraphicsMessage() {
+        val cid = readable.cid
+        val text = readable.text
+        val uri = readable.uri ?: return
+        if (text.isBlank()) return
+
+        messageUseCases.graphicsMessage(
+            cid = cid, text = text, uri = uri
+        ).onEach { resource ->
+            when (resource) {
+                Resource.Loading -> {
+                    _state.value = readable.copy(
+                        scrollToBottomEvent = eventOf(Unit),
+                        uri = null,
+                        text = ""
+                    )
+                }
+                is Resource.Success -> {
+                    notificationService.onEmit()
+                }
+                is Resource.Failure -> _state.value =
+                    readable.copy(event = eventOf(resource.message))
+            }
+        }.launchIn(viewModelScope)
     }
 
     private fun onTextChange(value: String) {
@@ -135,15 +179,15 @@ class ChatViewModel @Inject constructor(
 
     private fun sendTextMessage() {
         val cid = readable.cid
-        val content = readable.text
-        if (content.isBlank()) return
+        val text = readable.text
+        if (text.isBlank()) return
         viewModelScope.launch {
-            messageUseCases.textMessage(cid, content)
+            messageUseCases.textMessage(cid, text)
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {
                             _state.value = readable.copy(
-                                scrollToBottom = eventOf(Unit),
+                                scrollToBottomEvent = eventOf(Unit),
                                 text = ""
                             )
                         }
@@ -160,30 +204,27 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun sendImageMessage() {
-        fileUseCases.upload(readable.uri)
+        val cid = readable.cid
+        val uri = readable.uri ?: return
+
+        messageUseCases.imageMessage(cid, uri)
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> {
-                        Toast.makeText(
-                            applicationContext,
-                            "Uploading...",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        _state.value = readable.copy(
+                            scrollToBottomEvent = eventOf(Unit),
+                            uri = null,
+                        )
                     }
                     is Resource.Success -> {
-                        Toast.makeText(applicationContext, "Uploaded", Toast.LENGTH_SHORT)
-                            .show()
+                        notificationService.onEmit()
                     }
-                    is Resource.Failure -> {
-                        Toast.makeText(
-                            applicationContext,
-                            "Failed to upload, ${resource.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
+                    is Resource.Failure -> _state.value =
+                        readable.copy(event = eventOf(resource.message))
                 }
             }
             .launchIn(viewModelScope)
+
     }
 
 }

@@ -13,31 +13,48 @@ class UserRepositoryImpl(
     private val memory = mutableMapOf<Int, User?>()
     override suspend fun getById(id: Int, strategy: Strategy): User? = when (strategy) {
         Strategy.OnlyCache -> userDao.getById(id)
-        Strategy.OnlyNetwork -> userService.getById(id).map { it.toUser() }.peekOrNull()
+        Strategy.OnlyNetwork -> try {
+            userService.getById(id).map { it.toUser() }.peekOrNull()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
         Strategy.CacheElseNetwork -> {
             val user: User? = userDao.getById(id)
             if (user == null) {
-                userService.getById(id)
-                    .handle {
-                        userDao.insert(it.toUser())
-                    }
+                try {
+                    userService.getById(id)
+                        .handle {
+                            userDao.insert(it.toUser())
+                        }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
             user ?: userDao.getById(id)
         }
         Strategy.NetworkThenCache -> {
-            userService.getById(id)
-                .handle {
-                    userDao.insert(it.toUser())
-                }
+            try {
+                userService.getById(id)
+                    .handle {
+                        userDao.insert(it.toUser())
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
             userDao.getById(id)
         }
         Strategy.Memory -> memory.getOrPut(id) {
             val user: User? = userDao.getById(id)
             if (user == null) {
-                userService.getById(id)
-                    .handle {
-                        userDao.insert(it.toUser())
-                    }
+                try {
+                    userService.getById(id)
+                        .handle {
+                            userDao.insert(it.toUser())
+                        }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
             user ?: userDao.getById(id)
         }

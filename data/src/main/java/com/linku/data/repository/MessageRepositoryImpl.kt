@@ -1,11 +1,12 @@
 package com.linku.data.repository
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import com.linku.data.TAG
 import com.linku.data.debug
-import com.linku.domain.Auth
-import com.linku.domain.Resource
-import com.linku.domain.emitResource
+import com.linku.domain.*
+import com.linku.domain.entity.GraphicsContent
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.MessageRepository
@@ -13,131 +14,366 @@ import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ChatService
 import com.linku.domain.service.ChatSocketService
+import com.linku.domain.service.FileService
 import com.linku.domain.service.NotificationService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import java.util.*
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import java.io.FileNotFoundException
 
 class MessageRepositoryImpl(
     private val socketService: ChatSocketService,
     private val chatService: ChatService,
     private val messageDao: MessageDao,
     private val conversationDao: ConversationDao,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val context: Context,
+    private val fileService: FileService,
+    private val json: Json
 ) : MessageRepository {
-    override suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit> {
-        socketService.onClosed {
-            debug { Log.e(TAG, "Message Channel Closed!") }
-            if (Auth.currentUID != null) {
-                delay(3_000)
-                debug { Log.e(TAG, "Reconnecting...") }
-                initSession(uid, scope)
-            }
-        }
-        return socketService.initSession(uid, scope).also {
-            messageDao.clearStagingMessages()
-            socketService.incoming()
-                .onEach { message ->
-                    debug {
-                        Log.e(TAG, "Message Received: ${message.content}")
+    override fun initSession(uid: Int): Flow<Resource<Unit>> = channelFlow {
+        try {
+            socketService.initSession(uid)
+                .onEach { resource ->
+                    when (resource) {
+                        Resource.Loading -> {
+                            send(Resource.Loading)
+                            messageDao.clearStagingMessages()
+                            socketService.onClosed {
+                                debug { Log.e(TAG, "Message Channel Closed!") }
+                                if (Authenticator.currentUID != null) {
+                                    send(Resource.Failure("Message Channel Closed!"))
+                                }
+                            }
+                        }
+                        is Resource.Failure -> send(
+                            Resource.Failure(resource.message, resource.code)
+                        )
+                        is Resource.Success -> {
+                            launch {
+                                try {
+                                    chatService.subscribe()
+                                        .handleUnit {
+                                            Log.e(TAG, "initSession: mqtt success")
+                                            send(Resource.Success(Unit))
+                                        }
+                                        .catch { message, code ->
+                                            Log.e(TAG, "initSession: mqtt failed")
+                                            send(
+                                                Resource.Failure(message, code)
+                                            )
+                                        }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                                socketService.incoming()
+                                    .collectLatest { message ->
+                                        debug {
+                                            Log.e(TAG, "Message Received: ${message.content}")
+                                        }
+                                        notificationService.onCollected(message)
+                                        messageDao.insert(message)
+                                        val cid = message.cid
+                                        if (conversationDao.getById(cid) == null) {
+                                            chatService.getById(cid).handle { conversation ->
+                                                conversationDao.insert(conversation.toConversation())
+                                            }
+                                        }
+                                    }
+                            }
+                            launch {
+                                fetchUnreadMessages()
+                            }
+                        }
                     }
-                    notificationService.onCollected(message)
-                    messageDao.insert(message)
-                    val cid = message.cid
+                }
+                .launchIn(this)
+        } catch (e: Exception) {
+            send(Resource.Failure(e.message ?: ""))
+        }
+    }
+
+    override fun incoming(): Flow<List<Message>> = messageDao.incoming()
+
+    override fun incoming(cid: Int): Flow<List<Message>> = messageDao.incoming(cid)
+
+    override suspend fun closeSession() = socketService.closeSession()
+
+    override suspend fun sendTextMessage(cid: Int, text: String): Flow<Resource<Unit>> =
+        channelFlow {
+            // We wanna to custom the catch block, so we didn't use resourceFlow.
+            val userId = Authenticator.currentUID ?: kotlin.run {
+                send(Resource.Failure("Please sign in first."))
+                return@channelFlow
+            }
+            // 1: Create a staging message.
+            val staging = MessageRepository.StagingMessage.Text(
+                cid = cid,
+                uid = userId,
+                text = text
+            )
+            // 2: Put the message into database.
+            createStagingMessage(staging)
+            launch {
+                send(Resource.Loading)
+                try {
+                    // 3: Make real HTTP-Connection to send message.
+                    chatService.sendMessage(
+                        cid,
+                        text,
+                        Message.Type.Text.toString(),
+                        staging.uuid
+                    ).handle {
+                        // 4. If it is succeed, level-up the staging message by server-message.
+                        with(it) {
+                            levelStagingMessage(uuid, id, cid, timestamp, staging.text)
+                        }
+                        send(Resource.Success(Unit))
+                    }.catch { message, code ->
+                        // 5. Else downgrade it.
+                        downgradeStagingMessage(staging.uuid)
+                        send(Resource.Failure(message, code))
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    downgradeStagingMessage(staging.uuid)
+                    send(Resource.Failure(e.message ?: ""))
+                }
+            }
+
+        }
+
+    override fun sendImageMessage(cid: Int, uri: Uri): Flow<Resource<Unit>> = channelFlow {
+        try {
+            // 1. Make real HTTP-Connection to upload file.
+            val userId = Authenticator.currentUID
+            checkNotNull(userId) { "Please sign in first." }
+            // 2. Create a staging message.
+            val staging = MessageRepository.StagingMessage.Image(
+                cid = cid, uid = userId, uri = uri
+            )
+            uploadImage(uri).onEach { resource ->
+                when (resource) {
+                    Resource.Loading -> {
+                        // 3. Put the message into database.
+                        createStagingMessage(staging)
+                        send(Resource.Loading)
+                    }
+                    is Resource.Success -> {
+                        // 4. Make real HTTP-Connection to send message.
+                        launch {
+                            try {
+                                chatService.sendMessage(
+                                    cid = cid,
+                                    content = resource.data,
+                                    type = Message.Type.Image.toString(),
+                                    uuid = staging.uuid
+                                ).handle { serverMessage ->
+                                    // 4. If it is succeed, level-up the staging message by server-message.
+                                    with(serverMessage) {
+                                        levelStagingMessage(
+                                            uuid = uuid,
+                                            id = id,
+                                            cid = cid,
+                                            timestamp = timestamp,
+                                            content = uri.toString()
+                                        )
+                                    }
+                                    send(Resource.Success(Unit))
+                                }.catch { message, _ ->
+                                    // 5. Else downgrade it.
+                                    downgradeStagingMessage(staging.uuid)
+                                    send(Resource.Failure(message))
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+
+                        }
+                    }
+                    is Resource.Failure -> {
+                        downgradeStagingMessage(staging.uuid)
+                        send(Resource.Failure(resource.message))
+                    }
+                }
+            }
+                .launchIn(this)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+    }
+
+    override fun sendGraphicsMessage(cid: Int, text: String, uri: Uri): Flow<Resource<Unit>> =
+        channelFlow {
+            try {
+                // 1. Make real HTTP-Connection to upload file.
+                val userId = Authenticator.currentUID
+                checkNotNull(userId) { "Please sign in first." }
+                // 2. Create a staging message.
+                val staging = MessageRepository.StagingMessage.Graphics(
+                    cid = cid, uid = userId, text = text, uri = uri
+                )
+                uploadImage(uri).onEach { resource ->
+                    when (resource) {
+                        Resource.Loading -> {
+                            // 3. Put the message into database.
+                            createStagingMessage(staging)
+                            send(Resource.Loading)
+                        }
+                        is Resource.Success -> {
+                            // 4. Make real HTTP-Connection to send message.
+                            launch {
+                                try {
+                                    val content = GraphicsContent(text, resource.data)
+                                    chatService.sendMessage(
+                                        cid = cid,
+                                        content = json.encodeToString(content),
+                                        type = Message.Type.Graphics.toString(),
+                                        uuid = staging.uuid
+                                    ).handle { serverMessage ->
+                                        // 4. If it is succeed, level-up the staging message by server-message.
+                                        with(serverMessage) {
+                                            levelStagingMessage(
+                                                uuid = uuid,
+                                                id = id,
+                                                cid = cid,
+                                                timestamp = timestamp,
+                                                content = GraphicsContent(
+                                                    text = text, url = uri.toString()
+                                                ).let(json::encodeToString)
+                                            )
+                                        }
+                                        send(Resource.Success(Unit))
+                                    }.catch { message, _ ->
+                                        // 5. Else downgrade it.
+                                        downgradeStagingMessage(staging.uuid)
+                                        send(Resource.Failure(message))
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                        is Resource.Failure -> {
+                            downgradeStagingMessage(staging.uuid)
+                            send(Resource.Failure(resource.message))
+                        }
+                    }
+                }
+                    .launchIn(this)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+        }
+
+    private fun uploadImage(uri: Uri?): Flow<Resource<String>> = resourceFlow {
+        if (uri == null) {
+            debug { Log.e(TAG, "upload: uri is null.") }
+            emitOldVersionResource()
+            return@resourceFlow
+        }
+        val resolver = context.contentResolver
+        try {
+            resolver.openInputStream(uri).use { stream ->
+                if (stream != null) {
+                    val bytes = stream.readBytes()
+                    val filename = "file.png"
+                    val part = MultipartBody.Part.createFormData(
+                        "file", filename, RequestBody.create(MediaType.parse("image/*"), bytes)
+                    )
+                    fileService.upload(part).handle(::emitResource).catch(::emitResource)
+                } else {
+                    debug { Log.e(TAG, "upload: cannot open stream.") }
+                    emitOldVersionResource()
+                    return@resourceFlow
+                }
+            }
+        } catch (e: FileNotFoundException) {
+            debug { Log.e(TAG, "upload: cannot find file.") }
+            emitOldVersionResource()
+            return@resourceFlow
+        }
+    }
+
+    private suspend fun createStagingMessage(staging: MessageRepository.StagingMessage) {
+        val id = System.currentTimeMillis().toInt()
+        val message = when (staging) {
+            is MessageRepository.StagingMessage.Text -> {
+                Message(
+                    id = id,
+                    cid = staging.cid,
+                    uid = staging.uid,
+                    content = staging.text,
+                    type = Message.Type.Text,
+                    timestamp = System.currentTimeMillis(),
+                    uuid = staging.uuid,
+                    sendState = Message.STATE_PENDING
+                )
+            }
+            is MessageRepository.StagingMessage.Image -> Message(
+                id = id,
+                cid = staging.cid,
+                uid = staging.uid,
+                content = staging.uri.toString(),
+                type = Message.Type.Image,
+                timestamp = System.currentTimeMillis(),
+                uuid = staging.uuid,
+                sendState = Message.STATE_PENDING
+            )
+            is MessageRepository.StagingMessage.Graphics -> Message(
+                id = id,
+                cid = staging.cid,
+                uid = staging.uid,
+                content = json.encodeToString(
+                    GraphicsContent(
+                        staging.text, staging.uri.toString()
+                    )
+                ),
+                type = Message.Type.Graphics,
+                timestamp = System.currentTimeMillis(),
+                uuid = staging.uuid,
+                sendState = Message.STATE_PENDING
+            )
+        }
+        messageDao.insert(message)
+    }
+
+    private suspend fun levelStagingMessage(
+        uuid: String, id: Int, cid: Int, timestamp: Long, content: String
+    ) {
+        messageDao.levelStagingMessage(uuid, id, cid, timestamp, content)
+    }
+
+    override suspend fun resendStagingMessage(uuid: String) {
+        messageDao.resendStagingMessage(uuid)
+    }
+
+    private suspend fun downgradeStagingMessage(uuid: String) {
+        messageDao.failedStagingMessage(uuid)
+    }
+
+    override suspend fun fetchUnreadMessages() {
+        try {
+            chatService.getUnreadMessages().handle { messages ->
+                messages.forEach {
+                    messageDao.insert(it.toMessage())
+                    val cid = it.cid
                     if (conversationDao.getById(cid) == null) {
                         chatService.getById(cid).handle { conversation ->
                             conversationDao.insert(conversation.toConversation())
                         }
                     }
                 }
-                .launchIn(scope)
-            try {
-                chatService.subscribe()
-            } catch (_: Exception) {
-
             }
-        }
-    }
-
-    override fun incoming(): Flow<List<Message>> = messageDao
-        .incoming()
-        .onEach {
-            debug {
-                Log.e(TAG, "Room Messages Update, size = ${it.size}")
-            }
-        }
-
-    override fun incoming(cid: Int): Flow<List<Message>> = messageDao.incoming(cid)
-
-    override suspend fun closeSession() = socketService.closeSession()
-
-    override suspend fun sendTextMessage(
-        cid: Int,
-        content: String
-    ): Flow<Resource<Unit>> = flow {
-        val uuid = UUID.randomUUID().toString()
-        try {
-            val userId = Auth.currentUID
-            checkNotNull(userId) { "Please sign in first." }
-            val stagingMessage =
-                Message(
-                    id = System.currentTimeMillis().toInt(),
-                    cid = cid,
-                    uid = userId,
-                    content = content,
-                    type = "text",
-                    timestamp = System.currentTimeMillis(),
-                    uuid = uuid,
-                    sendState = Message.STATE_PENDING
-                )
-            messageDao.insert(stagingMessage)
-            emit(Resource.Loading)
-            chatService.sendMessage(cid, content, "text", uuid)
-                .handle { message ->
-                    val serverUUID = message.uuid
-                    val findByUUID = messageDao.findByUUID(serverUUID)
-                    if (findByUUID != null && serverUUID == uuid) {
-                        messageDao.levelStagingMessage(
-                            uuid = uuid,
-                            id = message.id,
-                            cid = message.cid,
-                            timestamp = message.timestamp
-                        )
-                        emitResource(Unit)
-                    } else {
-                        emitResource(
-                            message = "",
-                            code = ""
-                        )
-                    }
-                }
-                .catch { message, code ->
-                    messageDao.failedStagingMessage(uuid)
-                    emitResource(message, code)
-                }
-                .map { }
         } catch (e: Exception) {
             e.printStackTrace()
-            messageDao.failedStagingMessage(uuid)
-            emitResource(e.message ?: "Unknown Error", "?")
         }
     }
 
-    override suspend fun fetchUnreadMessages() {
-        chatService.getUnreadMessages().handle { messages ->
-            messages.forEach {
-                messageDao.insert(it.toMessage())
-                val cid = it.cid
-                if (conversationDao.getById(cid) == null) {
-                    chatService.getById(cid).handle { conversation ->
-                        conversationDao.insert(conversation.toConversation())
-                    }
-                }
-            }
-        }
-    }
 }

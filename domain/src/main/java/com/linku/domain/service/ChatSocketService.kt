@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Keep
 interface ChatSocketService {
-    suspend fun initSession(uid: Int, scope: CoroutineScope): Resource<Unit>
+    suspend fun initSession(uid: Int): Flow<Resource<Unit>>
     fun incoming(): Flow<Message>
     suspend fun closeSession()
     suspend fun onClosed(handler: suspend () -> Unit)
@@ -17,5 +17,4 @@ interface ChatSocketService {
     sealed class EndPoints(val url: String) {
         data class UIDSocket(val uid: Int) : EndPoints(BuildConfig.WS_URL + "/$uid")
     }
-
 }

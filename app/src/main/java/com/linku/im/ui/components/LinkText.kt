@@ -1,4 +1,4 @@
-package com.linku.im.ui
+package com.linku.im.ui.components
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape

@@ -22,50 +22,45 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
+import com.linku.im.BuildConfig
+import com.linku.im.LinkUEvent
 import com.linku.im.R
+import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.ToolBarAction
 import com.linku.im.extension.ifTrue
-import com.linku.im.extension.times
-import com.linku.im.linku.LinkUEvent
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
-import com.linku.im.ui.ToolBarAction
-import com.linku.im.ui.theme.Typography
+import com.linku.im.ui.theme.divider
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     viewModel: IntroduceViewModel = hiltViewModel()
 ) {
+    val vmState by vm.state
+    val isDarkMode = vmState.isDarkMode
     val state by viewModel.state
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     var dropdownMenuExpended by remember {
         mutableStateOf(false)
     }
 
-    vm.onActions {
-        ToolBarAction(
-            onClick = { dropdownMenuExpended = true },
-            imageVector = Icons.Default.MoreVert,
-        )
-        DropdownMenu(
-            expanded = dropdownMenuExpended,
-            onDismissRequest = { dropdownMenuExpended = false }) {
-            DropdownMenuItem(onClick = { viewModel.onEvent(IntroduceEvent.SignOut) }, text = {
-                Text(text = stringResource(R.string.sign_out))
-            })
-        }
-    }
+
 
     LaunchedEffect(Unit) {
         viewModel.onEvent(IntroduceEvent.FetchIntroduce)
@@ -132,7 +127,8 @@ fun ProfileScreen(
                         }
                     }
                 }
-            }, title = {
+            },
+            title = {
                 val title = stringResource(id = R.string.email_verified_dialog_title)
                 Text(text = title, style = MaterialTheme.typography.titleMedium)
             }
@@ -140,98 +136,139 @@ fun ProfileScreen(
         )
     }
 
-    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-    ModalBottomSheetLayout(
-        sheetState = sheetState,
-        sheetContent = {
-            LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
-                item {
-                    Text(
-                        text = state.actionsLabel,
-                        style = Typography.titleSmall.copy(color = MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-                items(state.actions) {
-                    ListItem(text = {
+
+    Scaffold { innerPadding ->
+        ModalBottomSheetLayout(
+            sheetState = sheetState,
+            sheetContent = {
+                LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
+                    item {
                         Text(
-                            text = it.text, color = MaterialTheme.colorScheme.onBackground
+                            text = state.actionsLabel,
+                            style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.primary),
+                            modifier = Modifier.padding(16.dp)
                         )
-                    },
-                        icon = {
-                            Icon(
-                                imageVector = it.icon,
-                                contentDescription = it.text,
-                                tint = MaterialTheme.colorScheme.outline
+                    }
+                    items(state.actions) {
+                        ListItem(text = {
+                            Text(
+                                text = it.text, color = MaterialTheme.colorScheme.onBackground
                             )
                         },
-                        modifier = Modifier
-                            .background(MaterialTheme.colorScheme.background)
-                            .clickable {
-                                scope.launch {
-                                    it.onClick()
-                                    sheetState.hide()
-                                }
-                            })
+                            icon = {
+                                Icon(
+                                    imageVector = it.icon,
+                                    contentDescription = it.text,
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                            },
+                            modifier = Modifier
+                                .background(MaterialTheme.colorScheme.background)
+                                .clickable {
+                                    scope.launch {
+                                        it.onClick()
+                                        sheetState.hide()
+                                    }
+                                })
+                    }
                 }
-            }
-        },
-        sheetBackgroundColor = MaterialTheme.colorScheme.background,
-        sheetContentColor = MaterialTheme.colorScheme.onBackground
-    ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
+            },
+            sheetBackgroundColor = MaterialTheme.colorScheme.background,
+            sheetContentColor = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(innerPadding)
         ) {
-            item {
-                Surface(
-                    color = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                ) {
-                    SubcomposeAsyncImage(
-                        model = "",
-                        contentDescription = "",
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .navigationBarsPadding()
+                    .background(MaterialTheme.colorScheme.surface)
+            ) {
+                item {
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    ) {
+                        SubcomposeAsyncImage(
+                            model = "",
+                            contentDescription = "",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(4 / 3f)
+                        )
+                    }
+                }
+                item {
+                    ProfileList(label = stringResource(id = R.string.account),
+                        items = state.dataProperties,
+                        onItemClick = { setting ->
+                            if (setting is Property.Data) {
+                                viewModel.onEvent(
+                                    IntroduceEvent.Actions(
+                                        label = setting.key, actions = setting.actions
+                                    )
+                                )
+                                scope.launch {
+                                    if (state.actions.isEmpty()) return@launch
+                                    sheetState.show()
+                                }
+                            }
+                        })
+                }
+
+                item {
+                    Spacer(
                         modifier = Modifier
+                            .height(18.dp)
                             .fillMaxWidth()
-                            .aspectRatio(4 / 3f)
+                            .background(MaterialTheme.colorScheme.divider(isDarkMode))
                     )
                 }
-            }
-            item {
-                ProfileList(label = stringResource(id = R.string.account),
-                    items = state.dataProperties,
-                    onItemClick = { setting ->
-                        if (setting is Property.Data) {
-                            viewModel.onEvent(
-                                IntroduceEvent.Actions(
-                                    label = setting.key, actions = setting.actions
-                                )
-                            )
-                            scope.launch {
-                                if (state.actions.isEmpty()) return@launch
-                                sheetState.show()
-                            }
-                        }
-                    })
+                item {
+                    ProfileList(label = stringResource(id = R.string.settings),
+                        items = state.settingsProperties,
+                        onItemClick = {})
+                }
+                item {
+                    val versionLabel = stringResource(id = R.string.version_label)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.divider(isDarkMode)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$versionLabel${BuildConfig.VERSION_NAME}",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
+                    }
+                }
             }
 
-            item {
-                Spacer(
-                    modifier = Modifier
-                        .height(18.dp)
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.outline * 0.1f)
-                )
-            }
-            item {
-                ProfileList(label = stringResource(id = R.string.settings),
-                    items = state.settingsProperties,
-                    onItemClick = {})
-            }
+            ToolBar(
+                onNavClick = { vm.onEvent(LinkUEvent.PopBackStack) },
+                actions = {
+                    ToolBarAction(
+                        onClick = { dropdownMenuExpended = true },
+                        imageVector = Icons.Default.MoreVert,
+                    )
+                    DropdownMenu(
+                        expanded = dropdownMenuExpended,
+                        onDismissRequest = { dropdownMenuExpended = false }) {
+                        DropdownMenuItem(
+                            onClick = { viewModel.onEvent(IntroduceEvent.SignOut) },
+                            text = {
+                                Text(text = stringResource(R.string.sign_out))
+                            })
+                    }
+                },
+                text = "",
+                backgroundColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSecondary
+            )
         }
     }
-
     BackHandler(sheetState.isVisible) {
         scope.launch {
             sheetState.hide()

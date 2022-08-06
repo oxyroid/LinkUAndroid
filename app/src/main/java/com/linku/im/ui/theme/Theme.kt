@@ -4,7 +4,9 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.linku.im.vm
 
 
 private val LightColors = lightColorScheme(
@@ -70,6 +72,9 @@ private val DarkColors = darkColorScheme(
 
 val supportDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
+fun ColorScheme.divider(useDarkTheme: Boolean): Color =
+    if (!useDarkTheme) md_theme_light_divider else md_theme_dark_divider
+
 @Composable
 fun AppTheme(
     useDarkTheme: Boolean = isSystemInDarkTheme(),
@@ -85,6 +90,17 @@ fun AppTheme(
 
     MaterialTheme(
         colorScheme = colors,
-        content = content
+        content = content,
+        typography = MaterialTheme.typography.copy(
+            titleLarge = MaterialTheme.typography.titleLarge.withBold(),
+            titleMedium = MaterialTheme.typography.titleMedium.withBold(),
+            titleSmall = MaterialTheme.typography.titleSmall.withBlack(),
+            displayLarge = MaterialTheme.typography.displayLarge.withBlack(),
+            displayMedium = MaterialTheme.typography.displayMedium.withBlack(),
+            displaySmall = MaterialTheme.typography.displaySmall.withBlack(),
+            bodySmall = MaterialTheme.typography.bodySmall.withMedium(),
+            bodyMedium = MaterialTheme.typography.bodyMedium.withMedium(),
+            bodyLarge = MaterialTheme.typography.bodyLarge.withMedium()
+        )
     )
 }

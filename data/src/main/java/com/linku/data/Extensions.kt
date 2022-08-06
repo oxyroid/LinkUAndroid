@@ -1,6 +1,6 @@
 package com.linku.data
 
-import com.wzk.data.BuildConfig
+import com.linku.domain.BuildConfig
 
 val <T> T.TAG: String
     get() = "[LinkU]" + this!!::class.java.simpleName

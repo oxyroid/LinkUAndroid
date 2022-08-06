@@ -13,7 +13,6 @@ data class FileUseCases @Inject constructor(
 data class UploadUseCase(
     private val repository: FileRepository
 ) {
-    operator fun invoke(uri: Uri?): Flow<Resource<Unit>> =
+    operator fun invoke(uri: Uri?): Flow<Resource<String>> =
         repository.upload(uri)
-
 }

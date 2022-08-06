@@ -1,6 +1,6 @@
 package com.linku.data.usecase
 
-import com.linku.domain.Auth
+import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.emitResource
 import com.linku.domain.repository.AuthRepository
@@ -48,7 +48,7 @@ data class SignOutUseCase(
     private val repository: AuthRepository
 ) {
     operator fun invoke(): Flow<Resource<Unit>> = resourceFlow {
-        Auth.update()
+        Authenticator.update()
         repository.signOut()
         emitResource(Unit)
     }

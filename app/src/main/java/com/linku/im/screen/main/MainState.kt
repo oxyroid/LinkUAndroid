@@ -7,6 +7,7 @@ import com.linku.im.applicationContext
 data class MainState(
     val title: String = applicationContext.getString(R.string.app_name),
     val conversations: List<ConversationMainUI> = emptyList(),
+    val contracts: List<ConversationMainUI> = emptyList(),
     val loading: Boolean = true,
     val drawerTitle: String? = null
 ) {

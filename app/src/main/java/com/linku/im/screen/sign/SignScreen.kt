@@ -1,13 +1,23 @@
 package com.linku.im.screen.sign
 
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -15,92 +25,125 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.google.accompanist.insets.ui.Scaffold
 import com.linku.im.R
-import com.linku.im.screen.sign.composable.LoginTextField
-import com.linku.im.ui.MaterialButton
-import com.linku.im.ui.MaterialTextButton
+import com.linku.im.ui.components.MaterialButton
+import com.linku.im.ui.components.MaterialTextButton
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     viewModel: SignViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val state by viewModel.state
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val scaffoldState = rememberScaffoldState()
     val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading))
 
-    state.error.handle {
-        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+    val focusRequester = remember(::FocusRequester)
+
+    LaunchedEffect(state.error) {
+        state.error.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
     }
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Column(
+    Scaffold(
+        scaffoldState = scaffoldState
+    ) { innerPadding ->
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .imePadding(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            LottieAnimation(
-                composition = composition,
-                modifier = Modifier
-                    .padding(bottom = 12.dp)
-                    .size(160.dp),
-                iterations = LottieConstants.IterateForever
-            )
-            LoginTextField(
-                value = email,
-                onValueChange = {
-                    email = it
-                },
-                titleRes = R.string.screen_login_tag_email,
-                enabled = !state.loading,
-                modifier = Modifier.fillMaxWidth(),
-                type = KeyboardType.Email
-            )
-            LoginTextField(
-                value = password,
-                onValueChange = {
-                    password = it
-                },
-                titleRes = R.string.screen_login_tag_password,
-                enabled = !state.loading,
-                modifier = Modifier.fillMaxWidth(),
-                type = KeyboardType.Password
-            )
-
-            Spacer(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp)
-            )
-
-            MaterialButton(
-                textRes = R.string.screen_login_btn_login,
-                enabled = !state.loading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
+                    .navigationBarsPadding()
+                    .imePadding(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                viewModel.onEvent(SignEvent.SignIn(email, password))
-            }
-            MaterialTextButton(
-                textRes = R.string.screen_login_btn_register,
-                enabled = !state.loading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 48.dp)
-            ) {
-                viewModel.onEvent(SignEvent.SignUp(email, password))
-            }
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
+                }
+                LottieAnimation(
+                    composition = composition,
+                    modifier = Modifier
+                        .padding(bottom = 12.dp)
+                        .size(160.dp),
+                    iterations = LottieConstants.IterateForever
+                )
+                OutlinedTextField(
+                    value = state.email,
+                    onValueChange = { viewModel.onEvent(SignEvent.OnEmail(it)) },
+                    label = { Text(stringResource(R.string.screen_login_tag_email)) },
+                    modifier = Modifier
+                        .padding(horizontal = 48.dp)
+                        .focusRequester(focusRequester),
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    enabled = !state.loading,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = {
+                            // TODO
+                        }
+                    )
+                )
+                OutlinedTextField(
+                    value = state.password,
+                    onValueChange = { viewModel.onEvent(SignEvent.OnPassword(it)) },
+                    label = { Text(stringResource(R.string.screen_login_tag_password)) },
+                    modifier = Modifier
+                        .padding(horizontal = 48.dp),
+                    singleLine = true,
+                    textStyle = TextStyle(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    enabled = !state.loading,
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            viewModel.onEvent(SignEvent.SignIn)
+                        }
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    )
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                )
+
+                MaterialButton(
+                    textRes = R.string.screen_login_btn_login,
+                    enabled = !state.loading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                ) {
+                    viewModel.onEvent(SignEvent.SignIn)
+                }
+                MaterialTextButton(
+                    textRes = R.string.screen_login_btn_register,
+                    enabled = !state.loading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 48.dp)
+                ) {
+                    viewModel.onEvent(SignEvent.SignUp)
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 

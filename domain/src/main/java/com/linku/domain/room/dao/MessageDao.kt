@@ -18,8 +18,14 @@ interface MessageDao {
     @Query("SELECT * FROM Message WHERE uuid = :uuid LIMIT 1")
     suspend fun findByUUID(uuid: String): Message?
 
-    @Query("UPDATE Message SET uuid = '', id = :id, cid = :cid, timestamp = :timestamp,sendState = 1 WHERE uuid = :uuid")
-    suspend fun levelStagingMessage(uuid: String, id: Int, cid: Int, timestamp: Long)
+    @Query("UPDATE Message SET uuid = '', id = :id, cid = :cid, timestamp = :timestamp,content = :content,sendState = 1 WHERE uuid = :uuid")
+    suspend fun levelStagingMessage(
+        uuid: String,
+        id: Int,
+        cid: Int,
+        timestamp: Long,
+        content: String
+    )
 
     @Query("UPDATE MESSAGE SET sendState = 2 WHERE uuid = :uuid")
     suspend fun failedStagingMessage(uuid: String)

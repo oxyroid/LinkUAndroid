@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -21,6 +22,8 @@ import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.times
+import com.linku.im.ui.theme.divider
+import com.linku.im.vm
 
 private val DIVIDER = 0.6.dp
 private val PADDING_X = 24.dp
@@ -34,14 +37,16 @@ fun IntroduceItem(
     onClick: () -> Unit,
     divider: Boolean = true
 ) {
-    val shimmerColor = MaterialTheme.colorScheme.outline * 0.1f
+    val state by vm.state
+    val darkMode = state.isDarkMode
+    val shimmerColor = MaterialTheme.colorScheme.divider(darkMode) * 0.1f
     when (property) {
         is Property.Data -> {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onClick)
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(
                         start = PADDING_X, top = ENTITY_PADDING_Y
                     )
@@ -50,24 +55,24 @@ fun IntroduceItem(
                     is String -> {
                         Text(
                             text = property.value,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(end = PADDING_X)
                         )
                     }
                     is AnnotatedString -> {
                         Text(
                             text = property.value,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(end = PADDING_X)
                         )
                     }
                     null -> {
                         Text(
                             text = "",
-                            color = MaterialTheme.colorScheme.onSurface,
-                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier
                                 .padding(end = PADDING_X)
                                 .placeholder(
@@ -84,10 +89,9 @@ fun IntroduceItem(
                 }
 
                 Spacer(modifier = Modifier.height(ENTITY_PADDING_Y))
-                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.disabled) {
                     Text(
                         text = property.key,
-                        color = MaterialTheme.colorScheme.outline,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier
                             .padding(
@@ -101,7 +105,7 @@ fun IntroduceItem(
             divider.ifTrue {
                 Divider(
                     thickness = DIVIDER,
-                    color = MaterialTheme.colorScheme.outline * 0.1f
+                    color = MaterialTheme.colorScheme.divider(darkMode)
                 )
             }
         }
@@ -109,7 +113,7 @@ fun IntroduceItem(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(MaterialTheme.colorScheme.background)
                     .clickable(onClick = {
 
                     })
@@ -121,14 +125,14 @@ fun IntroduceItem(
                 Icon(
                     imageVector = property.icon,
                     contentDescription = property.icon.name,
-                    tint = MaterialTheme.colorScheme.outline * TINT_ALPHA
+                    tint = MaterialTheme.colorScheme.onBackground * TINT_ALPHA
                 )
                 Column(
                     modifier = Modifier.padding(start = PADDING_X)
                 ) {
                     Text(
                         text = property.label,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onBackground,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(
                             end = PADDING_X,
@@ -138,7 +142,7 @@ fun IntroduceItem(
                     divider.ifTrue {
                         Divider(
                             thickness = DIVIDER,
-                            color = MaterialTheme.colorScheme.outline * 0.1f,
+                            color = MaterialTheme.colorScheme.divider(darkMode),
                             modifier = Modifier.padding(top = FOLDER_PADDING_Y, end = 8.dp)
                         )
                     }

@@ -1,4 +1,4 @@
-package com.linku.im.ui
+package com.linku.im.ui.components
 
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton

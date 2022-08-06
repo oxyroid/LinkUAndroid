@@ -4,6 +4,7 @@ import androidx.annotation.Keep
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -12,7 +13,7 @@ import kotlinx.serialization.json.Json
  * This is a local user manager.
  *
  */
-object Auth {
+object Authenticator {
     private const val AUTH_UID = "auth_uid"
     private const val AUTH_TOKEN = "auth_token"
     val currentUID: Int?
@@ -34,6 +35,7 @@ object Auth {
 
     private val _observeCurrent = MutableStateFlow(currentUID)
     val observeCurrent: Flow<Int?> = _observeCurrent
+        .distinctUntilChanged { old, new -> old == new }
 
     suspend fun update(
         uid: Int? = null,

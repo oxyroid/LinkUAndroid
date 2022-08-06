@@ -1,4 +1,4 @@
-package com.linku.im.ui
+package com.linku.im.ui.components
 
 import androidx.annotation.StringRes
 import androidx.compose.material.*

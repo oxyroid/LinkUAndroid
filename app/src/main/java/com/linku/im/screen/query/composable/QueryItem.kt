@@ -26,7 +26,7 @@ import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.domain.entity.Conversation
 import com.linku.im.extension.times
-import com.linku.im.ui.TextImage
+import com.linku.im.ui.components.TextImage
 
 @Composable
 fun QueryItem(
@@ -97,7 +97,6 @@ fun QueryItem(
                 Text(
                     text = conversation?.description ?: "",
                     maxLines = 1,
-                    color = MaterialTheme.colorScheme.outline,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .placeholder(

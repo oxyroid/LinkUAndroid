@@ -5,5 +5,5 @@ import com.linku.domain.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface FileRepository {
-    fun upload(uri: Uri?): Flow<Resource<Unit>>
+    fun upload(uri: Uri?): Flow<Resource<String>>
 }

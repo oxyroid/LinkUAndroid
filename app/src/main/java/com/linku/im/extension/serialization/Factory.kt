@@ -4,7 +4,6 @@ package com.linku.im.extension.serialization
 
 import com.linku.im.extension.serialization.Serializer.FromBytes
 import com.linku.im.extension.serialization.Serializer.FromString
-import java.lang.reflect.Type
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.StringFormat
@@ -13,32 +12,33 @@ import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Converter
 import retrofit2.Retrofit
+import java.lang.reflect.Type
 
 @ExperimentalSerializationApi
 internal class Factory(
-  private val contentType: MediaType,
-  private val serializer: Serializer
+    private val contentType: MediaType,
+    private val serializer: Serializer
 ) : Converter.Factory() {
-  @Suppress("RedundantNullableReturnType") // Retaining interface contract.
-  override fun responseBodyConverter(
-    type: Type,
-    annotations: Array<out Annotation>,
-    retrofit: Retrofit
-  ): Converter<ResponseBody, *>? {
-    val loader = serializer.serializer(type)
-    return DeserializationStrategyConverter(loader, serializer)
-  }
+    @Suppress("RedundantNullableReturnType") // Retaining interface contract.
+    override fun responseBodyConverter(
+        type: Type,
+        annotations: Array<out Annotation>,
+        retrofit: Retrofit
+    ): Converter<ResponseBody, *>? {
+        val loader = serializer.serializer(type)
+        return DeserializationStrategyConverter(loader, serializer)
+    }
 
-  @Suppress("RedundantNullableReturnType") // Retaining interface contract.
-  override fun requestBodyConverter(
-    type: Type,
-    parameterAnnotations: Array<out Annotation>,
-    methodAnnotations: Array<out Annotation>,
-    retrofit: Retrofit
-  ): Converter<*, RequestBody>? {
-    val saver = serializer.serializer(type)
-    return SerializationStrategyConverter(contentType, saver, serializer)
-  }
+    @Suppress("RedundantNullableReturnType") // Retaining interface contract.
+    override fun requestBodyConverter(
+        type: Type,
+        parameterAnnotations: Array<out Annotation>,
+        methodAnnotations: Array<out Annotation>,
+        retrofit: Retrofit
+    ): Converter<*, RequestBody>? {
+        val saver = serializer.serializer(type)
+        return SerializationStrategyConverter(contentType, saver, serializer)
+    }
 }
 
 /**
@@ -51,7 +51,7 @@ internal class Factory(
 @ExperimentalSerializationApi
 @JvmName("create")
 fun StringFormat.asConverterFactory(contentType: MediaType): Converter.Factory {
-  return Factory(contentType, FromString(this))
+    return Factory(contentType, FromString(this))
 }
 
 /**
@@ -64,5 +64,5 @@ fun StringFormat.asConverterFactory(contentType: MediaType): Converter.Factory {
 @ExperimentalSerializationApi
 @JvmName("create")
 fun BinaryFormat.asConverterFactory(contentType: MediaType): Converter.Factory {
-  return Factory(contentType, FromBytes(this))
+    return Factory(contentType, FromBytes(this))
 }
