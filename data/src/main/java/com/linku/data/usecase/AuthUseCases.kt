@@ -45,10 +45,11 @@ data class SignUpUseCase(
 }
 
 data class SignOutUseCase(
-    private val repository: AuthRepository
+    private val repository: AuthRepository,
+    private val authenticator: Authenticator
 ) {
     operator fun invoke(): Flow<Resource<Unit>> = resourceFlow {
-        Authenticator.update()
+        authenticator.update()
         repository.signOut()
         emitResource(Unit)
     }

@@ -26,6 +26,5 @@ class NotificationServiceImpl @Inject constructor(
 
     override fun onEmit() {
         soundPool.load(context, R.raw.sound_out, 1)
-        notificationManager.notify(-1, notificationBuilder.build())
     }
 }

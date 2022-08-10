@@ -1,6 +1,10 @@
 package com.linku.im.screen.main
 
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkRequest
 import androidx.lifecycle.viewModelScope
+import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
@@ -8,12 +12,14 @@ import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.TextMessage
+import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.applicationContext
 import com.linku.im.screen.BaseViewModel
+import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -22,19 +28,53 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val conversationUseCases: ConversationUseCases,
+    private val applicationUseCases: ApplicationUseCases,
+    private val authenticator: Authenticator
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
+
+    private val connectivityManager: ConnectivityManager = applicationUseCases.getSystemService()
+    private var networkCallback: ConnectivityManager.NetworkCallback
+
     init {
-        Authenticator.observeCurrent
-            .onEach {
-                if (it != null) onEvent(MainEvent.GetConversations)
-                else getAllConversationsJob?.cancel()
+        var initSessionJob: Job? = null
+        networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                applicationUseCases.toast("网络连接已恢复")
+                initSessionJob?.cancel()
+                initSessionJob = authenticator.observeCurrent
+                    .distinctUntilChanged()
+                    .onEach { userId ->
+                        if (userId != null) {
+                            vm.onEvent(LinkUEvent.InitSession)
+                            onEvent(MainEvent.GetConversations)
+                        } else {
+                            getAllConversationsJob?.cancel()
+                            vm.onEvent(LinkUEvent.Disconnect)
+                        }
+                    }
+                    .launchIn(viewModelScope)
+
             }
-            .launchIn(viewModelScope)
+
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                applicationUseCases.toast("网络连接已断开")
+                initSessionJob?.cancel()
+                getAllConversationsJob?.cancel()
+            }
+
+        }
+        val request = NetworkRequest.Builder().build()
+        connectivityManager.registerNetworkCallback(request, networkCallback)
+
     }
 
     override fun onEvent(event: MainEvent) {
         when (event) {
-            is MainEvent.CreateConversation -> {}
+            is MainEvent.CreateConversation -> {
+
+            }
             MainEvent.GetConversations -> getAllConversations()
         }
     }
@@ -45,10 +85,10 @@ class MainViewModel @Inject constructor(
             .onEach { conversations ->
                 _state.value = state.value.copy(
                     conversations = conversations
-                        .filter { it.type == Conversation.TYPE_GROUP }
+                        .filter { it.type == Conversation.Type.GROUP }
                         .map { it.toMainUI() },
                     contracts = conversations
-                        .filter { it.type == Conversation.TYPE_PM }
+                        .filter { it.type == Conversation.Type.PM }
                         .map { it.toMainUI() },
                     loading = false
                 )
@@ -66,9 +106,9 @@ class MainViewModel @Inject constructor(
                                     val copy = oldConversation.copy(
                                         content = when (message.toReadable()) {
                                             is TextMessage -> message.content
-                                            is ImageMessage -> applicationContext.getString(R.string.image_message)
-                                            is GraphicsMessage -> applicationContext.getString(R.string.graphics_message)
-                                            else -> applicationContext.getString(R.string.unknown_message_type)
+                                            is ImageMessage -> applicationUseCases.getString(R.string.image_message)
+                                            is GraphicsMessage -> applicationUseCases.getString(R.string.graphics_message)
+                                            else -> applicationUseCases.getString(R.string.unknown_message_type)
                                         }
                                     )
                                     oldConversations.add(copy)
@@ -77,12 +117,12 @@ class MainViewModel @Inject constructor(
                                     val copy = oldContract.copy(
                                         content = when (message.toReadable()) {
                                             is TextMessage -> message.content
-                                            is ImageMessage -> applicationContext.getString(R.string.image_message)
-                                            is GraphicsMessage -> applicationContext.getString(R.string.graphics_message)
-                                            else -> applicationContext.getString(R.string.unknown_message_type)
+                                            is ImageMessage -> applicationUseCases.getString(R.string.image_message)
+                                            is GraphicsMessage -> applicationUseCases.getString(R.string.graphics_message)
+                                            else -> applicationUseCases.getString(R.string.unknown_message_type)
                                         }
                                     )
-                                    oldConversations.add(copy)
+                                    oldContracts.add(copy)
                                 } else {
                                     // TODO
                                 }
@@ -110,5 +150,10 @@ class MainViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        connectivityManager.unregisterNetworkCallback(networkCallback)
     }
 }

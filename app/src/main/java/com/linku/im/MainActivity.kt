@@ -1,14 +1,8 @@
 package com.linku.im
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.ConnectivityManager.NetworkCallback
-import android.net.Network
-import android.net.NetworkRequest
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -25,35 +19,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.linku.domain.Authenticator
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.Screen
 import com.linku.im.screen.chat.ChatScreen
+import com.linku.im.screen.edit.EditScreen
+import com.linku.im.screen.introduce.IntroduceEvent
 import com.linku.im.screen.introduce.ProfileScreen
 import com.linku.im.screen.main.MainScreen
 import com.linku.im.screen.query.QueryScreen
 import com.linku.im.screen.sign.LoginScreen
 import com.linku.im.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), ViewTreeObserver.OnPreDrawListener {
     private val _vm: LinkUViewModel by viewModels()
+    private lateinit var content: View
 
-    private lateinit var request: NetworkRequest
-    private lateinit var networkCallback: NetworkCallback
-    private lateinit var connectivityManager: ConnectivityManager
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -61,51 +49,18 @@ class MainActivity : ComponentActivity() {
         vm = _vm
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        var initSessionJob: Job? = null
-
-        networkCallback = object : NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                super.onAvailable(network)
-                Toast.makeText(this@MainActivity, "网络连接已恢复", Toast.LENGTH_SHORT).show()
-                initSessionJob = with(vm) {
-                    Authenticator.observeCurrent
-                        .onEach { userId ->
-                            if (userId == null) LinkUEvent.Disconnect
-                            else onEvent(LinkUEvent.InitSession)
-                        }
-                        .launchIn(lifecycleScope)
-                }
-            }
-
-            override fun onLost(network: Network) {
-                super.onLost(network)
-                Toast.makeText(this@MainActivity, "网络连接已断开", Toast.LENGTH_SHORT).show()
-                initSessionJob?.cancel()
-            }
-
-        }
-        request = NetworkRequest.Builder().build()
-        connectivityManager.registerNetworkCallback(request, networkCallback)
-
         setContent { App() }
 
-        val content: View = findViewById(android.R.id.content)
-        content.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
-            override fun onPreDraw(): Boolean {
-                return vm.state.value.isReady.ifTrue {
-                    content.viewTreeObserver.removeOnPreDrawListener(this)
-                    true
-                } ?: false
-            }
-        })
+        content = findViewById(android.R.id.content)
+        content.viewTreeObserver.addOnPreDrawListener(this)
 
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        connectivityManager.unregisterNetworkCallback(networkCallback)
+    override fun onPreDraw(): Boolean {
+        return vm.state.value.isReady.ifTrue {
+            content.viewTreeObserver.removeOnPreDrawListener(this)
+            true
+        } ?: false
     }
 }
 
@@ -121,21 +76,20 @@ fun App() {
         useDarkTheme = isDarkMode,
         enableDynamic = state.dynamicEnabled
     ) {
+        val navController = rememberAnimatedNavController()
         val systemUiController = rememberSystemUiController()
         val navigationBarColor = MaterialTheme.colorScheme.surface
-        val useDarkIcon = !vm.state.value.isDarkMode
 
         LaunchedEffect(isDarkMode) {
             systemUiController.setStatusBarColor(
                 color = Color.Transparent,
-                darkIcons = useDarkIcon
+                darkIcons = !isDarkMode
             )
             systemUiController.setNavigationBarColor(
                 color = navigationBarColor,
-                darkIcons = useDarkIcon
+                darkIcons = !isDarkMode
             )
         }
-        val navController = rememberAnimatedNavController()
         AnimatedNavHost(
             navController = navController,
             startDestination = Screen.MainScreen.route,
@@ -174,7 +128,7 @@ fun App() {
                         type = NavType.IntType
                         nullable = false
                     }
-                ),
+                )
             ) { entry ->
                 ChatScreen(
                     cid = entry.arguments?.getInt("cid") ?: -1
@@ -183,6 +137,21 @@ fun App() {
             composable(Screen.LoginScreen.route) { LoginScreen() }
             composable(Screen.ProfileScreen.route) { ProfileScreen() }
             composable(Screen.QueryScreen.route) { QueryScreen() }
+            composable(
+                route = Screen.EditScreen.buildArgs("type"),
+                arguments = listOf(
+                    navArgument("type") {
+                        type = NavType.IntType
+                        nullable = false
+                    }
+                )
+            ) { entity ->
+                EditScreen(
+                    type = entity.arguments
+                        ?.getInt("type")
+                        ?.let(IntroduceEvent.Edit.Type::parse)
+                )
+            }
         }
 
         LaunchedEffect(state.navigateUp) {

@@ -2,25 +2,25 @@ package com.linku.im.screen.introduce
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.DateRange
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.sharp.*
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.viewModelScope
+import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
 import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.entity.User
 import com.linku.domain.eventOf
+import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.applicationContext
 import com.linku.im.screen.BaseViewModel
+import com.linku.im.screen.Screen
 import com.linku.im.screen.introduce.composable.Property
+import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -30,8 +30,19 @@ import javax.inject.Inject
 @HiltViewModel
 class IntroduceViewModel @Inject constructor(
     private val useCases: UserUseCases,
-    private val authUseCases: AuthUseCases
+    private val authUseCases: AuthUseCases,
+    private val applicationUseCases: ApplicationUseCases,
+    private val authenticator: Authenticator
 ) : BaseViewModel<IntroduceState, IntroduceEvent>(IntroduceState()) {
+
+    init {
+        _state.value = readable.copy(
+            loading = false,
+            dataProperties = makeDataProperties(null),
+            settingsProperties = makeSettingsProperties()
+        )
+    }
+
     override fun onEvent(event: IntroduceEvent) {
         when (event) {
             IntroduceEvent.FetchIntroduce -> fetchProfile()
@@ -40,6 +51,16 @@ class IntroduceViewModel @Inject constructor(
             is IntroduceEvent.VerifiedEmailCode -> verifiedEmailCode(event.code)
             IntroduceEvent.CancelVerifiedEmail -> cancelVerifiedEmail()
             is IntroduceEvent.Actions -> onActions(event.label, event.actions)
+            is IntroduceEvent.Edit -> {
+                vm.onEvent(
+                    LinkUEvent.NavigateWithArgs(
+                        Screen.EditScreen.withArgs(event.type)
+                    )
+                )
+                _state.value = readable.copy(
+                    editEvent = eventOf(event.type)
+                )
+            }
         }
     }
 
@@ -68,7 +89,8 @@ class IntroduceViewModel @Inject constructor(
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> _state.value = state.value.copy(
-                        verifiedEmailCodeVerifying = true
+                        verifiedEmailCodeVerifying = true,
+                        verifiedEmailCodeMessage = ""
                     )
                     is Resource.Success -> {
                         _state.value = state.value.copy(
@@ -78,7 +100,7 @@ class IntroduceViewModel @Inject constructor(
                     }
                     is Resource.Failure -> _state.value = state.value.copy(
                         verifiedEmailCodeVerifying = false,
-                        error = eventOf(resource.message)
+                        verifiedEmailCodeMessage = resource.message
                     )
                 }
             }
@@ -92,7 +114,7 @@ class IntroduceViewModel @Inject constructor(
     }
 
     private fun fetchProfile() {
-        val userId = Authenticator.currentUID
+        val userId = authenticator.currentUID
         checkNotNull(userId)
         viewModelScope.launch {
             val resource = useCases.findUser(userId)
@@ -141,7 +163,7 @@ class IntroduceViewModel @Inject constructor(
                 if (!user.verified) {
                     Property.Data.Action(
                         text = getString(R.string.email_verified),
-                        icon = Icons.Rounded.Email,
+                        icon = Icons.Sharp.Email,
                         onClick = {
                             onEvent(IntroduceEvent.VerifiedEmail)
                         }
@@ -160,14 +182,38 @@ class IntroduceViewModel @Inject constructor(
             }
 
             Property.Data(email, emailText.checkEmpty(), emailActions).also(::add)
-            Property.Data(name, user.name.checkEmpty()).also(::add)
+
+            val nickNameActions = buildList {
+                Property.Data.Action(
+                    text = getString(R.string.edit),
+                    icon = Icons.Sharp.Edit,
+                    onClick = {
+                        onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.NickName))
+                    }
+                ).also(::add)
+            }
+
+            Property.Data(name, user.name.checkEmpty(), nickNameActions).also(::add)
+
+
+
             Property.Data(
-                realName,
-                if (user.realName == null) applicationContext.getString(R.string.profile_data_realName_false)
-                else applicationContext.getString(R.string.profile_data_realName_true)
+                key = realName,
+                value = if (user.realName == null) applicationUseCases.getString(R.string.profile_data_realName_false)
+                else applicationUseCases.getString(R.string.profile_data_realName_true)
             ).also(::add)
-            // FIXME
-            Property.Data(description, "".checkEmpty()).also(::add)
+
+
+            val descriptionActions = buildList {
+                Property.Data.Action(
+                    text = getString(R.string.edit),
+                    icon = Icons.Sharp.Edit,
+                    onClick = {
+                        onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.Description))
+                    }
+                ).also(::add)
+            }
+            Property.Data(description, "".checkEmpty(), descriptionActions).also(::add)
         }
     }
 
@@ -175,15 +221,15 @@ class IntroduceViewModel @Inject constructor(
         val notification = getString(R.string.profile_settings_notification)
         val safe = getString(R.string.profile_settings_safe)
         val dataSource = getString(R.string.profile_settings_datasource)
-        Property.Folder(notification, Icons.Rounded.Notifications).also(::add)
-        Property.Folder(safe, Icons.Rounded.Lock).also(::add)
-        Property.Folder(dataSource, Icons.Rounded.DateRange).also(::add)
-        Property.Folder(notification, Icons.Rounded.Notifications).also(::add)
-        Property.Folder(safe, Icons.Rounded.Lock).also(::add)
-        Property.Folder(dataSource, Icons.Rounded.DateRange).also(::add)
+        Property.Folder(notification, Icons.Sharp.Notifications).also(::add)
+        Property.Folder(safe, Icons.Sharp.Lock).also(::add)
+        Property.Folder(dataSource, Icons.Sharp.DateRange).also(::add)
+        Property.Folder(notification, Icons.Sharp.Notifications).also(::add)
+        Property.Folder(safe, Icons.Sharp.Lock).also(::add)
+        Property.Folder(dataSource, Icons.Sharp.DateRange).also(::add)
     }
 
-    private fun getString(@StringRes resId: Int): String = applicationContext.getString(resId)
+    private fun getString(@StringRes resId: Int): String = applicationUseCases.getString(resId)
 
     private val loadingState get() = state.value.copy(loading = true)
 

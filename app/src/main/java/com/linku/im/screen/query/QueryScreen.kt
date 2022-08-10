@@ -1,6 +1,5 @@
 package com.linku.im.screen.query
 
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,8 +20,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.linku.im.R
 import com.linku.im.LinkUEvent
+import com.linku.im.R
+import com.linku.im.extension.toast
 import com.linku.im.screen.Screen
 import com.linku.im.screen.query.composable.QueryItem
 import com.linku.im.vm
@@ -112,8 +112,6 @@ fun QueryScreen(
     }
 
     LaunchedEffect(state.message) {
-        state.message.handle {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-        }
+        state.message.handle(context::toast)
     }
 }

@@ -16,13 +16,14 @@ class AuthRepositoryImpl(
     private val userDao: UserDao,
     private val conversationDao: ConversationDao,
     private val messageDao: MessageDao,
-    private val chatService: ChatService
+    private val chatService: ChatService,
+    private val authenticator: Authenticator
 ) : AuthRepository {
     override suspend fun signIn(email: String, password: String): Result<Unit> =
         sandbox {
             authService.signIn(email, password)
                 .handle { token ->
-                    Authenticator.update(uid = token.id, token = token.token)
+                    authenticator.update(uid = token.id, token = token.token)
                     val timestamp = System.currentTimeMillis() - 1000 * 60 * 60 * 24 * 3
                     chatService.getMessageAfter(timestamp).handle { messages ->
                         messages.forEach {

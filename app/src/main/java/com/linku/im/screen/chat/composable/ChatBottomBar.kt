@@ -15,10 +15,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AttachFile
-import androidx.compose.material.icons.rounded.EmojiEmotions
-import androidx.compose.material.icons.rounded.KeyboardVoice
-import androidx.compose.material.icons.rounded.Send
+import androidx.compose.material.icons.sharp.AttachFile
+import androidx.compose.material.icons.sharp.EmojiEmotions
+import androidx.compose.material.icons.sharp.KeyboardVoice
+import androidx.compose.material.icons.sharp.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.linku.domain.bean.Emoji
@@ -40,13 +41,13 @@ import com.linku.im.extension.ifTrue
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatBottomBar(
-    text: String,
+    text: TextFieldValue,
     uri: Uri?,
     emojis: List<Emoji>,
     expended: Boolean,
     onSend: () -> Unit,
     onFile: () -> Unit,
-    onText: (String) -> Unit,
+    onText: (TextFieldValue) -> Unit,
     onEmoji: (String) -> Unit,
     onExpanded: (Boolean) -> Unit,
     modifier: Modifier = Modifier
@@ -81,7 +82,7 @@ fun ChatBottomBar(
                         onClick = { onExpanded(!expended) }
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.EmojiEmotions,
+                            imageVector = Icons.Sharp.EmojiEmotions,
                             contentDescription = "emoji",
                             tint = MaterialTheme.colorScheme.outline
                         )
@@ -118,7 +119,7 @@ fun ChatBottomBar(
 
                     IconButton(onClick = onFile) {
                         Icon(
-                            imageVector = Icons.Rounded.AttachFile,
+                            imageVector = Icons.Sharp.AttachFile,
                             contentDescription = "emoji",
                             tint = MaterialTheme.colorScheme.outline
                         )
@@ -128,13 +129,13 @@ fun ChatBottomBar(
             Spacer(modifier = Modifier.width(4.dp))
             FilledIconButton(
                 onClick = {
-                    if (text.isNotBlank() || uri != null) onSend()
+                    if (text.text.isNotBlank() || uri != null) onSend()
                 }
             ) {
                 Icon(
-                    imageVector = (text.isNotBlank() || uri != null)
-                        .ifTrue { Icons.Rounded.Send }
-                        ?: Icons.Rounded.KeyboardVoice,
+                    imageVector = (text.text.isNotBlank() || uri != null)
+                        .ifTrue { Icons.Sharp.Send }
+                        ?: Icons.Sharp.KeyboardVoice,
                     contentDescription = "send"
                 )
             }

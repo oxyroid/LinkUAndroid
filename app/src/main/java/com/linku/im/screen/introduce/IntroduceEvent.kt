@@ -12,4 +12,23 @@ sealed class IntroduceEvent {
         val label: String,
         val actions: List<Property.Data.Action>
     ) : IntroduceEvent()
+
+    data class Edit(val type: Type) : IntroduceEvent() {
+        sealed class Type(private val code: Int) {
+            object Name : Type(0)
+            object NickName : Type(1)
+            object Description : Type(2)
+
+            override fun toString(): String = code.toString()
+
+            companion object {
+                fun parse(code: Int): Type? = when (code) {
+                    0 -> Name
+                    1 -> NickName
+                    2 -> Description
+                    else -> null
+                }
+            }
+        }
+    }
 }

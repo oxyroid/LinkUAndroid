@@ -1,12 +1,10 @@
 package com.linku.im.screen.sign
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -54,7 +52,6 @@ fun LoginScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
         ) {
             Column(
                 modifier = Modifier
@@ -109,6 +106,7 @@ fun LoginScreen(
                     keyboardActions = KeyboardActions(
                         onDone = {
                             viewModel.onEvent(SignEvent.SignIn)
+                            focusRequester.captureFocus()
                         }
                     ),
                     keyboardOptions = KeyboardOptions(
@@ -131,6 +129,7 @@ fun LoginScreen(
                         .padding(horizontal = 48.dp)
                 ) {
                     viewModel.onEvent(SignEvent.SignIn)
+                    focusRequester.captureFocus()
                 }
                 MaterialTextButton(
                     textRes = R.string.screen_login_btn_register,
@@ -140,6 +139,7 @@ fun LoginScreen(
                         .padding(horizontal = 48.dp)
                 ) {
                     viewModel.onEvent(SignEvent.SignUp)
+                    focusRequester.captureFocus()
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

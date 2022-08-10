@@ -1,18 +1,15 @@
 package com.linku.im
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
+import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.EmojiUseCases
 import com.linku.data.usecase.MessageUseCases
+import com.linku.data.usecase.SettingUseCase
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.eventOf
-import com.linku.im.Constants.SAVED_DARK_MODE
-import com.linku.im.Constants.SAVED_DYNAMIC_MODE
-import com.linku.im.extension.TAG
 import com.linku.im.extension.debug
 import com.linku.im.screen.BaseViewModel
-import com.tencent.mmkv.MMKV
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -24,7 +21,10 @@ import javax.inject.Inject
 @HiltViewModel
 class LinkUViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases,
-    private val emojiUseCases: EmojiUseCases
+    private val emojiUseCases: EmojiUseCases,
+    private val applicationUseCases: ApplicationUseCases,
+    private val settings: SettingUseCase,
+    val authenticator: Authenticator
 ) : BaseViewModel<LinkUState, LinkUEvent>(LinkUState()) {
     init {
         onEvent(LinkUEvent.InitConfig)
@@ -39,9 +39,10 @@ class LinkUViewModel @Inject constructor(
             )
 
             LinkUEvent.ToggleDarkMode -> {
-                MMKV.defaultMMKV().encode(SAVED_DARK_MODE, !readable.isDarkMode)
+                val saved = !readable.isDarkMode
+                settings.isDarkMode = saved
                 _state.value = readable.copy(
-                    isDarkMode = !readable.isDarkMode
+                    isDarkMode = saved
                 )
             }
 
@@ -61,32 +62,43 @@ class LinkUViewModel @Inject constructor(
                 )
             }
             LinkUEvent.ToggleDynamic -> {
-                MMKV.defaultMMKV().encode(SAVED_DYNAMIC_MODE, !readable.dynamicEnabled)
+                val saved = !readable.dynamicEnabled
+                settings.isDynamicMode = saved
                 _state.value = readable.copy(
-                    dynamicEnabled = !state.value.dynamicEnabled
+                    dynamicEnabled = saved
                 )
             }
         }
     }
 
-    private sealed class Label(val text: String) {
-        object Default : Label(applicationContext.getString(R.string.app_name))
-        object Connecting : Label(applicationContext.getString(R.string.connecting))
-        object ConnectedFailed : Label(applicationContext.getString(R.string.connected_failed))
-        object NoAuth : Label(applicationContext.getString(R.string.no_auth))
+    private sealed class Label {
+        object Default : Label()
+        object Connecting : Label()
+        object ConnectedFailed : Label()
+        object NoAuth : Label()
     }
 
     private fun updateLabel(label: Label) {
         _state.value = readable.copy(
-            label = label.text
+            label = when (label) {
+                Label.Default -> applicationUseCases.getString(R.string.app_name)
+                Label.Connecting -> applicationUseCases.getString(R.string.connecting)
+                Label.ConnectedFailed -> applicationUseCases.getString(R.string.connected_failed)
+                Label.NoAuth -> applicationUseCases.getString(R.string.no_auth)
+            }
         )
     }
 
     private var initSessionJob: Job? = null
+    private var times = 0
     private fun initSession() {
+        debug {
+            times++
+            applicationUseCases.toast("Init session, times: $times")
+        }
         initSessionJob?.cancel()
         initSessionJob = viewModelScope.launch {
-            val userId = Authenticator.currentUID
+            val userId = authenticator.currentUID
             checkNotNull(userId)
             messageUseCases.initSession(userId)
                 .onEach { resource ->
@@ -101,7 +113,9 @@ class LinkUViewModel @Inject constructor(
                             updateLabel(Label.ConnectedFailed)
                             launch {
                                 delay(3000)
-                                debug { Log.v(TAG, "Retrying...") }
+                                debug {
+                                    applicationUseCases.toast("InitSession Failed: ${resource.message}")
+                                }
                                 onEvent(LinkUEvent.InitSession)
                             }
                         }
@@ -113,9 +127,8 @@ class LinkUViewModel @Inject constructor(
     }
 
     private fun initConfig() {
-        val isDarkMode = MMKV.defaultMMKV().getBoolean(SAVED_DARK_MODE, true)
-        val enableDynamic =
-            MMKV.defaultMMKV().getBoolean(SAVED_DYNAMIC_MODE, false)
+        val isDarkMode = settings.isDarkMode
+        val enableDynamic = settings.isDynamicMode
         emojiUseCases.initialize()
             .onEach { resource ->
                 when (resource) {

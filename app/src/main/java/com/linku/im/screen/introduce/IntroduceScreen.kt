@@ -1,6 +1,5 @@
 package com.linku.im.screen.introduce
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,7 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.sharp.MoreVert
+import androidx.compose.material.icons.sharp.Verified
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,7 +25,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,15 +33,14 @@ import coil.compose.SubcomposeAsyncImage
 import com.linku.im.BuildConfig
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.components.ToolBarAction
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
+import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.ToolBarAction
 import com.linku.im.ui.theme.divider
 import com.linku.im.vm
 import kotlinx.coroutines.launch
-
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -53,14 +51,12 @@ fun ProfileScreen(
     val isDarkMode = vmState.isDarkMode
     val state by viewModel.state
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
+    val scaffoldState = rememberScaffoldState()
 
     val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     var dropdownMenuExpended by remember {
         mutableStateOf(false)
     }
-
-
 
     LaunchedEffect(Unit) {
         viewModel.onEvent(IntroduceEvent.FetchIntroduce)
@@ -71,18 +67,15 @@ fun ProfileScreen(
     }
 
     LaunchedEffect(state.error) {
-        state.error.handle { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        state.error.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }
 
     state.verifiedEmailStarting.ifTrue {
         AlertDialog(
-            onDismissRequest = { },
-//            buttons = { Spacer(modifier = Modifier.height(24.dp)) },
-            title = {
-                CircularProgressIndicator()
-            },
+            onDismissRequest = {},
+            text = { CircularProgressIndicator() },
             confirmButton = {}
         )
     }
@@ -90,54 +83,67 @@ fun ProfileScreen(
     state.verifiedEmailDialogShowing.ifTrue {
         var code by remember { mutableStateOf("") }
         AlertDialog(
-            onDismissRequest = { },
+            icon = {
+                Icon(
+                    imageVector = Icons.Sharp.Verified,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            onDismissRequest = {},
+            text = {
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it },
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        textColor = MaterialTheme.colorScheme.onBackground,
+                        containerColor = MaterialTheme.colorScheme.background
+                    ),
+                    enabled = !state.verifiedEmailCodeVerifying,
+                    maxLines = 1
+                )
+            },
             confirmButton = {
-                Column(
-                    modifier = Modifier.padding(12.dp)
+                TextButton(
+                    onClick = {
+                        viewModel.onEvent(IntroduceEvent.VerifiedEmailCode(code))
+                        code = ""
+                    },
+                    enabled = code.isNotBlank() and !state.verifiedEmailCodeVerifying
                 ) {
-                    OutlinedTextField(
-                        value = code,
-                        onValueChange = { code = it },
-                        colors = TextFieldDefaults.outlinedTextFieldColors(),
-                        enabled = !state.verifiedEmailCodeVerifying,
-                        maxLines = 1
+                    Text(
+                        text = stringResource(
+                            id = if (state.verifiedEmailCodeVerifying) R.string.verifying
+                            else R.string.confirm
+                        )
                     )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(
-                            onClick = { viewModel.onEvent(IntroduceEvent.CancelVerifiedEmail) },
-                            enabled = !state.verifiedEmailCodeVerifying
-                        ) {
-                            Text(text = stringResource(id = R.string.cancel))
-                        }
-                        TextButton(
-                            onClick = {
-                                viewModel.onEvent(IntroduceEvent.VerifiedEmailCode(code))
-                                code = ""
-                            },
-                            enabled = code.isNotBlank() and !state.verifiedEmailCodeVerifying
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    id = if (state.verifiedEmailCodeVerifying) R.string.verifying
-                                    else R.string.verified
-                                )
-                            )
-                        }
-                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.onEvent(IntroduceEvent.CancelVerifiedEmail) },
+                    enabled = !state.verifiedEmailCodeVerifying
+                ) {
+                    Text(text = stringResource(id = R.string.cancel))
                 }
             },
             title = {
-                val title = stringResource(id = R.string.email_verified_dialog_title)
+                val title = state.verifiedEmailCodeMessage
+                    .takeIf { it.isNotBlank() }
+                    ?: stringResource(id = R.string.email_verified_dialog_title)
                 Text(text = title, style = MaterialTheme.typography.titleMedium)
-            }
-
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            iconContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurface
         )
     }
 
 
-    Scaffold { innerPadding ->
+    Scaffold(
+        scaffoldState = scaffoldState
+    ) { innerPadding ->
         ModalBottomSheetLayout(
             sheetState = sheetState,
             sheetContent = {
@@ -145,16 +151,19 @@ fun ProfileScreen(
                     item {
                         Text(
                             text = state.actionsLabel,
-                            style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.primary),
+                            style = MaterialTheme.typography.titleSmall
+                                .copy(color = MaterialTheme.colorScheme.primary),
                             modifier = Modifier.padding(16.dp)
                         )
                     }
                     items(state.actions) {
-                        ListItem(text = {
-                            Text(
-                                text = it.text, color = MaterialTheme.colorScheme.onBackground
-                            )
-                        },
+                        ListItem(
+                            text = {
+                                Text(
+                                    text = it.text,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            },
                             icon = {
                                 Icon(
                                     imageVector = it.icon,
@@ -169,19 +178,21 @@ fun ProfileScreen(
                                         it.onClick()
                                         sheetState.hide()
                                     }
-                                })
+                                }
+                        )
                     }
                 }
             },
             sheetBackgroundColor = MaterialTheme.colorScheme.background,
             sheetContentColor = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .navigationBarsPadding()
-                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 item {
                     Surface(
@@ -189,7 +200,7 @@ fun ProfileScreen(
                         contentColor = MaterialTheme.colorScheme.onSecondary
                     ) {
                         SubcomposeAsyncImage(
-                            model = "",
+                            model = state.avatar,
                             contentDescription = "",
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -197,14 +208,17 @@ fun ProfileScreen(
                         )
                     }
                 }
+
                 item {
-                    ProfileList(label = stringResource(id = R.string.account),
+                    ProfileList(
+                        label = stringResource(id = R.string.account),
                         items = state.dataProperties,
                         onItemClick = { setting ->
                             if (setting is Property.Data) {
                                 viewModel.onEvent(
                                     IntroduceEvent.Actions(
-                                        label = setting.key, actions = setting.actions
+                                        label = setting.key,
+                                        actions = setting.actions
                                     )
                                 )
                                 scope.launch {
@@ -212,7 +226,8 @@ fun ProfileScreen(
                                     sheetState.show()
                                 }
                             }
-                        })
+                        }
+                    )
                 }
 
                 item {
@@ -223,24 +238,32 @@ fun ProfileScreen(
                             .background(MaterialTheme.colorScheme.divider(isDarkMode))
                     )
                 }
+
                 item {
-                    ProfileList(label = stringResource(id = R.string.settings),
+                    ProfileList(
+                        label = stringResource(R.string.settings),
                         items = state.settingsProperties,
-                        onItemClick = {})
+                        onItemClick = {}
+                    )
                 }
+
                 item {
-                    val versionLabel = stringResource(id = R.string.version_label)
+                    val versionLabel = stringResource(R.string.version_label)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.divider(isDarkMode)),
+                            .background(MaterialTheme.colorScheme.divider(isDarkMode))
+                            .clickable {
+
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "$versionLabel${BuildConfig.VERSION_NAME}",
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(vertical = 12.dp)
+                            modifier = Modifier.padding(vertical = 12.dp),
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -251,7 +274,7 @@ fun ProfileScreen(
                 actions = {
                     ToolBarAction(
                         onClick = { dropdownMenuExpended = true },
-                        imageVector = Icons.Default.MoreVert,
+                        imageVector = Icons.Sharp.MoreVert,
                     )
                     DropdownMenu(
                         expanded = dropdownMenuExpended,
@@ -269,6 +292,7 @@ fun ProfileScreen(
             )
         }
     }
+
     BackHandler(sheetState.isVisible) {
         scope.launch {
             sheetState.hide()

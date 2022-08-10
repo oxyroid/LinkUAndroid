@@ -9,9 +9,10 @@ import android.media.SoundPool
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.room.Room
+import com.linku.data.DefaultAuthenticator
 import com.linku.data.repository.*
-import com.linku.data.service.ChatSocketServiceImpl
 import com.linku.data.service.CommonEmojiPaster
+import com.linku.data.service.OkWebSocketService
 import com.linku.data.usecase.*
 import com.linku.domain.Authenticator
 import com.linku.domain.extension.json
@@ -21,27 +22,19 @@ import com.linku.domain.service.*
 import com.linku.im.BuildConfig
 import com.linku.im.Constants
 import com.linku.im.R
-import com.linku.im.applicationContext
 import com.linku.im.extension.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.logging.*
-import io.ktor.client.plugins.websocket.*
-import io.ktor.serialization.kotlinx.*
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.create
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import com.linku.domain.common.Constants as DataConstants
@@ -51,8 +44,10 @@ import com.linku.domain.common.Constants as DataConstants
 object AppModule {
     @Provides
     @Singleton
-    fun provideDatabase() = Room.databaseBuilder(
-        applicationContext,
+    fun provideDatabase(
+        @ApplicationContext context: Context
+    ): LinkUDatabase = Room.databaseBuilder(
+        context,
         LinkUDatabase::class.java,
         DataConstants.DB_NAME
     ).build()
@@ -61,28 +56,24 @@ object AppModule {
     @Singleton
     fun provideJson(): Json = json
 
+    @Provides
+    @Singleton
+    fun provideAuthenticator(
+        settingUseCase: SettingUseCase
+    ): Authenticator {
+        return DefaultAuthenticator(
+            settings = settingUseCase
+        )
+    }
+
     @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
     fun provideRetrofitClient(
-        json: Json
+        json: Json,
+        client: OkHttpClient
     ): Retrofit {
-        val client = OkHttpClient.Builder()
-            .writeTimeout(0L, TimeUnit.MINUTES)
-            .readTimeout(1L, TimeUnit.MINUTES)
-            .addInterceptor { chain ->
-                val original = chain.request()
-                val request = original.newBuilder()
-                    .also { builder ->
-                        Authenticator.token?.let { token ->
-                            builder.header(DataConstants.HEADER_JWT, token)
-                        }
-                    }
-                    .method(original.method, original.body)
-                    .build()
-                chain.proceed(request)
-            }
-            .build()
+
         val contentType = DataConstants.MEDIA_TYPE_JSON.toMediaType()
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
@@ -93,29 +84,27 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideHttpClient(): HttpClient {
-        return HttpClient(CIO) {
-            install(Logging) {
-                level = LogLevel.ALL
-                logger = Logger.SIMPLE
-            }
-            install(WebSockets) {
-                contentConverter = KotlinxWebsocketSerializationConverter(Json)
-                pingInterval = DataConstants.KTOR_CALL_TIMEOUT
-            }
-            install(HttpTimeout) {
-                socketTimeoutMillis = DataConstants.KTOR_CALL_TIMEOUT
-                requestTimeoutMillis = DataConstants.KTOR_CALL_TIMEOUT
-                connectTimeoutMillis = DataConstants.KTOR_CALL_TIMEOUT
-            }
-            install(ContentNegotiation) {
-                json(
-                    Json {
-                        ignoreUnknownKeys = true
+    fun provideOkHttpClient(
+        authenticator: Authenticator
+    ): OkHttpClient {
+        val client = OkHttpClient.Builder()
+            .writeTimeout(0L, TimeUnit.MINUTES)
+            .readTimeout(1L, TimeUnit.MINUTES)
+            .pingInterval(Duration.ofSeconds(8))
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val request = original.newBuilder()
+                    .also { builder ->
+                        authenticator.token?.let { token ->
+                            builder.header(DataConstants.HEADER_JWT, token)
+                        }
                     }
-                )
+                    .method(original.method, original.body)
+                    .build()
+                chain.proceed(request)
             }
-        }
+            .build()
+        return client
     }
 
     @Provides
@@ -124,8 +113,12 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideChatSocketService(client: HttpClient): ChatSocketService {
-        return ChatSocketServiceImpl(client)
+    fun provideWebSocketService(
+        okHttpClient: OkHttpClient,
+        chatService: ChatService,
+        json: Json
+    ): WebSocketService {
+        return OkWebSocketService(okHttpClient, json, chatService)
     }
 
     @Provides
@@ -149,13 +142,15 @@ object AppModule {
     fun providesAuthRepository(
         authService: AuthService,
         database: LinkUDatabase,
-        chatService: ChatService
+        chatService: ChatService,
+        authenticator: Authenticator
     ): AuthRepository = AuthRepositoryImpl(
         authService = authService,
         userDao = database.userDao(),
         conversationDao = database.conversationDao(),
         messageDao = database.messageDao(),
-        chatService = chatService
+        chatService = chatService,
+        authenticator = authenticator
     )
 
     @Provides
@@ -172,12 +167,13 @@ object AppModule {
     @Singleton
     fun providesMessageRepository(
         chatService: ChatService,
-        socketService: ChatSocketService,
+        socketService: WebSocketService,
         database: LinkUDatabase,
         @ApplicationContext context: Context,
         notificationService: NotificationService,
         fileService: FileService,
-        json: Json
+        json: Json,
+        authenticator: Authenticator
     ): MessageRepository = MessageRepositoryImpl(
         chatService = chatService,
         socketService = socketService,
@@ -186,7 +182,8 @@ object AppModule {
         notificationService = notificationService,
         context = context,
         fileService = fileService,
-        json = json
+        json = json,
+        authenticator = authenticator
     )
 
     @Provides
@@ -215,12 +212,13 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAuthUseCases(
-        repository: AuthRepository
+        repository: AuthRepository,
+        authenticator: Authenticator
     ): AuthUseCases {
         return AuthUseCases(
             signIn = SignInUseCase(repository),
             signUp = SignUpUseCase(repository),
-            logout = SignOutUseCase(repository),
+            logout = SignOutUseCase(repository, authenticator),
             verifiedEmail = VerifiedEmailUseCase(repository),
             verifiedEmailCode = VerifiedEmailCodeUseCase(repository)
         )
@@ -291,6 +289,18 @@ object AppModule {
 
     @Provides
     @Singleton
+    fun provideApplicationUseCases(
+        @ApplicationContext context: Context
+    ): ApplicationUseCases {
+        return ApplicationUseCases(
+            toast = ToastUseCase(context),
+            getString = GetStringUseCase(context),
+            getSystemService = GetSystemServiceUseCase(context)
+        )
+    }
+
+    @Provides
+    @Singleton
     fun provideSoundPool(): SoundPool {
         val attributes = AudioAttributes.Builder()
             .setLegacyStreamType(AudioManager.STREAM_NOTIFICATION)
@@ -337,6 +347,13 @@ object AppModule {
     @Singleton
     fun provideEmojiPaster(@ApplicationContext context: Context): EmojiPaster {
         return CommonEmojiPaster(context)
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideSettingUseCases(@ApplicationContext context: Context): SettingUseCase {
+        return SettingUseCase(context)
     }
 
 }

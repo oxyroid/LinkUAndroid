@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.Divider
+import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.sharp.Close
 import androidx.compose.material.icons.sharp.Menu
+import androidx.compose.material.icons.sharp.Search
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
@@ -26,15 +28,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
-import com.linku.domain.Authenticator
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.components.ToolBarAction
-import com.linku.im.extension.ifTrue
 import com.linku.im.screen.Screen
 import com.linku.im.screen.main.composable.ConversationItem
 import com.linku.im.screen.main.composable.Drawer
+import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.ToolBarAction
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
@@ -44,7 +44,8 @@ internal data class PageData(
 )
 
 @OptIn(
-    ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class,
+    ExperimentalMaterial3Api::class,
     ExperimentalPagerApi::class
 )
 @Composable
@@ -52,29 +53,28 @@ fun MainScreen(
     mainViewModel: MainViewModel = hiltViewModel()
 ) {
     val state by mainViewModel.state
+    val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     Scaffold(
+        scaffoldState = scaffoldState,
         topBar = {
             val vmState by vm.state
             ToolBar(
-                navIcon = drawerState.isOpen
-                    .ifTrue { Icons.Sharp.Close } ?: Icons.Sharp.Menu,
+                navIcon = Icons.Sharp.Close
+                    .takeIf { drawerState.isOpen }
+                    ?: Icons.Sharp.Menu,
                 onNavClick = {
                     if (drawerState.isOpen) {
-                        scope.launch {
-                            drawerState.close()
-                        }
+                        scope.launch { drawerState.close() }
                     } else {
-                        scope.launch {
-                            drawerState.open()
-                        }
+                        scope.launch { drawerState.open() }
                     }
                 },
                 actions = {
                     ToolBarAction(
                         onClick = { vm.onEvent(LinkUEvent.Navigate(Screen.QueryScreen)) },
-                        imageVector = Icons.Rounded.Search
+                        imageVector = Icons.Sharp.Search
                     )
                 },
                 text = vmState.label
@@ -87,7 +87,9 @@ fun MainScreen(
                 when (screen) {
                     Screen.ProfileScreen -> {
                         val screenActual =
-                            Screen.LoginScreen.takeIf { Authenticator.currentUID == null } ?: screen
+                            Screen.LoginScreen
+                                .takeIf { vm.authenticator.currentUID == null }
+                                ?: screen
                         vm.onEvent(LinkUEvent.Navigate(screenActual))
                     }
                     Screen.MainScreen -> {}
@@ -100,12 +102,12 @@ fun MainScreen(
 
             val pages = listOf(
                 PageData(
-                    stringResource(id = R.string.tab_notification),
-                    painterResource(id = R.drawable.tab_notification)
+                    stringResource(R.string.tab_notification),
+                    painterResource(R.drawable.tab_notification)
                 ),
                 PageData(
-                    stringResource(id = R.string.tab_contact),
-                    painterResource(id = R.drawable.tab_contact)
+                    stringResource(R.string.tab_contact),
+                    painterResource(R.drawable.tab_contact)
                 )
             )
 
@@ -148,12 +150,11 @@ fun MainScreen(
                 )
                 HorizontalPager(
                     count = pages.size,
-                    state = pagerState
+                    state = pagerState,
+                    modifier = Modifier.background(MaterialTheme.colorScheme.background)
                 ) { page ->
                     LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
+                        modifier = Modifier.fillMaxSize(),
                         userScrollEnabled = !state.loading
                     ) {
                         val conversations = when (page) {

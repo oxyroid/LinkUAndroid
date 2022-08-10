@@ -42,21 +42,21 @@ android {
 dependencies {
     implementation 'androidx.core:core-ktx:1.8.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
-    // mmkv
-    implementation 'com.tencent:mmkv:1.2.13'
+
     // hilt
     implementation "com.google.dagger:hilt-android:$hilt_version"
     implementation "androidx.hilt:hilt-navigation-compose:1.0.0"
     kapt "com.google.dagger:hilt-android-compiler:$hilt_version"
     kapt 'androidx.hilt:hilt-compiler:1.0.0'
+
     // room
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
-    //ktor
-    implementation "io.ktor:ktor-client-websockets:$ktor_version"
-    implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
 
     // retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+
+    // Json
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0-RC"
 }

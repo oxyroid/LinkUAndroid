@@ -1,12 +1,13 @@
 package com.linku.im.screen.chat.composable
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material.icons.sharp.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -19,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
@@ -112,7 +114,7 @@ fun ChatBubble(
                     }
                     Message.STATE_FAILED -> {
                         Icon(
-                            imageVector = Icons.Rounded.Warning,
+                            imageVector = Icons.Sharp.Warning,
                             contentDescription = "Failed",
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier
@@ -165,7 +167,7 @@ fun ChatBubble(
                     val nameVisibility = config is BubbleConfig.Multi && config.nameVisibility
                     if (nameVisibility) {
                         Text(
-                            text = (config as BubbleConfig.Multi).name ?: "",
+                            text = (config as BubbleConfig.Multi).name,
                             style = MaterialTheme.typography.titleSmall,
                             color = contentColor,
                             modifier = Modifier.padding(
@@ -196,103 +198,20 @@ fun ChatBubble(
                             }
                         }
                         is ImageMessage -> {
-                            Surface(
-                                shape = RoundedCornerShape(5),
-                                modifier = Modifier.padding(4.dp),
-                                color = backgroundColor,
-                                contentColor = contentColor
-                            ) {
-                                val url =
-                                    ImageRequest.Builder(LocalContext.current)
-                                        .data(message.url)
-                                        .crossfade(true)
-                                        .build()
-                                SubcomposeAsyncImage(
-                                    model = url,
-                                    contentDescription = "Image Message",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(4 / 3f),
-                                    contentScale = ContentScale.Crop,
-                                    error = {
-                                        val throwableMessage =
-                                            stringResource(R.string.load_image_failed) +
-                                                    '\n' + it.result.throwable.message
-                                        Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = throwableMessage,
-                                                style = MaterialTheme.typography.displaySmall,
-                                                color = contentColor,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    },
-                                    loading = {
-                                        Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = stringResource(id = R.string.load_image_loading),
-                                                style = MaterialTheme.typography.displaySmall,
-                                                color = contentColor,
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
-                                )
-                            }
+                            Image(
+                                backgroundColor = backgroundColor,
+                                contentColor = contentColor,
+                                message = message,
+                                contentDescription = "Image Message"
+                            )
                         }
                         is GraphicsMessage -> {
                             Column {
-                                Surface(
-                                    shape = RoundedCornerShape(5),
-                                    modifier = Modifier.padding(4.dp),
-                                    color = backgroundColor,
-                                    contentColor = contentColor
-                                ) {
-                                    message.content
-                                    val url =
-                                        ImageRequest.Builder(LocalContext.current).data(message.url)
-                                            .crossfade(true).build()
-                                    SubcomposeAsyncImage(
-                                        model = url,
-                                        contentDescription = "Graphics Message",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .aspectRatio(4 / 3f),
-                                        contentScale = ContentScale.Crop,
-                                        error = {
-                                            Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = stringResource(id = R.string.load_image_failed),
-                                                    style = MaterialTheme.typography.displaySmall,
-                                                    color = contentColor,
-                                                    textAlign = TextAlign.Center
-                                                )
-                                            }
-                                        },
-                                        loading = {
-                                            Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Text(
-                                                    text = stringResource(id = R.string.load_image_loading),
-                                                    style = MaterialTheme.typography.displaySmall,
-                                                    color = contentColor,
-                                                    textAlign = TextAlign.Center
-                                                )
-                                            }
-                                        }
-                                    )
-                                }
+                                Image(
+                                    backgroundColor = backgroundColor,
+                                    contentColor = contentColor,
+                                    message = message
+                                )
                                 CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
                                     Text(
                                         text = message.text,
@@ -327,16 +246,91 @@ fun ChatBubble(
 
                 }
             }
-            // tail
         }
 
     }
 }
 
-sealed class BubbleConfig(
-    open val isAnother: Boolean, open val isShowTime: Boolean, open val sendState: Int
+
+@Composable
+private fun Image(
+    backgroundColor: Color,
+    contentColor: Color,
+    message: Message,
+    contentDescription: String? = null
 ) {
-    data class Pair(
+    val realUrl = when (message) {
+        is ImageMessage -> message.url
+        is GraphicsMessage -> message.url
+        else -> ""
+    }
+    Surface(
+        shape = RoundedCornerShape(5),
+        modifier = Modifier.padding(4.dp),
+        color = backgroundColor,
+        contentColor = contentColor,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    ) {
+        message.content
+        val url = ImageRequest.Builder(LocalContext.current).data(realUrl)
+            .crossfade(true).build()
+        SubcomposeAsyncImage(
+            model = url,
+            contentDescription = contentDescription,
+            modifier = Modifier
+                .height(120.dp)
+                .aspectRatio(4 / 3f),
+            contentScale = ContentScale.Crop,
+            error = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.load_image_failed),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = contentColor,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = it.result.throwable.message ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = contentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            loading = {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.load_image_loading),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = contentColor,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        )
+    }
+}
+
+sealed class BubbleConfig(
+    open val isAnother: Boolean,
+    open val isShowTime: Boolean,
+    open val sendState: Int
+) {
+    data class PM(
         override val sendState: Int = Message.STATE_SEND,
         private val another: Boolean = false,
         override val isShowTime: Boolean = false
@@ -348,6 +342,6 @@ sealed class BubbleConfig(
         override val isShowTime: Boolean = false,
         val avatarVisibility: Boolean = false,
         val nameVisibility: Boolean = false,
-        val name: String? = null,
+        val name: String = "",
     ) : BubbleConfig(other, isShowTime, sendState)
 }

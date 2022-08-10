@@ -1,12 +1,12 @@
 package com.linku.im.screen.sign
 
 import androidx.lifecycle.viewModelScope
+import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
 import com.linku.domain.Resource
 import com.linku.domain.eventOf
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.applicationContext
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignViewModel @Inject constructor(
-    private val authUseCases: AuthUseCases
+    private val authUseCases: AuthUseCases,
+    private val applicationUseCases: ApplicationUseCases
 ) : BaseViewModel<SignState, SignEvent>(SignState()) {
 
     override fun onEvent(event: SignEvent) {
@@ -37,7 +38,7 @@ class SignViewModel @Inject constructor(
         val password = readable.password
         if (email.isBlank() || password.isBlank()) {
             _state.value = readable.copy(
-                error = eventOf(applicationContext.getString(R.string.information_required)),
+                error = eventOf(applicationUseCases.getString(R.string.information_required)),
                 loading = false
             )
             return
@@ -52,7 +53,7 @@ class SignViewModel @Inject constructor(
                         vm.onEvent(LinkUEvent.PopBackStack)
                         readable.copy(
                             loginEvent = eventOf(Unit),
-                            error = eventOf(applicationContext.getString(R.string.log_in_success)),
+                            error = eventOf(applicationUseCases.getString(R.string.log_in_success)),
                             loading = false
                         )
                     }
@@ -71,7 +72,7 @@ class SignViewModel @Inject constructor(
         val password = readable.password
         if (email.isBlank() || password.isBlank()) {
             _state.value = readable.copy(
-                error = eventOf(applicationContext.getString(R.string.information_required)),
+                error = eventOf(applicationUseCases.getString(R.string.information_required)),
                 loading = false
             )
             return
@@ -84,7 +85,7 @@ class SignViewModel @Inject constructor(
                     )
                     is Resource.Success -> readable.copy(
                         registerEvent = eventOf(resource.data),
-                        error = eventOf(applicationContext.getString(R.string.register_success)),
+                        error = eventOf(applicationUseCases.getString(R.string.register_success)),
                         loading = false
                     )
                     is Resource.Failure -> readable.copy(

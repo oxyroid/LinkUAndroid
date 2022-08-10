@@ -42,7 +42,7 @@
     <string name="email_verified">验证</string>
     <string name="email_verified_dialog_title">验证您的邮箱</string>
     <string name="unknown"><![CDATA[<未知>]]></string>
-    <string name="verified">验证</string>
+    <string name="confirm">验证</string>
     <string name="cancel">取消</string>
     <string name="verifying">验证中</string>
     <string name="toggle_dynamic">动态主题</string>
@@ -57,4 +57,5 @@
     <string name="tab_contact">联系人</string>
     <string name="load_image_failed">加载图片失败</string>
     <string name="load_image_loading">加载中…</string>
+    <string name="edit">编辑</string>
 </resources>

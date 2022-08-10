@@ -9,7 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.sharp.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -143,7 +143,7 @@ fun ConversationItem(
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Rounded.Lock,
+                        imageVector = Icons.Sharp.Lock,
                         contentDescription = "",
                         tint = MaterialTheme.colorScheme.onTertiary,
                         modifier = Modifier.padding(4.dp)

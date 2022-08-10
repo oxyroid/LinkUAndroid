@@ -13,7 +13,7 @@ import com.linku.domain.repository.MessageRepository
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ChatService
-import com.linku.domain.service.ChatSocketService
+import com.linku.domain.service.WebSocketService
 import com.linku.domain.service.FileService
 import com.linku.domain.service.NotificationService
 import kotlinx.coroutines.flow.*
@@ -26,14 +26,15 @@ import okhttp3.RequestBody
 import java.io.FileNotFoundException
 
 class MessageRepositoryImpl(
-    private val socketService: ChatSocketService,
+    private val socketService: WebSocketService,
     private val chatService: ChatService,
     private val messageDao: MessageDao,
     private val conversationDao: ConversationDao,
     private val notificationService: NotificationService,
     private val context: Context,
     private val fileService: FileService,
-    private val json: Json
+    private val json: Json,
+    private val authenticator: Authenticator
 ) : MessageRepository {
     override fun initSession(uid: Int): Flow<Resource<Unit>> = channelFlow {
         try {
@@ -45,7 +46,7 @@ class MessageRepositoryImpl(
                             messageDao.clearStagingMessages()
                             socketService.onClosed {
                                 debug { Log.e(TAG, "Message Channel Closed!") }
-                                if (Authenticator.currentUID != null) {
+                                if (authenticator.currentUID != null) {
                                     send(Resource.Failure("Message Channel Closed!"))
                                 }
                             }
@@ -106,7 +107,7 @@ class MessageRepositoryImpl(
     override suspend fun sendTextMessage(cid: Int, text: String): Flow<Resource<Unit>> =
         channelFlow {
             // We wanna to custom the catch block, so we didn't use resourceFlow.
-            val userId = Authenticator.currentUID ?: kotlin.run {
+            val userId = authenticator.currentUID ?: kotlin.run {
                 send(Resource.Failure("Please sign in first."))
                 return@channelFlow
             }
@@ -150,7 +151,7 @@ class MessageRepositoryImpl(
     override fun sendImageMessage(cid: Int, uri: Uri): Flow<Resource<Unit>> = channelFlow {
         try {
             // 1. Make real HTTP-Connection to upload file.
-            val userId = Authenticator.currentUID
+            val userId = authenticator.currentUID
             checkNotNull(userId) { "Please sign in first." }
             // 2. Create a staging message.
             val staging = MessageRepository.StagingMessage.Image(
@@ -212,7 +213,7 @@ class MessageRepositoryImpl(
         channelFlow {
             try {
                 // 1. Make real HTTP-Connection to upload file.
-                val userId = Authenticator.currentUID
+                val userId = authenticator.currentUID
                 checkNotNull(userId) { "Please sign in first." }
                 // 2. Create a staging message.
                 val staging = MessageRepository.StagingMessage.Graphics(

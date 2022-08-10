@@ -5,6 +5,7 @@ sealed class Screen(val route: String) {
     object MainScreen : Screen(route = "main_screen")
     object QueryScreen : Screen(route = "query_screen")
     object ChatScreen : Screen(route = "chat_screen")
+    object EditScreen : Screen(route = "edit_screen")
     object LoginScreen : Screen("login_screen")
     object ProfileScreen : Screen("profile_screen")
 
@@ -25,6 +26,7 @@ sealed class Screen(val route: String) {
             route.startsWith(ChatScreen.route) -> ChatScreen
             route.startsWith(LoginScreen.route) -> LoginScreen
             route.startsWith(ProfileScreen.route) -> ProfileScreen
+            route.startsWith(EditScreen.route) -> EditScreen
             else -> MainScreen
         }
     }

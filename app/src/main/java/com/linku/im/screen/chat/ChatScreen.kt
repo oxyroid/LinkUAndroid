@@ -1,7 +1,6 @@
 package com.linku.im.screen.chat
 
 import android.Manifest
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -34,7 +33,9 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
+import com.linku.im.extension.debug
 import com.linku.im.extension.ifTrue
+import com.linku.im.extension.toast
 import com.linku.im.screen.chat.composable.ChatBottomBar
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.ui.components.ToolBar
@@ -53,6 +54,7 @@ fun ChatScreen(
     val context = LocalContext.current
     val state by viewModel.state
     val listState = rememberLazyListState()
+
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         viewModel.onEvent(ChatEvent.OnFileUriChange(uri))
     }
@@ -68,17 +70,20 @@ fun ChatScreen(
         viewModel.onEvent(ChatEvent.Initial(cid))
     }
     LaunchedEffect(state.event) {
-        state.event.handle {
-            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-        }
+        state.event.handle(context::toast)
     }
     val firstVisibleItemIndex by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex
         }
     }
-    LaunchedEffect(firstVisibleItemIndex) {
-        viewModel.onEvent(ChatEvent.FirstVisibleIndex(listState.firstVisibleItemIndex))
+    val offset by remember {
+        derivedStateOf {
+            listState.firstVisibleItemScrollOffset
+        }
+    }
+    LaunchedEffect(firstVisibleItemIndex, offset) {
+        viewModel.onEvent(ChatEvent.OnScroll(firstVisibleItemIndex, offset))
     }
 
     Scaffold(
@@ -89,6 +94,8 @@ fun ChatScreen(
                 text = state.title
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -172,8 +179,16 @@ fun ChatScreen(
 
     }
 
-    LaunchedEffect(state.scrollToBottomEvent) {
-        val event = state.scrollToBottomEvent
+    val event by remember {
+        derivedStateOf { state.scrollToBottomEvent }
+    }
+    var times by remember {
+        mutableStateOf(0)
+    }
+    LaunchedEffect(event) {
+        debug {
+            context.toast("scroll: ${++times}")
+        }
         event.handle {
             listState.animateScrollToItem(0)
         }
