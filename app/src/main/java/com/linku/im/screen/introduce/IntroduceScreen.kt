@@ -47,9 +47,9 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     viewModel: IntroduceViewModel = hiltViewModel()
 ) {
-    val vmState by vm.state
+    val vmState = vm.readable
     val isDarkMode = vmState.isDarkMode
-    val state by viewModel.state
+    val state = viewModel.readable
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
 
@@ -66,8 +66,8 @@ fun ProfileScreen(
         if (state.logout) vm.onEvent(LinkUEvent.PopBackStack)
     }
 
-    LaunchedEffect(state.error) {
-        state.error.handle {
+    LaunchedEffect(viewModel.message) {
+        viewModel.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }

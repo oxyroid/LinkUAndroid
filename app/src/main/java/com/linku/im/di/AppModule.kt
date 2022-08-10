@@ -218,7 +218,7 @@ object AppModule {
         return AuthUseCases(
             signIn = SignInUseCase(repository),
             signUp = SignUpUseCase(repository),
-            logout = SignOutUseCase(repository, authenticator),
+            signOut = SignOutUseCase(repository, authenticator),
             verifiedEmail = VerifiedEmailUseCase(repository),
             verifiedEmailCode = VerifiedEmailCodeUseCase(repository)
         )

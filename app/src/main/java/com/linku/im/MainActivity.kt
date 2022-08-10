@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
@@ -57,7 +56,7 @@ class MainActivity : ComponentActivity(), ViewTreeObserver.OnPreDrawListener {
     }
 
     override fun onPreDraw(): Boolean {
-        return vm.state.value.isReady.ifTrue {
+        return vm.readable.isReady.ifTrue {
             content.viewTreeObserver.removeOnPreDrawListener(this)
             true
         } ?: false
@@ -69,7 +68,7 @@ lateinit var vm: LinkUViewModel
 
 @Composable
 fun App() {
-    val state by vm.state
+    val state = vm.readable
     val isDarkMode = state.isDarkMode
     @OptIn(ExperimentalAnimationApi::class)
     AppTheme(
@@ -90,6 +89,7 @@ fun App() {
                 darkIcons = !isDarkMode
             )
         }
+
         AnimatedNavHost(
             navController = navController,
             startDestination = Screen.MainScreen.route,

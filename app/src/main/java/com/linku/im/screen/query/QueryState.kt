@@ -7,6 +7,5 @@ data class QueryState(
     val text: String = "",
     val isDescription: Boolean = false,
     val querying: Boolean = false,
-    val message: Event<String> = Event.Handled(),
     val conversations: List<Conversation> = emptyList()
 )

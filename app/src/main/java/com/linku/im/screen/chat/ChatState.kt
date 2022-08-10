@@ -16,7 +16,6 @@ data class ChatState(
     val expended: Boolean = false,
     val uri: Uri? = null,
     val loading: Boolean = true,
-    val event: Event<String> = Event.Handled(),
     val messages: List<MessageVO> = emptyList(),
     val scrollToBottomEvent: Event<Unit> = Event.Handled(),
     val firstVisibleIndex: Int = 0,

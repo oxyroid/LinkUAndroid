@@ -1,8 +1,11 @@
 package com.linku.im.screen
 
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.linku.domain.Event
+import com.linku.domain.eventOf
 
 /**
  * This is a ViewModel based on the MVI architecture, which standardizes the state and event data flow
@@ -14,9 +17,14 @@ abstract class BaseViewModel<S, E>(emptyState: S) : ViewModel() {
     /**
      * Observe this to update UI
      */
-    protected val _state = mutableStateOf(emptyState)
-    protected val readable: S get() = _state.value
-    val state: State<S> = _state
+    private var _state = mutableStateOf(emptyState)
+    protected var writable by _state
+    val readable: S by _state
+
+    private var _message = mutableStateOf<Event<String>>(Event.Handled())
+    var message by _message
+        private set
+
 
     /**
      * This function is used to submit intent and hand it over to the use case
@@ -26,4 +34,8 @@ abstract class BaseViewModel<S, E>(emptyState: S) : ViewModel() {
      * @param event The intent saved as event
      */
     abstract fun onEvent(event: E)
+
+    protected fun onMessage(message: String) {
+        this.message = eventOf(message)
+    }
 }

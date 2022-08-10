@@ -34,37 +34,34 @@ class LinkUViewModel @Inject constructor(
         when (event) {
             LinkUEvent.InitSession -> initSession()
             LinkUEvent.InitConfig -> initConfig()
-            LinkUEvent.PopBackStack -> _state.value = readable.copy(
+            LinkUEvent.PopBackStack -> writable = readable.copy(
                 navigateUp = eventOf(Unit)
             )
-
             LinkUEvent.ToggleDarkMode -> {
                 val saved = !readable.isDarkMode
                 settings.isDarkMode = saved
-                _state.value = readable.copy(
+                writable = readable.copy(
                     isDarkMode = saved
                 )
             }
-
             LinkUEvent.Disconnect -> {
                 updateLabel(Label.NoAuth)
                 viewModelScope.launch { messageUseCases.closeSession() }
             }
             is LinkUEvent.Navigate -> {
-                _state.value = readable.copy(
+                writable = readable.copy(
                     navigate = eventOf(event.screen.route)
                 )
             }
-
             is LinkUEvent.NavigateWithArgs -> {
-                _state.value = readable.copy(
+                writable = readable.copy(
                     navigate = eventOf(event.route)
                 )
             }
             LinkUEvent.ToggleDynamic -> {
                 val saved = !readable.dynamicEnabled
                 settings.isDynamicMode = saved
-                _state.value = readable.copy(
+                writable = readable.copy(
                     dynamicEnabled = saved
                 )
             }
@@ -79,7 +76,7 @@ class LinkUViewModel @Inject constructor(
     }
 
     private fun updateLabel(label: Label) {
-        _state.value = readable.copy(
+        writable = readable.copy(
             label = when (label) {
                 Label.Default -> applicationUseCases.getString(R.string.app_name)
                 Label.Connecting -> applicationUseCases.getString(R.string.connecting)
@@ -98,9 +95,7 @@ class LinkUViewModel @Inject constructor(
         }
         initSessionJob?.cancel()
         initSessionJob = viewModelScope.launch {
-            val userId = authenticator.currentUID
-            checkNotNull(userId)
-            messageUseCases.initSession(userId)
+            messageUseCases.initSession(authenticator.currentUID)
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {
@@ -134,18 +129,19 @@ class LinkUViewModel @Inject constructor(
                 when (resource) {
                     Resource.Loading -> {}
                     is Resource.Success -> {
-                        _state.value = readable.copy(
+                        writable = readable.copy(
                             isDarkMode = isDarkMode,
                             dynamicEnabled = enableDynamic,
                             isReady = true
                         )
                     }
                     is Resource.Failure -> {
-                        _state.value = readable.copy(
+                        writable = readable.copy(
                             isDarkMode = isDarkMode,
                             dynamicEnabled = enableDynamic,
-                            isReady = true
+                            isReady = true,
                         )
+                        onMessage(resource.message)
                     }
                 }
             }

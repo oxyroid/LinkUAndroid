@@ -1,9 +1,7 @@
 package com.linku.data.usecase
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.widget.Toast
-import com.linku.domain.common.Constants
 import dagger.hilt.android.qualifiers.ApplicationContext
 
 data class ApplicationUseCases(

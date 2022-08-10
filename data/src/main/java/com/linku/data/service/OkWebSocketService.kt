@@ -26,11 +26,15 @@ class OkWebSocketService(
     private var webSocket: WebSocket? = null
     private var messageFlow = MutableSharedFlow<Message>()
     private var onClosed: (suspend () -> Unit)? = null
-    override fun initSession(uid: Int): Flow<Resource<Unit>> = callbackFlow {
+    override fun initSession(uid: Int?): Flow<Resource<Unit>> = callbackFlow {
+        send(Resource.Loading)
+        if (uid == null) {
+            send(Resource.Failure("User is not exist."))
+            return@callbackFlow
+        }
         val request = Request.Builder()
             .url(WebSocketService.EndPoints.UIDSocket(uid).url)
             .build()
-        send(Resource.Loading)
         okHttpClient.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)

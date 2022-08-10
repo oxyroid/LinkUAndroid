@@ -36,8 +36,9 @@ class MessageRepositoryImpl(
     private val json: Json,
     private val authenticator: Authenticator
 ) : MessageRepository {
-    override fun initSession(uid: Int): Flow<Resource<Unit>> = channelFlow {
+    override fun initSession(uid: Int?): Flow<Resource<Unit>> = channelFlow {
         try {
+
             socketService.initSession(uid)
                 .onEach { resource ->
                     when (resource) {

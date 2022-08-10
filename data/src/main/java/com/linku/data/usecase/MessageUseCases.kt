@@ -51,7 +51,7 @@ data class GraphicsMessageUseCase(
 data class InitSessionUseCase(
     private val repository: MessageRepository
 ) {
-    operator fun invoke(uid: Int): Flow<Resource<Unit>> = run {
+    operator fun invoke(uid: Int?): Flow<Resource<Unit>> = run {
         repository.initSession(uid)
     }
 }

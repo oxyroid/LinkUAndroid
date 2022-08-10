@@ -36,11 +36,9 @@ class DefaultAuthenticator(
         uid: Int?,
         token: String?
     ) {
-        uid?.also {
-            settings.currentUID = it
-            settings.token = token
-            _observeCurrent.emit(uid)
-        }
+        settings.currentUID = uid
+        settings.token = token
+        _observeCurrent.emit(uid)
     }
 
 }

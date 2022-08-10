@@ -11,7 +11,7 @@ import javax.inject.Inject
 data class AuthUseCases @Inject constructor(
     val signIn: SignInUseCase,
     val signUp: SignUpUseCase,
-    val logout: SignOutUseCase,
+    val signOut: SignOutUseCase,
     val verifiedEmail: VerifiedEmailUseCase,
     val verifiedEmailCode: VerifiedEmailCodeUseCase
 )

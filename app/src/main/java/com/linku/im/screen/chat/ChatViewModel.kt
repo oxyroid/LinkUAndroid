@@ -36,12 +36,12 @@ class ChatViewModel @Inject constructor(
     override fun onEvent(event: ChatEvent) {
         when (event) {
             is ChatEvent.Initial -> {
-                _state.value = readable.copy(
+                writable = readable.copy(
                     cid = event.cid
                 )
                 conversationUseCases.observeConversation(event.cid)
                     .onEach { conversation ->
-                        _state.value = readable.copy(
+                        writable = readable.copy(
                             title = conversation.name,
                             cid = conversation.id,
                             type = conversation.type,
@@ -51,7 +51,7 @@ class ChatViewModel @Inject constructor(
 
                 messageUseCases.observeMessages(event.cid)
                     .onEach { messages ->
-                        _state.value = readable.copy(
+                        writable = readable.copy(
                             messages = messages
                                 .map { it.toReadable() }
                                 .mapIndexedNotNull { index, message ->
@@ -112,7 +112,7 @@ class ChatViewModel @Inject constructor(
 
                 conversationUseCases.fetchConversation(event.cid).launchIn(viewModelScope)
 
-                _state.value = readable.copy(
+                writable = readable.copy(
                     emojis = emojiUseCases.getAll()
                 )
             }
@@ -125,7 +125,7 @@ class ChatViewModel @Inject constructor(
             }
             is ChatEvent.TextChange -> onTextChange(event.text)
             is ChatEvent.OnScroll -> {
-                _state.value = readable.copy(
+                writable = readable.copy(
                     firstVisibleIndex = event.index,
                     offset = event.offset
                 )
@@ -134,7 +134,7 @@ class ChatViewModel @Inject constructor(
 
             }
             is ChatEvent.OnFileUriChange -> {
-                _state.value = readable.copy(
+                writable = readable.copy(
                     uri = event.uri,
                 )
             }
@@ -145,14 +145,14 @@ class ChatViewModel @Inject constructor(
                     textFieldValue.selection.end,
                     textFieldValue.text.length
                 )
-                _state.value = readable.copy(
+                writable = readable.copy(
                     text = TextFieldValue(
                         text = "${leftText}${event.emoji}${rightText}",
                         selection = TextRange(textFieldValue.selection.start + event.emoji.length)
                     )
                 )
             }
-            is ChatEvent.Expanded -> _state.value = readable.copy(
+            is ChatEvent.Expanded -> writable = readable.copy(
                 expended = event.value
             )
         }
@@ -173,7 +173,7 @@ class ChatViewModel @Inject constructor(
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> {
-                        _state.value = readable.copy(
+                        writable = readable.copy(
                             scrollToBottomEvent = eventOf(Unit),
                             uri = null,
                             text = TextFieldValue()
@@ -182,17 +182,16 @@ class ChatViewModel @Inject constructor(
                     is Resource.Success -> {
                         notificationService.onEmit()
                     }
-                    is Resource.Failure -> _state.value =
-                        readable.copy(
-                            event = eventOf(resource.message)
-                        )
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                    }
                 }
             }
             .launchIn(viewModelScope)
     }
 
     private fun onTextChange(value: TextFieldValue) {
-        _state.value = readable.copy(text = value)
+        writable = readable.copy(text = value)
     }
 
     private fun sendTextMessage() {
@@ -204,7 +203,7 @@ class ChatViewModel @Inject constructor(
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {
-                            _state.value = readable.copy(
+                            writable = readable.copy(
                                 scrollToBottomEvent = eventOf(Unit),
                                 text = TextFieldValue()
                             )
@@ -213,7 +212,7 @@ class ChatViewModel @Inject constructor(
                             notificationService.onEmit()
                         }
                         is Resource.Failure -> {
-                            _state.value = readable.copy(event = eventOf(resource.message))
+                            onMessage(resource.message)
                         }
                     }
                 }
@@ -228,17 +227,16 @@ class ChatViewModel @Inject constructor(
         messageUseCases.imageMessage(cid, uri)
             .onEach { resource ->
                 when (resource) {
-                    Resource.Loading -> {
-                        _state.value = readable.copy(
-                            scrollToBottomEvent = eventOf(Unit),
-                            uri = null,
-                        )
-                    }
+                    Resource.Loading -> writable = readable.copy(
+                        scrollToBottomEvent = eventOf(Unit),
+                        uri = null,
+                    )
                     is Resource.Success -> {
                         notificationService.onEmit()
                     }
-                    is Resource.Failure -> _state.value =
-                        readable.copy(event = eventOf(resource.message))
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                    }
                 }
             }
             .launchIn(viewModelScope)

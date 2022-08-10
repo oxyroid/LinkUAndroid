@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import java.util.*
 
 interface MessageRepository {
-    fun initSession(uid: Int): Flow<Resource<Unit>>
+    fun initSession(uid: Int?): Flow<Resource<Unit>>
     fun incoming(): Flow<List<Message>>
     fun incoming(cid: Int): Flow<List<Message>>
     suspend fun closeSession()

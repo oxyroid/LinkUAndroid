@@ -7,12 +7,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -22,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.extension.toast
 import com.linku.im.screen.Screen
 import com.linku.im.screen.query.composable.QueryItem
 import com.linku.im.vm
@@ -33,8 +33,17 @@ fun QueryScreen(
     viewModel: QueryViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val state by viewModel.state
-    Scaffold { innerPadding ->
+    val state = viewModel.readable
+    val scaffoldState = rememberScaffoldState()
+
+    LaunchedEffect(viewModel.message) {
+        viewModel.message.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
+    }
+    Scaffold(
+        scaffoldState = scaffoldState
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -111,7 +120,4 @@ fun QueryScreen(
         }
     }
 
-    LaunchedEffect(state.message) {
-        state.message.handle(context::toast)
-    }
 }

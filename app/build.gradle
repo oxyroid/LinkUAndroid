@@ -99,14 +99,9 @@ dependencies {
     // lottie
     implementation "com.airbnb.android:lottie-compose:5.2.0"
 
-    implementation "io.ktor:ktor-client-content-negotiation:$ktor_version"
 
     // retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
-
-    // serialization
-    implementation "io.ktor:ktor-serialization-kotlinx-json:$ktor_version"
-    implementation "ch.qos.logback:logback-classic:1.2.6"
 
     // accompanist
     implementation "com.google.accompanist:accompanist-navigation-animation:$accompanist_version"
@@ -127,6 +122,5 @@ dependencies {
 
     // Json
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0-RC"
-
 
 }

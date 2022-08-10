@@ -13,7 +13,6 @@ This repository is **Jetpack Compose** instant messaging example.
 - **[Jetpack Compose](https://developer.android.com/jetpack/compose)** as UI Framework
 - **[Room](https://developer.android.com/training/data-storage/room)** as Data Persistence Framework
 - **[Retrofit](https://square.github.io/retrofit/)** as HTTP Framework
-- **[Okio](https://square.github.io/okio/)** as IO Framework
 - **[Leakcanary](https://square.github.io/leakcanary/)** as Memory Leak Detection Framework
 - **[Kotlin-serialization](https://kotlinlang.org/docs/serialization.html)** as Serialization Framework
 - **[Lottie](https://github.com/airbnb/lottie-android)** to render after effects animations natively

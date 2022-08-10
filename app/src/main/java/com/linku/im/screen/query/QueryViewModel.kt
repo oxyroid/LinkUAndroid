@@ -3,7 +3,6 @@ package com.linku.im.screen.query
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.domain.Resource
-import com.linku.domain.eventOf
 import com.linku.im.extension.ifFalse
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.BaseViewModel
@@ -25,14 +24,14 @@ class QueryViewModel @Inject constructor(
     }
 
     private fun toggleIncludeDescription() {
-        _state.value = readable.copy(
+        writable = readable.copy(
             isDescription = !readable.isDescription
         )
         hasQuery.ifTrue { query() }
     }
 
     private fun onText(text: String) {
-        _state.value = readable.copy(
+        writable = readable.copy(
             text = text
         )
     }
@@ -45,7 +44,7 @@ class QueryViewModel @Inject constructor(
             description = readable.isDescription.ifTrue { readable.text }
         )
             .onEach { resource ->
-                _state.value = when (resource) {
+                writable = when (resource) {
                     Resource.Loading -> readable.copy(
                         querying = true
                     )
@@ -53,10 +52,12 @@ class QueryViewModel @Inject constructor(
                         querying = false,
                         conversations = resource.data
                     )
-                    is Resource.Failure -> readable.copy(
-                        querying = false,
-                        message = eventOf(resource.message)
-                    )
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                        readable.copy(
+                            querying = false
+                        )
+                    }
                 }
             }
             .launchIn(viewModelScope)

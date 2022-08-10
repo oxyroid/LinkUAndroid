@@ -24,10 +24,10 @@ class SignViewModel @Inject constructor(
         when (event) {
             SignEvent.SignIn -> signIn()
             SignEvent.SignUp -> signUp()
-            is SignEvent.OnEmail -> _state.value = readable.copy(
+            is SignEvent.OnEmail -> writable = readable.copy(
                 email = event.email
             )
-            is SignEvent.OnPassword -> _state.value = readable.copy(
+            is SignEvent.OnPassword -> writable = readable.copy(
                 password = event.password
             )
         }
@@ -37,30 +37,32 @@ class SignViewModel @Inject constructor(
         val email = readable.email
         val password = readable.password
         if (email.isBlank() || password.isBlank()) {
-            _state.value = readable.copy(
-                error = eventOf(applicationUseCases.getString(R.string.information_required)),
+            onMessage(applicationUseCases.getString(R.string.information_required))
+            writable = readable.copy(
                 loading = false
             )
             return
         }
         authUseCases.signIn(email, password)
             .onEach { resource ->
-                _state.value = when (resource) {
+                writable = when (resource) {
                     Resource.Loading -> readable.copy(
                         loading = true,
                     )
                     is Resource.Success -> {
                         vm.onEvent(LinkUEvent.PopBackStack)
+                        onMessage(applicationUseCases.getString(R.string.log_in_success))
                         readable.copy(
                             loginEvent = eventOf(Unit),
-                            error = eventOf(applicationUseCases.getString(R.string.log_in_success)),
                             loading = false
                         )
                     }
-                    is Resource.Failure -> readable.copy(
-                        error = eventOf(resource.message),
-                        loading = false
-                    )
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                        readable.copy(
+                            loading = false
+                        )
+                    }
                 }
             }
             .launchIn(viewModelScope)
@@ -71,27 +73,31 @@ class SignViewModel @Inject constructor(
         val email = readable.email
         val password = readable.password
         if (email.isBlank() || password.isBlank()) {
-            _state.value = readable.copy(
-                error = eventOf(applicationUseCases.getString(R.string.information_required)),
+            onMessage(applicationUseCases.getString(R.string.information_required))
+            writable = readable.copy(
                 loading = false
             )
             return
         }
         authUseCases.signUp(email, password, email)
             .onEach { resource ->
-                _state.value = when (resource) {
+                writable = when (resource) {
                     Resource.Loading -> readable.copy(
                         loading = true,
                     )
-                    is Resource.Success -> readable.copy(
-                        registerEvent = eventOf(resource.data),
-                        error = eventOf(applicationUseCases.getString(R.string.register_success)),
-                        loading = false
-                    )
-                    is Resource.Failure -> readable.copy(
-                        error = eventOf(resource.message),
-                        loading = false
-                    )
+                    is Resource.Success -> {
+                        onMessage(applicationUseCases.getString(R.string.register_success))
+                        readable.copy(
+                            registerEvent = eventOf(resource.data),
+                            loading = false
+                        )
+                    }
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                        readable.copy(
+                            loading = false
+                        )
+                    }
                 }
             }.launchIn(viewModelScope)
     }

@@ -46,4 +46,4 @@ sealed class Event<out T> private constructor(
  * Top-level method for constructing EventImpl
  * @see Event.Regular
  */
-fun <T> eventOf(data: T) = Event.Regular(data)
+fun <T> eventOf(data: T): Event.Regular<T> = Event.Regular(data)

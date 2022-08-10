@@ -6,7 +6,6 @@ data class SignState(
     val registerEvent: Event<Unit> = Event.Handled(),
     val loginEvent: Event<Unit> = Event.Handled(),
     val loading: Boolean = false,
-    val error: Event<String> = Event.Handled(),
     val email: String = "",
     val password: String = ""
 )

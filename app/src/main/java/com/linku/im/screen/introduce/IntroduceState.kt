@@ -10,7 +10,6 @@ data class IntroduceState(
     val verifiedEmailCodeVerifying: Boolean = false,
     val actionsLabel: String = "",
     val actions: List<Property.Data.Action> = emptyList(),
-    val error: Event<String> = Event.Handled(),
     val verifiedEmailCodeMessage: String = "",
     val logout: Boolean = false,
     val dataProperties: List<Property> = emptyList(),

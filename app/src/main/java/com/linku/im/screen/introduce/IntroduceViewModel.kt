@@ -36,7 +36,7 @@ class IntroduceViewModel @Inject constructor(
 ) : BaseViewModel<IntroduceState, IntroduceEvent>(IntroduceState()) {
 
     init {
-        _state.value = readable.copy(
+        writable = readable.copy(
             loading = false,
             dataProperties = makeDataProperties(null),
             settingsProperties = makeSettingsProperties()
@@ -57,7 +57,7 @@ class IntroduceViewModel @Inject constructor(
                         Screen.EditScreen.withArgs(event.type)
                     )
                 )
-                _state.value = readable.copy(
+                writable = readable.copy(
                     editEvent = eventOf(event.type)
                 )
             }
@@ -67,18 +67,20 @@ class IntroduceViewModel @Inject constructor(
     private fun verifiedEmail() {
         authUseCases.verifiedEmail()
             .onEach { resource ->
-                _state.value = when (resource) {
-                    Resource.Loading -> state.value.copy(
+                writable = when (resource) {
+                    Resource.Loading -> readable.copy(
                         verifiedEmailStarting = true
                     )
-                    is Resource.Success -> state.value.copy(
+                    is Resource.Success -> readable.copy(
                         verifiedEmailStarting = false,
                         verifiedEmailDialogShowing = true
                     )
-                    is Resource.Failure -> state.value.copy(
-                        verifiedEmailStarting = false,
-                        error = eventOf(resource.message)
-                    )
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                        readable.copy(
+                            verifiedEmailStarting = false,
+                        )
+                    }
                 }
             }
             .launchIn(viewModelScope)
@@ -88,17 +90,17 @@ class IntroduceViewModel @Inject constructor(
         authUseCases.verifiedEmailCode(code)
             .onEach { resource ->
                 when (resource) {
-                    Resource.Loading -> _state.value = state.value.copy(
+                    Resource.Loading -> writable = readable.copy(
                         verifiedEmailCodeVerifying = true,
                         verifiedEmailCodeMessage = ""
                     )
                     is Resource.Success -> {
-                        _state.value = state.value.copy(
+                        writable = readable.copy(
                             verifiedEmailCodeVerifying = false,
                         )
                         onEvent(IntroduceEvent.FetchIntroduce)
                     }
-                    is Resource.Failure -> _state.value = state.value.copy(
+                    is Resource.Failure -> writable = readable.copy(
                         verifiedEmailCodeVerifying = false,
                         verifiedEmailCodeMessage = resource.message
                     )
@@ -108,7 +110,7 @@ class IntroduceViewModel @Inject constructor(
     }
 
     private fun cancelVerifiedEmail() {
-        _state.value = state.value.copy(
+        writable = readable.copy(
             verifiedEmailDialogShowing = false
         )
     }
@@ -118,7 +120,7 @@ class IntroduceViewModel @Inject constructor(
         checkNotNull(userId)
         viewModelScope.launch {
             val resource = useCases.findUser(userId)
-            _state.value = readable.copy(
+            writable = readable.copy(
                 loading = false,
                 dataProperties = makeDataProperties(resource),
                 settingsProperties = makeSettingsProperties()
@@ -127,22 +129,24 @@ class IntroduceViewModel @Inject constructor(
     }
 
     private fun signOut() {
-        authUseCases.logout()
+        authUseCases.signOut()
             .onEach { resource ->
-                _state.value = when (resource) {
+                writable = when (resource) {
                     Resource.Loading -> loadingState
-                    is Resource.Success -> _state.value.copy(loading = false, logout = true)
-                    is Resource.Failure -> _state.value.copy(
-                        loading = false,
-                        error = eventOf(getString(R.string.sign_out_failed))
-                    )
+                    is Resource.Success -> writable.copy(loading = false, logout = true)
+                    is Resource.Failure -> {
+                        onMessage(getString(R.string.sign_out_failed))
+                        writable.copy(
+                            loading = false,
+                        )
+                    }
                 }
             }
             .launchIn(viewModelScope)
     }
 
     private fun onActions(label: String, actions: List<Property.Data.Action>) {
-        _state.value = state.value.copy(
+        writable = readable.copy(
             actions = actions,
             actionsLabel = label
         )
@@ -231,7 +235,7 @@ class IntroduceViewModel @Inject constructor(
 
     private fun getString(@StringRes resId: Int): String = applicationUseCases.getString(resId)
 
-    private val loadingState get() = state.value.copy(loading = true)
+    private val loadingState get() = readable.copy(loading = true)
 
     private fun CharSequence?.checkEmpty(): CharSequence =
         if (isNullOrBlank()) getString(R.string.unknown) else this

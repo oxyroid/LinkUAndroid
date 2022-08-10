@@ -5,8 +5,7 @@ import com.linku.domain.entity.Conversation
 data class MainState(
     val conversations: List<ConversationMainUI> = emptyList(),
     val contracts: List<ConversationMainUI> = emptyList(),
-    val loading: Boolean = true,
-    val drawerTitle: String? = null
+    val loading: Boolean = true
 ) {
     data class ConversationMainUI(
         val id: Int,

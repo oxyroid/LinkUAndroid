@@ -13,13 +13,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Surface
+import androidx.compose.material.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,7 +49,8 @@ fun ChatScreen(
     cid: Int
 ) {
     val context = LocalContext.current
-    val state by viewModel.state
+    val state = viewModel.readable
+    val scaffoldState = rememberScaffoldState()
     val listState = rememberLazyListState()
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -69,8 +67,10 @@ fun ChatScreen(
     LaunchedEffect(Unit) {
         viewModel.onEvent(ChatEvent.Initial(cid))
     }
-    LaunchedEffect(state.event) {
-        state.event.handle(context::toast)
+    LaunchedEffect(viewModel.message) {
+        viewModel.message.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
     }
     val firstVisibleItemIndex by remember {
         derivedStateOf {
@@ -94,8 +94,9 @@ fun ChatScreen(
                 text = state.title
             )
         },
-        containerColor = MaterialTheme.colorScheme.background,
-        contentColor = MaterialTheme.colorScheme.onBackground
+        backgroundColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        scaffoldState = scaffoldState
     ) { innerPadding ->
         Box(
             modifier = Modifier

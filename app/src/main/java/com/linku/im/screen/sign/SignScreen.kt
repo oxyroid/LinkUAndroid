@@ -5,6 +5,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -33,19 +34,21 @@ import com.linku.im.ui.components.MaterialTextButton
 fun LoginScreen(
     viewModel: SignViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state
+    val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
     val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading))
 
     val focusRequester = remember(::FocusRequester)
 
-    LaunchedEffect(state.error) {
-        state.error.handle {
+    LaunchedEffect(viewModel.message) {
+        viewModel.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }
     Scaffold(
-        scaffoldState = scaffoldState
+        scaffoldState = scaffoldState,
+        backgroundColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) { innerPadding ->
         Box(
             contentAlignment = Alignment.Center,

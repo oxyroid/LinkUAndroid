@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Keep
 interface WebSocketService {
-    fun initSession(uid: Int): Flow<Resource<Unit>>
+    fun initSession(uid: Int?): Flow<Resource<Unit>>
     fun incoming(): Flow<Message>
     suspend fun closeSession()
     suspend fun onClosed(handler: suspend () -> Unit)

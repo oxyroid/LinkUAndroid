@@ -17,7 +17,7 @@ import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,16 +50,23 @@ internal data class PageData(
 )
 @Composable
 fun MainScreen(
-    mainViewModel: MainViewModel = hiltViewModel()
+    viewModel: MainViewModel = hiltViewModel()
 ) {
-    val state by mainViewModel.state
+    val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    LaunchedEffect(viewModel.message) {
+        viewModel.message.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
+    }
+
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
-            val vmState by vm.state
+            val vmState = vm.readable
             ToolBar(
                 navIcon = Icons.Sharp.Close
                     .takeIf { drawerState.isOpen }

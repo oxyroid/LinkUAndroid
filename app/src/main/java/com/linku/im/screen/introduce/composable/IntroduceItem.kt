@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
@@ -30,7 +29,7 @@ fun IntroduceItem(
     onClick: () -> Unit,
     divider: Boolean = true
 ) {
-    val state by vm.state
+    val state = vm.readable
     val darkMode = state.isDarkMode
     when (property) {
         is Property.Data -> {

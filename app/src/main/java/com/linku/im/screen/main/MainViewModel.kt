@@ -83,7 +83,7 @@ class MainViewModel @Inject constructor(
     private fun getAllConversations() {
         conversationUseCases.observeConversations()
             .onEach { conversations ->
-                _state.value = state.value.copy(
+                writable = readable.copy(
                     conversations = conversations
                         .filter { it.type == Conversation.Type.GROUP }
                         .map { it.toMainUI() },
@@ -97,8 +97,8 @@ class MainViewModel @Inject constructor(
                     conversations.forEach { conversation ->
                         conversationUseCases.observeLatestContent(conversation.id)
                             .collectLatest { message ->
-                                val oldConversations = state.value.conversations.toMutableList()
-                                val oldContracts = state.value.contracts.toMutableList()
+                                val oldConversations = readable.conversations.toMutableList()
+                                val oldContracts = readable.contracts.toMutableList()
                                 val oldConversation = oldConversations.find { it.id == message.cid }
                                 val oldContract = oldContracts.find { it.id == message.cid }
                                 if (oldConversation != null) {
@@ -126,7 +126,7 @@ class MainViewModel @Inject constructor(
                                 } else {
                                     // TODO
                                 }
-                                _state.value = state.value.copy(
+                                writable = readable.copy(
                                     conversations = oldConversations,
                                     contracts = oldContracts
                                 )
@@ -137,14 +137,14 @@ class MainViewModel @Inject constructor(
             .launchIn(viewModelScope)
         conversationUseCases.fetchConversations()
             .onEach { resource ->
-                _state.value = when (resource) {
-                    Resource.Loading -> state.value.copy(
+                writable = when (resource) {
+                    Resource.Loading -> readable.copy(
                         loading = true
                     )
-                    is Resource.Success -> state.value.copy(
+                    is Resource.Success -> readable.copy(
                         loading = false
                     )
-                    is Resource.Failure -> state.value.copy(
+                    is Resource.Failure -> readable.copy(
                         loading = false
                     )
                 }

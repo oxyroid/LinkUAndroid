@@ -47,12 +47,12 @@ fun Drawer(
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Switch(
-                        checked = vm.state.value.isDarkMode,
+                        checked = vm.readable.isDarkMode,
                         onCheckedChange = {
                             vm.onEvent(LinkUEvent.ToggleDarkMode)
                         },
                         thumbContent = {
-                            val icon = if (!vm.state.value.isDarkMode) Icons.Sharp.DarkMode
+                            val icon = if (!vm.readable.isDarkMode) Icons.Sharp.DarkMode
                             else Icons.Sharp.LightMode
                             Icon(imageVector = icon, contentDescription = "dark theme")
                         }
@@ -67,7 +67,7 @@ fun Drawer(
                 if (supportDynamic) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Switch(
-                            checked = vm.state.value.dynamicEnabled,
+                            checked = vm.readable.dynamicEnabled,
                             onCheckedChange = {
                                 vm.onEvent(LinkUEvent.ToggleDynamic)
                             },
