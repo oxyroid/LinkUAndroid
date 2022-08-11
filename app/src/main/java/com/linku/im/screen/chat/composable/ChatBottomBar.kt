@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
@@ -37,6 +36,7 @@ import coil.compose.AsyncImage
 import com.linku.domain.bean.Emoji
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
+import com.linku.im.extension.intervalClickable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,6 +176,6 @@ private fun LazyGridItemScope.EmojiButton(
             .padding(12.dp)
             .width(24.dp)
             .aspectRatio(1f)
-            .clickable { onClick() }
+            .intervalClickable { onClick() }
     )
 }

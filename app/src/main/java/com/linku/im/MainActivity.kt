@@ -31,6 +31,7 @@ import com.linku.im.screen.edit.EditScreen
 import com.linku.im.screen.introduce.IntroduceEvent
 import com.linku.im.screen.introduce.ProfileScreen
 import com.linku.im.screen.main.MainScreen
+import com.linku.im.screen.preview.PreviewScreen
 import com.linku.im.screen.query.QueryScreen
 import com.linku.im.screen.sign.LoginScreen
 import com.linku.im.ui.theme.AppTheme
@@ -150,6 +151,19 @@ fun App() {
                     type = entity.arguments
                         ?.getInt("type")
                         ?.let(IntroduceEvent.Edit.Type::parse)
+                )
+            }
+            composable(
+                route = Screen.PreviewScreen.buildArgs("mid"),
+                arguments = listOf(
+                    navArgument("mid") {
+                        type = NavType.IntType
+                        nullable = false
+                    }
+                )
+            ) { entity ->
+                PreviewScreen(
+                    mid = entity.arguments?.getInt("mid") ?: -1
                 )
             }
         }

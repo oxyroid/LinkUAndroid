@@ -4,7 +4,6 @@ import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
@@ -25,6 +24,7 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.domain.entity.Conversation
+import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
 import com.linku.im.ui.components.TextImage
 
@@ -49,7 +49,7 @@ fun QueryItem(
         modifier = modifier
             .fillMaxWidth()
             .height(64.dp)
-            .clickable(
+            .intervalClickable(
                 enabled = (conversation != null),
                 onClick = onClick
             )

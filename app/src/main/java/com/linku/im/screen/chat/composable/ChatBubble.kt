@@ -49,7 +49,8 @@ private val BUBBLE_SPECIAL_CORNER = 0.dp
 fun ChatBubble(
     message: Message,
     config: BubbleConfig,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPreview: (Int) -> Unit
 ) {
     val state = vm.readable
     val isSystemInDarkMode = state.isDarkMode
@@ -203,7 +204,8 @@ fun ChatBubble(
                                 backgroundColor = backgroundColor,
                                 contentColor = contentColor,
                                 message = message,
-                                contentDescription = "Image Message"
+                                contentDescription = "Image Message",
+                                onClick = { onPreview(message.id) }
                             )
                         }
                         is GraphicsMessage -> {
@@ -211,7 +213,8 @@ fun ChatBubble(
                                 Image(
                                     backgroundColor = backgroundColor,
                                     contentColor = contentColor,
-                                    message = message
+                                    message = message,
+                                    onClick = { onPreview(message.id) }
                                 )
                                 CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
                                     Text(
@@ -252,12 +255,14 @@ fun ChatBubble(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Image(
     backgroundColor: Color,
     contentColor: Color,
     message: Message,
-    contentDescription: String? = null
+    contentDescription: String? = null,
+    onClick: () -> Unit
 ) {
     val realUrl = when (message) {
         is ImageMessage -> message.url
@@ -269,7 +274,8 @@ private fun Image(
         modifier = Modifier.padding(4.dp),
         color = backgroundColor,
         contentColor = contentColor,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        onClick = onClick
     ) {
         message.content
         val url = ImageRequest.Builder(LocalContext.current).data(realUrl)

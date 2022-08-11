@@ -15,7 +15,15 @@ data class MessageUseCases @Inject constructor(
     val textMessage: TextMessageUseCase,
     val imageMessage: ImageMessageUseCase,
     val graphicsMessage: GraphicsMessageUseCase,
+    val getMessage: GetMessageUseCase
 )
+
+data class GetMessageUseCase(
+    val repository: MessageRepository
+) {
+    operator fun invoke(mid: Int): Flow<Resource<Message>> =
+        repository.getMessageById(mid)
+}
 
 data class TextMessageUseCase(
     val repository: MessageRepository

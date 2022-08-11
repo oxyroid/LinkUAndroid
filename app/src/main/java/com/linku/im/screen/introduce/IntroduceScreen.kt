@@ -3,7 +3,6 @@ package com.linku.im.screen.introduce
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,6 +36,7 @@ import com.linku.im.BuildConfig
 import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
+import com.linku.im.extension.intervalClickable
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.ui.components.ToolBar
@@ -46,7 +46,8 @@ import com.linku.im.vm
 import kotlinx.coroutines.launch
 
 @OptIn(
-    ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalMaterialApi::class,
+    ExperimentalMaterial3Api::class,
     ExperimentalFoundationApi::class
 )
 @Composable
@@ -174,7 +175,7 @@ fun ProfileScreen(
                             },
                             modifier = Modifier
                                 .background(MaterialTheme.colorScheme.background)
-                                .clickable {
+                                .intervalClickable {
                                     scope.launch {
                                         it.onClick()
                                         sheetState.hide()

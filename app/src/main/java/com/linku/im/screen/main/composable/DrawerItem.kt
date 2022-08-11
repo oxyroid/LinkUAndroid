@@ -1,7 +1,6 @@
 package com.linku.im.screen.main.composable
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.linku.im.extension.intervalClickable
 import com.linku.im.screen.Screen
 
 internal data class Route(
@@ -45,7 +45,7 @@ internal fun DrawerItem(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .intervalClickable(onClick = onClick)
                 .padding(
                     vertical = 12.dp,
                     horizontal = 18.dp

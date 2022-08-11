@@ -111,6 +111,12 @@ class MessageRepositoryImpl(
 
     override suspend fun closeSession() = socketService.closeSession()
 
+    override fun getMessageById(mid: Int): Flow<Resource<Message>> = resourceFlow {
+        val message = messageDao.getById(mid)
+        message?.let { emitResource(it.toReadable()) }
+        // FIXME: GET LATEST FROM SERVER
+    }
+
     override suspend fun sendTextMessage(cid: Int, text: String): Flow<Resource<Unit>> =
         channelFlow {
             // We wanna to custom the catch block, so we didn't use resourceFlow.

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,6 +23,7 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.im.extension.ifTrue
+import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
 import com.linku.im.screen.main.MainState
 import com.linku.im.ui.components.TextImage
@@ -56,8 +56,8 @@ fun ConversationItem(
                     it.background(MaterialTheme.colorScheme.surface * 0.8f)
                 } ?: it
             }
-            .clickable(
-                enabled = (conversation != null),
+            .intervalClickable(
+                enabled = conversation != null,
                 onClick = onClick
             )
             .padding(

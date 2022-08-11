@@ -1,20 +1,19 @@
 package com.linku.im.screen.introduce.composable
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.im.extension.ifTrue
+import com.linku.im.extension.intervalClickable
 import com.linku.im.ui.theme.divider
 import com.linku.im.vm
 
@@ -36,9 +35,8 @@ fun IntroduceItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(
-                        onClick = onClick,
-                        role = Role.Tab
+                    .intervalClickable(
+                        onClick = onClick
                     )
                     .background(MaterialTheme.colorScheme.background)
                     .padding(
@@ -109,11 +107,10 @@ fun IntroduceItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    .clickable(
+                    .intervalClickable(
                         onClick = {
 
-                        },
-                        role = Role.Tab
+                        }
                     )
                     .padding(
                         start = PADDING_X,

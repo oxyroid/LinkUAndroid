@@ -30,6 +30,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
+import com.linku.im.screen.Screen
 import com.linku.im.screen.chat.composable.ChatBottomBar
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.ui.components.ToolBar
@@ -112,7 +113,15 @@ fun ChatScreen(
             ) {
                 itemsIndexed(state.messages) { index, it ->
                     Column {
-                        ChatBubble(message = it.message, config = it.config)
+                        ChatBubble(
+                            message = it.message,
+                            config = it.config,
+                            onPreview = {
+                                vm.onEvent(
+                                    LinkUEvent.NavigateWithArgs(Screen.PreviewScreen.withArgs(it))
+                                )
+                            }
+                        )
                         if (index == 0) Spacer(modifier = Modifier.height(120.dp))
                     }
                 }

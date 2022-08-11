@@ -237,7 +237,8 @@ object AppModule {
             closeSession = CloseSessionUseCase(repository),
             observeMessages = ObserveMessagesUseCase(repository),
             imageMessage = ImageMessageUseCase(repository),
-            graphicsMessage = GraphicsMessageUseCase(repository)
+            graphicsMessage = GraphicsMessageUseCase(repository),
+            getMessage = GetMessageUseCase(repository)
         )
     }
 
