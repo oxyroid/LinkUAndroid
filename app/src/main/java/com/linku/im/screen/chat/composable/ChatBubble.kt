@@ -110,6 +110,7 @@ fun ChatBubble(
                                 .size(16.dp)
                                 .align(Alignment.Bottom)
                         )
+                        Spacer(modifier = Modifier.width(4.dp))
                     }
                     Message.STATE_FAILED -> {
                         Icon(
@@ -120,6 +121,7 @@ fun ChatBubble(
                                 .size(24.dp)
                                 .align(Alignment.Bottom)
                         )
+                        Spacer(modifier = Modifier.width(4.dp))
                     }
                 }
                 if (config is BubbleConfig.Multi) {
@@ -250,7 +252,6 @@ fun ChatBubble(
     }
 }
 
-
 @Composable
 private fun Image(
     backgroundColor: Color,
@@ -277,7 +278,7 @@ private fun Image(
             model = url,
             contentDescription = contentDescription,
             modifier = Modifier
-                .height(120.dp)
+                .fillMaxWidth()
                 .aspectRatio(4 / 3f),
             contentScale = ContentScale.Crop,
             error = {

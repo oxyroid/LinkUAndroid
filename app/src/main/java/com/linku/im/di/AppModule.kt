@@ -75,7 +75,6 @@ object AppModule {
         json: Json,
         client: OkHttpClient
     ): Retrofit {
-
         val contentType = DataConstants.MEDIA_TYPE_JSON.toMediaType()
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
@@ -203,16 +202,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFileRepository(
-        @ApplicationContext context: Context,
-        fileService: FileService
-    ): FileRepository = FileRepositoryImpl(
-        context = context,
-        fileService = fileService
-    )
-
-    @Provides
-    @Singleton
     fun provideAuthUseCases(
         repository: AuthRepository,
         authenticator: Authenticator
@@ -240,7 +229,6 @@ object AppModule {
     @Singleton
     fun provideChatUseCases(
         repository: MessageRepository,
-        fileRepository: FileRepository
     ): MessageUseCases {
         return MessageUseCases(
             textMessage = TextMessageUseCase(repository),
@@ -248,8 +236,8 @@ object AppModule {
             observeAllMessages = ObserveAllMessagesUseCase(repository),
             closeSession = CloseSessionUseCase(repository),
             observeMessages = ObserveMessagesUseCase(repository),
-            imageMessage = ImageMessageUseCase(repository, fileRepository),
-            graphicsMessage = GraphicsMessageUseCase(repository, fileRepository)
+            imageMessage = ImageMessageUseCase(repository),
+            graphicsMessage = GraphicsMessageUseCase(repository)
         )
     }
 
@@ -268,15 +256,6 @@ object AppModule {
         )
     }
 
-    @Provides
-    @Singleton
-    fun provideFileUseCases(
-        repository: FileRepository
-    ): FileUseCases {
-        return FileUseCases(
-            upload = UploadUseCase(repository)
-        )
-    }
 
     @Provides
     @Singleton

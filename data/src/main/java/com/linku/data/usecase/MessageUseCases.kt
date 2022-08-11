@@ -3,7 +3,6 @@ package com.linku.data.usecase
 import android.net.Uri
 import com.linku.domain.Resource
 import com.linku.domain.entity.Message
-import com.linku.domain.repository.FileRepository
 import com.linku.domain.repository.MessageRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -28,8 +27,7 @@ data class TextMessageUseCase(
 }
 
 data class ImageMessageUseCase(
-    val messageRepository: MessageRepository,
-    val fileRepository: FileRepository
+    val messageRepository: MessageRepository
 ) {
     operator fun invoke(
         cid: Int,
@@ -38,8 +36,7 @@ data class ImageMessageUseCase(
 }
 
 data class GraphicsMessageUseCase(
-    val messageRepository: MessageRepository,
-    val fileRepository: FileRepository
+    val messageRepository: MessageRepository
 ) {
     operator fun invoke(
         cid: Int,

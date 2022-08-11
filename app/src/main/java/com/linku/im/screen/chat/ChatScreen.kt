@@ -13,15 +13,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Surface
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,27 +29,25 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.extension.debug
 import com.linku.im.extension.ifTrue
-import com.linku.im.extension.toast
 import com.linku.im.screen.chat.composable.ChatBottomBar
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.vm
 
 @OptIn(
-    ExperimentalPermissionsApi::class,
-    ExperimentalMaterial3Api::class,
-    ExperimentalAnimationApi::class
+    ExperimentalPermissionsApi::class, ExperimentalAnimationApi::class,
+    ExperimentalMaterial3Api::class
 )
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = hiltViewModel(),
-    cid: Int
+    viewModel: ChatViewModel = hiltViewModel(), cid: Int
 ) {
-    val context = LocalContext.current
     val state = viewModel.readable
-    val scaffoldState = rememberScaffoldState()
+
+    val hostState = remember {
+        SnackbarHostState()
+    }
     val listState = rememberLazyListState()
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -69,10 +66,10 @@ fun ChatScreen(
     }
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
+            hostState.showSnackbar(it)
         }
         vm.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
+            hostState.showSnackbar(it)
         }
     }
     val firstVisibleItemIndex by remember {
@@ -97,9 +94,8 @@ fun ChatScreen(
                 text = state.title
             )
         },
-        backgroundColor = MaterialTheme.colorScheme.background,
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        scaffoldState = scaffoldState
+        containerColor = MaterialTheme.colorScheme.background,
+        contentColor = MaterialTheme.colorScheme.onBackground
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -107,6 +103,7 @@ fun ChatScreen(
                 .fillMaxSize()
                 .imePadding()
         ) {
+
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 reverseLayout = true,
@@ -120,9 +117,11 @@ fun ChatScreen(
                     }
                 }
             }
+
             Column(
                 modifier = Modifier.align(Alignment.BottomCenter)
             ) {
+                SnackbarHost(hostState)
                 AnimatedContent(
                     targetState = state.uri,
                     modifier = Modifier
@@ -131,8 +130,7 @@ fun ChatScreen(
                         .draggable(
                             state = rememberDraggableState {
                                 if (it > 20) viewModel.onEvent(ChatEvent.OnFileUriChange(null))
-                            },
-                            orientation = Orientation.Vertical
+                            }, orientation = Orientation.Vertical
                         ),
                     transitionSpec = {
                         slideInVertically { it } with slideOutVertically { -it }
@@ -167,8 +165,7 @@ fun ChatScreen(
                         }
                     }
                 }
-                ChatBottomBar(
-                    text = state.text,
+                ChatBottomBar(text = state.text,
                     uri = state.uri,
                     emojis = state.emojis,
                     expended = state.expended,
@@ -176,8 +173,7 @@ fun ChatScreen(
                     onFile = { permissionState.launchPermissionRequest() },
                     onText = { viewModel.onEvent(ChatEvent.TextChange(it)) },
                     onEmoji = { viewModel.onEvent(ChatEvent.EmojiChange(it)) },
-                    onExpanded = { viewModel.onEvent(ChatEvent.Expanded(!state.expended)) }
-                )
+                    onExpanded = { viewModel.onEvent(ChatEvent.Expanded(!state.expended)) })
             }
         }
 
@@ -186,13 +182,7 @@ fun ChatScreen(
     val event by remember {
         derivedStateOf { state.scrollToBottomEvent }
     }
-    var times by remember {
-        mutableStateOf(0)
-    }
     LaunchedEffect(event) {
-        debug {
-            context.toast("scroll: ${++times}")
-        }
         event.handle {
             listState.animateScrollToItem(0)
         }

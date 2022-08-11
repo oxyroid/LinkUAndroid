@@ -4,6 +4,7 @@ import com.linku.im.screen.introduce.composable.Property
 
 sealed class IntroduceEvent {
     object FetchIntroduce : IntroduceEvent()
+    object ToggleLogMode : IntroduceEvent()
     object VerifiedEmail : IntroduceEvent()
     data class VerifiedEmailCode(val code: String) : IntroduceEvent()
     object CancelVerifiedEmail : IntroduceEvent()
@@ -12,7 +13,6 @@ sealed class IntroduceEvent {
         val label: String,
         val actions: List<Property.Data.Action>
     ) : IntroduceEvent()
-
     data class Edit(val type: Type) : IntroduceEvent() {
         sealed class Type(private val code: Int) {
             object Name : Type(0)

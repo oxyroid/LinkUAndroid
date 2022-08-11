@@ -16,15 +16,19 @@ import com.linku.domain.service.ChatService
 import com.linku.domain.service.FileService
 import com.linku.domain.service.NotificationService
 import com.linku.domain.service.WebSocketService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import java.io.File
 import java.io.FileNotFoundException
+import java.util.*
 
 class MessageRepositoryImpl(
     private val socketService: WebSocketService,
@@ -282,22 +286,37 @@ class MessageRepositoryImpl(
             emitOldVersionResource()
             return@resourceFlow
         }
+
+        val default = UUID.randomUUID().toString()
+        val segment = uri.lastPathSegment ?: default
+        val file = File(context.cacheDir, "$segment.png")
+        withContext(Dispatchers.IO) {
+            file.createNewFile()
+        }
         val resolver = context.contentResolver
         try {
-            resolver.openInputStream(uri).use { stream ->
-                if (stream != null) {
-                    val bytes = stream.readBytes()
-                    val filename = "file.png"
-                    val part = MultipartBody.Part.createFormData(
-                        "file", filename, RequestBody.create(MediaType.parse("image/*"), bytes)
-                    )
-                    fileService.upload(part).handle(::emitResource).catch(::emitResource)
-                } else {
-                    debug { Log.e(TAG, "upload: cannot open stream.") }
-                    emitOldVersionResource()
-                    return@resourceFlow
+            file.outputStream().use {
+                resolver.openInputStream(uri).use { stream ->
+                    if (stream != null) {
+                        stream.copyTo(it)
+                        val filename = file.name
+                        val part = MultipartBody.Part
+                            .createFormData(
+                                "file",
+                                filename,
+                                RequestBody.create(MediaType.parse("image"), file)
+                            )
+                        fileService.upload(part)
+                            .handle(::emitResource)
+                            .catch(::emitResource)
+                    } else {
+                        debug { Log.e(TAG, "upload: cannot open stream.") }
+                        emitOldVersionResource()
+                        return@resourceFlow
+                    }
                 }
             }
+
         } catch (e: FileNotFoundException) {
             debug { Log.e(TAG, "upload: cannot find file.") }
             emitOldVersionResource()

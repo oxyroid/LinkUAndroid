@@ -1,8 +1,10 @@
 package com.linku.im.screen.introduce
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -42,7 +45,10 @@ import com.linku.im.ui.theme.divider
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class
+)
 @Composable
 fun ProfileScreen(
     viewModel: IntroduceViewModel = hiltViewModel()
@@ -76,11 +82,9 @@ fun ProfileScreen(
     }
 
     state.verifiedEmailStarting.ifTrue {
-        AlertDialog(
-            onDismissRequest = {},
+        AlertDialog(onDismissRequest = {},
             text = { CircularProgressIndicator() },
-            confirmButton = {}
-        )
+            confirmButton = {})
     }
 
     state.verifiedEmailDialogShowing.ifTrue {
@@ -111,8 +115,7 @@ fun ProfileScreen(
                     onClick = {
                         viewModel.onEvent(IntroduceEvent.VerifiedEmailCode(code))
                         code = ""
-                    },
-                    enabled = code.isNotBlank() and !state.verifiedEmailCodeVerifying
+                    }, enabled = code.isNotBlank() and !state.verifiedEmailCodeVerifying
                 ) {
                     Text(
                         text = stringResource(
@@ -131,8 +134,7 @@ fun ProfileScreen(
                 }
             },
             title = {
-                val title = state.verifiedEmailCodeMessage
-                    .takeIf { it.isNotBlank() }
+                val title = state.verifiedEmailCodeMessage.takeIf { it.isNotBlank() }
                     ?: stringResource(id = R.string.email_verified_dialog_title)
                 Text(text = title, style = MaterialTheme.typography.titleMedium)
             },
@@ -142,7 +144,6 @@ fun ProfileScreen(
             textContentColor = MaterialTheme.colorScheme.onSurface
         )
     }
-
 
     Scaffold(
         scaffoldState = scaffoldState
@@ -154,19 +155,16 @@ fun ProfileScreen(
                     item {
                         Text(
                             text = state.actionsLabel,
-                            style = MaterialTheme.typography.titleSmall
-                                .copy(color = MaterialTheme.colorScheme.primary),
+                            style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.primary),
                             modifier = Modifier.padding(16.dp)
                         )
                     }
                     items(state.actions) {
-                        ListItem(
-                            text = {
-                                Text(
-                                    text = it.text,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                            },
+                        ListItem(text = {
+                            Text(
+                                text = it.text, color = MaterialTheme.colorScheme.onBackground
+                            )
+                        },
                             icon = {
                                 Icon(
                                     imageVector = it.icon,
@@ -181,8 +179,7 @@ fun ProfileScreen(
                                         it.onClick()
                                         sheetState.hide()
                                     }
-                                }
-                        )
+                                })
                     }
                 }
             },
@@ -225,7 +222,6 @@ fun ProfileScreen(
                                     )
                                 )
                                 scope.launch {
-                                    if (state.actions.isEmpty()) return@launch
                                     sheetState.show()
                                 }
                             }
@@ -243,11 +239,9 @@ fun ProfileScreen(
                 }
 
                 item {
-                    ProfileList(
-                        label = stringResource(R.string.settings),
+                    ProfileList(label = stringResource(R.string.settings),
                         items = state.settingsProperties,
-                        onItemClick = {}
-                    )
+                        onItemClick = {})
                 }
 
                 item {
@@ -256,9 +250,11 @@ fun ProfileScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.divider(isDarkMode))
-                            .clickable {
-
-                            },
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) },
+                                role = Role.Button
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -281,12 +277,14 @@ fun ProfileScreen(
                     )
                     DropdownMenu(
                         expanded = dropdownMenuExpended,
-                        onDismissRequest = { dropdownMenuExpended = false }) {
+                        onDismissRequest = { dropdownMenuExpended = false }
+                    ) {
                         DropdownMenuItem(
                             onClick = { viewModel.onEvent(IntroduceEvent.SignOut) },
                             text = {
-                                Text(text = stringResource(R.string.sign_out))
-                            })
+                                Text(stringResource(R.string.sign_out))
+                            }
+                        )
                     }
                 },
                 text = "",

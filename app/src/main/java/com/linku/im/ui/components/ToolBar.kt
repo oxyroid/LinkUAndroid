@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.linku.im.extension.ifTrue
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -29,7 +30,7 @@ fun ToolBar(
         Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
         SmallTopAppBar(
             title = {
-                val duration = 800
+                val duration = text.isNotEmpty().ifTrue { 800 } ?: 0
                 Row {
                     Spacer(Modifier.width(8.dp))
                     val animation = remember {

@@ -8,7 +8,6 @@ import com.linku.data.usecase.SettingUseCase
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.eventOf
-import com.linku.im.extension.debug
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -121,7 +120,7 @@ class LinkUViewModel @Inject constructor(
     private var initSessionJob: Job? = null
     private var times = 0
     private fun initSession() {
-        debug {
+        settings.debug {
             times++
             applicationUseCases.toast("Init session, times: $times")
         }
@@ -141,7 +140,7 @@ class LinkUViewModel @Inject constructor(
                             updateLabel(Label.ConnectedFailed)
                             launch {
                                 delay(3000)
-                                debug {
+                                settings.debug {
                                     applicationUseCases.toast("InitSession Failed: ${resource.message}")
                                 }
                                 onEvent(LinkUEvent.InitSession)

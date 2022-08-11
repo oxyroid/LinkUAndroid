@@ -13,6 +13,11 @@ class SettingUseCase(context: Context) {
     var isDynamicMode: Boolean by BooleanPreference(sharedPreferences, DYNAMIC_MODE, false)
     var currentUID: Int? by IntPreference(sharedPreferences, CURRENT_UID)
     var token: String? by StringPreference(sharedPreferences, TOKEN)
+    var isLogMode: Boolean by BooleanPreference(sharedPreferences, LOG_MODE, false)
+
+    inline fun debug(block: () -> Unit) {
+        if (isLogMode) block()
+    }
 
     companion object {
         const val DARK_MODE = "dark_mode"
@@ -20,5 +25,6 @@ class SettingUseCase(context: Context) {
         const val CURRENT_UID = "current_uid"
         const val TOKEN = "token"
         const val SHARED_SETTINGS = "shared_settings"
+        const val LOG_MODE = "log_mode"
     }
 }
