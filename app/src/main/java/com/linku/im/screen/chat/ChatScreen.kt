@@ -67,8 +67,11 @@ fun ChatScreen(
     LaunchedEffect(Unit) {
         viewModel.onEvent(ChatEvent.Initial(cid))
     }
-    LaunchedEffect(viewModel.message) {
+    LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
+        vm.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }

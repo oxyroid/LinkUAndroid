@@ -2,10 +2,7 @@ package com.linku.data
 
 import com.linku.data.usecase.SettingUseCase
 import com.linku.domain.Authenticator
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 
 class DefaultAuthenticator(
     private val settings: SettingUseCase
@@ -27,7 +24,6 @@ class DefaultAuthenticator(
 
     private val _observeCurrent = MutableStateFlow(currentUID)
     override val observeCurrent: Flow<Int?> = _observeCurrent
-        .distinctUntilChangedBy { it }
         .onEach {
             print(it)
         }

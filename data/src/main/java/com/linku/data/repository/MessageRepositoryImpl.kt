@@ -13,9 +13,10 @@ import com.linku.domain.repository.MessageRepository
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ChatService
-import com.linku.domain.service.WebSocketService
 import com.linku.domain.service.FileService
 import com.linku.domain.service.NotificationService
+import com.linku.domain.service.WebSocketService
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -36,23 +37,24 @@ class MessageRepositoryImpl(
     private val json: Json,
     private val authenticator: Authenticator
 ) : MessageRepository {
+    private var job: Job? = null
     override fun initSession(uid: Int?): Flow<Resource<Unit>> = channelFlow {
         try {
-
-            socketService.initSession(uid)
+            job?.cancel()
+            job = socketService.initSession(uid)
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {
-                            send(Resource.Loading)
+                            trySend(Resource.Loading)
                             messageDao.clearStagingMessages()
                             socketService.onClosed {
                                 debug { Log.e(TAG, "Message Channel Closed!") }
                                 if (authenticator.currentUID != null) {
-                                    send(Resource.Failure("Message Channel Closed!"))
+                                    trySend(Resource.Failure("Message Channel Closed!"))
                                 }
                             }
                         }
-                        is Resource.Failure -> send(
+                        is Resource.Failure -> trySend(
                             Resource.Failure(resource.message, resource.code)
                         )
                         is Resource.Success -> {
@@ -61,11 +63,11 @@ class MessageRepositoryImpl(
                                     chatService.subscribe()
                                         .handleUnit {
                                             Log.e(TAG, "initSession: mqtt success")
-                                            send(Resource.Success(Unit))
+                                            trySend(Resource.Success(Unit))
                                         }
                                         .catch { message, code ->
                                             Log.e(TAG, "initSession: mqtt failed")
-                                            send(
+                                            trySend(
                                                 Resource.Failure(message, code)
                                             )
                                         }
@@ -95,7 +97,7 @@ class MessageRepositoryImpl(
                 }
                 .launchIn(this)
         } catch (e: Exception) {
-            send(Resource.Failure(e.message ?: ""))
+            trySend(Resource.Failure(e.message ?: ""))
         }
     }
 
@@ -109,7 +111,7 @@ class MessageRepositoryImpl(
         channelFlow {
             // We wanna to custom the catch block, so we didn't use resourceFlow.
             val userId = authenticator.currentUID ?: kotlin.run {
-                send(Resource.Failure("Please sign in first."))
+                trySend(Resource.Failure("Please sign in first."))
                 return@channelFlow
             }
             // 1: Create a staging message.
@@ -121,7 +123,7 @@ class MessageRepositoryImpl(
             // 2: Put the message into database.
             createStagingMessage(staging)
             launch {
-                send(Resource.Loading)
+                trySend(Resource.Loading)
                 try {
                     // 3: Make real HTTP-Connection to send message.
                     chatService.sendMessage(
@@ -134,16 +136,16 @@ class MessageRepositoryImpl(
                         with(it) {
                             levelStagingMessage(uuid, id, cid, timestamp, staging.text)
                         }
-                        send(Resource.Success(Unit))
+                        trySend(Resource.Success(Unit))
                     }.catch { message, code ->
                         // 5. Else downgrade it.
                         downgradeStagingMessage(staging.uuid)
-                        send(Resource.Failure(message, code))
+                        trySend(Resource.Failure(message, code))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                     downgradeStagingMessage(staging.uuid)
-                    send(Resource.Failure(e.message ?: ""))
+                    trySend(Resource.Failure(e.message ?: ""))
                 }
             }
 
@@ -163,7 +165,7 @@ class MessageRepositoryImpl(
                     Resource.Loading -> {
                         // 3. Put the message into database.
                         createStagingMessage(staging)
-                        send(Resource.Loading)
+                        trySend(Resource.Loading)
                     }
                     is Resource.Success -> {
                         // 4. Make real HTTP-Connection to send message.
@@ -185,11 +187,11 @@ class MessageRepositoryImpl(
                                             content = uri.toString()
                                         )
                                     }
-                                    send(Resource.Success(Unit))
+                                    trySend(Resource.Success(Unit))
                                 }.catch { message, _ ->
                                     // 5. Else downgrade it.
                                     downgradeStagingMessage(staging.uuid)
-                                    send(Resource.Failure(message))
+                                    trySend(Resource.Failure(message))
                                 }
                             } catch (e: Exception) {
                                 e.printStackTrace()
@@ -199,7 +201,7 @@ class MessageRepositoryImpl(
                     }
                     is Resource.Failure -> {
                         downgradeStagingMessage(staging.uuid)
-                        send(Resource.Failure(resource.message))
+                        trySend(Resource.Failure(resource.message))
                     }
                 }
             }
@@ -225,7 +227,7 @@ class MessageRepositoryImpl(
                         Resource.Loading -> {
                             // 3. Put the message into database.
                             createStagingMessage(staging)
-                            send(Resource.Loading)
+                            trySend(Resource.Loading)
                         }
                         is Resource.Success -> {
                             // 4. Make real HTTP-Connection to send message.
@@ -250,11 +252,11 @@ class MessageRepositoryImpl(
                                                 ).let(json::encodeToString)
                                             )
                                         }
-                                        send(Resource.Success(Unit))
+                                        trySend(Resource.Success(Unit))
                                     }.catch { message, _ ->
                                         // 5. Else downgrade it.
                                         downgradeStagingMessage(staging.uuid)
-                                        send(Resource.Failure(message))
+                                        trySend(Resource.Failure(message))
                                     }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
@@ -263,7 +265,7 @@ class MessageRepositoryImpl(
                         }
                         is Resource.Failure -> {
                             downgradeStagingMessage(staging.uuid)
-                            send(Resource.Failure(resource.message))
+                            trySend(Resource.Failure(resource.message))
                         }
                     }
                 }

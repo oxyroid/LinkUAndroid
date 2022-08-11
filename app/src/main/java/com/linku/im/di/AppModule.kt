@@ -11,8 +11,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.room.Room
 import com.linku.data.DefaultAuthenticator
 import com.linku.data.repository.*
-import com.linku.data.service.CommonEmojiPaster
-import com.linku.data.service.OkWebSocketService
+import com.linku.data.service.TwitterEmojiService
+import com.linku.data.service.WebSocketServiceImpl
 import com.linku.data.usecase.*
 import com.linku.domain.Authenticator
 import com.linku.domain.extension.json
@@ -23,6 +23,8 @@ import com.linku.im.BuildConfig
 import com.linku.im.Constants
 import com.linku.im.R
 import com.linku.im.extension.serialization.asConverterFactory
+import com.linku.im.network.ConnectivityObserver
+import com.linku.im.network.NetworkConnectivityObserver
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -118,7 +120,7 @@ object AppModule {
         chatService: ChatService,
         json: Json
     ): WebSocketService {
-        return OkWebSocketService(okHttpClient, json, chatService)
+        return WebSocketServiceImpl(okHttpClient, json, chatService)
     }
 
     @Provides
@@ -279,11 +281,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideEmojiUseCases(
-        emojiPaster: EmojiPaster
+        emojiService: EmojiService
     ): EmojiUseCases {
         return EmojiUseCases(
-            getAll = GetAllUseCase(emojiPaster),
-            initialize = InitializeUseCase(emojiPaster)
+            getAll = GetAllUseCase(emojiService),
+            initialize = InitializeUseCase(emojiService)
         )
     }
 
@@ -345,8 +347,8 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideEmojiPaster(@ApplicationContext context: Context): EmojiPaster {
-        return CommonEmojiPaster(context)
+    fun provideEmojiPaster(@ApplicationContext context: Context): EmojiService {
+        return TwitterEmojiService(context)
     }
 
 
@@ -354,6 +356,12 @@ object AppModule {
     @Singleton
     fun provideSettingUseCases(@ApplicationContext context: Context): SettingUseCase {
         return SettingUseCase(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideConnectivityObserver(@ApplicationContext context: Context): ConnectivityObserver {
+        return NetworkConnectivityObserver(context)
     }
 
 }

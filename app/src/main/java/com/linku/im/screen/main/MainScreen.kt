@@ -57,8 +57,11 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-    LaunchedEffect(viewModel.message) {
+    LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
+        vm.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }

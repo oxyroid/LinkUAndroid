@@ -2,7 +2,7 @@ package com.linku.data.usecase
 
 import com.linku.domain.Resource
 import com.linku.domain.bean.Emoji
-import com.linku.domain.service.EmojiPaster
+import com.linku.domain.service.EmojiService
 import kotlinx.coroutines.flow.Flow
 
 data class EmojiUseCases(
@@ -11,13 +11,13 @@ data class EmojiUseCases(
 )
 
 data class InitializeUseCase(
-    private val emojiPaster: EmojiPaster
+    private val emojiService: EmojiService
 ) {
-    operator fun invoke(): Flow<Resource<Unit>> = emojiPaster.initialize()
+    operator fun invoke(): Flow<Resource<Unit>> = emojiService.initialize()
 }
 
 data class GetAllUseCase(
-    private val emojiPaster: EmojiPaster
+    private val emojiService: EmojiService
 ) {
-    operator fun invoke(): List<Emoji> = emojiPaster.emojis()
+    operator fun invoke(): List<Emoji> = emojiService.emojis()
 }

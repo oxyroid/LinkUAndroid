@@ -66,8 +66,11 @@ fun ProfileScreen(
         if (state.logout) vm.onEvent(LinkUEvent.PopBackStack)
     }
 
-    LaunchedEffect(viewModel.message) {
+    LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
+        vm.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }

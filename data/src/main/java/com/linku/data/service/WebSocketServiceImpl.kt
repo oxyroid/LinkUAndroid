@@ -18,7 +18,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.*
 import okio.ByteString
 
-class OkWebSocketService(
+class WebSocketServiceImpl(
     private val okHttpClient: OkHttpClient,
     private val json: Json,
     private val chatService: ChatService
@@ -26,10 +26,11 @@ class OkWebSocketService(
     private var webSocket: WebSocket? = null
     private var messageFlow = MutableSharedFlow<Message>()
     private var onClosed: (suspend () -> Unit)? = null
+
     override fun initSession(uid: Int?): Flow<Resource<Unit>> = callbackFlow {
-        send(Resource.Loading)
+        trySend(Resource.Loading)
         if (uid == null) {
-            send(Resource.Failure("User is not exist."))
+            trySend(Resource.Failure("User is not exist."))
             return@callbackFlow
         }
         val request = Request.Builder()
@@ -38,29 +39,15 @@ class OkWebSocketService(
         okHttpClient.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 super.onOpen(webSocket, response)
-                this@OkWebSocketService.webSocket = webSocket
-                launch {
-                    try {
-                        chatService.subscribe()
-                            .handleUnit {
-                                Log.e(TAG, "initSession: mqtt success")
-                                send(Resource.Success(Unit))
-                            }
-                            .catch { message, code ->
-                                Log.e(TAG, "initSession: mqtt failed")
-                                send(Resource.Failure(message, code))
-                            }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                }
+                this@WebSocketServiceImpl.webSocket = webSocket
+                trySend(Resource.Success(Unit))
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
                 super.onMessage(webSocket, text)
                 launch {
                     try {
-                        json.decodeFromString<Socket<MessageDTO>>(text).data.toMessage()
+                        json.decodeFromString<SocketPackage<MessageDTO>>(text).data.toMessage()
                     } catch (e: Exception) {
                         debug { Log.e(TAG, "onMessage: ", e) }
                         null
@@ -79,6 +66,9 @@ class OkWebSocketService(
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                 super.onClosed(webSocket, code, reason)
+                debug {
+                    Log.e(TAG, "Websocket closed, code = $code, reason = $reason")
+                }
                 launch {
                     onClosed?.invoke()
                 }
@@ -86,13 +76,15 @@ class OkWebSocketService(
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 super.onFailure(webSocket, t, response)
-                launch { send(Resource.Failure(t.message ?: "")) }
+                debug {
+                    Log.e(TAG, "Websocket failed", t)
+                }
+                trySend(Resource.Failure(t.message ?: ""))
             }
         })
         awaitClose {
             webSocket?.close(1000, null)
         }
-
     }
 
     override fun incoming(): Flow<Message> = messageFlow

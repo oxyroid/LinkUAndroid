@@ -1,4 +1,4 @@
-package com.linku.im.service
+package com.linku.im.network
 
 import android.content.Context
 import android.media.SoundPool

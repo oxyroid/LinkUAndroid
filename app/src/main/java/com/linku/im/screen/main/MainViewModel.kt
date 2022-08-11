@@ -1,25 +1,19 @@
 package com.linku.im.screen.main
 
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkRequest
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
-import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.TextMessage
-import com.linku.im.LinkUEvent
 import com.linku.im.R
+import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -29,45 +23,24 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val conversationUseCases: ConversationUseCases,
     private val applicationUseCases: ApplicationUseCases,
-    private val authenticator: Authenticator
+    connectivityObserver: ConnectivityObserver
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
 
-    private val connectivityManager: ConnectivityManager = applicationUseCases.getSystemService()
-    private var networkCallback: ConnectivityManager.NetworkCallback
-
     init {
-        var initSessionJob: Job? = null
-        networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                super.onAvailable(network)
-                applicationUseCases.toast("网络连接已恢复")
-                initSessionJob?.cancel()
-                initSessionJob = authenticator.observeCurrent
-                    .distinctUntilChanged()
-                    .onEach { userId ->
-                        if (userId != null) {
-                            vm.onEvent(LinkUEvent.InitSession)
-                            onEvent(MainEvent.GetConversations)
-                        } else {
-                            getAllConversationsJob?.cancel()
-                            vm.onEvent(LinkUEvent.Disconnect)
-                        }
+        connectivityObserver.observe()
+            .onEach { state ->
+                when (state) {
+                    ConnectivityObserver.State.Available -> {
+                        onEvent(MainEvent.GetConversations)
                     }
-                    .launchIn(viewModelScope)
-
+                    ConnectivityObserver.State.Unavailable -> {}
+                    ConnectivityObserver.State.Losing -> {
+                        getAllConversationsJob?.cancel()
+                    }
+                    ConnectivityObserver.State.Lost -> {}
+                }
             }
-
-            override fun onLost(network: Network) {
-                super.onLost(network)
-                applicationUseCases.toast("网络连接已断开")
-                initSessionJob?.cancel()
-                getAllConversationsJob?.cancel()
-            }
-
-        }
-        val request = NetworkRequest.Builder().build()
-        connectivityManager.registerNetworkCallback(request, networkCallback)
-
+            .launchIn(viewModelScope)
     }
 
     override fun onEvent(event: MainEvent) {
@@ -150,10 +123,5 @@ class MainViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        connectivityManager.unregisterNetworkCallback(networkCallback)
     }
 }

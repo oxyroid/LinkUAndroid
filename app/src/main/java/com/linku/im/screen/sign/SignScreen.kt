@@ -28,6 +28,7 @@ import com.google.accompanist.insets.ui.Scaffold
 import com.linku.im.R
 import com.linku.im.ui.components.MaterialButton
 import com.linku.im.ui.components.MaterialTextButton
+import com.linku.im.vm
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,8 +41,11 @@ fun LoginScreen(
 
     val focusRequester = remember(::FocusRequester)
 
-    LaunchedEffect(viewModel.message) {
+    LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
+        vm.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }

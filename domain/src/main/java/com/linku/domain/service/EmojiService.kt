@@ -4,7 +4,7 @@ import com.linku.domain.Resource
 import com.linku.domain.bean.Emoji
 import kotlinx.coroutines.flow.Flow
 
-interface EmojiPaster {
+interface EmojiService {
     fun initialize(): Flow<Resource<Unit>>
     fun emojis(): List<Emoji>
 }

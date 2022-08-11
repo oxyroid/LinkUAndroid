@@ -27,7 +27,7 @@ class QueryViewModel @Inject constructor(
         writable = readable.copy(
             isDescription = !readable.isDescription
         )
-        hasQuery.ifTrue { query() }
+        hasQuery.ifTrue(::query)
     }
 
     private fun onText(text: String) {

@@ -9,10 +9,13 @@ import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.eventOf
 import com.linku.im.extension.debug
+import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -24,10 +27,39 @@ class LinkUViewModel @Inject constructor(
     private val emojiUseCases: EmojiUseCases,
     private val applicationUseCases: ApplicationUseCases,
     private val settings: SettingUseCase,
+    connectivityObserver: ConnectivityObserver,
     val authenticator: Authenticator
 ) : BaseViewModel<LinkUState, LinkUEvent>(LinkUState()) {
     init {
         onEvent(LinkUEvent.InitConfig)
+        connectivityObserver.observe()
+            .onEach { state ->
+                when (state) {
+                    ConnectivityObserver.State.Available -> {
+                        onMessage("网络连接已恢复")
+                        initSessionJob?.cancel()
+                        initSessionJob = authenticator.observeCurrent
+                            .distinctUntilChanged()
+                            .onEach { userId ->
+                                if (userId != null) onEvent(LinkUEvent.InitSession)
+                                else onEvent(LinkUEvent.Disconnect)
+                            }
+                            .launchIn(viewModelScope)
+                    }
+                    ConnectivityObserver.State.Unavailable -> {
+                        onMessage("未连接到网络")
+                    }
+                    ConnectivityObserver.State.Losing -> {
+                        onMessage("网络连接断开中")
+                        initSessionJob?.cancel()
+                    }
+                    ConnectivityObserver.State.Lost -> {
+                        onMessage("网络连接已断开")
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+
     }
 
     override fun onEvent(event: LinkUEvent) {
@@ -95,8 +127,9 @@ class LinkUViewModel @Inject constructor(
         }
         initSessionJob?.cancel()
         initSessionJob = viewModelScope.launch {
-            messageUseCases.initSession(authenticator.currentUID)
-                .onEach { resource ->
+            messageUseCases
+                .initSession(authenticator.currentUID)
+                .collectLatest { resource ->
                     when (resource) {
                         Resource.Loading -> {
                             updateLabel(Label.Connecting)
@@ -116,9 +149,8 @@ class LinkUViewModel @Inject constructor(
                         }
                     }
                 }
-                .launchIn(viewModelScope)
-
         }
+
     }
 
     private fun initConfig() {

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @Keep
-data class Socket<T>(
+data class SocketPackage<T>(
     val data: T,
     val type: String
 )

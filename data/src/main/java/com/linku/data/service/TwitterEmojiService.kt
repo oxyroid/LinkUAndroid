@@ -6,14 +6,13 @@ import com.linku.domain.Resource
 import com.linku.domain.bean.Emoji
 import com.linku.domain.emitResource
 import com.linku.domain.resourceFlow
-import com.linku.domain.service.EmojiPaster
+import com.linku.domain.service.EmojiService
 import kotlinx.coroutines.flow.Flow
 
-class CommonEmojiPaster(
+class TwitterEmojiService(
     private val context: Context
-) : EmojiPaster {
+) : EmojiService {
     private val cached = mutableListOf<Emoji>()
-
     override fun initialize(): Flow<Resource<Unit>> = resourceFlow {
         context.assets.open("emoji-test.config")
             .reader()

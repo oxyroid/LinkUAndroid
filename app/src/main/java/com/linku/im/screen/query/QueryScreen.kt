@@ -32,12 +32,14 @@ import com.linku.im.vm
 fun QueryScreen(
     viewModel: QueryViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
 
-    LaunchedEffect(viewModel.message) {
+    LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
+            scaffoldState.snackbarHostState.showSnackbar(it)
+        }
+        vm.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }
