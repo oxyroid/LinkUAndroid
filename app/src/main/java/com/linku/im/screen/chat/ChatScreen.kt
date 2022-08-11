@@ -1,6 +1,7 @@
 package com.linku.im.screen.chat
 
 import android.Manifest
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -21,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -45,6 +47,7 @@ fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(), cid: Int
 ) {
     val state = viewModel.readable
+    val context = LocalContext.current
 
     val hostState = remember {
         SnackbarHostState()
@@ -52,6 +55,12 @@ fun ChatScreen(
     val listState = rememberLazyListState()
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            )
+        }
         viewModel.onEvent(ChatEvent.OnFileUriChange(uri))
     }
     val permissionState =

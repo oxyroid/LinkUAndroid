@@ -14,6 +14,7 @@ import com.linku.domain.service.UserService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 class ConversationRepositoryImpl(
     private val conversationDao: ConversationDao,
@@ -61,7 +62,7 @@ class ConversationRepositoryImpl(
     }
 
     override fun observeLatestMessages(cid: Int): Flow<Message> {
-        return messageDao.getLatestMessageByCid(cid).filterNotNull()
+        return messageDao.getLatestMessageByCid(cid).filterNotNull().map { it.toReadable() }
     }
 
     override fun queryConversations(

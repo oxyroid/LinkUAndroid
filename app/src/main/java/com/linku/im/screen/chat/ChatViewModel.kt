@@ -53,7 +53,6 @@ class ChatViewModel @Inject constructor(
                     .onEach { messages ->
                         writable = readable.copy(
                             messages = messages
-                                .map { it.toReadable() }
                                 .mapIndexedNotNull { index, message ->
                                     val next = if (index == messages.lastIndex) null
                                     else messages[index + 1]

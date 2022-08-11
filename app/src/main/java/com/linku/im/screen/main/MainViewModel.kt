@@ -77,7 +77,7 @@ class MainViewModel @Inject constructor(
                                 if (oldConversation != null) {
                                     oldConversations.remove(oldConversation)
                                     val copy = oldConversation.copy(
-                                        content = when (message.toReadable()) {
+                                        content = when (message) {
                                             is TextMessage -> message.content
                                             is ImageMessage -> applicationUseCases.getString(R.string.image_message)
                                             is GraphicsMessage -> applicationUseCases.getString(R.string.graphics_message)
@@ -88,7 +88,7 @@ class MainViewModel @Inject constructor(
                                 } else if (oldContract != null) {
                                     oldContracts.remove(oldContract)
                                     val copy = oldContract.copy(
-                                        content = when (message.toReadable()) {
+                                        content = when (message) {
                                             is TextMessage -> message.content
                                             is ImageMessage -> applicationUseCases.getString(R.string.image_message)
                                             is GraphicsMessage -> applicationUseCases.getString(R.string.graphics_message)

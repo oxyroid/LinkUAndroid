@@ -6,4 +6,6 @@ sealed class Strategy {
     object OnlyCache : Strategy()
     object OnlyNetwork : Strategy()
     object Memory : Strategy()
+
+    object StrategyMemoryNotSupportException : Exception()
 }

@@ -2,6 +2,7 @@ package com.linku.data.usecase
 
 import android.net.Uri
 import com.linku.domain.Resource
+import com.linku.domain.Strategy
 import com.linku.domain.entity.Message
 import com.linku.domain.repository.MessageRepository
 import kotlinx.coroutines.flow.Flow
@@ -21,8 +22,10 @@ data class MessageUseCases @Inject constructor(
 data class GetMessageUseCase(
     val repository: MessageRepository
 ) {
-    operator fun invoke(mid: Int): Flow<Resource<Message>> =
-        repository.getMessageById(mid)
+    suspend operator fun invoke(
+        mid: Int,
+        strategy: Strategy
+    ): Message? = repository.getMessageById(mid, strategy)
 }
 
 data class TextMessageUseCase(

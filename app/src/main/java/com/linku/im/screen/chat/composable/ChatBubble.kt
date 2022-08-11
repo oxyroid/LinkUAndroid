@@ -277,8 +277,8 @@ private fun Image(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         onClick = onClick
     ) {
-        message.content
-        val url = ImageRequest.Builder(LocalContext.current).data(realUrl)
+        val url = ImageRequest.Builder(LocalContext.current)
+            .data(realUrl)
             .crossfade(true).build()
         SubcomposeAsyncImage(
             model = url,
@@ -307,9 +307,9 @@ private fun Image(
                         text = it.result.throwable.message ?: "",
                         style = MaterialTheme.typography.bodyMedium,
                         color = contentColor,
-                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
                     )
                 }
             },

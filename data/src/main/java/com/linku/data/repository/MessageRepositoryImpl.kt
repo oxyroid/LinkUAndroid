@@ -3,12 +3,11 @@ package com.linku.data.repository
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.core.net.toFile
 import com.linku.data.TAG
 import com.linku.data.debug
 import com.linku.domain.*
-import com.linku.domain.entity.GraphicsContent
-import com.linku.domain.entity.Message
-import com.linku.domain.entity.toConversation
+import com.linku.domain.entity.*
 import com.linku.domain.repository.MessageRepository
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
@@ -105,16 +104,164 @@ class MessageRepositoryImpl(
         }
     }
 
-    override fun incoming(): Flow<List<Message>> = messageDao.incoming()
+    override fun incoming(): Flow<List<Message>> =
+        // Cached Message is original type which is unreadable.
+        messageDao.incoming()
+            .map { list ->
+                list.mapNotNull { message ->
+                    // So we will convert each one to readable type.
+                    when (val readable = message.toReadable()) {
+                        // If it is the message which contains image.
+                        is ImageMessage -> {
+                            val url = readable.url
+                            // If its image content is map to cached file.
+                            if (url.startsWith("file:///")) {
+                                val uri = Uri.parse(url)
+                                val file = uri.toFile()
+                                // If it is not exists
+                                if (!file.exists()) {
+                                    // Fetch latest one from server then update local one.
+                                    getMessageById(readable.id, Strategy.NetworkThenCache)
+                                        .also {
+                                            // If the server one is not exists, we delete it from local.
+                                            if (it == null) {
+                                                messageDao.delete(readable.id)
+                                            }
+                                        }
+                                } else readable
+                                // If its image content is map to ContentProvider
+                                // The else-if branch is made for old version
+                            } else if (url.startsWith("content://")) {
+                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                    .also {
+                                        // If the server one is not exists, we delete it from local.
+                                        if (it == null) {
+                                            messageDao.delete(readable.id)
+                                        }
+                                    }
+                            } else readable
+                        }
+                        // Same with Image Message.
+                        is GraphicsMessage -> {
+                            val url = readable.url
+                            if (url.startsWith("file:///")) {
+                                val uri = Uri.parse(url)
+                                val file = uri.toFile()
+                                if (!file.exists()) {
+                                    getMessageById(readable.id, Strategy.NetworkThenCache)
+                                        .also {
+                                            if (it == null) {
+                                                messageDao.delete(readable.id)
+                                            }
+                                        }
+                                } else readable
+                            } else if (url.startsWith("content://")) {
+                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                    .also {
+                                        // If the server one is not exists, we delete it from local.
+                                        if (it == null) {
+                                            messageDao.delete(readable.id)
+                                        }
+                                    }
+                            } else readable
+                        }
+                        else -> readable
+                    }
+                }
+            }
 
-    override fun incoming(cid: Int): Flow<List<Message>> = messageDao.incoming(cid)
+    override fun incoming(cid: Int): Flow<List<Message>> = messageDao
+        .incoming(cid)
+        .map { list ->
+            list.mapNotNull { message ->
+                // So we will convert each one to readable type.
+                when (val readable = message.toReadable()) {
+                    // If it is the message which contains image.
+                    is ImageMessage -> {
+                        val url = readable.url
+                        // If its image content is map to cached file.
+                        if (url.startsWith("file:///")) {
+                            val uri = Uri.parse(url)
+                            val file = uri.toFile()
+                            // If it is not exists
+                            if (!file.exists()) {
+                                // Fetch latest one from server then update local one.
+                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                    .also {
+                                        // If the server one is not exists, we delete it from local.
+                                        if (it == null) {
+                                            messageDao.delete(readable.id)
+                                        }
+                                    }
+                            } else readable
+                            // If its image content is map to ContentProvider
+                            // The else-if branch is made for old version
+                        } else if (url.startsWith("content://")) {
+                            getMessageById(readable.id, Strategy.NetworkThenCache)
+                                .also {
+                                    // If the server one is not exists, we delete it from local.
+                                    if (it == null) {
+                                        messageDao.delete(readable.id)
+                                    }
+                                }
+                        } else readable
+                    }
+                    // Same with Image Message.
+                    is GraphicsMessage -> {
+                        val url = readable.url
+                        if (url.startsWith("file:///")) {
+                            val uri = Uri.parse(url)
+                            val file = uri.toFile()
+                            if (!file.exists()) {
+                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                    .also {
+                                        if (it == null) {
+                                            messageDao.delete(readable.id)
+                                        }
+                                    }
+                            } else readable
+                        } else if (url.startsWith("content://")) {
+                            getMessageById(readable.id, Strategy.NetworkThenCache)
+                                .also {
+                                    // If the server one is not exists, we delete it from local.
+                                    if (it == null) {
+                                        messageDao.delete(readable.id)
+                                    }
+                                }
+                        } else readable
+                    }
+                    else -> readable
+                }
+            }
+        }
 
     override suspend fun closeSession() = socketService.closeSession()
 
-    override fun getMessageById(mid: Int): Flow<Resource<Message>> = resourceFlow {
-        val message = messageDao.getById(mid)
-        message?.let { emitResource(it.toReadable()) }
-        // FIXME: GET LATEST FROM SERVER
+    override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? {
+        return try {
+            when (strategy) {
+                Strategy.CacheElseNetwork -> run {
+                    messageDao.getById(mid)
+                        ?: chatService.getMessageById(mid)
+                            .peekOrNull()
+                            ?.toMessage()
+                            ?.also { messageDao.insert(it) }
+                }
+                Strategy.Memory -> throw Strategy.StrategyMemoryNotSupportException
+                Strategy.NetworkThenCache -> {
+                    chatService.getMessageById(mid)
+                        .peekOrNull()
+                        ?.toMessage()
+                        ?.also { messageDao.insert(it) }
+                }
+                Strategy.OnlyCache -> messageDao.getById(mid)
+                Strategy.OnlyNetwork -> chatService.getMessageById(mid).peekOrNull()?.toMessage()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+
     }
 
     override suspend fun sendTextMessage(cid: Int, text: String): Flow<Resource<Unit>> =
@@ -168,7 +315,9 @@ class MessageRepositoryImpl(
             checkNotNull(userId) { "Please sign in first." }
             // 2. Create a staging message.
             val staging = MessageRepository.StagingMessage.Image(
-                cid = cid, uid = userId, uri = uri
+                cid = cid,
+                uid = userId,
+                uri = uri
             )
             uploadImage(uri).onEach { resource ->
                 when (resource) {
@@ -179,11 +328,12 @@ class MessageRepositoryImpl(
                     }
                     is Resource.Success -> {
                         // 4. Make real HTTP-Connection to send message.
+                        val cachedFile = resource.data
                         launch {
                             try {
                                 chatService.sendMessage(
                                     cid = cid,
-                                    content = resource.data,
+                                    content = cachedFile.remoteUrl,
                                     type = Message.Type.Image.toString(),
                                     uuid = staging.uuid
                                 ).handle { serverMessage ->
@@ -194,7 +344,7 @@ class MessageRepositoryImpl(
                                             id = id,
                                             cid = cid,
                                             timestamp = timestamp,
-                                            content = uri.toString()
+                                            content = cachedFile.localUri.toString()
                                         )
                                     }
                                     trySend(Resource.Success(Unit))
@@ -230,7 +380,10 @@ class MessageRepositoryImpl(
                 checkNotNull(userId) { "Please sign in first." }
                 // 2. Create a staging message.
                 val staging = MessageRepository.StagingMessage.Graphics(
-                    cid = cid, uid = userId, text = text, uri = uri
+                    cid = cid,
+                    uid = userId,
+                    text = text,
+                    uri = uri
                 )
                 uploadImage(uri).onEach { resource ->
                     when (resource) {
@@ -241,9 +394,10 @@ class MessageRepositoryImpl(
                         }
                         is Resource.Success -> {
                             // 4. Make real HTTP-Connection to send message.
+                            val cachedFile = resource.data
                             launch {
                                 try {
-                                    val content = GraphicsContent(text, resource.data)
+                                    val content = GraphicsContent(text, cachedFile.remoteUrl)
                                     chatService.sendMessage(
                                         cid = cid,
                                         content = json.encodeToString(content),
@@ -258,7 +412,8 @@ class MessageRepositoryImpl(
                                                 cid = cid,
                                                 timestamp = timestamp,
                                                 content = GraphicsContent(
-                                                    text = text, url = uri.toString()
+                                                    text = text,
+                                                    url = cachedFile.localUri.toString()
                                                 ).let(json::encodeToString)
                                             )
                                         }
@@ -286,49 +441,53 @@ class MessageRepositoryImpl(
 
         }
 
-    private fun uploadImage(uri: Uri?): Flow<Resource<String>> = resourceFlow {
-        if (uri == null) {
-            debug { Log.e(TAG, "upload: uri is null.") }
-            emitOldVersionResource()
-            return@resourceFlow
-        }
-
-        val default = UUID.randomUUID().toString()
-        val segment = uri.lastPathSegment ?: default
-        val file = File(context.cacheDir, "$segment.png")
-        withContext(Dispatchers.IO) {
-            file.createNewFile()
-        }
-        val resolver = context.contentResolver
-        try {
-            file.outputStream().use {
-                resolver.openInputStream(uri).use { stream ->
-                    if (stream != null) {
-                        stream.copyTo(it)
-                        val filename = file.name
-                        val part = MultipartBody.Part
-                            .createFormData(
-                                "file",
-                                filename,
-                                RequestBody.create(MediaType.parse("image"), file)
-                            )
-                        fileService.upload(part)
-                            .handle(::emitResource)
-                            .catch(::emitResource)
-                    } else {
-                        debug { Log.e(TAG, "upload: cannot open stream.") }
-                        emitOldVersionResource()
-                        return@resourceFlow
-                    }
-                }
+    private fun uploadImage(uri: Uri?): Flow<Resource<MessageRepository.CachedFile>> =
+        resourceFlow {
+            if (uri == null) {
+                debug { Log.e(TAG, "upload: uri is null.") }
+                emitOldVersionResource()
+                return@resourceFlow
             }
 
-        } catch (e: FileNotFoundException) {
-            debug { Log.e(TAG, "upload: cannot find file.") }
-            emitOldVersionResource()
-            return@resourceFlow
+            val uuid = UUID.randomUUID().toString()
+            val file = File(context.externalCacheDir, "$uuid.png")
+            withContext(Dispatchers.IO) {
+                file.createNewFile()
+            }
+            val resolver = context.contentResolver
+            try {
+                file.outputStream().use {
+                    resolver.openInputStream(uri).use { stream ->
+                        if (stream != null) {
+                            stream.copyTo(it)
+                            val filename = file.name
+                            val part = MultipartBody.Part
+                                .createFormData(
+                                    "file",
+                                    filename,
+                                    RequestBody.create(MediaType.parse("image"), file)
+                                )
+                            fileService.upload(part)
+                                .handle {
+                                    val cachedFile =
+                                        MessageRepository.CachedFile(Uri.fromFile(file), it)
+                                    emitResource(cachedFile)
+                                }
+                                .catch(::emitResource)
+                        } else {
+                            debug { Log.e(TAG, "upload: cannot open stream.") }
+                            emitOldVersionResource()
+                            return@resourceFlow
+                        }
+                    }
+                }
+
+            } catch (e: FileNotFoundException) {
+                debug { Log.e(TAG, "upload: cannot find file.") }
+                emitOldVersionResource()
+                return@resourceFlow
+            }
         }
-    }
 
     private suspend fun createStagingMessage(staging: MessageRepository.StagingMessage) {
         val id = System.currentTimeMillis().toInt()
@@ -345,16 +504,18 @@ class MessageRepositoryImpl(
                     sendState = Message.STATE_PENDING
                 )
             }
-            is MessageRepository.StagingMessage.Image -> Message(
-                id = id,
-                cid = staging.cid,
-                uid = staging.uid,
-                content = staging.uri.toString(),
-                type = Message.Type.Image,
-                timestamp = System.currentTimeMillis(),
-                uuid = staging.uuid,
-                sendState = Message.STATE_PENDING
-            )
+            is MessageRepository.StagingMessage.Image -> {
+                Message(
+                    id = id,
+                    cid = staging.cid,
+                    uid = staging.uid,
+                    content = staging.uri.toString(),
+                    type = Message.Type.Image,
+                    timestamp = System.currentTimeMillis(),
+                    uuid = staging.uuid,
+                    sendState = Message.STATE_PENDING
+                )
+            }
             is MessageRepository.StagingMessage.Graphics -> Message(
                 id = id,
                 cid = staging.cid,

@@ -2,12 +2,18 @@ package com.linku.domain.repository
 
 import android.net.Uri
 import com.linku.domain.Resource
+import com.linku.domain.Strategy
 import com.linku.domain.entity.Message
 import kotlinx.coroutines.flow.Flow
 import java.util.*
 
 interface MessageRepository {
-    fun getMessageById(mid: Int): Flow<Resource<Message>>
+    data class CachedFile(
+        val localUri: Uri,
+        val remoteUrl: String
+    )
+
+    suspend fun getMessageById(mid: Int, strategy: Strategy): Message?
     fun initSession(uid: Int?): Flow<Resource<Unit>>
     fun incoming(): Flow<List<Message>>
     fun incoming(cid: Int): Flow<List<Message>>

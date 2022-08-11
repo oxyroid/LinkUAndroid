@@ -2,13 +2,12 @@ package com.linku.im.screen.preview
 
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.MessageUseCases
-import com.linku.domain.Resource
+import com.linku.domain.Strategy
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -18,21 +17,16 @@ class PreviewViewModel @Inject constructor(
     override fun onEvent(event: PreviewEvent) {
         when (event) {
             is PreviewEvent.GetImageUrl -> {
-                messageUseCases.getMessage(event.mid)
-                    .onEach { resource ->
-                        writable = when (resource) {
-                            Resource.Loading -> readable
-                            is Resource.Success -> readable.copy(
-                                url = when (val message = resource.data) {
-                                    is ImageMessage -> message.url
-                                    is GraphicsMessage -> message.url
-                                    else -> ""
-                                }
-                            )
-                            is Resource.Failure -> readable
+                viewModelScope.launch {
+                    val latest = messageUseCases.getMessage(event.mid, Strategy.CacheElseNetwork)
+                    writable = readable.copy(
+                        url = when (latest) {
+                            is ImageMessage -> latest.url
+                            is GraphicsMessage -> latest.url
+                            else -> ""
                         }
-                    }
-                    .launchIn(viewModelScope)
+                    )
+                }
             }
         }
     }

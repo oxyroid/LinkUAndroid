@@ -17,6 +17,9 @@ interface ChatService {
         @Field("uuid") uuid: String
     ): Result<MessageDTO>
 
+    @GET("chats/msg/{mid}")
+    suspend fun getMessageById(@Path("mid") mid: Int): Result<MessageDTO>
+
     @POST("chats/{cid}/exit")
     suspend fun exitConversation(@Path("cid") cid: Int): Result<Unit>
 
