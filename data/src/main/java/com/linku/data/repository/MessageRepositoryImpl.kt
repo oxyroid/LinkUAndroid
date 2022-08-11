@@ -1,5 +1,6 @@
 package com.linku.data.repository
 
+import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -131,14 +132,6 @@ class MessageRepositoryImpl(
                                 } else readable
                                 // If its image content is map to ContentProvider
                                 // The else-if branch is made for old version
-                            } else if (url.startsWith("content://")) {
-                                getMessageById(readable.id, Strategy.NetworkThenCache)
-                                    .also {
-                                        // If the server one is not exists, we delete it from local.
-                                        if (it == null) {
-                                            messageDao.delete(readable.id)
-                                        }
-                                    }
                             } else readable
                         }
                         // Same with Image Message.
@@ -155,14 +148,6 @@ class MessageRepositoryImpl(
                                             }
                                         }
                                 } else readable
-                            } else if (url.startsWith("content://")) {
-                                getMessageById(readable.id, Strategy.NetworkThenCache)
-                                    .also {
-                                        // If the server one is not exists, we delete it from local.
-                                        if (it == null) {
-                                            messageDao.delete(readable.id)
-                                        }
-                                    }
                             } else readable
                         }
                         else -> readable
@@ -196,14 +181,6 @@ class MessageRepositoryImpl(
                             } else readable
                             // If its image content is map to ContentProvider
                             // The else-if branch is made for old version
-                        } else if (url.startsWith("content://")) {
-                            getMessageById(readable.id, Strategy.NetworkThenCache)
-                                .also {
-                                    // If the server one is not exists, we delete it from local.
-                                    if (it == null) {
-                                        messageDao.delete(readable.id)
-                                    }
-                                }
                         } else readable
                     }
                     // Same with Image Message.
@@ -220,14 +197,6 @@ class MessageRepositoryImpl(
                                         }
                                     }
                             } else readable
-                        } else if (url.startsWith("content://")) {
-                            getMessageById(readable.id, Strategy.NetworkThenCache)
-                                .also {
-                                    // If the server one is not exists, we delete it from local.
-                                    if (it == null) {
-                                        messageDao.delete(readable.id)
-                                    }
-                                }
                         } else readable
                     }
                     else -> readable

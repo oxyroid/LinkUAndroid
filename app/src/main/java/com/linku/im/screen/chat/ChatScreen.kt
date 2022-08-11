@@ -21,7 +21,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,7 +45,6 @@ fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(), cid: Int
 ) {
     val state = viewModel.readable
-    val context = LocalContext.current
 
     val hostState = remember {
         SnackbarHostState()
@@ -190,11 +188,8 @@ fun ChatScreen(
 
     }
 
-    val event by remember {
-        derivedStateOf { state.scrollToBottomEvent }
-    }
-    LaunchedEffect(event) {
-        event.handle {
+    LaunchedEffect(state.scrollToBottomEvent) {
+        state.scrollToBottomEvent.handle {
             listState.animateScrollToItem(0)
         }
     }

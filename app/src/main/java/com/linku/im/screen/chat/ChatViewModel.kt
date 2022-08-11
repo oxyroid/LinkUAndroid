@@ -222,7 +222,6 @@ class ChatViewModel @Inject constructor(
     private fun sendImageMessage() {
         val cid = readable.cid
         val uri = readable.uri ?: return
-
         messageUseCases.imageMessage(cid, uri)
             .onEach { resource ->
                 when (resource) {
