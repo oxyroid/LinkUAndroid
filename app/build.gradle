@@ -7,16 +7,16 @@ plugins {
 }
 android {
     namespace 'com.linku.im'
-    compileSdk 32
+    compileSdk 33
     aaptOptions {
         noCompress "config"
     }
     defaultConfig {
         applicationId 'com.linku.im'
         minSdk 26
-        targetSdk 32
-        versionCode 70
-        versionName "0.11.17"
+        targetSdk 33
+        versionCode 72
+        versionName "0.12.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -70,7 +70,7 @@ dependencies {
     implementation 'androidx.core:core-splashscreen:1.0.0'
     implementation "androidx.compose.ui:ui:$compose_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
-    implementation 'androidx.compose.material3:material3:1.0.0-alpha15'
+    implementation 'androidx.compose.material3:material3:1.0.0-alpha16'
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
@@ -114,13 +114,14 @@ dependencies {
     implementation "com.google.accompanist:accompanist-pager:$accompanist_version"
     implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version"
 
-    // leakcanary
-    debugImplementation "com.squareup.leakcanary:leakcanary-android:$leakcanary_version"
-
     // pretty time
     implementation "org.ocpsoft.prettytime:prettytime:$pretty_time_version"
 
     // Json
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0-RC"
+
+    // Acra
+    implementation "ch.acra:acra-http:$acraVersion"
+    implementation "ch.acra:acra-notification:$acraVersion"
 
 }

@@ -1,12 +1,16 @@
 package com.linku.im.screen.introduce
 
+import android.Manifest
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
@@ -25,13 +29,20 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.im.BuildConfig
 import com.linku.im.LinkUEvent
 import com.linku.im.R
@@ -48,13 +59,14 @@ import kotlinx.coroutines.launch
 @OptIn(
     ExperimentalMaterialApi::class,
     ExperimentalMaterial3Api::class,
-    ExperimentalFoundationApi::class
+    ExperimentalFoundationApi::class, ExperimentalPermissionsApi::class
 )
 @Composable
 fun ProfileScreen(
     viewModel: IntroduceViewModel = hiltViewModel()
 ) {
     val vmState = vm.readable
+    val context = LocalContext.current
     val isDarkMode = vmState.isDarkMode
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
@@ -64,6 +76,16 @@ fun ProfileScreen(
     var dropdownMenuExpended by remember {
         mutableStateOf(false)
     }
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            viewModel.onEvent(IntroduceEvent.UpdateAvatar(it))
+        }
+    }
+    val permissionState =
+        rememberPermissionState(permission = Manifest.permission.READ_EXTERNAL_STORAGE) {
+            it.ifTrue { launcher.launch("image/*") }
+        }
 
     LaunchedEffect(Unit) {
         viewModel.onEvent(IntroduceEvent.FetchIntroduce)
@@ -82,10 +104,36 @@ fun ProfileScreen(
         }
     }
 
-    state.verifiedEmailStarting.ifTrue {
-        AlertDialog(onDismissRequest = {},
+    LaunchedEffect(state.runLauncher) {
+        state.runLauncher.handle {
+            permissionState.launchPermissionRequest()
+        }
+    }
+
+    state.visitAvatar.isNotEmpty().ifTrue {
+        AlertDialog(
+            text = {
+                AsyncImage(
+                    model = state.visitAvatar,
+                    contentDescription = "",
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                )
+            },
+            confirmButton = {},
+            onDismissRequest = {
+                viewModel.onEvent(IntroduceEvent.DismissVisitAvatar)
+            }
+        )
+    }
+
+    with(state) {
+        verifiedEmailStarting || uploading
+    }.ifTrue {
+        AlertDialog(
             text = { CircularProgressIndicator() },
-            confirmButton = {})
+            confirmButton = {},
+            onDismissRequest = {},
+        )
     }
 
     state.verifiedEmailDialogShowing.ifTrue {
@@ -161,11 +209,12 @@ fun ProfileScreen(
                         )
                     }
                     items(state.actions) {
-                        ListItem(text = {
-                            Text(
-                                text = it.text, color = MaterialTheme.colorScheme.onBackground
-                            )
-                        },
+                        ListItem(
+                            text = {
+                                Text(
+                                    text = it.text, color = MaterialTheme.colorScheme.onBackground
+                                )
+                            },
                             icon = {
                                 Icon(
                                     imageVector = it.icon,
@@ -180,7 +229,8 @@ fun ProfileScreen(
                                         it.onClick()
                                         sheetState.hide()
                                     }
-                                })
+                                }
+                        )
                     }
                 }
             },
@@ -198,14 +248,25 @@ fun ProfileScreen(
                 item {
                     Surface(
                         color = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                        onClick = {
+                            viewModel.onEvent(IntroduceEvent.AvatarClicked)
+                            scope.launch {
+                                sheetState.show()
+                            }
+                        }
                     ) {
+                        val model = ImageRequest.Builder(context)
+                            .data(state.avatar)
+                            .crossfade(true)
+                            .build()
                         SubcomposeAsyncImage(
-                            model = state.avatar,
+                            model = model,
                             contentDescription = "",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .aspectRatio(4 / 3f)
+                                .aspectRatio(4 / 3f),
+                            contentScale = ContentScale.Crop
                         )
                     }
                 }

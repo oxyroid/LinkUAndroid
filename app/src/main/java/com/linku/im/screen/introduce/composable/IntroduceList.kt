@@ -4,11 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.linku.im.ui.theme.divider
 
 @Composable
 fun ProfileList(
@@ -33,17 +35,20 @@ fun ProfileList(
             )
         )
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
             items.forEachIndexed { index, settingItem ->
                 IntroduceItem(
                     property = settingItem,
                     onClick = {
                         onItemClick(settingItem)
-                    },
-                    divider = index != items.size - 1
+                    }
                 )
+                if (index != items.lastIndex)
+                    Divider(
+                        thickness = 0.6.dp,
+                        color = MaterialTheme.colorScheme.divider()
+                    )
             }
         }
     }

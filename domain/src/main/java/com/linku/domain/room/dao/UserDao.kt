@@ -8,6 +8,9 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(user: User)
 
+    @Query("UPDATE User SET avatar = :avatar WHERE id = :uid")
+    suspend fun updateAvatar(uid: Int, avatar: String?)
+
     @Delete
     suspend fun delete(user: User)
 

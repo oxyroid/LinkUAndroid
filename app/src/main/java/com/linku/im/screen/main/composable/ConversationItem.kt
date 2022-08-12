@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -161,25 +162,21 @@ private fun CircleHeadPicture(
     modifier: Modifier = Modifier,
     placeholder: @Composable (String?) -> Unit = {}
 ) {
-    Card(
-        shape = RoundedCornerShape(100),
+    SubcomposeAsyncImage(
+        model = model,
+        contentDescription = name,
         modifier = modifier
             .padding(vertical = 8.dp)
             .fillMaxHeight()
             .aspectRatio(1f)
-    ) {
-        SubcomposeAsyncImage(
-            model = model,
-            contentDescription = name,
-            modifier = Modifier
-                .fillMaxSize(),
-            error = {
-                placeholder(name)
-            },
-            loading = {
-                placeholder(name)
-            }
-        )
-    }
+            .clip(RoundedCornerShape(100)),
+        error = {
+            placeholder(name)
+        },
+        loading = {
+            placeholder(name)
+        }
+    )
+
 }
 

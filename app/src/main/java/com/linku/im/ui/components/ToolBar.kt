@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linku.im.extension.ifTrue
+import com.linku.im.vm
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -23,8 +24,8 @@ fun ToolBar(
     onNavClick: () -> Unit,
     actions: @Composable (RowScope.() -> Unit),
     text: String,
-    backgroundColor: Color = MaterialTheme.colorScheme.surface,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface
+    backgroundColor: Color = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary,
+    contentColor: Color = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
 ) {
     Column(Modifier.background(backgroundColor)) {
         Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
@@ -56,7 +57,7 @@ fun ToolBar(
                 }
 
             },
-            colors = TopAppBarDefaults.mediumTopAppBarColors(
+            colors = TopAppBarDefaults.smallTopAppBarColors(
                 containerColor = backgroundColor,
                 titleContentColor = contentColor,
                 navigationIconContentColor = contentColor,
@@ -84,7 +85,7 @@ fun ToolBarAction(
     ) {
         Icon(
             imageVector = imageVector,
-            contentDescription = contentDescription,
+            contentDescription = contentDescription
         )
     }
 }

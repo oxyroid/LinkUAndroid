@@ -1,6 +1,12 @@
 package com.linku.data.repository
 
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import com.linku.data.TAG
+import com.linku.data.debug
 import com.linku.domain.Authenticator
+import com.linku.domain.Resource
 import com.linku.domain.Result
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.AuthRepository
@@ -10,6 +16,19 @@ import com.linku.domain.room.dao.UserDao
 import com.linku.domain.sandbox
 import com.linku.domain.service.AuthService
 import com.linku.domain.service.ChatService
+import com.linku.domain.service.FileService
+import com.linku.domain.service.ProfileService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import java.io.File
+import java.io.FileNotFoundException
+import java.util.*
 
 class AuthRepositoryImpl(
     private val authService: AuthService,
@@ -17,7 +36,10 @@ class AuthRepositoryImpl(
     private val conversationDao: ConversationDao,
     private val messageDao: MessageDao,
     private val chatService: ChatService,
-    private val authenticator: Authenticator
+    private val authenticator: Authenticator,
+    private val context: Context,
+    private val fileService: FileService,
+    private val profileService: ProfileService
 ) : AuthRepository {
     override suspend fun signIn(email: String, password: String): Result<Unit> =
         sandbox {
@@ -63,4 +85,58 @@ class AuthRepositoryImpl(
         messageDao.clear()
     }
 
+    override fun uploadAvatar(uri: Uri): Flow<Resource<Unit>> = channelFlow {
+        trySend(Resource.Loading)
+        val uid = authenticator.currentUID
+        checkNotNull(uid)
+        val uuid = UUID.randomUUID().toString()
+        val file = File(context.externalCacheDir, "$uuid.png")
+        withContext(Dispatchers.IO) {
+            file.createNewFile()
+        }
+        val resolver = context.contentResolver
+        try {
+            file.outputStream().use {
+                resolver.openInputStream(uri).use { stream ->
+                    if (stream != null) {
+                        stream.copyTo(it)
+                        val filename = file.name
+                        val part = MultipartBody.Part
+                            .createFormData(
+                                "file",
+                                filename,
+                                RequestBody.create(MediaType.parse("image"), file)
+                            )
+                        launch {
+                            fileService.upload(part)
+                                .handle { avatar ->
+                                    launch {
+                                        profileService.editAvatar(avatar)
+                                            .handleUnit {
+                                                userDao.updateAvatar(uid, avatar)
+                                                trySend(Resource.Success(Unit))
+                                            }
+                                            .catch { message, code ->
+                                                trySend(Resource.Failure(message, code))
+                                            }
+                                    }
+                                }
+                                .catch { message, code ->
+                                    trySend(Resource.Failure(message, code))
+                                }
+                        }
+
+                    } else {
+                        debug { Log.e(TAG, "upload: cannot open stream.") }
+                        trySend(Resource.Failure("upload: cannot open stream."))
+                    }
+                }
+            }
+
+        } catch (e: FileNotFoundException) {
+            debug { Log.e(TAG, "upload: cannot find file.") }
+            trySend(Resource.Failure("upload: cannot open stream."))
+            return@channelFlow
+        }
+    }
 }

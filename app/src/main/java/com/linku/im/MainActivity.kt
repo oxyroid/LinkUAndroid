@@ -78,15 +78,13 @@ fun App() {
     ) {
         val navController = rememberAnimatedNavController()
         val systemUiController = rememberSystemUiController()
-        val navigationBarColor = MaterialTheme.colorScheme.surface
-
         LaunchedEffect(isDarkMode) {
             systemUiController.setStatusBarColor(
                 color = Color.Transparent,
-                darkIcons = !isDarkMode
+                darkIcons = false
             )
             systemUiController.setNavigationBarColor(
-                color = navigationBarColor,
+                color = Color.Transparent,
                 darkIcons = !isDarkMode
             )
         }

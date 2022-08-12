@@ -4,7 +4,7 @@ import com.linku.domain.Event
 import com.linku.im.screen.introduce.composable.Property
 
 data class IntroduceState(
-    val loading: Boolean = false,
+    val uploading: Boolean = false,
     val verifiedEmailStarting: Boolean = false,
     val verifiedEmailDialogShowing: Boolean = false,
     val verifiedEmailCodeVerifying: Boolean = false,
@@ -15,5 +15,7 @@ data class IntroduceState(
     val dataProperties: List<Property> = emptyList(),
     val settingsProperties: List<Property> = emptyList(),
     val editEvent: Event<IntroduceEvent.Edit.Type> = Event.Handled(),
-    val avatar: String = ""
+    val avatar: String = "",
+    val visitAvatar: String = "",
+    val runLauncher: Event<Unit> = Event.Handled()
 )

@@ -95,7 +95,8 @@ class ChatViewModel @Inject constructor(
                                                     isShowTime = showTimeLabel,
                                                     avatarVisibility = isShowAvatar,
                                                     nameVisibility = isShowName,
-                                                    name = user?.name ?: ""
+                                                    name = user?.name ?: "",
+                                                    avatar = user?.avatar ?: ""
                                                 )
                                             )
                                         }

@@ -1,6 +1,5 @@
 package com.linku.data.repository
 
-import android.content.ContentUris
 import android.content.Context
 import android.net.Uri
 import android.util.Log
@@ -77,6 +76,7 @@ class MessageRepositoryImpl(
                                         }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
+                                    trySend(Resource.Failure(e.message ?: ""))
                                 }
                                 socketService.incoming()
                                     .collectLatest { message ->
@@ -225,7 +225,7 @@ class MessageRepositoryImpl(
                 }
                 Strategy.OnlyCache -> messageDao.getById(mid)
                 Strategy.OnlyNetwork -> chatService.getMessageById(mid).peekOrNull()?.toMessage()
-            }
+            }?.toReadable()
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -236,7 +236,7 @@ class MessageRepositoryImpl(
     override suspend fun sendTextMessage(cid: Int, text: String): Flow<Resource<Unit>> =
         channelFlow {
             // We wanna to custom the catch block, so we didn't use resourceFlow.
-            val userId = authenticator.currentUID ?: kotlin.run {
+            val userId = authenticator.currentUID ?: run {
                 trySend(Resource.Failure("Please sign in first."))
                 return@channelFlow
             }
@@ -324,6 +324,7 @@ class MessageRepositoryImpl(
                                 }
                             } catch (e: Exception) {
                                 e.printStackTrace()
+                                trySend(Resource.Failure(e.message ?: ""))
                             }
 
                         }
@@ -337,6 +338,7 @@ class MessageRepositoryImpl(
                 .launchIn(this)
         } catch (e: Exception) {
             e.printStackTrace()
+            trySend(Resource.Failure(e.message ?: ""))
         }
 
     }
@@ -394,6 +396,7 @@ class MessageRepositoryImpl(
                                     }
                                 } catch (e: Exception) {
                                     e.printStackTrace()
+                                    trySend(Resource.Failure(e.message ?: ""))
                                 }
                             }
                         }
@@ -406,6 +409,7 @@ class MessageRepositoryImpl(
                     .launchIn(this)
             } catch (e: Exception) {
                 e.printStackTrace()
+                trySend(Resource.Failure(e.message ?: ""))
             }
 
         }

@@ -60,4 +60,13 @@
     <string name="edit">编辑</string>
     <string name="log_mode_on">已启用日志</string>
     <string name="log_mode_off">已禁用日志</string>
+    <string name="profile_settings_language">语言</string>
+    <string name="profile_settings_theme">主题与样式</string>
+    <string name="profile_avatar_visit">查看原图</string>
+    <string name="profile_avatar_update">上传图片</string>
+    <string name="crash_title">Crash</string>
+    <string name="crash_text">应用发送崩溃</string>
+    <string name="crash_channel">BUG</string>
+    <string name="tab_more">更多</string>
+    <string name="notification">通知</string>
 </resources>

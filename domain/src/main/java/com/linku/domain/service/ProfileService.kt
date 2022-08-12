@@ -1,18 +1,23 @@
 package com.linku.domain.service
 
-import retrofit2.http.PATCH
-import retrofit2.http.Query
+import com.linku.domain.Result
+import retrofit2.http.*
 
 interface ProfileService {
-    @PATCH("profile/name")
-    suspend fun editName(@Query("name") name: String): Result<Unit>
 
-    @PATCH("profile/realname")
-    suspend fun editRealName(@Query("realname") name: String): Result<Unit>
+    @FormUrlEncoded
+    @POST("profile/name")
+    suspend fun editName(@Field("name") name: String): Result<Unit>
 
-    @PATCH("profile/modify")
-    suspend fun editPassword(@Query("password") password: String): Result<Unit>
+    @FormUrlEncoded
+    @POST("profile/realname")
+    suspend fun editRealName(@Field("realname") name: String): Result<Unit>
 
-    @PATCH("profile/avatar")
-    suspend fun editAvatar(@Query("avatar") avatar: String): Result<Unit>
+    @FormUrlEncoded
+    @POST("profile/modify")
+    suspend fun editPassword(@Field("password") password: String): Result<Unit>
+
+    @FormUrlEncoded
+    @POST("profile/avatar")
+    suspend fun editAvatar(@Field("avatar") avatar: String): Result<Unit>
 }

@@ -1,6 +1,5 @@
 package com.linku.domain.entity
 
-import androidx.annotation.Keep
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.SerialName
@@ -13,11 +12,11 @@ data class User(
     val name: String,
     val email: String,
     val verified: Boolean,
-    val realName: String?
+    val realName: String?,
+    val avatar: String?
 )
 
 @Serializable
-@Keep
 data class UserDTO(
     @SerialName("id")
     val id: Int,
@@ -34,13 +33,16 @@ data class UserDTO(
     @SerialName("is_verified")
     val verified: Boolean,
     @SerialName("real_name")
-    val realName: String? = null
+    val realName: String? = null,
+    @SerialName("avatar")
+    val avatar: String? = null
 ) {
     fun toUser() = User(
         id = id,
         name = name,
         email = email,
         verified = verified,
-        realName = realName
+        realName = realName,
+        avatar = avatar
     )
 }

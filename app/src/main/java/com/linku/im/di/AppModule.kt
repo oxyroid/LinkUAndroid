@@ -144,14 +144,20 @@ object AppModule {
         authService: AuthService,
         database: LinkUDatabase,
         chatService: ChatService,
-        authenticator: Authenticator
+        authenticator: Authenticator,
+        @ApplicationContext context: Context,
+        fileService: FileService,
+        profileService: ProfileService
     ): AuthRepository = AuthRepositoryImpl(
         authService = authService,
         userDao = database.userDao(),
         conversationDao = database.conversationDao(),
         messageDao = database.messageDao(),
         chatService = chatService,
-        authenticator = authenticator
+        authenticator = authenticator,
+        context = context,
+        fileService = fileService,
+        profileService = profileService
     )
 
     @Provides
@@ -211,7 +217,8 @@ object AppModule {
             signUp = SignUpUseCase(repository),
             signOut = SignOutUseCase(repository, authenticator),
             verifiedEmail = VerifiedEmailUseCase(repository),
-            verifiedEmailCode = VerifiedEmailCodeUseCase(repository)
+            verifiedEmailCode = VerifiedEmailCodeUseCase(repository),
+            uploadAvatar = UploadAvatarUseCase(repository)
         )
     }
 

@@ -72,7 +72,7 @@ private val DarkColors = darkColorScheme(
 
 val supportDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
-fun ColorScheme.divider(useDarkTheme: Boolean): Color =
+fun ColorScheme.divider(useDarkTheme: Boolean = vm.readable.isDarkMode): Color =
     if (!useDarkTheme) md_theme_light_divider else md_theme_dark_divider
 
 @Composable

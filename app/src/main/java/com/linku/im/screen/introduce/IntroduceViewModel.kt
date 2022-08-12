@@ -39,7 +39,7 @@ class IntroduceViewModel @Inject constructor(
 
     init {
         writable = readable.copy(
-            loading = false,
+            uploading = false,
             dataProperties = makeDataProperties(null),
             settingsProperties = makeSettingsProperties()
         )
@@ -69,6 +69,58 @@ class IntroduceViewModel @Inject constructor(
                 val message = if (settings.isLogMode) getString(R.string.log_mode_on)
                 else getString(R.string.log_mode_off)
                 onMessage(message)
+            }
+            IntroduceEvent.AvatarClicked -> {
+                onActions("avatar", buildList {
+                    Property.Data.Action(
+                        text = getString(R.string.profile_avatar_visit),
+                        icon = Icons.Sharp.Visibility,
+                        onClick = {
+                            writable = readable.copy(
+                                visitAvatar = readable.avatar
+                            )
+                        }
+                    ).also(::add)
+                    Property.Data.Action(
+                        text = getString(R.string.profile_avatar_update),
+                        icon = Icons.Sharp.Upload,
+                        onClick = {
+                            writable = readable.copy(
+                                runLauncher = eventOf(Unit)
+                            )
+                        }
+                    ).also(::add)
+                })
+            }
+            IntroduceEvent.DismissVisitAvatar -> writable = readable.copy(
+                visitAvatar = ""
+            )
+            is IntroduceEvent.UpdateAvatar -> {
+                val uri = event.uri
+                writable = readable.copy(
+                    avatar = uri?.toString() ?: "",
+                )
+                uri?.also {
+                    authUseCases.uploadAvatar(it)
+                        .onEach { resource ->
+                            writable = when (resource) {
+                                Resource.Loading -> readable.copy(
+                                    uploading = true
+                                )
+                                is Resource.Success -> readable.copy(
+                                    uploading = false
+                                )
+                                is Resource.Failure -> {
+                                    onMessage(resource.message)
+                                    readable.copy(
+                                        uploading = false,
+                                        avatar = ""
+                                    )
+                                }
+                            }
+                        }
+                        .launchIn(viewModelScope)
+                }
             }
         }
     }
@@ -128,11 +180,12 @@ class IntroduceViewModel @Inject constructor(
         val userId = authenticator.currentUID
         checkNotNull(userId)
         viewModelScope.launch {
-            val resource = useCases.findUser(userId)
+            val user = useCases.findUser(userId)
             writable = readable.copy(
-                loading = false,
-                dataProperties = makeDataProperties(resource),
-                settingsProperties = makeSettingsProperties()
+                uploading = false,
+                dataProperties = makeDataProperties(user),
+                settingsProperties = makeSettingsProperties(),
+                avatar = user?.avatar ?: ""
             )
         }
     }
@@ -141,12 +194,12 @@ class IntroduceViewModel @Inject constructor(
         authUseCases.signOut()
             .onEach { resource ->
                 writable = when (resource) {
-                    Resource.Loading -> loadingState
-                    is Resource.Success -> writable.copy(loading = false, logout = true)
+                    Resource.Loading -> readable.copy(uploading = true)
+                    is Resource.Success -> writable.copy(uploading = false, logout = true)
                     is Resource.Failure -> {
                         onMessage(getString(R.string.sign_out_failed))
                         writable.copy(
-                            loading = false,
+                            uploading = false,
                         )
                     }
                 }
@@ -231,17 +284,16 @@ class IntroduceViewModel @Inject constructor(
         val notification = getString(R.string.profile_settings_notification)
         val safe = getString(R.string.profile_settings_safe)
         val dataSource = getString(R.string.profile_settings_datasource)
+        val theme = getString(R.string.profile_settings_theme)
+        val language = getString(R.string.profile_settings_language)
         Property.Folder(notification, Icons.Sharp.Notifications).also(::add)
         Property.Folder(safe, Icons.Sharp.Lock).also(::add)
         Property.Folder(dataSource, Icons.Sharp.DateRange).also(::add)
-        Property.Folder(notification, Icons.Sharp.Notifications).also(::add)
-        Property.Folder(safe, Icons.Sharp.Lock).also(::add)
-        Property.Folder(dataSource, Icons.Sharp.DateRange).also(::add)
+        Property.Folder(theme, Icons.Sharp.FormatPaint).also(::add)
+        Property.Folder(language, Icons.Sharp.Language).also(::add)
     }
 
     private fun getString(@StringRes resId: Int): String = applicationUseCases.getString(resId)
-
-    private val loadingState get() = readable.copy(loading = true)
 
     private fun CharSequence?.checkEmpty(): CharSequence =
         if (isNullOrBlank()) getString(R.string.unknown) else this

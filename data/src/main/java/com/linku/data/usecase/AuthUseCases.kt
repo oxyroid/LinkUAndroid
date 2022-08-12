@@ -1,5 +1,6 @@
 package com.linku.data.usecase
 
+import android.net.Uri
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.emitResource
@@ -13,7 +14,8 @@ data class AuthUseCases @Inject constructor(
     val signUp: SignUpUseCase,
     val signOut: SignOutUseCase,
     val verifiedEmail: VerifiedEmailUseCase,
-    val verifiedEmailCode: VerifiedEmailCodeUseCase
+    val verifiedEmailCode: VerifiedEmailCodeUseCase,
+    val uploadAvatar: UploadAvatarUseCase,
 )
 
 data class SignInUseCase(
@@ -73,4 +75,10 @@ data class VerifiedEmailCodeUseCase(
             .handleUnit(::emitResource)
             .catch(::emitResource)
     }
+}
+
+data class UploadAvatarUseCase(
+    private val repository: AuthRepository
+) {
+    operator fun invoke(uri: Uri): Flow<Resource<Unit>> = repository.uploadAvatar(uri)
 }

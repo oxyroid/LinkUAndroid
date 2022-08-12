@@ -1,6 +1,5 @@
 package com.linku.domain.entity
 
-import androidx.annotation.Keep
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
@@ -48,23 +47,26 @@ open class Message(
         const val STATE_ANOTHER = 3
     }
 
-    fun toReadable(): Message = when (type) {
-        Type.Text -> TextMessage(id, cid, uid, content, timestamp, uuid, sendState)
-        Type.Image -> ImageMessage(id, cid, uid, content, timestamp, uuid, sendState)
-        Type.Graphics -> {
-            val graphicsContent = json.decodeFromString<GraphicsContent>(content)
-            GraphicsMessage(
-                id = id,
-                cid = cid,
-                uid = uid,
-                text = graphicsContent.text,
-                url = graphicsContent.url,
-                timestamp = timestamp,
-                uuid = uuid,
-                sendState = sendState
-            )
+    fun toReadable(): Message = when (this) {
+        is TextMessage, is ImageMessage, is GraphicsMessage -> this
+        else -> when (type) {
+            Type.Text -> TextMessage(id, cid, uid, content, timestamp, uuid, sendState)
+            Type.Image -> ImageMessage(id, cid, uid, content, timestamp, uuid, sendState)
+            Type.Graphics -> {
+                val graphicsContent = json.decodeFromString<GraphicsContent>(content)
+                GraphicsMessage(
+                    id = id,
+                    cid = cid,
+                    uid = uid,
+                    text = graphicsContent.text,
+                    url = graphicsContent.url,
+                    timestamp = timestamp,
+                    uuid = uuid,
+                    sendState = sendState
+                )
+            }
+            else -> this
         }
-        else -> this
     }
 }
 
@@ -109,9 +111,8 @@ data class GraphicsMessage(
 )
 
 @Serializable
-@Keep
 data class MessageDTO(
-    @PrimaryKey @SerialName("id") val id: Int = -1,
+    @SerialName("id") val id: Int = -1,
     @SerialName("cid") val cid: Int = -1,
     @SerialName("uid") val uid: Int = -1,
     @SerialName("tid") val tid: Int = -1,

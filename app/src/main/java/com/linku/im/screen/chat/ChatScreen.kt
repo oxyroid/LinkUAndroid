@@ -14,8 +14,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.sharp.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,10 +35,12 @@ import com.linku.im.screen.Screen
 import com.linku.im.screen.chat.composable.ChatBottomBar
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.ToolBarAction
 import com.linku.im.vm
 
 @OptIn(
-    ExperimentalPermissionsApi::class, ExperimentalAnimationApi::class,
+    ExperimentalPermissionsApi::class,
+    ExperimentalAnimationApi::class,
     ExperimentalMaterial3Api::class
 )
 @Composable
@@ -91,7 +94,12 @@ fun ChatScreen(
         topBar = {
             ToolBar(
                 onNavClick = { vm.onEvent(LinkUEvent.PopBackStack) },
-                actions = {},
+                actions = {
+                    ToolBarAction(
+                        onClick = { /*TODO*/ },
+                        imageVector = Icons.Sharp.Videocam
+                    )
+                },
                 text = state.title
             )
         },
@@ -120,9 +128,12 @@ fun ChatScreen(
                                 vm.onEvent(
                                     LinkUEvent.NavigateWithArgs(Screen.PreviewScreen.withArgs(it))
                                 )
+                            },
+                            onProfile = {
+
                             }
                         )
-                        if (index == 0) Spacer(modifier = Modifier.height(120.dp))
+                        if (index == 0) Spacer(Modifier.height(120.dp))
                     }
                 }
             }

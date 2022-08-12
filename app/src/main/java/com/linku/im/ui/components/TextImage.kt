@@ -8,15 +8,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TextImage(text: String?, fontSize: TextUnit = 36.sp) {
+fun TextImage(
+    text: String?,
+    modifier: Modifier = Modifier,
+    fontSize: TextUnit = 36.sp,
+    color: Color = MaterialTheme.colorScheme.primary
+) {
     Box(
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.primary),
+        modifier = modifier.background(color),
         contentAlignment = Alignment.Center
     ) {
         if (!text.isNullOrBlank()) {

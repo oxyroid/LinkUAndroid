@@ -1,6 +1,6 @@
 package com.linku.im.screen.chat.composable
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -13,6 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
@@ -50,7 +52,8 @@ fun ChatBubble(
     message: Message,
     config: BubbleConfig,
     modifier: Modifier = Modifier,
-    onPreview: (Int) -> Unit
+    onPreview: (Int) -> Unit,
+    onProfile: (Int) -> Unit
 ) {
     val state = vm.readable
     val isSystemInDarkMode = state.isDarkMode
@@ -74,11 +77,14 @@ fun ChatBubble(
             val display = prettyTime.format(Date(message.timestamp))
             Text(
                 text = display ?: "",
-                modifier = Modifier.padding(
-                    horizontal = 4.dp,
-                    vertical = 8.dp
-                ),
+                modifier = Modifier
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(50)
+                    )
+                    .padding(4.dp),
                 style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -127,16 +133,38 @@ fun ChatBubble(
                 }
                 if (config is BubbleConfig.Multi) {
                     if (config.avatarVisibility) {
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            modifier = Modifier.size(32.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            TextImage(text = config.name, fontSize = 24.sp)
-                        }
+                        SubcomposeAsyncImage(
+                            model = config.avatar,
+                            contentDescription = "",
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(50)),
+                            error = {
+                                TextImage(
+                                    text = config.name,
+                                    fontSize = 24.sp,
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(50))
+                                )
+                            },
+                            loading = {
+                                TextImage(
+                                    text = config.name,
+                                    fontSize = 24.sp,
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(50))
+                                )
+                            }
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
                     } else if (isAnother) {
-                        Surface(modifier = Modifier.size(32.dp), color = Color.Transparent) {}
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .background(Color.Transparent)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
                     }
                 }
@@ -205,7 +233,8 @@ fun ChatBubble(
                                 contentColor = contentColor,
                                 message = message,
                                 contentDescription = "Image Message",
-                                onClick = { onPreview(message.id) }
+                                onClick = { onPreview(message.id) },
+                                isPending = config.sendState == Message.STATE_PENDING
                             )
                         }
                         is GraphicsMessage -> {
@@ -214,7 +243,8 @@ fun ChatBubble(
                                     backgroundColor = backgroundColor,
                                     contentColor = contentColor,
                                     message = message,
-                                    onClick = { onPreview(message.id) }
+                                    onClick = { onPreview(message.id) },
+                                    isPending = config.sendState == Message.STATE_PENDING
                                 )
                                 CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
                                     Text(
@@ -261,6 +291,7 @@ private fun Image(
     backgroundColor: Color,
     contentColor: Color,
     message: Message,
+    isPending: Boolean = false,
     contentDescription: String? = null,
     onClick: () -> Unit
 ) {
@@ -274,18 +305,23 @@ private fun Image(
         modifier = Modifier.padding(4.dp),
         color = backgroundColor,
         contentColor = contentColor,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         onClick = onClick
     ) {
         val url = ImageRequest.Builder(LocalContext.current)
             .data(realUrl)
-            .crossfade(true).build()
+            .crossfade(200)
+            .build()
         SubcomposeAsyncImage(
             model = url,
             contentDescription = contentDescription,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(4 / 3f),
+                .aspectRatio(4 / 3f)
+                .apply {
+                    if (isPending) {
+                        blur(8.dp)
+                    }
+                },
             contentScale = ContentScale.Crop,
             error = {
                 Column(
@@ -349,5 +385,6 @@ sealed class BubbleConfig(
         val avatarVisibility: Boolean = false,
         val nameVisibility: Boolean = false,
         val name: String = "",
+        val avatar: String = "",
     ) : BubbleConfig(other, isShowTime, sendState)
 }
