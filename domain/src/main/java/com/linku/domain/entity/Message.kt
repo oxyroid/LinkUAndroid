@@ -40,6 +40,13 @@ open class Message(
         override fun toString(): String = text
     }
 
+    fun reply(): Int? = when (this) {
+        is TextMessage -> reply
+        is ImageMessage -> reply
+        is GraphicsMessage -> reply
+        else -> null
+    }
+
     companion object {
         const val STATE_PENDING = 0
         const val STATE_SEND = 1
@@ -50,8 +57,36 @@ open class Message(
     fun toReadable(): Message = when (this) {
         is TextMessage, is ImageMessage, is GraphicsMessage -> this
         else -> when (type) {
-            Type.Text -> TextMessage(id, cid, uid, content, timestamp, uuid, sendState)
-            Type.Image -> ImageMessage(id, cid, uid, content, timestamp, uuid, sendState)
+            Type.Text -> {
+                val textContent = try {
+                    json.decodeFromString(content)
+                } catch (e: Exception) {
+                    TextContent(content, null)
+                }
+                TextMessage(
+                    id = id,
+                    cid = cid,
+                    uid = uid,
+                    text = textContent.text,
+                    reply = textContent.reply,
+                    timestamp = timestamp,
+                    uuid = uuid,
+                    sendState = sendState
+                )
+            }
+            Type.Image -> {
+                val imageContent = json.decodeFromString<ImageContent>(content)
+                ImageMessage(
+                    id = id,
+                    cid = cid,
+                    uid = uid,
+                    url = imageContent.url,
+                    reply = imageContent.reply,
+                    timestamp = timestamp,
+                    uuid = uuid,
+                    sendState = sendState
+                )
+            }
             Type.Graphics -> {
                 val graphicsContent = json.decodeFromString<GraphicsContent>(content)
                 GraphicsMessage(
@@ -60,6 +95,7 @@ open class Message(
                     uid = uid,
                     text = graphicsContent.text,
                     url = graphicsContent.url,
+                    reply = graphicsContent.reply,
                     timestamp = timestamp,
                     uuid = uuid,
                     sendState = sendState
@@ -75,27 +111,7 @@ data class TextMessage(
     override val cid: Int,
     override val uid: Int,
     val text: String,
-    override val timestamp: Long,
-    override val uuid: String,
-    override val sendState: Int
-) : Message(id, cid, uid, text, Type.Text, timestamp, uuid, sendState)
-
-data class ImageMessage(
-    override val id: Int,
-    override val cid: Int,
-    override val uid: Int,
-    val url: String,
-    override val timestamp: Long,
-    override val uuid: String,
-    override val sendState: Int
-) : Message(id, cid, uid, url, Type.Image, timestamp, uuid, sendState)
-
-data class GraphicsMessage(
-    override val id: Int,
-    override val cid: Int,
-    override val uid: Int,
-    val text: String,
-    val url: String,
+    val reply: Int?,
     override val timestamp: Long,
     override val uuid: String,
     override val sendState: Int
@@ -103,7 +119,48 @@ data class GraphicsMessage(
     id = id,
     cid = cid,
     uid = uid,
-    content = GraphicsContent(text, url).let(json::encodeToString),
+    content = TextContent(text, reply).let(json::encodeToString),
+    type = Type.Text,
+    timestamp = timestamp,
+    uuid = uuid,
+    sendState = sendState
+)
+
+data class ImageMessage(
+    override val id: Int,
+    override val cid: Int,
+    override val uid: Int,
+    val url: String,
+    val reply: Int?,
+    override val timestamp: Long,
+    override val uuid: String,
+    override val sendState: Int
+) : Message(
+    id = id,
+    cid = cid,
+    uid = uid,
+    content = ImageContent(url, reply).let(json::encodeToString),
+    type = Type.Image,
+    timestamp = timestamp,
+    uuid = uuid,
+    sendState = sendState
+)
+
+data class GraphicsMessage(
+    override val id: Int,
+    override val cid: Int,
+    override val uid: Int,
+    val text: String,
+    val url: String,
+    val reply: Int?,
+    override val timestamp: Long,
+    override val uuid: String,
+    override val sendState: Int
+) : Message(
+    id = id,
+    cid = cid,
+    uid = uid,
+    content = GraphicsContent(text, url, reply).let(json::encodeToString),
     type = Type.Image,
     timestamp = timestamp,
     uuid = uuid,
@@ -127,8 +184,50 @@ data class MessageDTO(
     }
 
     fun toMessage() = when (Message.Type.parse(type)) {
-        Message.Type.Text -> TextMessage(id, cid, uid, content, timestamp, uuid, sendState)
-        Message.Type.Image -> ImageMessage(id, cid, uid, content, timestamp, uuid, sendState)
+        Message.Type.Text -> {
+            val textContent = try {
+                json.decodeFromString(content)
+            } catch (e: Exception) {
+                TextContent(content, null)
+            }
+            TextMessage(
+                id = id,
+                cid = cid,
+                uid = uid,
+                text = textContent.text,
+                reply = textContent.reply,
+                timestamp = timestamp,
+                uuid = uuid,
+                sendState = sendState
+            )
+        }
+        Message.Type.Image -> {
+            val imageContent = json.decodeFromString<ImageContent>(content)
+            ImageMessage(
+                id = id,
+                cid = cid,
+                uid = uid,
+                url = imageContent.url,
+                reply = imageContent.reply,
+                timestamp = timestamp,
+                uuid = uuid,
+                sendState = sendState
+            )
+        }
+        Message.Type.Graphics -> {
+            val graphicsContent = json.decodeFromString<GraphicsContent>(content)
+            GraphicsMessage(
+                id = id,
+                cid = cid,
+                uid = uid,
+                text = graphicsContent.text,
+                url = graphicsContent.url,
+                reply = graphicsContent.reply,
+                timestamp = timestamp,
+                uuid = uuid,
+                sendState = sendState
+            )
+        }
         else -> Message(
             id = id,
             cid = cid,
@@ -143,9 +242,29 @@ data class MessageDTO(
 }
 
 @Serializable
+data class TextContent(
+    @SerialName("text")
+    val text: String,
+    @SerialName("reply")
+    val reply: Int?
+)
+
+
+@Serializable
+data class ImageContent(
+    @SerialName("url")
+    val url: String,
+    @SerialName("reply")
+    val reply: Int?
+)
+
+
+@Serializable
 data class GraphicsContent(
     @SerialName("text")
     val text: String,
     @SerialName("url")
-    val url: String
+    val url: String,
+    @SerialName("reply")
+    val reply: Int?
 )

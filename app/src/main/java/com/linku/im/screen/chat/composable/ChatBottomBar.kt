@@ -31,9 +31,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.linku.domain.bean.Emoji
+import com.linku.domain.entity.GraphicsMessage
+import com.linku.domain.entity.ImageMessage
+import com.linku.domain.entity.Message
+import com.linku.domain.entity.TextMessage
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
@@ -43,6 +48,7 @@ import com.linku.im.extension.intervalClickable
 fun ChatBottomBar(
     text: TextFieldValue,
     uri: Uri?,
+    repliedMessage: Message?,
     emojis: List<Emoji>,
     expended: Boolean,
     onSend: () -> Unit,
@@ -87,6 +93,18 @@ fun ChatBottomBar(
                             tint = MaterialTheme.colorScheme.outline
                         )
                     }
+                    val placeholder = when {
+                        repliedMessage != null -> {
+                            when (repliedMessage) {
+                                is TextMessage -> repliedMessage.text
+                                is ImageMessage -> stringResource(R.string.image_message)
+                                is GraphicsMessage -> stringResource(R.string.graphics_message)
+                                else -> stringResource(R.string.unknown_message_type)
+                            }.let { "Reply Message: \"$it\"" }
+                        }
+                        uri == null -> stringResource(R.string.screen_chat_input)
+                        else -> stringResource(R.string.screen_chat_input_image)
+                    }
                     OutlinedTextField(
                         value = text,
                         onValueChange = { onText(it) },
@@ -96,12 +114,11 @@ fun ChatBottomBar(
                             .animateContentSize { _, _ -> },
                         placeholder = {
                             Text(
-                                text = stringResource(
-                                    if (uri == null) R.string.screen_chat_input
-                                    else R.string.screen_chat_input_image
-                                ),
+                                text = placeholder,
                                 color = MaterialTheme.colorScheme.onBackground,
-                                style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         },
                         colors = TextFieldDefaults.outlinedTextFieldColors(
@@ -113,9 +130,10 @@ fun ChatBottomBar(
                             imeAction = ImeAction.Send,
                             keyboardType = KeyboardType.Text
                         ),
-                        keyboardActions = KeyboardActions { onSend() },
-
+                        keyboardActions = KeyboardActions(
+                            onSend = { onSend() }
                         )
+                    )
 
                     IconButton(onClick = onFile) {
                         Icon(

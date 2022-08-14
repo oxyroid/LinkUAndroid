@@ -1,5 +1,6 @@
 package com.linku.im.screen.query
 
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.domain.Resource
@@ -30,7 +31,7 @@ class QueryViewModel @Inject constructor(
         hasQuery.ifTrue(::query)
     }
 
-    private fun onText(text: String) {
+    private fun onText(text: TextFieldValue) {
         writable = readable.copy(
             text = text
         )
@@ -40,8 +41,8 @@ class QueryViewModel @Inject constructor(
     private fun query() {
         hasQuery = true
         useCases.queryConversations(
-            name = readable.isDescription.ifFalse { readable.text },
-            description = readable.isDescription.ifTrue { readable.text }
+            name = readable.isDescription.ifFalse { readable.text.text },
+            description = readable.isDescription.ifTrue { readable.text.text }
         )
             .onEach { resource ->
                 writable = when (resource) {

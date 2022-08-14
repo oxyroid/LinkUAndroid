@@ -5,6 +5,8 @@ import com.linku.im.screen.introduce.composable.Property
 
 data class IntroduceState(
     val uploading: Boolean = false,
+    val isOthers: Boolean = false,
+    val uid: Int = -1,
     val verifiedEmailStarting: Boolean = false,
     val verifiedEmailDialogShowing: Boolean = false,
     val verifiedEmailCodeVerifying: Boolean = false,

@@ -18,6 +18,7 @@ import com.linku.domain.entity.User
 import com.linku.domain.eventOf
 import com.linku.im.LinkUEvent
 import com.linku.im.R
+import com.linku.im.extension.ifFalse
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.Screen
 import com.linku.im.screen.introduce.composable.Property
@@ -37,17 +38,9 @@ class IntroduceViewModel @Inject constructor(
     private val settings: SettingUseCase
 ) : BaseViewModel<IntroduceState, IntroduceEvent>(IntroduceState()) {
 
-    init {
-        writable = readable.copy(
-            uploading = false,
-            dataProperties = makeDataProperties(null),
-            settingsProperties = makeSettingsProperties()
-        )
-    }
-
     override fun onEvent(event: IntroduceEvent) {
         when (event) {
-            IntroduceEvent.FetchIntroduce -> fetchProfile()
+            is IntroduceEvent.FetchIntroduce -> fetchProfile(event.uid)
             IntroduceEvent.SignOut -> signOut()
             IntroduceEvent.VerifiedEmail -> verifiedEmail()
             is IntroduceEvent.VerifiedEmailCode -> verifiedEmailCode(event.code)
@@ -71,7 +64,7 @@ class IntroduceViewModel @Inject constructor(
                 onMessage(message)
             }
             IntroduceEvent.AvatarClicked -> {
-                onActions("avatar", buildList {
+                onActions(getString(R.string.profile_avatar_label), buildList {
                     Property.Data.Action(
                         text = getString(R.string.profile_avatar_visit),
                         icon = Icons.Sharp.Visibility,
@@ -81,15 +74,17 @@ class IntroduceViewModel @Inject constructor(
                             )
                         }
                     ).also(::add)
-                    Property.Data.Action(
-                        text = getString(R.string.profile_avatar_update),
-                        icon = Icons.Sharp.Upload,
-                        onClick = {
-                            writable = readable.copy(
-                                runLauncher = eventOf(Unit)
-                            )
-                        }
-                    ).also(::add)
+                    readable.isOthers.ifFalse {
+                        Property.Data.Action(
+                            text = getString(R.string.profile_avatar_update),
+                            icon = Icons.Sharp.Upload,
+                            onClick = {
+                                writable = readable.copy(
+                                    runLauncher = eventOf(Unit)
+                                )
+                            }
+                        ).also(::add)
+                    }
                 })
             }
             IntroduceEvent.DismissVisitAvatar -> writable = readable.copy(
@@ -159,7 +154,7 @@ class IntroduceViewModel @Inject constructor(
                         writable = readable.copy(
                             verifiedEmailCodeVerifying = false,
                         )
-                        onEvent(IntroduceEvent.FetchIntroduce)
+                        onEvent(IntroduceEvent.FetchIntroduce(readable.uid))
                     }
                     is Resource.Failure -> writable = readable.copy(
                         verifiedEmailCodeVerifying = false,
@@ -176,13 +171,17 @@ class IntroduceViewModel @Inject constructor(
         )
     }
 
-    private fun fetchProfile() {
-        val userId = authenticator.currentUID
-        checkNotNull(userId)
+    private fun fetchProfile(uid: Int) {
+        val currentUid = if (uid == -1) authenticator.currentUID ?: uid else uid
+        writable = readable.copy(
+            uploading = false,
+            isOthers = currentUid != authenticator.currentUID,
+            dataProperties = makeDataProperties(null)
+        )
         viewModelScope.launch {
-            val user = useCases.findUser(userId)
+            val user = useCases.findUser(currentUid)
             writable = readable.copy(
-                uploading = false,
+                uid = currentUid,
                 dataProperties = makeDataProperties(user),
                 settingsProperties = makeSettingsProperties(),
                 avatar = user?.avatar ?: ""
@@ -222,11 +221,13 @@ class IntroduceViewModel @Inject constructor(
         if (user == null) {
             Property.Data(email, null).also(::add)
             Property.Data(name, null).also(::add)
-            Property.Data(realName, null).also(::add)
+            readable.isOthers.ifFalse {
+                Property.Data(realName, null).also(::add)
+            }
             Property.Data(description, null).also(::add)
         } else {
             val emailActions = buildList {
-                if (!user.verified) {
+                if (!readable.isOthers && !user.verified) {
                     Property.Data.Action(
                         text = getString(R.string.email_verified),
                         icon = Icons.Sharp.Email,
@@ -236,7 +237,7 @@ class IntroduceViewModel @Inject constructor(
                     ).also(::add)
                 }
             }
-            val emailText = if (user.verified) user.email
+            val emailText = if (readable.isOthers || user.verified) user.email
             else buildAnnotatedString {
                 withStyle(
                     style = SpanStyle(
@@ -250,37 +251,46 @@ class IntroduceViewModel @Inject constructor(
             Property.Data(email, emailText.checkEmpty(), emailActions).also(::add)
 
             val nickNameActions = buildList {
-                Property.Data.Action(
-                    text = getString(R.string.edit),
-                    icon = Icons.Sharp.Edit,
-                    onClick = {
-                        onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.NickName))
-                    }
-                ).also(::add)
+                readable.isOthers.ifFalse {
+                    Property.Data.Action(
+                        text = getString(R.string.edit),
+                        icon = Icons.Sharp.Edit,
+                        onClick = {
+                            onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.NickName))
+                        }
+                    ).also(::add)
+                }
             }
 
             Property.Data(name, user.name.checkEmpty(), nickNameActions).also(::add)
 
-            Property.Data(
-                key = realName,
-                value = if (user.realName == null) applicationUseCases.getString(R.string.profile_data_realName_false)
-                else applicationUseCases.getString(R.string.profile_data_realName_true)
-            ).also(::add)
+
+            readable.isOthers.ifFalse {
+                Property.Data(
+                    key = realName,
+                    value = if (user.realName == null) applicationUseCases.getString(R.string.profile_data_realName_false)
+                    else applicationUseCases.getString(R.string.profile_data_realName_true)
+                ).also(::add)
+            }
 
             val descriptionActions = buildList {
-                Property.Data.Action(
-                    text = getString(R.string.edit),
-                    icon = Icons.Sharp.Edit,
-                    onClick = {
-                        onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.Description))
-                    }
-                ).also(::add)
+
+                readable.isOthers.ifFalse {
+                    Property.Data.Action(
+                        text = getString(R.string.edit),
+                        icon = Icons.Sharp.Edit,
+                        onClick = {
+                            onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.Description))
+                        }
+                    ).also(::add)
+                }
             }
             Property.Data(description, "".checkEmpty(), descriptionActions).also(::add)
         }
     }
 
     private fun makeSettingsProperties(): List<Property> = buildList {
+        if (readable.isOthers) return@buildList
         val notification = getString(R.string.profile_settings_notification)
         val safe = getString(R.string.profile_settings_safe)
         val dataSource = getString(R.string.profile_settings_datasource)

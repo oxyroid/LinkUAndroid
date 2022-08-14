@@ -46,6 +46,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.im.BuildConfig
 import com.linku.im.LinkUEvent
 import com.linku.im.R
+import com.linku.im.extension.ifFalse
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
 import com.linku.im.screen.introduce.composable.ProfileList
@@ -59,10 +60,12 @@ import kotlinx.coroutines.launch
 @OptIn(
     ExperimentalMaterialApi::class,
     ExperimentalMaterial3Api::class,
-    ExperimentalFoundationApi::class, ExperimentalPermissionsApi::class
+    ExperimentalFoundationApi::class,
+    ExperimentalPermissionsApi::class
 )
 @Composable
-fun ProfileScreen(
+fun IntroduceScreen(
+    uid: Int,
     viewModel: IntroduceViewModel = hiltViewModel()
 ) {
     val vmState = vm.readable
@@ -88,7 +91,7 @@ fun ProfileScreen(
         }
 
     LaunchedEffect(Unit) {
-        viewModel.onEvent(IntroduceEvent.FetchIntroduce)
+        viewModel.onEvent(IntroduceEvent.FetchIntroduce(uid))
     }
 
     LaunchedEffect(state.logout) {
@@ -116,7 +119,9 @@ fun ProfileScreen(
                 AsyncImage(
                     model = state.visitAvatar,
                     contentDescription = "",
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
                 )
             },
             confirmButton = {},
@@ -130,9 +135,9 @@ fun ProfileScreen(
         verifiedEmailStarting || uploading
     }.ifTrue {
         AlertDialog(
-            text = { CircularProgressIndicator() },
             confirmButton = {},
             onDismissRequest = {},
+            icon = { CircularProgressIndicator() }
         )
     }
 
@@ -276,6 +281,7 @@ fun ProfileScreen(
                         label = stringResource(id = R.string.account),
                         items = state.dataProperties,
                         onItemClick = { setting ->
+                            if (state.isOthers) return@ProfileList
                             if (setting is Property.Data) {
                                 viewModel.onEvent(
                                     IntroduceEvent.Actions(
@@ -291,41 +297,43 @@ fun ProfileScreen(
                     )
                 }
 
-                item {
-                    Spacer(
-                        modifier = Modifier
-                            .height(18.dp)
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.divider(isDarkMode))
-                    )
-                }
-
-                item {
-                    ProfileList(label = stringResource(R.string.settings),
-                        items = state.settingsProperties,
-                        onItemClick = {})
-                }
-
-                item {
-                    val versionLabel = stringResource(R.string.version_label)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.divider(isDarkMode))
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) },
-                                role = Role.Button
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "$versionLabel${BuildConfig.VERSION_NAME}",
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(vertical = 12.dp),
-                            color = MaterialTheme.colorScheme.onBackground
+                if (state.settingsProperties.isNotEmpty()) {
+                    item {
+                        Spacer(
+                            modifier = Modifier
+                                .height(18.dp)
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.divider(isDarkMode))
                         )
+                    }
+                    item {
+                        ProfileList(
+                            label = stringResource(R.string.settings),
+                            items = state.settingsProperties,
+                            onItemClick = {}
+                        )
+                    }
+                    item {
+                        val versionLabel = stringResource(R.string.version_label)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.divider(isDarkMode))
+                                .combinedClickable(
+                                    onClick = {},
+                                    onLongClick = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) },
+                                    role = Role.Button
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "$versionLabel${BuildConfig.VERSION_NAME}",
+                                style = MaterialTheme.typography.bodySmall,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(vertical = 12.dp),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
                     }
                 }
             }
@@ -341,12 +349,25 @@ fun ProfileScreen(
                         expanded = dropdownMenuExpended,
                         onDismissRequest = { dropdownMenuExpended = false }
                     ) {
-                        DropdownMenuItem(
-                            onClick = { viewModel.onEvent(IntroduceEvent.SignOut) },
-                            text = {
-                                Text(stringResource(R.string.sign_out))
-                            }
-                        )
+                        state.isOthers.ifFalse {
+                            DropdownMenuItem(
+                                onClick = {
+                                    viewModel.onEvent(IntroduceEvent.SignOut)
+                                    dropdownMenuExpended = false
+                                },
+                                text = {
+                                    Text(stringResource(R.string.sign_out))
+                                }
+                            )
+                        }
+                        state.isOthers.ifTrue {
+                            DropdownMenuItem(
+                                onClick = { dropdownMenuExpended = false },
+                                text = {
+                                    Text(stringResource(R.string.share))
+                                }
+                            )
+                        }
                     }
                 },
                 text = "",

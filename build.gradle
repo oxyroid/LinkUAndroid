@@ -9,7 +9,6 @@ buildscript {
         nav_version = "2.5.1"
         retrofit_version = "2.9.0"
         accompanist_version = "0.24.13-rc"
-        pretty_time_version = "4.0.4.Final"
         acraVersion = "5.9.6"
     }
     dependencies {

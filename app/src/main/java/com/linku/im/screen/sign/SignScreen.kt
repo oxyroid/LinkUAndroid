@@ -2,20 +2,15 @@ package com.linku.im.screen.sign
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -28,6 +23,7 @@ import com.google.accompanist.insets.ui.Scaffold
 import com.linku.im.R
 import com.linku.im.ui.components.MaterialButton
 import com.linku.im.ui.components.MaterialTextButton
+import com.linku.im.ui.components.TextInputFieldOne
 import com.linku.im.vm
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +33,7 @@ fun LoginScreen(
 ) {
     val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
-    val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading))
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
 
     val focusRequester = remember(::FocusRequester)
 
@@ -64,7 +60,8 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .imePadding(),
+                    .imePadding()
+                    .padding(PaddingValues(horizontal = 48.dp)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LaunchedEffect(Unit) {
@@ -77,48 +74,40 @@ fun LoginScreen(
                         .size(160.dp),
                     iterations = LottieConstants.IterateForever
                 )
-                OutlinedTextField(
-                    value = state.email,
+                TextInputFieldOne(
+                    textFieldValue = state.email,
                     onValueChange = { viewModel.onEvent(SignEvent.OnEmail(it)) },
-                    label = { Text(stringResource(R.string.screen_login_tag_email)) },
-                    modifier = Modifier
-                        .padding(horizontal = 48.dp)
-                        .focusRequester(focusRequester),
-                    singleLine = true,
-                    textStyle = TextStyle(
-                        fontWeight = FontWeight.Bold
-                    ),
+                    placeholder = stringResource(id = R.string.screen_login_tag_email),
                     enabled = !state.loading,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
-                    ),
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next,
                     keyboardActions = KeyboardActions(
                         onNext = {
                             // TODO
                         }
-                    )
-                )
-                OutlinedTextField(
-                    value = state.password,
-                    onValueChange = { viewModel.onEvent(SignEvent.OnPassword(it)) },
-                    label = { Text(stringResource(R.string.screen_login_tag_password)) },
-                    modifier = Modifier
-                        .padding(horizontal = 48.dp),
-                    singleLine = true,
-                    textStyle = TextStyle(
-                        fontWeight = FontWeight.Bold
                     ),
+                    modifier = Modifier
+                        .focusRequester(focusRequester)
+                )
+
+                Spacer(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(18.dp)
+                )
+
+                TextInputFieldOne(
+                    textFieldValue = state.password,
+                    onValueChange = { viewModel.onEvent(SignEvent.OnPassword(it)) },
+                    placeholder = stringResource(id = R.string.screen_login_tag_password),
                     enabled = !state.loading,
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done,
                     keyboardActions = KeyboardActions(
                         onDone = {
                             viewModel.onEvent(SignEvent.SignIn)
                             focusRequester.captureFocus()
                         }
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
                     )
                 )
 
@@ -133,7 +122,6 @@ fun LoginScreen(
                     enabled = !state.loading,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
                 ) {
                     viewModel.onEvent(SignEvent.SignIn)
                     focusRequester.captureFocus()
@@ -143,7 +131,6 @@ fun LoginScreen(
                     enabled = !state.loading,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 48.dp)
                 ) {
                     viewModel.onEvent(SignEvent.SignUp)
                     focusRequester.captureFocus()

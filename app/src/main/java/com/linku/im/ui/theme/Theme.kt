@@ -6,6 +6,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.linku.im.vm
 
 
@@ -92,15 +95,22 @@ fun AppTheme(
         colorScheme = colors,
         content = content,
         typography = MaterialTheme.typography.copy(
-            titleLarge = MaterialTheme.typography.titleLarge.withBold(),
-            titleMedium = MaterialTheme.typography.titleMedium.withBold(),
-            titleSmall = MaterialTheme.typography.titleSmall.withBlack(),
-            displayLarge = MaterialTheme.typography.displayLarge.withBlack(),
-            displayMedium = MaterialTheme.typography.displayMedium.withBlack(),
-            displaySmall = MaterialTheme.typography.displaySmall.withBlack(),
-            bodySmall = MaterialTheme.typography.bodySmall.withMedium(),
-            bodyMedium = MaterialTheme.typography.bodyMedium.withMedium(),
-            bodyLarge = MaterialTheme.typography.bodyLarge.withMedium()
+            titleLarge = MaterialTheme.typography.titleLarge.withDefaultFontFamily(),
+            titleMedium = MaterialTheme.typography.titleMedium.withDefaultFontFamily(),
+            titleSmall = MaterialTheme.typography.titleSmall.withDefaultFontFamily(),
+            bodyLarge = MaterialTheme.typography.bodyLarge.withDefaultFontFamily(),
+            bodyMedium = MaterialTheme.typography.bodyMedium.withDefaultFontFamily(),
+            bodySmall = MaterialTheme.typography.bodySmall.withDefaultFontFamily(),
+            displayLarge = MaterialTheme.typography.displayLarge.withDefaultFontFamily(),
+            displayMedium = MaterialTheme.typography.displayMedium.withDefaultFontFamily(),
+            displaySmall = MaterialTheme.typography.displaySmall.withDefaultFontFamily(),
+            headlineLarge = MaterialTheme.typography.headlineLarge.withDefaultFontFamily(),
+            headlineMedium = MaterialTheme.typography.headlineMedium.withDefaultFontFamily(),
+            headlineSmall = MaterialTheme.typography.headlineSmall.withDefaultFontFamily(),
+            labelLarge = MaterialTheme.typography.labelLarge.withDefaultFontFamily(),
+            labelMedium = MaterialTheme.typography.labelMedium.withDefaultFontFamily(),
+            labelSmall = MaterialTheme.typography.labelSmall.withDefaultFontFamily()
+
         )
     )
 }

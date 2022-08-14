@@ -33,8 +33,9 @@ data class TextMessageUseCase(
 ) {
     suspend operator fun invoke(
         cid: Int,
-        text: String
-    ): Flow<Resource<Unit>> = repository.sendTextMessage(cid, text)
+        text: String,
+        reply: Int? = null
+    ): Flow<Resource<Unit>> = repository.sendTextMessage(cid, text, reply)
 }
 
 data class ImageMessageUseCase(
@@ -43,7 +44,8 @@ data class ImageMessageUseCase(
     operator fun invoke(
         cid: Int,
         uri: Uri,
-    ): Flow<Resource<Unit>> = messageRepository.sendImageMessage(cid, uri)
+        reply: Int? = null
+    ): Flow<Resource<Unit>> = messageRepository.sendImageMessage(cid, uri, reply)
 }
 
 data class GraphicsMessageUseCase(
@@ -52,8 +54,9 @@ data class GraphicsMessageUseCase(
     operator fun invoke(
         cid: Int,
         text: String,
-        uri: Uri
-    ): Flow<Resource<Unit>> = messageRepository.sendGraphicsMessage(cid, text, uri)
+        uri: Uri,
+        reply: Int? = null
+    ): Flow<Resource<Unit>> = messageRepository.sendGraphicsMessage(cid, text, uri, reply)
 }
 
 data class InitSessionUseCase(

@@ -29,7 +29,7 @@ import com.linku.im.screen.Screen
 import com.linku.im.screen.chat.ChatScreen
 import com.linku.im.screen.edit.EditScreen
 import com.linku.im.screen.introduce.IntroduceEvent
-import com.linku.im.screen.introduce.ProfileScreen
+import com.linku.im.screen.introduce.IntroduceScreen
 import com.linku.im.screen.main.MainScreen
 import com.linku.im.screen.preview.PreviewScreen
 import com.linku.im.screen.query.QueryScreen
@@ -134,7 +134,17 @@ fun App() {
                 )
             }
             composable(Screen.LoginScreen.route) { LoginScreen() }
-            composable(Screen.ProfileScreen.route) { ProfileScreen() }
+            composable(
+                route = Screen.IntroduceScreen.buildArgs("uid"),
+                arguments = listOf(
+                    navArgument("uid") {
+                        type = NavType.IntType
+                        nullable = false
+                    }
+                )
+            ) { entity ->
+                IntroduceScreen(entity.arguments?.getInt("uid") ?: -1)
+            }
             composable(Screen.QueryScreen.route) { QueryScreen() }
             composable(
                 route = Screen.EditScreen.buildArgs("type"),

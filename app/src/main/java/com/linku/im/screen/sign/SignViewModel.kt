@@ -34,8 +34,8 @@ class SignViewModel @Inject constructor(
     }
 
     private fun signIn() {
-        val email = readable.email
-        val password = readable.password
+        val email = readable.email.text
+        val password = readable.password.text
         if (email.isBlank() || password.isBlank()) {
             onMessage(applicationUseCases.getString(R.string.information_required))
             writable = readable.copy(
@@ -70,8 +70,8 @@ class SignViewModel @Inject constructor(
     }
 
     private fun signUp() {
-        val email = readable.email
-        val password = readable.password
+        val email = readable.email.text
+        val password = readable.password.text
         if (email.isBlank() || password.isBlank()) {
             onMessage(applicationUseCases.getString(R.string.information_required))
             writable = readable.copy(

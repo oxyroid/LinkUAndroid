@@ -20,18 +20,21 @@ interface MessageRepository {
     suspend fun closeSession()
     suspend fun sendTextMessage(
         cid: Int,
-        text: String
+        text: String,
+        reply: Int?
     ): Flow<Resource<Unit>>
 
     fun sendImageMessage(
         cid: Int,
-        uri: Uri
+        uri: Uri,
+        reply: Int?
     ): Flow<Resource<Unit>>
 
     fun sendGraphicsMessage(
         cid: Int,
         text: String,
-        uri: Uri
+        uri: Uri,
+        reply: Int?
     ): Flow<Resource<Unit>>
 
     suspend fun resendStagingMessage(uuid: String)
@@ -42,20 +45,23 @@ interface MessageRepository {
         data class Text(
             val cid: Int,
             val uid: Int,
-            val text: String
+            val text: String,
+            val reply: Int?
         ) : StagingMessage()
 
         data class Image(
             val cid: Int,
             val uid: Int,
-            val uri: Uri
+            val uri: Uri,
+            val reply: Int?
         ) : StagingMessage()
 
         data class Graphics(
             val cid: Int,
             val uid: Int,
             val text: String,
-            val uri: Uri
+            val uri: Uri,
+            val reply: Int?
         ) : StagingMessage()
 
         val uuid: String by lazy { UUID.randomUUID().toString() }

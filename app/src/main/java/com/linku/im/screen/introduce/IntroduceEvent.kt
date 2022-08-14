@@ -4,7 +4,7 @@ import android.net.Uri
 import com.linku.im.screen.introduce.composable.Property
 
 sealed class IntroduceEvent {
-    object FetchIntroduce : IntroduceEvent()
+    data class FetchIntroduce(val uid: Int) : IntroduceEvent()
     object ToggleLogMode : IntroduceEvent()
     object VerifiedEmail : IntroduceEvent()
     data class VerifiedEmailCode(val code: String) : IntroduceEvent()

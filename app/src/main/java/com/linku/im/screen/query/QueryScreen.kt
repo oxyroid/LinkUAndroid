@@ -6,17 +6,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -25,6 +24,7 @@ import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.screen.Screen
 import com.linku.im.screen.query.composable.QueryItem
+import com.linku.im.ui.components.TextInputFieldOne
 import com.linku.im.vm
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -46,76 +46,73 @@ fun QueryScreen(
     Scaffold(
         scaffoldState = scaffoldState
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.surface)
-                .statusBarsPadding()
-                .navigationBarsPadding()
+        CompositionLocalProvider(
+            LocalContentColor provides if (vm.readable.isDarkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
         ) {
-            Row {
-                IconButton(
-                    onClick = { vm.onEvent(LinkUEvent.PopBackStack) },
-                    modifier = Modifier.padding(4.dp)
-                ) {
-                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "")
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    textStyle = MaterialTheme.typography.titleMedium,
-                    value = state.text,
-                    onValueChange = { viewModel.onEvent(QueryEvent.OnText(it)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.outlinedTextFieldColors(
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                        cursorColor = MaterialTheme.colorScheme.onSurface,
-                        textColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Search
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onSearch = {
-                            viewModel.onEvent(QueryEvent.Query)
-                        }
-                    )
-                )
-
-            }
-            LazyColumn(
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        color = MaterialTheme.colorScheme.background,
-                    )
+                    .padding(innerPadding)
+                    .background(if (vm.readable.isDarkMode) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary)
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
             ) {
-                stickyHeader {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 18.dp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { vm.onEvent(LinkUEvent.PopBackStack) },
+                        modifier = Modifier.padding(4.dp)
                     ) {
-                        ElevatedFilterChip(
-                            selected = state.isDescription,
-                            onClick = { viewModel.onEvent(QueryEvent.ToggleIncludeDescription) },
-                            label = {
-                                Text(
-                                    text = stringResource(id = R.string.query_filter_description),
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            }
-                        )
+                        Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "")
                     }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    TextInputFieldOne(
+                        textFieldValue = state.text,
+                        onValueChange = { viewModel.onEvent(QueryEvent.OnText(it)) },
+                        imeAction = ImeAction.Search,
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                viewModel.onEvent(QueryEvent.Query)
+                            }
+                        ),
+                        modifier = Modifier.padding(8.dp)
+                    )
 
                 }
-                items(state.conversations) { conversation ->
-                    QueryItem(conversation = conversation) {
-                        vm.onEvent(
-                            LinkUEvent.NavigateWithArgs(
-                                Screen.ChatScreen.withArgs(
-                                    conversation.id
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            color = MaterialTheme.colorScheme.background,
+                        )
+                ) {
+                    stickyHeader {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 18.dp)
+                        ) {
+                            ElevatedFilterChip(
+                                selected = state.isDescription,
+                                onClick = { viewModel.onEvent(QueryEvent.ToggleIncludeDescription) },
+                                label = {
+                                    Text(
+                                        text = stringResource(id = R.string.query_filter_description),
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+                            )
+                        }
+
+                    }
+                    items(state.conversations) { conversation ->
+                        QueryItem(conversation = conversation) {
+                            vm.onEvent(
+                                LinkUEvent.NavigateWithArgs(
+                                    Screen.ChatScreen.withArgs(
+                                        conversation.id
+                                    )
                                 )
                             )
-                        )
+                        }
                     }
                 }
             }

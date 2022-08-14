@@ -49,6 +49,7 @@ class MainViewModel @Inject constructor(
 
             }
             MainEvent.GetConversations -> getAllConversations()
+            MainEvent.StartToCreateConversation -> {}
         }
     }
 
@@ -78,7 +79,7 @@ class MainViewModel @Inject constructor(
                                     oldConversations.remove(oldConversation)
                                     val copy = oldConversation.copy(
                                         content = when (message) {
-                                            is TextMessage -> message.content
+                                            is TextMessage -> message.text
                                             is ImageMessage -> applicationUseCases.getString(R.string.image_message)
                                             is GraphicsMessage -> applicationUseCases.getString(R.string.graphics_message)
                                             else -> applicationUseCases.getString(R.string.unknown_message_type)

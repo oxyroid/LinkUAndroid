@@ -20,7 +20,7 @@ import com.linku.im.extension.intervalClickable
 
 private val PADDING_X = 24.dp
 private val ENTITY_PADDING_Y = 8.dp
-private val FOLDER_PADDING_Y = 16.dp
+private val FOLDER_PADDING_Y = 12.dp
 
 @Composable
 fun IntroduceItem(

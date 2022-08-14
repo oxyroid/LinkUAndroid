@@ -206,6 +206,7 @@ class MessageRepositoryImpl(
 
     override suspend fun closeSession() = socketService.closeSession()
 
+    private val memory = mutableMapOf<Int, Message?>()
     override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? {
         return try {
             when (strategy) {
@@ -216,7 +217,14 @@ class MessageRepositoryImpl(
                             ?.toMessage()
                             ?.also { messageDao.insert(it) }
                 }
-                Strategy.Memory -> throw Strategy.StrategyMemoryNotSupportException
+                Strategy.Memory -> {
+                    memory.getOrPut(mid) {
+                        chatService.getMessageById(mid)
+                            .peekOrNull()
+                            ?.toMessage()
+                            ?.also { messageDao.insert(it) }
+                    }
+                }
                 Strategy.NetworkThenCache -> {
                     chatService.getMessageById(mid)
                         .peekOrNull()
@@ -233,7 +241,11 @@ class MessageRepositoryImpl(
 
     }
 
-    override suspend fun sendTextMessage(cid: Int, text: String): Flow<Resource<Unit>> =
+    override suspend fun sendTextMessage(
+        cid: Int,
+        text: String,
+        reply: Int?
+    ): Flow<Resource<Unit>> =
         channelFlow {
             // We wanna to custom the catch block, so we didn't use resourceFlow.
             val userId = authenticator.currentUID ?: run {
@@ -244,7 +256,8 @@ class MessageRepositoryImpl(
             val staging = MessageRepository.StagingMessage.Text(
                 cid = cid,
                 uid = userId,
-                text = text
+                text = text,
+                reply = reply
             )
             // 2: Put the message into database.
             createStagingMessage(staging)
@@ -252,15 +265,16 @@ class MessageRepositoryImpl(
                 trySend(Resource.Loading)
                 try {
                     // 3: Make real HTTP-Connection to send message.
+                    val content = json.encodeToString(TextContent(text, reply))
                     chatService.sendMessage(
                         cid,
-                        text,
+                        content,
                         Message.Type.Text.toString(),
                         staging.uuid
                     ).handle {
                         // 4. If it is succeed, level-up the staging message by server-message.
                         with(it) {
-                            levelStagingMessage(uuid, id, cid, timestamp, staging.text)
+                            levelStagingMessage(uuid, id, cid, timestamp, content)
                         }
                         trySend(Resource.Success(Unit))
                     }.catch { message, code ->
@@ -277,7 +291,11 @@ class MessageRepositoryImpl(
 
         }
 
-    override fun sendImageMessage(cid: Int, uri: Uri): Flow<Resource<Unit>> = channelFlow {
+    override fun sendImageMessage(
+        cid: Int,
+        uri: Uri,
+        reply: Int?
+    ): Flow<Resource<Unit>> = channelFlow {
         try {
             // 1. Make real HTTP-Connection to upload file.
             val userId = authenticator.currentUID
@@ -286,7 +304,8 @@ class MessageRepositoryImpl(
             val staging = MessageRepository.StagingMessage.Image(
                 cid = cid,
                 uid = userId,
-                uri = uri
+                uri = uri,
+                reply = reply
             )
             uploadImage(uri).onEach { resource ->
                 when (resource) {
@@ -300,9 +319,11 @@ class MessageRepositoryImpl(
                         val cachedFile = resource.data
                         launch {
                             try {
+                                val content =
+                                    json.encodeToString(ImageContent(cachedFile.remoteUrl, reply))
                                 chatService.sendMessage(
                                     cid = cid,
-                                    content = cachedFile.remoteUrl,
+                                    content = content,
                                     type = Message.Type.Image.toString(),
                                     uuid = staging.uuid
                                 ).handle { serverMessage ->
@@ -313,7 +334,7 @@ class MessageRepositoryImpl(
                                             id = id,
                                             cid = cid,
                                             timestamp = timestamp,
-                                            content = cachedFile.localUri.toString()
+                                            content = content
                                         )
                                     }
                                     trySend(Resource.Success(Unit))
@@ -343,7 +364,12 @@ class MessageRepositoryImpl(
 
     }
 
-    override fun sendGraphicsMessage(cid: Int, text: String, uri: Uri): Flow<Resource<Unit>> =
+    override fun sendGraphicsMessage(
+        cid: Int,
+        text: String,
+        uri: Uri,
+        reply: Int?
+    ): Flow<Resource<Unit>> =
         channelFlow {
             try {
                 // 1. Make real HTTP-Connection to upload file.
@@ -354,7 +380,8 @@ class MessageRepositoryImpl(
                     cid = cid,
                     uid = userId,
                     text = text,
-                    uri = uri
+                    uri = uri,
+                    reply = reply
                 )
                 uploadImage(uri).onEach { resource ->
                     when (resource) {
@@ -368,10 +395,16 @@ class MessageRepositoryImpl(
                             val cachedFile = resource.data
                             launch {
                                 try {
-                                    val content = GraphicsContent(text, cachedFile.remoteUrl)
+                                    val content = json.encodeToString(
+                                        GraphicsContent(
+                                            text,
+                                            cachedFile.remoteUrl,
+                                            reply
+                                        )
+                                    )
                                     chatService.sendMessage(
                                         cid = cid,
-                                        content = json.encodeToString(content),
+                                        content = content,
                                         type = Message.Type.Graphics.toString(),
                                         uuid = staging.uuid
                                     ).handle { serverMessage ->
@@ -382,10 +415,7 @@ class MessageRepositoryImpl(
                                                 id = id,
                                                 cid = cid,
                                                 timestamp = timestamp,
-                                                content = GraphicsContent(
-                                                    text = text,
-                                                    url = cachedFile.localUri.toString()
-                                                ).let(json::encodeToString)
+                                                content = content
                                             )
                                         }
                                         trySend(Resource.Success(Unit))
@@ -470,7 +500,12 @@ class MessageRepositoryImpl(
                     id = id,
                     cid = staging.cid,
                     uid = staging.uid,
-                    content = staging.text,
+                    content = json.encodeToString(
+                        TextContent(
+                            text = staging.text,
+                            reply = staging.reply
+                        )
+                    ),
                     type = Message.Type.Text,
                     timestamp = System.currentTimeMillis(),
                     uuid = staging.uuid,
@@ -482,7 +517,12 @@ class MessageRepositoryImpl(
                     id = id,
                     cid = staging.cid,
                     uid = staging.uid,
-                    content = staging.uri.toString(),
+                    content = json.encodeToString(
+                        ImageContent(
+                            url = staging.uri.toString(),
+                            reply = staging.reply
+                        )
+                    ),
                     type = Message.Type.Image,
                     timestamp = System.currentTimeMillis(),
                     uuid = staging.uuid,
@@ -495,7 +535,9 @@ class MessageRepositoryImpl(
                 uid = staging.uid,
                 content = json.encodeToString(
                     GraphicsContent(
-                        staging.text, staging.uri.toString()
+                        text = staging.text,
+                        url = staging.uri.toString(),
+                        reply = staging.reply
                     )
                 ),
                 type = Message.Type.Graphics,

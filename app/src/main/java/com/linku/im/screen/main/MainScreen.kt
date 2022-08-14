@@ -1,7 +1,6 @@
 package com.linku.im.screen.main
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,24 +8,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.material.Divider
-import androidx.compose.material.FabPosition
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.*
 import androidx.compose.material3.*
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -55,7 +42,7 @@ private sealed class Selection(
 ) {
     data class Route(
         override val resId: Int,
-        val screen: Screen,
+        val route: String,
         override val icon: ImageVector
     ) : Selection(resId, icon)
 
@@ -72,21 +59,30 @@ private sealed class Selection(
 @OptIn(
     ExperimentalFoundationApi::class,
     ExperimentalPagerApi::class,
-    ExperimentalMaterialApi::class, ExperimentalAnimationApi::class
+    ExperimentalMaterial3Api::class,
 )
 @Composable
 fun MainScreen(
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
-    val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState()
+    val hostState = remember {
+        SnackbarHostState()
+    }
 
     val selections = buildList {
-        Selection.Route(R.string.notification, Screen.ProfileScreen, Icons.Sharp.Notifications)
-            .also(::add)
-        Selection.Route(R.string.settings, Screen.ProfileScreen, Icons.Sharp.Settings).also(::add)
+        Selection.Route(
+            resId = R.string.notification,
+            route = Screen.IntroduceScreen.withArgs(-1),
+            icon = Icons.Sharp.Notifications
+        ).also(::add)
+        Selection.Route(
+            resId = R.string.settings,
+            route = Screen.IntroduceScreen.withArgs(-1),
+            icon = Icons.Sharp.Settings
+        ).also(::add)
         Selection.Switch(
             resId = R.string.toggle_theme,
             value = vm.readable.isDarkMode,
@@ -110,15 +106,14 @@ fun MainScreen(
 
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
+            hostState.showSnackbar(it)
         }
         vm.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
+            hostState.showSnackbar(it)
         }
     }
 
     Scaffold(
-        scaffoldState = scaffoldState,
         topBar = {
             val vmState = vm.readable
             ToolBar(
@@ -138,18 +133,26 @@ fun MainScreen(
             )
         },
         floatingActionButton = {
-            AnimatedVisibility(pagerState.currentPage == 1) {
-                LargeFloatingActionButton(
-                    onClick = { /*TODO*/ }
+            Column(
+                modifier = Modifier.fillMaxWidth().animateContentSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                FloatingActionButton(
+                    onClick = { viewModel.onEvent(MainEvent.StartToCreateConversation) },
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .align(Alignment.End)
                 ) {
                     Icon(
                         imageVector = Icons.Sharp.Add,
                         contentDescription = ""
                     )
                 }
+                SnackbarHost(hostState = hostState)
             }
+
         },
-        floatingActionButtonPosition = FabPosition.End
+        floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
         val pages = listOf(
             stringResource(R.string.tab_notification),
@@ -172,13 +175,10 @@ fun MainScreen(
                             .padding(horizontal = 24.dp)
                             .clip(
                                 RoundedCornerShape(
-                                    topStart = 4.dp,
-                                    topEnd = 4.dp
+                                    topStart = 4.dp, topEnd = 4.dp
                                 )
-                            ),
-                        color = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onPrimary,
-                        height = 5.dp
+                            ), color = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onPrimary, height = 5.dp
                     )
                 },
                 divider = {},
@@ -193,8 +193,7 @@ fun MainScreen(
                             },
                             text = {
                                 Text(
-                                    text = page,
-                                    style = MaterialTheme.typography.titleSmall
+                                    text = page, style = MaterialTheme.typography.titleSmall
                                 )
                             },
                             selectedContentColor = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.onSurface
@@ -220,20 +219,20 @@ fun MainScreen(
                         ) {
                             items(selections) { selection ->
                                 ListItem(
-                                    icon = {
+                                    leadingContent = {
                                         Icon(
                                             imageVector = selection.icon,
                                             contentDescription = stringResource(selection.resId)
                                         )
                                     },
-                                    text = {
+                                    headlineText = {
                                         Text(
                                             text = stringResource(selection.resId),
                                             style = MaterialTheme.typography.titleSmall,
                                             color = LocalContentColor.current
                                         )
                                     },
-                                    trailing = {
+                                    trailingContent = {
                                         if (selection is Selection.Switch) {
                                             Box(
                                                 modifier = Modifier
@@ -248,36 +247,31 @@ fun MainScreen(
                                     },
                                     modifier = Modifier
                                         .padding(8.dp)
+                                        .clip(RoundedCornerShape(8.dp))
                                         .background(
                                             color = MaterialTheme.colorScheme.surface,
-                                            shape = RoundedCornerShape(8.dp)
                                         )
                                         .intervalClickable {
                                             when (selection) {
                                                 is Selection.Route -> {
-                                                    when (val screen = selection.screen) {
-                                                        Screen.ProfileScreen -> {
-                                                            val screenActual =
-                                                                Screen.LoginScreen
-                                                                    .takeIf { vm.authenticator.currentUID == null }
-                                                                    ?: screen
+                                                    when (Screen.valueOf(selection.route)) {
+                                                        Screen.IntroduceScreen -> {
                                                             vm.onEvent(
-                                                                LinkUEvent.Navigate(
-                                                                    screenActual
+                                                                if (vm.authenticator.currentUID == null) LinkUEvent.Navigate(
+                                                                    Screen.LoginScreen
+                                                                )
+                                                                else LinkUEvent.NavigateWithArgs(
+                                                                    selection.route
                                                                 )
                                                             )
                                                         }
                                                         Screen.MainScreen -> {}
                                                         else -> vm.onEvent(
-                                                            LinkUEvent.Navigate(
-                                                                screen
-                                                            )
+                                                            LinkUEvent.NavigateWithArgs(selection.route)
                                                         )
                                                     }
                                                 }
-                                                is Selection.Switch -> {
-                                                    selection.onClick()
-                                                }
+                                                is Selection.Switch -> selection.onClick()
                                             }
                                         }
                                 )
@@ -288,8 +282,7 @@ fun MainScreen(
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        userScrollEnabled = !state.loading
+                        modifier = Modifier.fillMaxSize(), userScrollEnabled = !state.loading
                     ) {
                         val conversations = when (page) {
                             0 -> state.conversations
@@ -309,7 +302,7 @@ fun MainScreen(
                                     )
                                 )
                             }
-                            Divider()
+                            if (index != conversations.lastIndex) Divider()
                         }
                     }
                 }
