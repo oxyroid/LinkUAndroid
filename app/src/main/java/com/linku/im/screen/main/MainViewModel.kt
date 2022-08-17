@@ -3,6 +3,7 @@ package com.linku.im.screen.main
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
+import com.linku.data.usecase.MessageUseCases
 import com.linku.domain.Resource
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.GraphicsMessage
@@ -23,6 +24,7 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val conversationUseCases: ConversationUseCases,
     private val applicationUseCases: ApplicationUseCases,
+    private val messageUseCases: MessageUseCases,
     connectivityObserver: ConnectivityObserver
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
 
@@ -69,7 +71,7 @@ class MainViewModel @Inject constructor(
                 getAllConversationsJob?.cancel()
                 getAllConversationsJob = viewModelScope.launch {
                     conversations.forEach { conversation ->
-                        conversationUseCases.observeLatestContent(conversation.id)
+                        messageUseCases.observeLatestMessage(conversation.id)
                             .collectLatest { message ->
                                 val oldConversations = readable.conversations.toMutableList()
                                 val oldContracts = readable.contracts.toMutableList()

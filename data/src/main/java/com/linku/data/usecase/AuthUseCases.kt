@@ -18,20 +18,16 @@ data class AuthUseCases @Inject constructor(
     val uploadAvatar: UploadAvatarUseCase,
 )
 
-data class SignInUseCase(
+data class SignInUseCase @Inject constructor(
     private val repository: AuthRepository
 ) {
     operator fun invoke(
         email: String,
         password: String
-    ): Flow<Resource<Unit>> = resourceFlow {
-        repository.signIn(email, password)
-            .handle(::emitResource)
-            .catch(::emitResource)
-    }
+    ): Flow<Resource<Float>> = repository.signIn(email, password)
 }
 
-data class SignUpUseCase(
+data class SignUpUseCase @Inject constructor(
     private val repository: AuthRepository
 ) {
     operator fun invoke(
@@ -46,7 +42,7 @@ data class SignUpUseCase(
     }
 }
 
-data class SignOutUseCase(
+data class SignOutUseCase @Inject constructor(
     private val repository: AuthRepository,
     private val authenticator: Authenticator
 ) {
@@ -57,7 +53,7 @@ data class SignOutUseCase(
     }
 }
 
-data class VerifiedEmailUseCase(
+data class VerifiedEmailUseCase @Inject constructor(
     private val repository: AuthRepository
 ) {
     operator fun invoke(): Flow<Resource<Unit>> = resourceFlow {
@@ -67,7 +63,7 @@ data class VerifiedEmailUseCase(
     }
 }
 
-data class VerifiedEmailCodeUseCase(
+data class VerifiedEmailCodeUseCase @Inject constructor(
     private val repository: AuthRepository
 ) {
     operator fun invoke(code: String): Flow<Resource<Unit>> = resourceFlow {
@@ -77,7 +73,7 @@ data class VerifiedEmailCodeUseCase(
     }
 }
 
-data class UploadAvatarUseCase(
+data class UploadAvatarUseCase @Inject constructor(
     private val repository: AuthRepository
 ) {
     operator fun invoke(uri: Uri): Flow<Resource<Unit>> = repository.uploadAvatar(uri)

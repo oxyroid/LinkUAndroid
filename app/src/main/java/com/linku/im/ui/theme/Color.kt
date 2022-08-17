@@ -1,5 +1,6 @@
 package com.linku.im.ui.theme
 
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 val md_theme_light_primary = Color(0xFF657A98)
@@ -62,4 +63,10 @@ val md_theme_dark_shadow = Color(0xFF000000)
 val md_theme_dark_surfaceTint = Color(0xFFA2C9FF)
 val md_theme_dark_divider = Color(0xFF0A0A0A)
 
-val seed = Color(0xFF657A98)
+data class ExpandColor(
+    val divider: Color,
+    val seed: Color = Color(0xFF657A98)
+)
+
+val LocalExpandColor = staticCompositionLocalOf<ExpandColor> { error("No divider color provided") }
+val LocalContainerColor = staticCompositionLocalOf<Color> { error("No container color provided") }

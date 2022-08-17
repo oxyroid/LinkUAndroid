@@ -36,4 +36,8 @@ interface AuthService {
     @FormUrlEncoded
     @POST("auth/forget/{code}")
     suspend fun forgetPasswordVerify(@Path("code") code: String): Result<Unit>
+
+    @GET("chats/mqtt")
+    suspend fun subscribe(): Result<Unit>
+
 }

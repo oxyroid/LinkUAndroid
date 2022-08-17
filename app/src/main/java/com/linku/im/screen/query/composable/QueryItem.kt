@@ -61,7 +61,7 @@ fun QueryItem(
         CircleHeadPicture(
             model = conversation?.avatar,
             name = conversation?.name,
-            placeholder = { TextImage(text = conversation?.name) }
+            placeholder = { TextImage(text = conversation?.name ?: "") }
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(

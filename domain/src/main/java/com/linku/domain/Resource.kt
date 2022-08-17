@@ -1,9 +1,7 @@
 package com.linku.domain
 
-import androidx.annotation.Keep
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
-import kotlinx.serialization.Serializable
 
 /**
  * A data wrapper
@@ -11,16 +9,10 @@ import kotlinx.serialization.Serializable
  * Data request state wrapper, usually used in a flow collector
  */
 sealed class Resource<out T> {
-    @Serializable
-    @Keep
     object Loading : Resource<Nothing>()
 
-    @Serializable
-    @Keep
     data class Success<T>(val data: T) : Resource<T>()
 
-    @Serializable
-    @Keep
     data class Failure<T>(
         val message: String,
         val code: String = "?"

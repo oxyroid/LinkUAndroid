@@ -5,19 +5,13 @@ import com.linku.domain.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.Message
 import kotlinx.coroutines.flow.Flow
-import java.util.*
 
 interface MessageRepository {
-    data class CachedFile(
-        val localUri: Uri,
-        val remoteUrl: String
-    )
-
     suspend fun getMessageById(mid: Int, strategy: Strategy): Message?
-    fun initSession(uid: Int?): Flow<Resource<Unit>>
     fun incoming(): Flow<List<Message>>
     fun incoming(cid: Int): Flow<List<Message>>
-    suspend fun closeSession()
+    fun observeLatestMessages(cid: Int): Flow<Message>
+
     suspend fun sendTextMessage(
         cid: Int,
         text: String,
@@ -41,29 +35,6 @@ interface MessageRepository {
 
     suspend fun fetchUnreadMessages()
 
-    sealed class StagingMessage {
-        data class Text(
-            val cid: Int,
-            val uid: Int,
-            val text: String,
-            val reply: Int?
-        ) : StagingMessage()
+    suspend fun fetchMessagesAtLeast(after: Long)
 
-        data class Image(
-            val cid: Int,
-            val uid: Int,
-            val uri: Uri,
-            val reply: Int?
-        ) : StagingMessage()
-
-        data class Graphics(
-            val cid: Int,
-            val uid: Int,
-            val text: String,
-            val uri: Uri,
-            val reply: Int?
-        ) : StagingMessage()
-
-        val uuid: String by lazy { UUID.randomUUID().toString() }
-    }
 }

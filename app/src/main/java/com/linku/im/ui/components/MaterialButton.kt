@@ -1,11 +1,7 @@
 package com.linku.im.ui.components
 
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.TextButton
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -46,8 +42,8 @@ fun MaterialTextButton(
         enabled = enabled
     ) {
         Text(
+            style = MaterialTheme.typography.titleMedium,
             text = stringResource(id = textRes),
-            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 14.sp
         )
     }

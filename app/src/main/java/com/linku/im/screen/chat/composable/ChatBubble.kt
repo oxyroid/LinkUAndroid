@@ -19,12 +19,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
@@ -40,7 +38,8 @@ import com.linku.im.R
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
 import com.linku.im.ui.components.TextImage
-import com.linku.im.ui.theme.seed
+import com.linku.im.ui.theme.LocalExpandColor
+import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.vm
 import java.util.*
 
@@ -94,7 +93,7 @@ fun ChatBubble(
             Message.STATE_PENDING -> {
                 CircularProgressIndicator(
                     modifier = Modifier
-                        .size(16.dp)
+                        .size(LocalSpacing.current.medium)
                         .align(Alignment.Bottom)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
@@ -105,7 +104,7 @@ fun ChatBubble(
                     contentDescription = "Failed",
                     tint = MaterialTheme.colorScheme.error,
                     modifier = Modifier
-                        .size(24.dp)
+                        .size(LocalSpacing.current.large)
                         .align(Alignment.Bottom)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
@@ -117,7 +116,7 @@ fun ChatBubble(
                     model = config.avatar,
                     contentDescription = "",
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(LocalSpacing.current.largest)
                         .clip(RoundedCornerShape(50))
                         .intervalClickable { onProfile(message.uid) },
                     error = {
@@ -125,7 +124,7 @@ fun ChatBubble(
                             text = config.name,
                             fontSize = 24.sp,
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(LocalSpacing.current.largest)
                                 .clip(RoundedCornerShape(50))
                         )
                     },
@@ -134,19 +133,20 @@ fun ChatBubble(
                             text = config.name,
                             fontSize = 24.sp,
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(LocalSpacing.current.largest)
                                 .clip(RoundedCornerShape(50))
                         )
-                    }
+                    },
+                    contentScale = ContentScale.Crop
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
             } else if (isAnother) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
+                        .size(LocalSpacing.current.largest)
                         .background(Color.Transparent)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
             }
         }
 
@@ -168,7 +168,7 @@ fun ChatBubble(
             )
         ) {
             val customTextSelectionColors = TextSelectionColors(
-                handleColor = seed,
+                handleColor = LocalExpandColor.current.seed,
                 backgroundColor = ColorUtils.blendARGB(
                     backgroundColor.toArgb(),
                     Color.Black.toArgb(),
@@ -207,7 +207,7 @@ fun ChatBubble(
                     ) {
                         Box(
                             modifier = Modifier
-                                .height(24.dp)
+                                .height(LocalSpacing.current.large)
                                 .width(4.dp)
                                 .clip(RoundedCornerShape(50))
                                 .background(LocalContentColor.current)
@@ -233,7 +233,7 @@ fun ChatBubble(
                                     modifier = Modifier.padding(
                                         start = HORIZONTAL_IN_PADDING,
                                         end = HORIZONTAL_IN_PADDING,
-                                        top = VERTICAL_IN_PADDING / 2,
+                                        top = if (reply == null) VERTICAL_IN_PADDING else VERTICAL_IN_PADDING / 2,
                                         bottom = VERTICAL_IN_PADDING,
                                     ),
                                     textAlign = TextAlign.Start,
@@ -281,7 +281,7 @@ fun ChatBubble(
                     else -> {
                         Text(
                             text = stringResource(id = R.string.unknown_message_type),
-                            color = MaterialTheme.colorScheme.tertiary,
+                            color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.padding(
                                 start = HORIZONTAL_IN_PADDING,
                                 end = HORIZONTAL_IN_PADDING,

@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.linku.im.ui.theme.divider
+import com.linku.im.ui.theme.LocalExpandColor
 
 @Composable
 fun ProfileList(
@@ -47,7 +47,7 @@ fun ProfileList(
                 if (index != items.lastIndex)
                     Divider(
                         thickness = 0.6.dp,
-                        color = MaterialTheme.colorScheme.divider()
+                        color = LocalExpandColor.current.divider
                     )
             }
         }

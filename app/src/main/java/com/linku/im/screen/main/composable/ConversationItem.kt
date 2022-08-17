@@ -69,7 +69,7 @@ fun ConversationItem(
         CircleHeadPicture(
             model = conversation?.image,
             name = conversation?.name,
-            placeholder = { TextImage(text = conversation?.name) }
+            placeholder = { TextImage(text = conversation?.name ?: "") }
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(

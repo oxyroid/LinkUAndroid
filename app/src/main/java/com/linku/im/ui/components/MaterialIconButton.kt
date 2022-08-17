@@ -1,7 +1,7 @@
 package com.linku.im.ui.components
 
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -17,6 +17,10 @@ fun MaterialIconButton(
     contentDescription: String = icon.name
 ) {
     IconButton(onClick = onClick, modifier) {
-        Icon(imageVector = icon, contentDescription = contentDescription, tint = tint)
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = tint
+        )
     }
 }

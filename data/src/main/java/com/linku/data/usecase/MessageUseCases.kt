@@ -9,17 +9,39 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 data class MessageUseCases @Inject constructor(
-    val initSession: InitSessionUseCase,
     val observeAllMessages: ObserveAllMessagesUseCase,
     val observeMessages: ObserveMessagesUseCase,
-    val closeSession: CloseSessionUseCase,
+    val observeLatestMessage: ObserveLatestMessagesUseCase,
     val textMessage: TextMessageUseCase,
     val imageMessage: ImageMessageUseCase,
     val graphicsMessage: GraphicsMessageUseCase,
-    val getMessage: GetMessageUseCase
+    val getMessage: GetMessageUseCase,
+    val fetchUnreadMessages: FetchUnreadMessagesUseCase,
+    val fetchMessagesAtLeastUseCase: FetchMessagesAtLeastUseCase,
 )
 
-data class GetMessageUseCase(
+data class FetchUnreadMessagesUseCase @Inject constructor(
+    val repository: MessageRepository
+) {
+    suspend operator fun invoke() = repository.fetchUnreadMessages()
+}
+
+data class ObserveLatestMessagesUseCase @Inject constructor(
+    private val repository: MessageRepository
+) {
+    operator fun invoke(cid: Int): Flow<Message> = repository.observeLatestMessages(cid)
+}
+
+data class FetchMessagesAtLeastUseCase @Inject constructor(
+    val repository: MessageRepository
+) {
+    suspend operator fun invoke(
+        after: Long
+    ) = repository.fetchMessagesAtLeast(after)
+}
+
+
+data class GetMessageUseCase @Inject constructor(
     val repository: MessageRepository
 ) {
     suspend operator fun invoke(
@@ -28,7 +50,7 @@ data class GetMessageUseCase(
     ): Message? = repository.getMessageById(mid, strategy)
 }
 
-data class TextMessageUseCase(
+data class TextMessageUseCase @Inject constructor(
     val repository: MessageRepository
 ) {
     suspend operator fun invoke(
@@ -38,7 +60,7 @@ data class TextMessageUseCase(
     ): Flow<Resource<Unit>> = repository.sendTextMessage(cid, text, reply)
 }
 
-data class ImageMessageUseCase(
+data class ImageMessageUseCase @Inject constructor(
     val messageRepository: MessageRepository
 ) {
     operator fun invoke(
@@ -48,7 +70,7 @@ data class ImageMessageUseCase(
     ): Flow<Resource<Unit>> = messageRepository.sendImageMessage(cid, uri, reply)
 }
 
-data class GraphicsMessageUseCase(
+data class GraphicsMessageUseCase @Inject constructor(
     val messageRepository: MessageRepository
 ) {
     operator fun invoke(
@@ -59,15 +81,7 @@ data class GraphicsMessageUseCase(
     ): Flow<Resource<Unit>> = messageRepository.sendGraphicsMessage(cid, text, uri, reply)
 }
 
-data class InitSessionUseCase(
-    private val repository: MessageRepository
-) {
-    operator fun invoke(uid: Int?): Flow<Resource<Unit>> = run {
-        repository.initSession(uid)
-    }
-}
-
-data class ObserveAllMessagesUseCase(
+data class ObserveAllMessagesUseCase @Inject constructor(
     private val repository: MessageRepository
 ) {
     operator fun invoke(): Flow<List<Message>> {
@@ -75,18 +89,10 @@ data class ObserveAllMessagesUseCase(
     }
 }
 
-data class ObserveMessagesUseCase(
+data class ObserveMessagesUseCase @Inject constructor(
     private val repository: MessageRepository
 ) {
     operator fun invoke(cid: Int): Flow<List<Message>> {
         return repository.incoming(cid)
-    }
-}
-
-data class CloseSessionUseCase(
-    private val repository: MessageRepository
-) {
-    suspend operator fun invoke() {
-        repository.closeSession()
     }
 }

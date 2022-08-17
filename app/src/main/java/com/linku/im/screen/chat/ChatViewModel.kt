@@ -1,6 +1,5 @@
 package com.linku.im.screen.chat
 
-import android.util.Log
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
@@ -12,6 +11,7 @@ import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.TextMessage
+import com.linku.domain.eventOf
 import com.linku.domain.service.NotificationService
 import com.linku.im.Constants
 import com.linku.im.R
@@ -20,8 +20,6 @@ import com.linku.im.screen.chat.composable.BubbleConfig
 import com.linku.im.screen.chat.composable.ReplyConfig
 import com.linku.im.screen.chat.vo.MessageVO
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -37,8 +35,6 @@ class ChatViewModel @Inject constructor(
     private val authenticator: Authenticator,
     private val applicationUseCases: ApplicationUseCases
 ) : BaseViewModel<ChatState, ChatEvent>(ChatState()) {
-    private val _scrollEvent = MutableStateFlow(Unit)
-    val scrollEvent: Flow<Unit> get() = _scrollEvent
 
     override fun onEvent(event: ChatEvent) {
         when (event) {
@@ -85,12 +81,15 @@ class ChatViewModel @Inject constructor(
             is ChatEvent.Reply -> {
                 viewModelScope.launch {
                     writable = readable.copy(
-                        repliedMessage = messageUseCases
-                            .getMessage(event.mid, Strategy.OnlyCache)
-                            ?.let {
-                                if (it == readable.repliedMessage) null
-                                else it
-                            }
+                        repliedMessage = event.mid?.let {
+                            messageUseCases
+                                .getMessage(it, Strategy.OnlyCache)
+                                ?.let { message ->
+                                    if (message == readable.repliedMessage) null
+                                    else message
+                                }
+
+                        }
                     )
                 }
             }
@@ -102,20 +101,19 @@ class ChatViewModel @Inject constructor(
             )
         }
     }
-    private val TAG = "VM"
+
 
     private fun initial(event: ChatEvent.Initial) {
-        Log.e(TAG, "initial: ")
         writable = readable.copy(
             cid = event.cid
         )
         conversationUseCases.observeConversation(event.cid)
             .onEach { conversation ->
-                Log.e(TAG, "observed: ")
                 writable = readable.copy(
                     title = conversation.name,
                     cid = conversation.id,
                     type = conversation.type,
+                    videoChatAllowed = conversation.type == Conversation.Type.PM
                 )
             }
             .launchIn(viewModelScope)
@@ -196,11 +194,10 @@ class ChatViewModel @Inject constructor(
                                 }
                                 else -> null
                             }
-                        }
+                        },
+                    scroll = if (readable.firstVisibleIndex == 0 && readable.offset == 0 && !readable.loading)
+                        eventOf(0) else readable.scroll
                 )
-                if (readable.firstVisibleIndex == 0 && readable.offset == 0 && !readable.loading) {
-                    _scrollEvent.emit(Unit)
-                }
             }
             .launchIn(viewModelScope)
 
@@ -227,11 +224,11 @@ class ChatViewModel @Inject constructor(
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> {
-                        _scrollEvent.emit(Unit)
                         writable = readable.copy(
                             uri = null,
                             textFieldValue = TextFieldValue(),
-                            repliedMessage = null
+                            repliedMessage = null,
+                            scroll = eventOf(0)
                         )
                     }
                     is Resource.Success -> {
@@ -259,10 +256,10 @@ class ChatViewModel @Inject constructor(
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {
-                            _scrollEvent.emit(Unit)
                             writable = readable.copy(
                                 textFieldValue = TextFieldValue(),
-                                repliedMessage = null
+                                repliedMessage = null,
+                                scroll = eventOf(0)
                             )
                         }
                         is Resource.Success -> {
@@ -285,10 +282,10 @@ class ChatViewModel @Inject constructor(
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> {
-                        _scrollEvent.emit(Unit)
                         writable = readable.copy(
                             uri = null,
-                            repliedMessage = null
+                            repliedMessage = null,
+                            scroll = eventOf(0)
                         )
                     }
                     is Resource.Success -> {

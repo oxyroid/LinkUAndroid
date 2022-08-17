@@ -10,7 +10,11 @@ import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao
 
 @Database(
-    entities = [User::class, Message::class, Conversation::class],
+    entities = [
+        User::class,
+        Message::class,
+        Conversation::class
+    ],
     version = 1,
     exportSchema = false
 )

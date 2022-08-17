@@ -5,8 +5,10 @@ import android.content.SharedPreferences
 import com.linku.domain.extension.BooleanPreference
 import com.linku.domain.extension.IntPreference
 import com.linku.domain.extension.StringPreference
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class SettingUseCase(context: Context) {
+class SettingUseCase @Inject constructor(@ApplicationContext context: Context) {
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
     var isDarkMode: Boolean by BooleanPreference(sharedPreferences, DARK_MODE, false)

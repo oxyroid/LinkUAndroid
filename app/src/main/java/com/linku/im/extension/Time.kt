@@ -6,15 +6,40 @@ val Long.friendlyFormatted
     get() = run {
         val calendar = Calendar.getInstance()
         calendar.time = Date(this)
-        val hour = calendar.get(Calendar.HOUR_OF_DAY).toString()
-            .let {
-                if (it.length < 2)  "0$it"
-                else it
+        if (isToday) {
+            val hour = calendar.get(Calendar.HOUR_OF_DAY).toString()
+                .let {
+                    if (it.length < 2) "0$it"
+                    else it
+                }
+            val minute = calendar.get(Calendar.MINUTE).toString()
+                .let {
+                    if (it.length < 2) "0$it"
+                    else it
+                }
+            "$hour:$minute"
+        } else {
+            val month = (calendar.get(Calendar.MONTH) + 1).toString()
+            val day = calendar.get(Calendar.DAY_OF_MONTH).toString()
+                .let {
+                    if (it.length < 2) "0$it"
+                    else it
+                }
+            "$month-$day"
+        }
+    }
+val Long.isToday: Boolean
+    get() = run {
+        val current = Calendar.getInstance()
+            .apply {
+                time = Date(this@isToday)
             }
-        val minute = calendar.get(Calendar.MINUTE).toString()
-            .let {
-                if (it.length < 2)  "0$it"
-                else it
+        val todayBegin = Calendar.getInstance()
+            .apply {
+                set(Calendar.SECOND, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MILLISECOND, 0)
             }
-        "$hour:$minute"
+        current.equals(todayBegin) || current.after(todayBegin)
     }

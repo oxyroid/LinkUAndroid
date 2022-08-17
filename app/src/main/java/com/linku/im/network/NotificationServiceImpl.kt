@@ -4,7 +4,10 @@ import android.content.Context
 import android.media.SoundPool
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.linku.domain.entity.GraphicsMessage
+import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
+import com.linku.domain.entity.TextMessage
 import com.linku.domain.service.NotificationService
 import com.linku.im.R
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,8 +21,14 @@ class NotificationServiceImpl @Inject constructor(
 ) : NotificationService {
     override fun onCollected(message: Message) {
         soundPool.load(context, R.raw.sound_in, 1)
+        val content = when (message) {
+            is TextMessage -> message.text
+            is ImageMessage -> getString(R.string.image_message)
+            is GraphicsMessage -> getString(R.string.graphics_message)
+            else -> getString(R.string.unknown_message_type)
+        }
         val notification = notificationBuilder
-            .setContentText(message.content)
+            .setContentText(content)
             .build()
         notificationManager.notify(message.cid, notification)
     }
@@ -27,4 +36,6 @@ class NotificationServiceImpl @Inject constructor(
     override fun onEmit() {
         soundPool.load(context, R.raw.sound_out, 1)
     }
+
+    private fun getString(resId: Int): String = context.getString(resId)
 }

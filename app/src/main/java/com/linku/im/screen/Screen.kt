@@ -8,7 +8,6 @@ sealed class Screen(val route: String) {
     object EditScreen : Screen(route = "edit_screen")
     object LoginScreen : Screen("login_screen")
     object IntroduceScreen : Screen("introduce_screen")
-    object PreviewScreen : Screen("preview_screen")
 
     fun buildArgs(vararg args: String) = buildString {
         append(route)
@@ -28,7 +27,6 @@ sealed class Screen(val route: String) {
             route.startsWith(LoginScreen.route) -> LoginScreen
             route.startsWith(IntroduceScreen.route) -> IntroduceScreen
             route.startsWith(EditScreen.route) -> EditScreen
-            route.startsWith(PreviewScreen.route) -> PreviewScreen
             else -> MainScreen
         }
     }

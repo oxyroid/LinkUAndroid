@@ -2,6 +2,7 @@ package com.linku.im.screen.chat
 
 import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
+import com.linku.domain.Event
 import com.linku.domain.bean.Emoji
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
@@ -20,5 +21,7 @@ data class ChatState(
     val firstVisibleIndex: Int = 0,
     val offset: Int = 0,
     val repliedMessage: Message? = null,
-    val visitImage: String = ""
+    val visitImage: String = "",
+    val videoChatAllowed: Boolean = false,
+    val scroll: Event<Int> = Event.Handled()
 )

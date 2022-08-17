@@ -10,13 +10,12 @@ import javax.inject.Inject
 data class ConversationUseCases @Inject constructor(
     val observeConversation: ObserveConversationUseCase,
     val observeConversations: ObserveConversationsUseCase,
-    val observeLatestContent: ObserveLatestMessagesUseCase,
     val fetchConversation: FetchConversationUseCase,
     val fetchConversations: FetchConversationsUseCase,
     val queryConversations: QueryConversationsUseCase
 )
 
-data class ObserveConversationUseCase(
+data class ObserveConversationUseCase @Inject constructor(
     private val repository: ConversationRepository
 ) {
     operator fun invoke(cid: Int): Flow<Conversation> {
@@ -25,32 +24,26 @@ data class ObserveConversationUseCase(
     }
 }
 
-data class ObserveConversationsUseCase(
+data class ObserveConversationsUseCase @Inject constructor(
     private val repository: ConversationRepository
 ) {
     operator fun invoke(): Flow<List<Conversation>> = repository.observeConversations()
 }
 
 
-data class ObserveLatestMessagesUseCase(
-    private val repository: ConversationRepository
-) {
-    operator fun invoke(cid: Int): Flow<Message> = repository.observeLatestMessages(cid)
-}
-
-data class FetchConversationUseCase(
+data class FetchConversationUseCase @Inject constructor(
     private val repository: ConversationRepository
 ) {
     operator fun invoke(cid: Int): Flow<Resource<Unit>> = repository.fetchConversation(cid)
 }
 
-data class FetchConversationsUseCase(
+data class FetchConversationsUseCase @Inject constructor(
     private val repository: ConversationRepository
 ) {
     operator fun invoke(): Flow<Resource<Unit>> = repository.fetchConversations()
 }
 
-data class QueryConversationsUseCase(
+data class QueryConversationsUseCase @Inject constructor(
     private val repository: ConversationRepository
 ) {
     operator fun invoke(name: String?, description: String?): Flow<Resource<List<Conversation>>> =

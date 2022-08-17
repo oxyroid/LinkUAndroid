@@ -9,7 +9,7 @@ data class UserUseCases @Inject constructor(
     val findUser: FindUserUseCase
 )
 
-data class FindUserUseCase(
+data class FindUserUseCase @Inject constructor(
     private val repository: UserRepository
 ) {
     suspend operator fun invoke(

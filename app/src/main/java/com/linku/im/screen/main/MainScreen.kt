@@ -18,8 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -30,20 +30,20 @@ import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
 import com.linku.im.screen.Screen
 import com.linku.im.screen.main.composable.ConversationItem
+import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.components.ToolBarAction
+import com.linku.im.ui.theme.LocalAnimatedColor
+import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.supportDynamic
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
 private sealed class Selection(
-    open val resId: Int,
-    open val icon: ImageVector
+    open val resId: Int, open val icon: ImageVector
 ) {
     data class Route(
-        override val resId: Int,
-        val route: String,
-        override val icon: ImageVector
+        override val resId: Int, val route: String, override val icon: ImageVector
     ) : Selection(resId, icon)
 
     data class Switch(
@@ -67,11 +67,13 @@ fun MainScreen(
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val pagerState = rememberPagerState()
     val hostState = remember {
         SnackbarHostState()
     }
 
+    val navController = LocalNavController.current
     val selections = buildList {
         Selection.Route(
             resId = R.string.notification,
@@ -83,23 +85,18 @@ fun MainScreen(
             route = Screen.IntroduceScreen.withArgs(-1),
             icon = Icons.Sharp.Settings
         ).also(::add)
-        Selection.Switch(
-            resId = R.string.toggle_theme,
+        Selection.Switch(resId = R.string.toggle_theme,
             value = vm.readable.isDarkMode,
             onIcon = Icons.Sharp.LightMode,
             offIcon = Icons.Sharp.DarkMode,
             onClick = {
                 vm.onEvent(LinkUEvent.ToggleDarkMode)
-            }
-        ).also(::add)
+            }).also(::add)
         supportDynamic.ifTrue {
             Selection.Switch(
-                resId = R.string.toggle_dynamic,
-                value = vm.readable.dynamicEnabled,
-                onClick = {
+                resId = R.string.toggle_dynamic, value = vm.readable.dynamicEnabled, onClick = {
                     vm.onEvent(LinkUEvent.ToggleDynamic)
-                },
-                onIcon = Icons.Sharp.FormatPaint
+                }, onIcon = Icons.Sharp.FormatPaint
             ).also(::add)
         }
     }
@@ -112,7 +109,6 @@ fun MainScreen(
             hostState.showSnackbar(it)
         }
     }
-
     Scaffold(
         topBar = {
             val vmState = vm.readable
@@ -124,47 +120,49 @@ fun MainScreen(
                     }
                 },
                 actions = {
-                    ToolBarAction(
-                        onClick = { vm.onEvent(LinkUEvent.Navigate(Screen.QueryScreen)) },
-                        imageVector = Icons.Sharp.Search
+                    MaterialIconButton(
+                        icon = Icons.Sharp.Search,
+                        onClick = { navController.navigate(Screen.QueryScreen.route) },
+                        contentDescription = "search"
                     )
                 },
-                text = vmState.label
+                text = vmState.label ?: context.getString(R.string.app_name)
             )
         },
         floatingActionButton = {
             Column(
-                modifier = Modifier.fillMaxWidth().animateContentSize(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateContentSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 FloatingActionButton(
                     onClick = { viewModel.onEvent(MainEvent.StartToCreateConversation) },
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .align(Alignment.End)
+                        .padding(LocalSpacing.current.medium)
+                        .align(Alignment.End),
+                    elevation = FloatingActionButtonDefaults.loweredElevation(),
+                    containerColor = LocalAnimatedColor.current.containerColor,
+                    contentColor = LocalAnimatedColor.current.onContainerColor
                 ) {
                     Icon(
-                        imageVector = Icons.Sharp.Add,
-                        contentDescription = ""
+                        imageVector = Icons.Sharp.Add, contentDescription = "create conversation"
                     )
                 }
                 SnackbarHost(hostState = hostState)
             }
 
-        },
-        floatingActionButtonPosition = FabPosition.Center
+        }, floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
         val pages = listOf(
             stringResource(R.string.tab_notification),
             stringResource(R.string.tab_contact),
             stringResource(R.string.tab_more)
         )
-
         Column(
             modifier = Modifier.padding(innerPadding)
         ) {
             TabRow(
-                modifier = Modifier.wrapContentWidth(),
                 selectedTabIndex = pagerState.currentPage,
                 indicator = { tabPositions ->
                     TabRowDefaults.Indicator(
@@ -172,13 +170,16 @@ fun MainScreen(
                             .tabIndicatorOffset(
                                 tabPositions[pagerState.currentPage]
                             )
-                            .padding(horizontal = 24.dp)
+                            .padding(horizontal = LocalSpacing.current.large)
                             .clip(
                                 RoundedCornerShape(
-                                    topStart = 4.dp, topEnd = 4.dp
+                                    topStart = LocalSpacing.current.extraSmall,
+                                    topEnd = LocalSpacing.current.extraSmall
                                 )
-                            ), color = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onPrimary, height = 5.dp
+                            ),
+                        color = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onPrimary,
+                        height = LocalSpacing.current.extraSmall
                     )
                 },
                 divider = {},
@@ -203,19 +204,19 @@ fun MainScreen(
                         )
                     }
                 },
-                containerColor = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary,
-                contentColor = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
+                containerColor = LocalAnimatedColor.current.containerColor,
+                contentColor = LocalAnimatedColor.current.onContainerColor
             )
             HorizontalPager(
                 count = pages.size,
                 state = pagerState,
-                modifier = Modifier.background(MaterialTheme.colorScheme.background)
+                modifier = Modifier.background(LocalAnimatedColor.current.backgroundColor)
             ) { page ->
                 if (page == 2) {
-                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+                    CompositionLocalProvider(LocalContentColor provides LocalAnimatedColor.current.onBackgroundColor) {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(8.dp)
+                            contentPadding = PaddingValues(LocalSpacing.current.small)
                         ) {
                             items(selections) { selection ->
                                 ListItem(
@@ -236,7 +237,7 @@ fun MainScreen(
                                         if (selection is Selection.Switch) {
                                             Box(
                                                 modifier = Modifier
-                                                    .size(8.dp)
+                                                    .size(LocalSpacing.current.small)
                                                     .background(
                                                         color = if (selection.value) Color.Green
                                                         else MaterialTheme.colorScheme.error,
@@ -246,8 +247,8 @@ fun MainScreen(
                                         }
                                     },
                                     modifier = Modifier
-                                        .padding(8.dp)
-                                        .clip(RoundedCornerShape(8.dp))
+                                        .padding(LocalSpacing.current.small)
+                                        .clip(RoundedCornerShape(LocalSpacing.current.small))
                                         .background(
                                             color = MaterialTheme.colorScheme.surface,
                                         )
@@ -256,24 +257,26 @@ fun MainScreen(
                                                 is Selection.Route -> {
                                                     when (Screen.valueOf(selection.route)) {
                                                         Screen.IntroduceScreen -> {
-                                                            vm.onEvent(
-                                                                if (vm.authenticator.currentUID == null) LinkUEvent.Navigate(
-                                                                    Screen.LoginScreen
-                                                                )
-                                                                else LinkUEvent.NavigateWithArgs(
-                                                                    selection.route
-                                                                )
+                                                            navController.navigate(
+                                                                if (vm.authenticator.currentUID == null) Screen.LoginScreen.route
+                                                                else selection.route
                                                             )
                                                         }
                                                         Screen.MainScreen -> {}
-                                                        else -> vm.onEvent(
-                                                            LinkUEvent.NavigateWithArgs(selection.route)
-                                                        )
+                                                        else -> navController.navigate(selection.route)
                                                     }
                                                 }
                                                 is Selection.Switch -> selection.onClick()
                                             }
-                                        }
+                                        },
+                                    colors = ListItemDefaults.colors(
+                                        containerColor = LocalAnimatedColor.current.surfaceColor,
+                                        headlineColor = LocalAnimatedColor.current.onSurfaceColor,
+                                        leadingIconColor = LocalAnimatedColor.current.onSurfaceColor,
+                                        overlineColor = LocalAnimatedColor.current.onSurfaceColor,
+                                        supportingColor = LocalAnimatedColor.current.onSurfaceColor,
+                                        trailingIconColor = LocalAnimatedColor.current.onSurfaceColor
+                                    )
                                 )
                             }
 
@@ -296,11 +299,7 @@ fun MainScreen(
                                 unreadCount = index / 2,
                                 modifier = Modifier.animateItemPlacement()
                             ) {
-                                vm.onEvent(
-                                    LinkUEvent.NavigateWithArgs(
-                                        Screen.ChatScreen.withArgs(conversation.id)
-                                    )
-                                )
+                                navController.navigate(Screen.ChatScreen.withArgs(conversation.id))
                             }
                             if (index != conversations.lastIndex) Divider()
                         }

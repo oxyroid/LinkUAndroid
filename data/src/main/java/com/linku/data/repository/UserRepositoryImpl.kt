@@ -5,8 +5,9 @@ import com.linku.domain.entity.User
 import com.linku.domain.repository.UserRepository
 import com.linku.domain.room.dao.UserDao
 import com.linku.domain.service.UserService
+import javax.inject.Inject
 
-class UserRepositoryImpl(
+class UserRepositoryImpl @Inject constructor(
     private val userService: UserService,
     private val userDao: UserDao
 ) : UserRepository {

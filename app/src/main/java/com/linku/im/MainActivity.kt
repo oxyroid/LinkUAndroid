@@ -22,7 +22,6 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.Screen
@@ -31,10 +30,10 @@ import com.linku.im.screen.edit.EditScreen
 import com.linku.im.screen.introduce.IntroduceEvent
 import com.linku.im.screen.introduce.IntroduceScreen
 import com.linku.im.screen.main.MainScreen
-import com.linku.im.screen.preview.PreviewScreen
 import com.linku.im.screen.query.QueryScreen
 import com.linku.im.screen.sign.LoginScreen
 import com.linku.im.ui.theme.AppTheme
+import com.linku.im.ui.theme.LocalNavController
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -62,6 +61,11 @@ class MainActivity : ComponentActivity(), ViewTreeObserver.OnPreDrawListener {
             true
         } ?: false
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        _vm.onEvent(LinkUEvent.Disconnect)
+    }
 }
 
 lateinit var vm: LinkUViewModel
@@ -76,7 +80,6 @@ fun App() {
         useDarkTheme = isDarkMode,
         enableDynamic = state.dynamicEnabled
     ) {
-        val navController = rememberAnimatedNavController()
         val systemUiController = rememberSystemUiController()
         LaunchedEffect(isDarkMode) {
             systemUiController.setStatusBarColor(
@@ -90,7 +93,7 @@ fun App() {
         }
 
         AnimatedNavHost(
-            navController = navController,
+            navController = LocalNavController.current,
             startDestination = Screen.MainScreen.route,
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.background)
@@ -160,30 +163,6 @@ fun App() {
                         ?.getInt("type")
                         ?.let(IntroduceEvent.Edit.Type::parse)
                 )
-            }
-            composable(
-                route = Screen.PreviewScreen.buildArgs("mid"),
-                arguments = listOf(
-                    navArgument("mid") {
-                        type = NavType.IntType
-                        nullable = false
-                    }
-                )
-            ) { entity ->
-                PreviewScreen(
-                    mid = entity.arguments?.getInt("mid") ?: -1
-                )
-            }
-        }
-
-        LaunchedEffect(state.navigateUp) {
-            state.navigateUp.handle {
-                navController.navigateUp()
-            }
-        }
-        LaunchedEffect(state.navigate) {
-            state.navigate.handle { route ->
-                navController.navigate(route)
             }
         }
     }

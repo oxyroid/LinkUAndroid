@@ -12,28 +12,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import com.linku.im.ui.theme.SugarColors
 
 @Composable
 fun TextImage(
-    text: String?,
+    text: String,
     modifier: Modifier = Modifier,
-    fontSize: TextUnit = 36.sp,
-    color: Color = MaterialTheme.colorScheme.primary
+    fontSize: TextUnit = 32.sp,
+    color: Color = SugarColors.key(text)
 ) {
     Box(
         modifier = modifier.background(color),
         contentAlignment = Alignment.Center
     ) {
-        if (!text.isNullOrBlank()) {
-            Text(
-                text = text.first().toString(),
-                style = MaterialTheme.typography.displaySmall.copy(
-                    fontSize = fontSize
-                ),
-                color = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.fillMaxSize(),
-                textAlign = TextAlign.Center,
-            )
-        }
+        Text(
+            text = text.first().toString(),
+            style = MaterialTheme.typography.displaySmall.copy(
+                fontSize = fontSize
+            ),
+            color = Color.White,
+            modifier = Modifier.fillMaxSize(),
+            textAlign = TextAlign.Center,
+        )
     }
 }

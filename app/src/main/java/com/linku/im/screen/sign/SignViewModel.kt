@@ -3,12 +3,11 @@ package com.linku.im.screen.sign
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
+import com.linku.data.usecase.MessageUseCases
 import com.linku.domain.Resource
 import com.linku.domain.eventOf
-import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -17,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SignViewModel @Inject constructor(
     private val authUseCases: AuthUseCases,
-    private val applicationUseCases: ApplicationUseCases
+    private val applicationUseCases: ApplicationUseCases,
+    private val messageUseCases: MessageUseCases
 ) : BaseViewModel<SignState, SignEvent>(SignState()) {
 
     override fun onEvent(event: SignEvent) {
@@ -50,12 +50,22 @@ class SignViewModel @Inject constructor(
                         loading = true,
                     )
                     is Resource.Success -> {
-                        vm.onEvent(LinkUEvent.PopBackStack)
-                        onMessage(applicationUseCases.getString(R.string.log_in_success))
-                        readable.copy(
-                            loginEvent = eventOf(Unit),
-                            loading = false
-                        )
+                        when (resource.data) {
+                            0.5f -> {
+                                readable.copy(
+                                    syncing = true
+                                )
+                            }
+                            1f -> {
+                                onMessage(applicationUseCases.getString(R.string.log_in_success))
+                                readable.copy(
+                                    syncing = false,
+                                    loading = false,
+                                    loginEvent = eventOf(Unit)
+                                )
+                            }
+                            else -> readable
+                        }
                     }
                     is Resource.Failure -> {
                         onMessage(resource.message)
@@ -88,7 +98,6 @@ class SignViewModel @Inject constructor(
                     is Resource.Success -> {
                         onMessage(applicationUseCases.getString(R.string.register_success))
                         readable.copy(
-                            registerEvent = eventOf(resource.data),
                             loading = false
                         )
                     }

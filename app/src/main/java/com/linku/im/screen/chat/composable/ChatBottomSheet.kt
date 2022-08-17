@@ -20,6 +20,7 @@ import androidx.compose.material.icons.sharp.KeyboardVoice
 import androidx.compose.material.icons.sharp.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,20 +36,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.linku.domain.bean.Emoji
-import com.linku.domain.entity.GraphicsMessage
-import com.linku.domain.entity.ImageMessage
-import com.linku.domain.entity.Message
-import com.linku.domain.entity.TextMessage
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
+import com.linku.im.ui.components.MaterialIconButton
+import com.linku.im.ui.theme.LocalSpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatBottomBar(
+fun ChatBottomSheet(
     text: TextFieldValue,
     uri: Uri?,
-    repliedMessage: Message?,
     emojis: List<Emoji>,
     expended: Boolean,
     onSend: () -> Unit,
@@ -64,14 +62,13 @@ fun ChatBottomBar(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .padding(
-                    horizontal = 8.dp,
-                    vertical = 4.dp
+                    horizontal = LocalSpacing.current.small,
+                    vertical = LocalSpacing.current.extraSmall
                 )
         ) {
             Surface(
@@ -82,69 +79,57 @@ fun ChatBottomBar(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 4.dp)
+                    modifier = Modifier.padding(horizontal = LocalSpacing.current.extraSmall)
                 ) {
-                    IconButton(
-                        onClick = { onExpanded(!expended) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Sharp.EmojiEmotions,
-                            contentDescription = "emoji",
-                            tint = MaterialTheme.colorScheme.outline
+                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.outline) {
+                        MaterialIconButton(
+                            icon = Icons.Sharp.EmojiEmotions,
+                            onClick = { onExpanded(!expended) },
+                            contentDescription = "emoji"
                         )
-                    }
-                    val placeholder = when {
-                        repliedMessage != null -> {
-                            when (repliedMessage) {
-                                is TextMessage -> repliedMessage.text
-                                is ImageMessage -> stringResource(R.string.image_message)
-                                is GraphicsMessage -> stringResource(R.string.graphics_message)
-                                else -> stringResource(R.string.unknown_message_type)
-                            }.let { "Reply Message: \"$it\"" }
+                        val placeholder = when (uri) {
+                            null -> stringResource(R.string.screen_chat_input)
+                            else -> stringResource(R.string.screen_chat_input_image)
                         }
-                        uri == null -> stringResource(R.string.screen_chat_input)
-                        else -> stringResource(R.string.screen_chat_input_image)
-                    }
-                    OutlinedTextField(
-                        value = text,
-                        onValueChange = { onText(it) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .focusRequester(focusRequester)
-                            .animateContentSize { _, _ -> },
-                        placeholder = {
-                            Text(
-                                text = placeholder,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                        OutlinedTextField(
+                            value = text,
+                            onValueChange = { onText(it) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester)
+                                .animateContentSize { _, _ -> },
+                            placeholder = {
+                                Text(
+                                    text = placeholder,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
+                            colors = TextFieldDefaults.outlinedTextFieldColors(
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                cursorColor = MaterialTheme.colorScheme.primary
+                            ),
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Send,
+                                keyboardType = KeyboardType.Text
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onSend = { onSend() }
                             )
-                        },
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            cursorColor = MaterialTheme.colorScheme.primary
-                        ),
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Send,
-                            keyboardType = KeyboardType.Text
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onSend = { onSend() }
                         )
-                    )
 
-                    IconButton(onClick = onFile) {
-                        Icon(
-                            imageVector = Icons.Sharp.AttachFile,
-                            contentDescription = "emoji",
-                            tint = MaterialTheme.colorScheme.outline
+                        MaterialIconButton(
+                            icon = Icons.Sharp.AttachFile,
+                            onClick = onFile,
+                            contentDescription = "attach file"
                         )
                     }
                 }
             }
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(LocalSpacing.current.extraSmall))
             FilledIconButton(
                 onClick = {
                     if (text.text.isNotBlank() || uri != null) onSend()
@@ -160,14 +145,15 @@ fun ChatBottomBar(
 
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(LocalSpacing.current.medium))
 
         LazyHorizontalGrid(
             modifier = Modifier
                 .fillMaxWidth()
-                .height((expended.ifTrue { 144.dp } ?: 24.dp) + 24.dp)
+                .height((expended.ifTrue { 144.dp }
+                    ?: LocalSpacing.current.large) + LocalSpacing.current.large)
                 .background(MaterialTheme.colorScheme.surface)
-                .padding(vertical = 8.dp),
+                .padding(vertical = LocalSpacing.current.small),
             rows = GridCells.Fixed(expended.ifTrue { 4 } ?: 1),
             verticalArrangement = Arrangement.Center,
             horizontalArrangement = Arrangement.Start
@@ -191,8 +177,8 @@ private fun LazyGridItemScope.EmojiButton(
         contentDescription = "",
         modifier = Modifier
             .animateItemPlacement()
-            .padding(12.dp)
-            .width(24.dp)
+            .padding(LocalSpacing.current.medium)
+            .width(LocalSpacing.current.large)
             .aspectRatio(1f)
             .intervalClickable { onClick() }
     )

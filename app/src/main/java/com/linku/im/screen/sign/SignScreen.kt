@@ -3,9 +3,11 @@ package com.linku.im.screen.sign
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -24,15 +26,17 @@ import com.linku.im.R
 import com.linku.im.ui.components.MaterialButton
 import com.linku.im.ui.components.MaterialTextButton
 import com.linku.im.ui.components.TextInputFieldOne
+import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.vm
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     viewModel: SignViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
+    val navController = LocalNavController.current
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
 
     val focusRequester = remember(::FocusRequester)
@@ -45,6 +49,13 @@ fun LoginScreen(
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }
+
+    LaunchedEffect(state.loginEvent) {
+        state.loginEvent.handle {
+            navController.navigateUp()
+        }
+    }
+
     Scaffold(
         scaffoldState = scaffoldState,
         backgroundColor = MaterialTheme.colorScheme.background,
@@ -61,7 +72,7 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .navigationBarsPadding()
                     .imePadding()
-                    .padding(PaddingValues(horizontal = 48.dp)),
+                    .padding(PaddingValues(horizontal = LocalSpacing.current.extraLarge)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LaunchedEffect(Unit) {
@@ -70,7 +81,7 @@ fun LoginScreen(
                 LottieAnimation(
                     composition = composition,
                     modifier = Modifier
-                        .padding(bottom = 12.dp)
+                        .padding(bottom = LocalSpacing.current.medium)
                         .size(160.dp),
                     iterations = LottieConstants.IterateForever
                 )
@@ -93,7 +104,7 @@ fun LoginScreen(
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(18.dp)
+                        .height(LocalSpacing.current.medium)
                 )
 
                 TextInputFieldOne(
@@ -114,11 +125,12 @@ fun LoginScreen(
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(LocalSpacing.current.extraLarge)
                 )
 
                 MaterialButton(
-                    textRes = R.string.screen_login_btn_login,
+                    textRes = if (state.syncing) R.string.syncing else
+                        R.string.screen_login_btn_login,
                     enabled = !state.loading,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -136,7 +148,7 @@ fun LoginScreen(
                     focusRequester.captureFocus()
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(LocalSpacing.current.large))
             }
         }
     }

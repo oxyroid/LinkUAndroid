@@ -14,10 +14,8 @@ import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao
 import com.linku.domain.sandbox
-import com.linku.domain.service.AuthService
-import com.linku.domain.service.ChatService
-import com.linku.domain.service.FileService
-import com.linku.domain.service.ProfileService
+import com.linku.domain.service.*
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -29,38 +27,58 @@ import okhttp3.RequestBody
 import java.io.File
 import java.io.FileNotFoundException
 import java.util.*
+import javax.inject.Inject
 
-class AuthRepositoryImpl(
-    private val authService: AuthService,
+class AuthRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val authenticator: Authenticator,
     private val userDao: UserDao,
     private val conversationDao: ConversationDao,
     private val messageDao: MessageDao,
-    private val chatService: ChatService,
-    private val authenticator: Authenticator,
-    private val context: Context,
-    private val fileService: FileService,
-    private val profileService: ProfileService
+    private val authService: AuthService,
+    private val profileService: ProfileService,
+    private val conversationService: ConversationService,
+    private val messageService: MessageService,
+    private val fileService: FileService
 ) : AuthRepository {
-    override suspend fun signIn(email: String, password: String): Result<Unit> =
-        sandbox {
-            authService.signIn(email, password)
+    override fun signIn(email: String, password: String): Flow<Resource<Float>> = channelFlow {
+        trySend(Resource.Loading)
+        launch {
+            authService
+                .signIn(email, password)
                 .handle { token ->
-                    authenticator.update(uid = token.id, token = token.token)
-                    val timestamp = System.currentTimeMillis() - 1000 * 60 * 60 * 24 * 3
-                    chatService.getMessageAfter(timestamp).handle { messages ->
-                        messages.forEach {
-                            messageDao.insert(it.toMessage())
-                            val cid = it.cid
-                            if (conversationDao.getById(cid) == null) {
-                                chatService.getById(cid).handle { conversation ->
-                                    conversationDao.insert(conversation.toConversation())
+                    authenticator.update(
+                        uid = token.id,
+                        token = token.token
+                    )
+
+                    trySend(Resource.Success(0.5f))
+                    launch {
+                        val after: Long = 1000L * 60 * 60 * 24 * 3
+                        messageService.getMessageAfter(System.currentTimeMillis() - after)
+                            .handle { messages ->
+                                try {
+                                    messages.forEach { message ->
+                                        messageDao.insert(message.toMessage())
+                                        if (conversationDao.getById(message.cid) == null) {
+                                            conversationService.getConversationById(message.cid)
+                                                .handle {
+                                                    conversationDao.insert(it.toConversation())
+                                                }
+                                        }
+                                    }
+                                } catch (ignored: Exception) {
+                                } finally {
+                                    trySend(Resource.Success(1f))
                                 }
                             }
-                        }
                     }
                 }
-                .map {}
+                .catch { message, code ->
+                    trySend(Resource.Failure(message, code))
+                }
         }
+    }
 
     override suspend fun signUp(
         email: String,

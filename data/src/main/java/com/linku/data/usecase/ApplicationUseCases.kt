@@ -3,14 +3,15 @@ package com.linku.data.usecase
 import android.content.Context
 import android.widget.Toast
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-data class ApplicationUseCases(
+data class ApplicationUseCases @Inject constructor(
     val getString: GetStringUseCase,
     val toast: ToastUseCase,
     val getSystemService: GetSystemServiceUseCase
 )
 
-data class GetSystemServiceUseCase(
+data class GetSystemServiceUseCase @Inject constructor(
     @ApplicationContext val context: Context
 ) {
     @Suppress("UNCHECKED_CAST")
@@ -19,7 +20,7 @@ data class GetSystemServiceUseCase(
     }
 }
 
-data class GetStringUseCase(
+data class GetStringUseCase @Inject constructor(
     @ApplicationContext val context: Context
 ) {
     operator fun invoke(resId: Int): String {
@@ -27,7 +28,7 @@ data class GetStringUseCase(
     }
 }
 
-data class ToastUseCase(
+data class ToastUseCase @Inject constructor(
     @ApplicationContext val context: Context
 ) {
     operator fun invoke(text: String, duration: Int = Toast.LENGTH_SHORT) {

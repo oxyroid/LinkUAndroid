@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.linku.im.R
 
 object AppFont {
-    val TitilliumWeb = FontFamily(
+    val Default = FontFamily(
         Font(R.font.titillium_web_regular),
         Font(R.font.titillium_web_italic, style = FontStyle.Italic),
         Font(R.font.titillium_web_medium, FontWeight.Medium),
@@ -19,5 +19,5 @@ object AppFont {
 }
 
 fun TextStyle.withDefaultFontFamily() = copy(
-    fontFamily = AppFont.TitilliumWeb
+    fontFamily = AppFont.Default
 )

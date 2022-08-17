@@ -44,16 +44,18 @@ import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.im.BuildConfig
-import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.extension.ifFalse
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
+import com.linku.im.screen.Screen
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
+import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.components.ToolBarAction
-import com.linku.im.ui.theme.divider
+import com.linku.im.ui.theme.LocalExpandColor
+import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
@@ -65,16 +67,14 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun IntroduceScreen(
-    uid: Int,
-    viewModel: IntroduceViewModel = hiltViewModel()
+    uid: Int, viewModel: IntroduceViewModel = hiltViewModel()
 ) {
-    val vmState = vm.readable
     val context = LocalContext.current
-    val isDarkMode = vmState.isDarkMode
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
 
+    val navController = LocalNavController.current
     val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     var dropdownMenuExpended by remember {
         mutableStateOf(false)
@@ -95,7 +95,7 @@ fun IntroduceScreen(
     }
 
     LaunchedEffect(state.logout) {
-        if (state.logout) vm.onEvent(LinkUEvent.PopBackStack)
+        if (state.logout) navController.navigateUp()
     }
 
     LaunchedEffect(viewModel.message, vm.message) {
@@ -113,32 +113,33 @@ fun IntroduceScreen(
         }
     }
 
+    LaunchedEffect(state.editEvent) {
+        state.editEvent.handle {
+            navController.navigate(Screen.EditScreen.withArgs(it))
+        }
+    }
+
+
     state.visitAvatar.isNotEmpty().ifTrue {
-        AlertDialog(
-            text = {
-                AsyncImage(
-                    model = state.visitAvatar,
-                    contentDescription = "",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                )
-            },
-            confirmButton = {},
-            onDismissRequest = {
-                viewModel.onEvent(IntroduceEvent.DismissVisitAvatar)
-            }
-        )
+        AlertDialog(text = {
+            AsyncImage(
+                model = state.visitAvatar,
+                contentDescription = "",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(LocalSpacing.current.small))
+            )
+        }, confirmButton = {}, onDismissRequest = {
+            viewModel.onEvent(IntroduceEvent.DismissVisitAvatar)
+        })
     }
 
     with(state) {
         verifiedEmailStarting || uploading
     }.ifTrue {
-        AlertDialog(
-            confirmButton = {},
+        AlertDialog(confirmButton = {},
             onDismissRequest = {},
-            icon = { CircularProgressIndicator() }
-        )
+            icon = { CircularProgressIndicator() })
     }
 
     state.verifiedEmailDialogShowing.ifTrue {
@@ -210,16 +211,15 @@ fun IntroduceScreen(
                         Text(
                             text = state.actionsLabel,
                             style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.primary),
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(LocalSpacing.current.medium)
                         )
                     }
                     items(state.actions) {
-                        ListItem(
-                            text = {
-                                Text(
-                                    text = it.text, color = MaterialTheme.colorScheme.onBackground
-                                )
-                            },
+                        ListItem(text = {
+                            Text(
+                                text = it.text, color = MaterialTheme.colorScheme.onBackground
+                            )
+                        },
                             icon = {
                                 Icon(
                                     imageVector = it.icon,
@@ -234,8 +234,7 @@ fun IntroduceScreen(
                                         it.onClick()
                                         sheetState.hide()
                                     }
-                                }
-                        )
+                                })
                     }
                 }
             },
@@ -251,20 +250,16 @@ fun IntroduceScreen(
                     .navigationBarsPadding()
             ) {
                 item {
-                    Surface(
-                        color = MaterialTheme.colorScheme.secondary,
+                    Surface(color = MaterialTheme.colorScheme.secondary,
                         contentColor = MaterialTheme.colorScheme.onSecondary,
                         onClick = {
                             viewModel.onEvent(IntroduceEvent.AvatarClicked)
                             scope.launch {
                                 sheetState.show()
                             }
-                        }
-                    ) {
-                        val model = ImageRequest.Builder(context)
-                            .data(state.avatar)
-                            .crossfade(true)
-                            .build()
+                        }) {
+                        val model =
+                            ImageRequest.Builder(context).data(state.avatar).crossfade(true).build()
                         SubcomposeAsyncImage(
                             model = model,
                             contentDescription = "",
@@ -277,60 +272,54 @@ fun IntroduceScreen(
                 }
 
                 item {
-                    ProfileList(
-                        label = stringResource(id = R.string.account),
+                    ProfileList(label = stringResource(id = R.string.account),
                         items = state.dataProperties,
                         onItemClick = { setting ->
                             if (state.isOthers) return@ProfileList
                             if (setting is Property.Data) {
                                 viewModel.onEvent(
                                     IntroduceEvent.Actions(
-                                        label = setting.key,
-                                        actions = setting.actions
+                                        label = setting.key, actions = setting.actions
                                     )
                                 )
                                 scope.launch {
                                     sheetState.show()
                                 }
                             }
-                        }
-                    )
+                        })
                 }
 
                 if (state.settingsProperties.isNotEmpty()) {
                     item {
                         Spacer(
                             modifier = Modifier
-                                .height(18.dp)
+                                .height(LocalSpacing.current.medium)
                                 .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.divider(isDarkMode))
+                                .background(LocalExpandColor.current.divider)
                         )
                     }
                     item {
-                        ProfileList(
-                            label = stringResource(R.string.settings),
+                        ProfileList(label = stringResource(R.string.settings),
                             items = state.settingsProperties,
-                            onItemClick = {}
-                        )
+                            onItemClick = {})
                     }
                     item {
                         val versionLabel = stringResource(R.string.version_label)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.divider(isDarkMode))
+                                .background(LocalExpandColor.current.divider)
                                 .combinedClickable(
                                     onClick = {},
                                     onLongClick = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) },
                                     role = Role.Button
-                                ),
-                            contentAlignment = Alignment.Center
+                                ), contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "$versionLabel${BuildConfig.VERSION_NAME}",
                                 style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 12.dp),
+                                modifier = Modifier.padding(vertical = LocalSpacing.current.medium),
                                 color = MaterialTheme.colorScheme.onBackground
                             )
                         }
@@ -339,34 +328,27 @@ fun IntroduceScreen(
             }
 
             ToolBar(
-                onNavClick = { vm.onEvent(LinkUEvent.PopBackStack) },
+                onNavClick = { navController.navigateUp() },
                 actions = {
-                    ToolBarAction(
+                    MaterialIconButton(
+                        icon = Icons.Sharp.MoreVert,
                         onClick = { dropdownMenuExpended = true },
-                        imageVector = Icons.Sharp.MoreVert,
+                        contentDescription = "more"
                     )
-                    DropdownMenu(
-                        expanded = dropdownMenuExpended,
-                        onDismissRequest = { dropdownMenuExpended = false }
-                    ) {
+                    DropdownMenu(expanded = dropdownMenuExpended,
+                        onDismissRequest = { dropdownMenuExpended = false }) {
                         state.isOthers.ifFalse {
-                            DropdownMenuItem(
-                                onClick = {
-                                    viewModel.onEvent(IntroduceEvent.SignOut)
-                                    dropdownMenuExpended = false
-                                },
-                                text = {
-                                    Text(stringResource(R.string.sign_out))
-                                }
-                            )
+                            DropdownMenuItem(onClick = {
+                                viewModel.onEvent(IntroduceEvent.SignOut)
+                                dropdownMenuExpended = false
+                            }, text = {
+                                Text(stringResource(R.string.sign_out))
+                            })
                         }
                         state.isOthers.ifTrue {
-                            DropdownMenuItem(
-                                onClick = { dropdownMenuExpended = false },
-                                text = {
-                                    Text(stringResource(R.string.share))
-                                }
-                            )
+                            DropdownMenuItem(onClick = { dropdownMenuExpended = false }, text = {
+                                Text(stringResource(R.string.share))
+                            })
                         }
                     }
                 },

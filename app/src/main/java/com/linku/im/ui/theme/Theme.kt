@@ -1,14 +1,17 @@
 package com.linku.im.ui.theme
 
 import android.os.Build
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.linku.im.vm
 
 
@@ -75,9 +78,7 @@ private val DarkColors = darkColorScheme(
 
 val supportDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
-fun ColorScheme.divider(useDarkTheme: Boolean = vm.readable.isDarkMode): Color =
-    if (!useDarkTheme) md_theme_light_divider else md_theme_dark_divider
-
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppTheme(
     useDarkTheme: Boolean = isSystemInDarkTheme(),
@@ -91,26 +92,72 @@ fun AppTheme(
         if (enableDynamic and supportDynamic) dynamicDarkColorScheme(LocalContext.current)
         else DarkColors
 
-    MaterialTheme(
-        colorScheme = colors,
-        content = content,
-        typography = MaterialTheme.typography.copy(
-            titleLarge = MaterialTheme.typography.titleLarge.withDefaultFontFamily(),
-            titleMedium = MaterialTheme.typography.titleMedium.withDefaultFontFamily(),
-            titleSmall = MaterialTheme.typography.titleSmall.withDefaultFontFamily(),
-            bodyLarge = MaterialTheme.typography.bodyLarge.withDefaultFontFamily(),
-            bodyMedium = MaterialTheme.typography.bodyMedium.withDefaultFontFamily(),
-            bodySmall = MaterialTheme.typography.bodySmall.withDefaultFontFamily(),
-            displayLarge = MaterialTheme.typography.displayLarge.withDefaultFontFamily(),
-            displayMedium = MaterialTheme.typography.displayMedium.withDefaultFontFamily(),
-            displaySmall = MaterialTheme.typography.displaySmall.withDefaultFontFamily(),
-            headlineLarge = MaterialTheme.typography.headlineLarge.withDefaultFontFamily(),
-            headlineMedium = MaterialTheme.typography.headlineMedium.withDefaultFontFamily(),
-            headlineSmall = MaterialTheme.typography.headlineSmall.withDefaultFontFamily(),
-            labelLarge = MaterialTheme.typography.labelLarge.withDefaultFontFamily(),
-            labelMedium = MaterialTheme.typography.labelMedium.withDefaultFontFamily(),
-            labelSmall = MaterialTheme.typography.labelSmall.withDefaultFontFamily()
-
-        )
+    val navController = rememberAnimatedNavController()
+    val expandColor = ExpandColor(
+        divider = if (!useDarkTheme) md_theme_light_divider else md_theme_dark_divider
     )
+    val animatedSpec = tween<Color>(200, 0, FastOutSlowInEasing)
+
+    val containerColor by animateColorAsState(
+        if (vm.readable.isDarkMode) colors.surface
+        else colors.primary,
+        animatedSpec
+    )
+    val onContainerColor by animateColorAsState(
+        if (vm.readable.isDarkMode) colors.onSurface
+        else colors.onPrimary,
+        animatedSpec
+    )
+    val backgroundColor by animateColorAsState(
+        colors.background,
+        animatedSpec
+    )
+    val onBackgroundColor by animateColorAsState(
+        colors.onBackground,
+        animatedSpec
+    )
+    val surfaceColor by animateColorAsState(
+        colors.surface,
+        animatedSpec
+    )
+    val onSurfaceColor by animateColorAsState(
+        colors.onSurface,
+        animatedSpec
+    )
+    val animatedColor = AnimatedColor(
+        containerColor = containerColor,
+        onContainerColor = onContainerColor,
+        backgroundColor = backgroundColor,
+        onBackgroundColor = onBackgroundColor,
+        surfaceColor = surfaceColor,
+        onSurfaceColor = onSurfaceColor
+    )
+    CompositionLocalProvider(
+        LocalSpacing provides Spacing(),
+        LocalNavController provides navController,
+        LocalExpandColor provides expandColor,
+        LocalAnimatedColor provides animatedColor
+    ) {
+        MaterialTheme(
+            colorScheme = colors,
+            content = content,
+            typography = MaterialTheme.typography.copy(
+                titleLarge = MaterialTheme.typography.titleLarge.withDefaultFontFamily(),
+                titleMedium = MaterialTheme.typography.titleMedium.withDefaultFontFamily(),
+                titleSmall = MaterialTheme.typography.titleSmall.withDefaultFontFamily(),
+                bodyLarge = MaterialTheme.typography.bodyLarge.withDefaultFontFamily(),
+                bodyMedium = MaterialTheme.typography.bodyMedium.withDefaultFontFamily(),
+                bodySmall = MaterialTheme.typography.bodySmall.withDefaultFontFamily(),
+                displayLarge = MaterialTheme.typography.displayLarge.withDefaultFontFamily(),
+                displayMedium = MaterialTheme.typography.displayMedium.withDefaultFontFamily(),
+                displaySmall = MaterialTheme.typography.displaySmall.withDefaultFontFamily(),
+                headlineLarge = MaterialTheme.typography.headlineLarge.withDefaultFontFamily(),
+                headlineMedium = MaterialTheme.typography.headlineMedium.withDefaultFontFamily(),
+                headlineSmall = MaterialTheme.typography.headlineSmall.withDefaultFontFamily(),
+                labelLarge = MaterialTheme.typography.labelLarge.withDefaultFontFamily(),
+                labelMedium = MaterialTheme.typography.labelMedium.withDefaultFontFamily(),
+                labelSmall = MaterialTheme.typography.labelSmall.withDefaultFontFamily()
+            )
+        )
+    }
 }
