@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.linku.im.ui.theme.LocalExpandColor
+import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun ProfileList(
@@ -21,13 +22,13 @@ fun ProfileList(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
+            .background(LocalTheme.current.background)
             .padding(top = 12.dp)
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
+            color = LocalTheme.current.primary,
             modifier = Modifier.padding(
                 start = 24.dp,
                 end = 24.dp,

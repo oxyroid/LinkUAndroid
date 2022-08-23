@@ -41,6 +41,7 @@ import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.theme.LocalSpacing
+import com.linku.im.ui.theme.LocalTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,15 +74,15 @@ fun ChatBottomSheet(
         ) {
             Surface(
                 shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onSurface,
+                color = LocalTheme.current.surface,
+                contentColor = LocalTheme.current.onSurface,
                 modifier = Modifier.weight(1f)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = LocalSpacing.current.extraSmall)
                 ) {
-                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.outline) {
+                    CompositionLocalProvider(LocalContentColor provides LocalTheme.current.onSurface) {
                         MaterialIconButton(
                             icon = Icons.Sharp.EmojiEmotions,
                             onClick = { onExpanded(!expended) },
@@ -101,7 +102,7 @@ fun ChatBottomSheet(
                             placeholder = {
                                 Text(
                                     text = placeholder,
-                                    color = MaterialTheme.colorScheme.onBackground,
+                                    color = LocalTheme.current.onBackground,
                                     style = MaterialTheme.typography.bodyMedium,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -110,7 +111,7 @@ fun ChatBottomSheet(
                             colors = TextFieldDefaults.outlinedTextFieldColors(
                                 focusedBorderColor = Color.Transparent,
                                 unfocusedBorderColor = Color.Transparent,
-                                cursorColor = MaterialTheme.colorScheme.primary
+                                cursorColor = LocalTheme.current.primary
                             ),
                             keyboardOptions = KeyboardOptions(
                                 imeAction = ImeAction.Send,
@@ -133,7 +134,11 @@ fun ChatBottomSheet(
             FilledIconButton(
                 onClick = {
                     if (text.text.isNotBlank() || uri != null) onSend()
-                }
+                },
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = LocalTheme.current.primary,
+                    contentColor = LocalTheme.current.onPrimary
+                )
             ) {
                 Icon(
                     imageVector = (text.text.isNotBlank() || uri != null)
@@ -152,7 +157,7 @@ fun ChatBottomSheet(
                 .fillMaxWidth()
                 .height((expended.ifTrue { 144.dp }
                     ?: LocalSpacing.current.large) + LocalSpacing.current.large)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(LocalTheme.current.surface)
                 .padding(vertical = LocalSpacing.current.small),
             rows = GridCells.Fixed(expended.ifTrue { 4 } ?: 1),
             verticalArrangement = Arrangement.Center,

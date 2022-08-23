@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linku.im.extension.ifTrue
-import com.linku.im.ui.theme.LocalAnimatedColor
 import com.linku.im.ui.theme.LocalContainerColor
+import com.linku.im.ui.theme.LocalTheme
 
 @OptIn(
     ExperimentalAnimationApi::class
@@ -29,8 +29,8 @@ fun ToolBar(
     onNavClick: () -> Unit,
     actions: @Composable (RowScope.() -> Unit),
     text: String,
-    backgroundColor: Color = LocalAnimatedColor.current.containerColor,
-    contentColor: Color = LocalAnimatedColor.current.onContainerColor
+    backgroundColor: Color = LocalTheme.current.surface,
+    contentColor: Color = LocalTheme.current.onSurface
 ) {
     CompositionLocalProvider(
         LocalContainerColor provides backgroundColor,

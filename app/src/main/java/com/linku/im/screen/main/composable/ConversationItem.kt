@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Lock
@@ -28,6 +29,7 @@ import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
 import com.linku.im.screen.main.MainState
 import com.linku.im.ui.components.TextImage
+import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun ConversationItem(
@@ -37,7 +39,7 @@ fun ConversationItem(
     pinned: Boolean = false,
     onClick: () -> Unit = {}
 ) {
-    val shimmerColor = MaterialTheme.colorScheme.outline * 0.3f
+    val shimmerColor = LocalTheme.current.divider * 0.3f
     val onShimmerColor = Color.White
     val shimmerAnimationSpec: InfiniteRepeatableSpec<Float> by lazy {
         infiniteRepeatable(
@@ -54,7 +56,7 @@ fun ConversationItem(
             .height(64.dp)
             .let {
                 pinned.ifTrue {
-                    it.background(MaterialTheme.colorScheme.surface * 0.8f)
+                    it.background(LocalTheme.current.surface * 0.8f)
                 } ?: it
             }
             .intervalClickable(
@@ -85,7 +87,7 @@ fun ConversationItem(
             Text(
                 text = conversation?.name ?: "",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = LocalTheme.current.onSurface,
                 maxLines = 1,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -101,7 +103,7 @@ fun ConversationItem(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.weight(1f))
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.outline) {
+            CompositionLocalProvider(LocalContentColor provides LocalTheme.current.onSurface * 0.8f) {
                 Text(
                     text = conversation?.content ?: "",
                     maxLines = 1,
@@ -127,11 +129,11 @@ fun ConversationItem(
             (unreadCount != 0) -> {
                 Surface(
                     shape = RoundedCornerShape(100),
-                    color = MaterialTheme.colorScheme.tertiary
+                    color = LocalTheme.current.primary
                 ) {
                     Text(
                         text = unreadCount.toString(),
-                        color = MaterialTheme.colorScheme.onTertiary,
+                        color = LocalTheme.current.onPrimary,
                         modifier = Modifier.padding(horizontal = 8.dp),
                         fontWeight = FontWeight.Bold
                     )
@@ -139,14 +141,14 @@ fun ConversationItem(
             }
             pinned -> {
                 Surface(
-                    shape = RoundedCornerShape(100),
-                    color = MaterialTheme.colorScheme.tertiary,
+                    shape = CircleShape,
+                    color = LocalTheme.current.primary,
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Sharp.Lock,
                         contentDescription = "",
-                        tint = MaterialTheme.colorScheme.onTertiary,
+                        tint = LocalTheme.current.onPrimary,
                         modifier = Modifier.padding(4.dp)
                     )
                 }

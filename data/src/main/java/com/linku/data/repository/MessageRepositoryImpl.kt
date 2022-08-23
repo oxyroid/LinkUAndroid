@@ -2,10 +2,8 @@ package com.linku.data.repository
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.core.net.toFile
-import com.linku.data.TAG
-import com.linku.data.debug
+import androidx.core.net.toUri
 import com.linku.data.error
 import com.linku.domain.*
 import com.linku.domain.bean.CachedFile
@@ -17,19 +15,16 @@ import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ConversationService
 import com.linku.domain.service.FileService
 import com.linku.domain.service.MessageService
+import com.linku.fs_android.writeFs
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
-import java.io.File
 import java.io.FileNotFoundException
-import java.util.*
 import javax.inject.Inject
 
 class MessageRepositoryImpl @Inject constructor(
@@ -264,24 +259,26 @@ class MessageRepositoryImpl @Inject constructor(
                         val cachedFile = resource.data
                         launch {
                             try {
-                                val content =
-                                    json.encodeToString(ImageContent(cachedFile.remoteUrl, reply))
+                                val remoteContent = json.encodeToString(
+                                    ImageContent(cachedFile.remoteUrl, reply)
+                                )
+                                val localContent = json.encodeToString(
+                                    ImageContent(cachedFile.localUri.toString(), reply)
+                                )
                                 messageService.sendMessage(
                                     cid = cid,
-                                    content = content,
+                                    content = remoteContent,
                                     type = Message.Type.Image.toString(),
                                     uuid = staging.uuid
                                 ).handle { serverMessage ->
                                     // 4. If it is succeed, level-up the staging message by server-message.
-                                    with(serverMessage) {
-                                        levelStagingMessage(
-                                            uuid = uuid,
-                                            id = id,
-                                            cid = cid,
-                                            timestamp = timestamp,
-                                            content = content
-                                        )
-                                    }
+                                    levelStagingMessage(
+                                        uuid = serverMessage.uuid,
+                                        id = serverMessage.id,
+                                        cid = cid,
+                                        timestamp = serverMessage.timestamp,
+                                        content = localContent
+                                    )
                                     trySend(Resource.Success(Unit))
                                 }.catch { message, _ ->
                                     // 5. Else downgrade it.
@@ -347,29 +344,31 @@ class MessageRepositoryImpl @Inject constructor(
                             val cachedFile = resource.data
                             launch {
                                 try {
-                                    val content = json.encodeToString(
+                                    val remoteContent = json.encodeToString(
                                         GraphicsContent(
                                             text,
                                             cachedFile.remoteUrl,
                                             reply
                                         )
                                     )
+
+                                    val localContent = json.encodeToString(
+                                        GraphicsContent(text, cachedFile.localUri.toString(), reply)
+                                    )
                                     messageService.sendMessage(
                                         cid = cid,
-                                        content = content,
+                                        content = remoteContent,
                                         type = Message.Type.Graphics.toString(),
                                         uuid = staging.uuid
                                     ).handle { serverMessage ->
                                         // 4. If it is succeed, level-up the staging message by server-message.
-                                        with(serverMessage) {
-                                            levelStagingMessage(
-                                                uuid = uuid,
-                                                id = id,
-                                                cid = cid,
-                                                timestamp = timestamp,
-                                                content = content
-                                            )
-                                        }
+                                        levelStagingMessage(
+                                            uuid = serverMessage.uuid,
+                                            id = serverMessage.id,
+                                            cid = serverMessage.cid,
+                                            timestamp = serverMessage.timestamp,
+                                            content = localContent
+                                        )
                                         trySend(Resource.Success(Unit))
                                     }.catch { message, _ ->
                                         // 5. Else downgrade it.
@@ -406,46 +405,33 @@ class MessageRepositoryImpl @Inject constructor(
     private fun uploadImage(uri: Uri?): Flow<Resource<CachedFile>> =
         resourceFlow {
             if (uri == null) {
-                debug { Log.e(TAG, "upload: uri is null.") }
+                error("upload: uri is null.")
                 emitOldVersionResource()
                 return@resourceFlow
             }
 
-            val uuid = UUID.randomUUID().toString()
-            val file = File(context.externalCacheDir, "$uuid.png")
-            withContext(Dispatchers.IO) {
-                file.createNewFile()
-            }
-            val resolver = context.contentResolver
+            val file = context.writeFs.put(uri)
             try {
-                file.outputStream().use {
-                    resolver.openInputStream(uri).use { stream ->
-                        if (stream != null) {
-                            stream.copyTo(it)
-                            val filename = file.name
-                            val part = MultipartBody.Part
-                                .createFormData(
-                                    "file",
-                                    filename,
-                                    RequestBody.create(MediaType.parse("image"), file)
-                                )
-                            fileService.upload(part)
-                                .handle {
-                                    val cachedFile =
-                                        CachedFile(Uri.fromFile(file), it)
-                                    emitResource(cachedFile)
-                                }
-                                .catch(::emitResource)
-                        } else {
-                            debug { Log.e(TAG, "upload: cannot open stream.") }
-                            emitOldVersionResource()
-                            return@resourceFlow
-                        }
-                    }
+                file ?: run {
+                    emitOldVersionResource()
+                    return@resourceFlow
                 }
+                val filename = file.name
+                val part = MultipartBody.Part
+                    .createFormData(
+                        "file",
+                        filename,
+                        RequestBody.create(MediaType.parse("image"), file)
+                    )
+                fileService.upload(part)
+                    .handle {
+                        val cachedFile = CachedFile(file.toUri(), it)
+                        emitResource(cachedFile)
+                    }
+                    .catch(::emitResource)
 
             } catch (e: FileNotFoundException) {
-                debug { Log.e(TAG, "upload: cannot find file.") }
+                error("upload: cannot find file.")
                 emitOldVersionResource()
                 return@resourceFlow
             }

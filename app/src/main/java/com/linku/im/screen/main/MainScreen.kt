@@ -12,7 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,22 +31,23 @@ import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
+import com.linku.im.extension.times
 import com.linku.im.screen.Screen
 import com.linku.im.screen.main.composable.ConversationItem
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.theme.LocalAnimatedColor
-import com.linku.im.ui.theme.LocalNavController
-import com.linku.im.ui.theme.LocalSpacing
-import com.linku.im.ui.theme.supportDynamic
+import com.linku.im.ui.theme.*
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
 private sealed class Selection(
-    open val resId: Int, open val icon: ImageVector
+    open val resId: Int,
+    open val icon: ImageVector
 ) {
     data class Route(
-        override val resId: Int, val route: String, override val icon: ImageVector
+        override val resId: Int,
+        val route: String,
+        override val icon: ImageVector
     ) : Selection(resId, icon)
 
     data class Switch(
@@ -142,8 +146,8 @@ fun MainScreen(
                         .padding(LocalSpacing.current.medium)
                         .align(Alignment.End),
                     elevation = FloatingActionButtonDefaults.loweredElevation(),
-                    containerColor = LocalAnimatedColor.current.containerColor,
-                    contentColor = LocalAnimatedColor.current.onContainerColor
+                    containerColor = LocalTheme.current.primary,
+                    contentColor = LocalTheme.current.onPrimary
                 ) {
                     Icon(
                         imageVector = Icons.Sharp.Add, contentDescription = "create conversation"
@@ -152,7 +156,9 @@ fun MainScreen(
                 SnackbarHost(hostState = hostState)
             }
 
-        }, floatingActionButtonPosition = FabPosition.Center
+        },
+        floatingActionButtonPosition = FabPosition.Center,
+        containerColor = Color.Unspecified
     ) { innerPadding ->
         val pages = listOf(
             stringResource(R.string.tab_notification),
@@ -177,8 +183,7 @@ fun MainScreen(
                                     topEnd = LocalSpacing.current.extraSmall
                                 )
                             ),
-                        color = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onPrimary,
+                        color = LocalTheme.current.primary,
                         height = LocalSpacing.current.extraSmall
                     )
                 },
@@ -197,95 +202,84 @@ fun MainScreen(
                                     text = page, style = MaterialTheme.typography.titleSmall
                                 )
                             },
-                            selectedContentColor = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.onSurface
-                            else MaterialTheme.colorScheme.onPrimary,
-                            unselectedContentColor = if (vm.readable.isDarkMode) MaterialTheme.colorScheme.onPrimaryContainer
-                            else MaterialTheme.colorScheme.primaryContainer
+                            selectedContentColor = LocalAnimatedColor.current.onSurfaceColor,
+                            unselectedContentColor = LocalAnimatedColor.current.onSurfaceColor * 0.4f
                         )
                     }
                 },
-                containerColor = LocalAnimatedColor.current.containerColor,
-                contentColor = LocalAnimatedColor.current.onContainerColor
+                containerColor = LocalTheme.current.surface,
+                contentColor = LocalTheme.current.onSurface
             )
             HorizontalPager(
                 count = pages.size,
-                state = pagerState,
-                modifier = Modifier.background(LocalAnimatedColor.current.backgroundColor)
+                state = pagerState
             ) { page ->
                 if (page == 2) {
-                    CompositionLocalProvider(LocalContentColor provides LocalAnimatedColor.current.onBackgroundColor) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(LocalSpacing.current.small)
-                        ) {
-                            items(selections) { selection ->
-                                ListItem(
-                                    leadingContent = {
-                                        Icon(
-                                            imageVector = selection.icon,
-                                            contentDescription = stringResource(selection.resId)
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(LocalSpacing.current.small)
+                    ) {
+                        items(selections) { selection ->
+                            ListItem(
+                                leadingContent = {
+                                    Icon(
+                                        imageVector = selection.icon,
+                                        contentDescription = stringResource(selection.resId)
+                                    )
+                                },
+                                headlineText = {
+                                    Text(
+                                        text = stringResource(selection.resId),
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                },
+                                trailingContent = {
+                                    if (selection is Selection.Switch) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(LocalSpacing.current.small)
+                                                .background(
+                                                    color = if (selection.value) Color.Green
+                                                    else LocalTheme.current.error,
+                                                    shape = RoundedCornerShape(50)
+                                                )
                                         )
-                                    },
-                                    headlineText = {
-                                        Text(
-                                            text = stringResource(selection.resId),
-                                            style = MaterialTheme.typography.titleSmall,
-                                            color = LocalContentColor.current
-                                        )
-                                    },
-                                    trailingContent = {
-                                        if (selection is Selection.Switch) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(LocalSpacing.current.small)
-                                                    .background(
-                                                        color = if (selection.value) Color.Green
-                                                        else MaterialTheme.colorScheme.error,
-                                                        shape = RoundedCornerShape(50)
-                                                    )
-                                            )
+                                    }
+                                },
+                                modifier = Modifier
+                                    .padding(LocalSpacing.current.small)
+                                    .clip(RoundedCornerShape(LocalSpacing.current.small))
+                                    .intervalClickable {
+                                        when (selection) {
+                                            is Selection.Route -> {
+                                                when (Screen.valueOf(selection.route)) {
+                                                    Screen.IntroduceScreen -> {
+                                                        navController.navigate(
+                                                            if (vm.authenticator.currentUID == null)
+                                                                Screen.LoginScreen.route
+                                                            else selection.route
+                                                        )
+                                                    }
+                                                    Screen.MainScreen -> {}
+                                                    else -> navController.navigate(selection.route)
+                                                }
+                                            }
+                                            is Selection.Switch -> selection.onClick()
                                         }
                                     },
-                                    modifier = Modifier
-                                        .padding(LocalSpacing.current.small)
-                                        .clip(RoundedCornerShape(LocalSpacing.current.small))
-                                        .background(
-                                            color = MaterialTheme.colorScheme.surface,
-                                        )
-                                        .intervalClickable {
-                                            when (selection) {
-                                                is Selection.Route -> {
-                                                    when (Screen.valueOf(selection.route)) {
-                                                        Screen.IntroduceScreen -> {
-                                                            navController.navigate(
-                                                                if (vm.authenticator.currentUID == null) Screen.LoginScreen.route
-                                                                else selection.route
-                                                            )
-                                                        }
-                                                        Screen.MainScreen -> {}
-                                                        else -> navController.navigate(selection.route)
-                                                    }
-                                                }
-                                                is Selection.Switch -> selection.onClick()
-                                            }
-                                        },
-                                    colors = ListItemDefaults.colors(
-                                        containerColor = LocalAnimatedColor.current.surfaceColor,
-                                        headlineColor = LocalAnimatedColor.current.onSurfaceColor,
-                                        leadingIconColor = LocalAnimatedColor.current.onSurfaceColor,
-                                        overlineColor = LocalAnimatedColor.current.onSurfaceColor,
-                                        supportingColor = LocalAnimatedColor.current.onSurfaceColor,
-                                        trailingIconColor = LocalAnimatedColor.current.onSurfaceColor
-                                    )
+                                colors = ListItemDefaults.colors(
+                                    containerColor = LocalTheme.current.surface,
+                                    leadingIconColor = LocalTheme.current.onSurface,
+                                    trailingIconColor = LocalTheme.current.onSurface,
+                                    headlineColor = LocalTheme.current.onSurface
                                 )
-                            }
-
+                            )
                         }
-
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize(), userScrollEnabled = !state.loading
+                        modifier = Modifier.fillMaxSize(),
+                        userScrollEnabled = !state.loading
                     ) {
                         val conversations = when (page) {
                             0 -> state.conversations

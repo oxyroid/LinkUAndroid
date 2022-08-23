@@ -6,10 +6,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.linku.im.vm
@@ -96,47 +93,45 @@ fun AppTheme(
     val expandColor = ExpandColor(
         divider = if (!useDarkTheme) md_theme_light_divider else md_theme_dark_divider
     )
-    val animatedSpec = tween<Color>(200, 0, FastOutSlowInEasing)
 
     val containerColor by animateColorAsState(
         if (vm.readable.isDarkMode) colors.surface
-        else colors.primary,
-        animatedSpec
+        else colors.primary
     )
     val onContainerColor by animateColorAsState(
         if (vm.readable.isDarkMode) colors.onSurface
-        else colors.onPrimary,
-        animatedSpec
+        else colors.onPrimary
     )
     val backgroundColor by animateColorAsState(
-        colors.background,
-        animatedSpec
+        colors.background
     )
     val onBackgroundColor by animateColorAsState(
-        colors.onBackground,
-        animatedSpec
+        colors.onBackground
     )
     val surfaceColor by animateColorAsState(
-        colors.surface,
-        animatedSpec
+        colors.surface
     )
     val onSurfaceColor by animateColorAsState(
-        colors.onSurface,
-        animatedSpec
+        colors.onSurface
     )
-    val animatedColor = AnimatedColor(
-        containerColor = containerColor,
-        onContainerColor = onContainerColor,
-        backgroundColor = backgroundColor,
-        onBackgroundColor = onBackgroundColor,
-        surfaceColor = surfaceColor,
-        onSurfaceColor = onSurfaceColor
-    )
+    val animatedColor by remember {
+        derivedStateOf {
+            AnimatedColor(
+                containerColor = containerColor,
+                onContainerColor = onContainerColor,
+                backgroundColor = backgroundColor,
+                onBackgroundColor = onBackgroundColor,
+                surfaceColor = surfaceColor,
+                onSurfaceColor = onSurfaceColor
+            )
+        }
+    }
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),
         LocalNavController provides navController,
         LocalExpandColor provides expandColor,
-        LocalAnimatedColor provides animatedColor
+        LocalAnimatedColor provides animatedColor,
+        LocalTheme provides defaultLight
     ) {
         MaterialTheme(
             colorScheme = colors,

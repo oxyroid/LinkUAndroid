@@ -15,7 +15,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,17 +36,16 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.insets.LocalWindowInsets
+import com.linku.im.ui.theme.LocalTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val ELEMENT_HEIGHT = 48.dp
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TextInputFieldOne(
+fun TextField(
     modifier: Modifier = Modifier,
     textFieldValue: TextFieldValue,
-    background: Color = MaterialTheme.colorScheme.surface,
+    background: Color = LocalTheme.current.surface,
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
@@ -52,7 +54,7 @@ fun TextInputFieldOne(
     enabled: Boolean = true,
     keyboardActions: KeyboardActions? = null,
     fontSize: TextUnit = 16.sp,
-    height: Dp = ELEMENT_HEIGHT,
+    height: Dp = 48.dp,
     isError: Boolean = false,
     onValueChange: (TextFieldValue) -> Unit = {},
 ) {
@@ -80,7 +82,7 @@ fun TextInputFieldOne(
         textStyle = TextStyle(
             fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
             fontSize = fontSize,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = LocalTheme.current.onSurface,
         ),
         onValueChange = {
             onValueChange(it)
@@ -99,12 +101,12 @@ fun TextInputFieldOne(
             .bringIntoViewRequester(bringIntoViewRequester)
             .fillMaxWidth(),
         readOnly = readOnly,
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.onSurface.copy(.35f)),
+        cursorBrush = SolidColor(LocalTheme.current.onSurface.copy(.35f)),
         decorationBox = { innerTextField ->
             Box(
                 Modifier
                     .clip(MaterialTheme.shapes.medium)
-                    .background(if (isError) MaterialTheme.colorScheme.errorContainer else background)
+                    .background(if (isError) LocalTheme.current.error else background)
                     .height(height)
                     .padding(horizontal = 12.dp),
                 contentAlignment = if (singleLine) Alignment.CenterStart else Alignment.TopStart,
@@ -122,7 +124,7 @@ fun TextInputFieldOne(
                     if (textFieldValue.text.isEmpty()) {
                         Text(
                             text = placeholder,
-                            color = MaterialTheme.colorScheme.onSurface.copy(.35f),
+                            color = LocalTheme.current.onSurface.copy(.35f),
                             fontSize = fontSize,
                             maxLines = if (singleLine) 1 else Int.MAX_VALUE,
                             overflow = TextOverflow.Ellipsis

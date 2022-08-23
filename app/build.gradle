@@ -15,8 +15,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 33
-        versionCode 79
-        versionName "0.12.7"
+        versionCode 80
+        versionName "0.12.8"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -61,8 +61,8 @@ android {
 }
 
 dependencies {
-    implementation project(path: ':domain')
-    implementation project(path: ':data')
+    implementation project(':domain')
+    implementation project(':data')
     implementation 'androidx.core:core-ktx:1.8.0'
     implementation "androidx.activity:activity-ktx:1.5.1"
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
@@ -116,7 +116,7 @@ dependencies {
     implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version"
 
     // Json
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0-RC"
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0'
 
     // Acra
     implementation "ch.acra:acra-http:$acraVersion"

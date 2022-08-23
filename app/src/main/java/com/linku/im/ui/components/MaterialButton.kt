@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun MaterialButton(
@@ -20,7 +21,12 @@ fun MaterialButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier,
-        colors = ButtonDefaults.buttonColors()
+        colors = ButtonDefaults.buttonColors(
+            containerColor = LocalTheme.current.primary,
+            contentColor = LocalTheme.current.onPrimary,
+            disabledContainerColor = LocalTheme.current.primaryDisable,
+            disabledContentColor = LocalTheme.current.onPrimaryDisable
+        )
     ) {
         Text(
             text = stringResource(id = textRes)

@@ -56,6 +56,7 @@ import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.theme.LocalExpandColor
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
+import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
@@ -149,7 +150,7 @@ fun IntroduceScreen(
                 Icon(
                     imageVector = Icons.Sharp.Verified,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = LocalTheme.current.onSurface
                 )
             },
             onDismissRequest = {},
@@ -158,8 +159,8 @@ fun IntroduceScreen(
                     value = code,
                     onValueChange = { code = it },
                     colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = MaterialTheme.colorScheme.onBackground,
-                        containerColor = MaterialTheme.colorScheme.background
+                        textColor = LocalTheme.current.onBackground,
+                        containerColor = LocalTheme.current.background
                     ),
                     enabled = !state.verifiedEmailCodeVerifying,
                     maxLines = 1
@@ -193,10 +194,10 @@ fun IntroduceScreen(
                     ?: stringResource(id = R.string.email_verified_dialog_title)
                 Text(text = title, style = MaterialTheme.typography.titleMedium)
             },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            iconContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = LocalTheme.current.surface,
+            titleContentColor = LocalTheme.current.onSurface,
+            iconContentColor = LocalTheme.current.onSurface,
+            textContentColor = LocalTheme.current.onSurface
         )
     }
 
@@ -210,25 +211,25 @@ fun IntroduceScreen(
                     item {
                         Text(
                             text = state.actionsLabel,
-                            style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.primary),
+                            style = MaterialTheme.typography.titleSmall.copy(color = LocalTheme.current.primary),
                             modifier = Modifier.padding(LocalSpacing.current.medium)
                         )
                     }
                     items(state.actions) {
                         ListItem(text = {
                             Text(
-                                text = it.text, color = MaterialTheme.colorScheme.onBackground
+                                text = it.text, color = LocalTheme.current.onBackground
                             )
                         },
                             icon = {
                                 Icon(
                                     imageVector = it.icon,
                                     contentDescription = it.text,
-                                    tint = MaterialTheme.colorScheme.outline
+                                    tint = LocalTheme.current.onBackground
                                 )
                             },
                             modifier = Modifier
-                                .background(MaterialTheme.colorScheme.background)
+                                .background(LocalTheme.current.background)
                                 .intervalClickable {
                                     scope.launch {
                                         it.onClick()
@@ -238,11 +239,11 @@ fun IntroduceScreen(
                     }
                 }
             },
-            sheetBackgroundColor = MaterialTheme.colorScheme.background,
-            sheetContentColor = MaterialTheme.colorScheme.onBackground,
+            sheetBackgroundColor = LocalTheme.current.background,
+            sheetContentColor = LocalTheme.current.onBackground,
             modifier = Modifier
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
+                .background(LocalTheme.current.background)
         ) {
             LazyColumn(
                 modifier = Modifier
@@ -250,8 +251,9 @@ fun IntroduceScreen(
                     .navigationBarsPadding()
             ) {
                 item {
-                    Surface(color = MaterialTheme.colorScheme.secondary,
-                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                    Surface(
+                        color = LocalTheme.current.primary,
+                        contentColor = LocalTheme.current.onPrimary,
                         onClick = {
                             viewModel.onEvent(IntroduceEvent.AvatarClicked)
                             scope.launch {
@@ -320,7 +322,7 @@ fun IntroduceScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 textAlign = TextAlign.Center,
                                 modifier = Modifier.padding(vertical = LocalSpacing.current.medium),
-                                color = MaterialTheme.colorScheme.onBackground
+                                color = LocalTheme.current.onBackground
                             )
                         }
                     }
@@ -354,7 +356,7 @@ fun IntroduceScreen(
                 },
                 text = "",
                 backgroundColor = Color.Transparent,
-                contentColor = MaterialTheme.colorScheme.onSecondary
+                contentColor = LocalTheme.current.onSurface
             )
         }
     }

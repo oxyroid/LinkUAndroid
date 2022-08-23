@@ -8,8 +8,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import com.linku.im.extension.friendlyFormatted
 import com.linku.im.ui.theme.LocalSpacing
+import com.linku.im.ui.theme.LocalTheme
 import java.util.*
 
 @SuppressLint("SimpleDateFormat")
@@ -19,14 +21,17 @@ fun ChatTimestamp(timestamp: Long) {
         text = timestamp.friendlyFormatted,
         modifier = Modifier
             .background(
-                color = MaterialTheme.colorScheme.surface,
+                color = LocalTheme.current.surface,
                 shape = RoundedCornerShape(30)
             )
             .padding(
                 vertical = LocalSpacing.current.extraSmall,
                 horizontal = LocalSpacing.current.small
             ),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurface
+        style = MaterialTheme.typography.bodySmall
+            .copy(
+                fontWeight = FontWeight.Bold
+            ),
+        color = LocalTheme.current.onSurface
     )
 }

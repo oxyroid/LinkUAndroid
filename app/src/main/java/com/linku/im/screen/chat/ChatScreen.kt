@@ -22,6 +22,7 @@ import androidx.compose.material.icons.sharp.ExpandCircleDown
 import androidx.compose.material.icons.sharp.ExpandMore
 import androidx.compose.material.icons.sharp.Videocam
 import androidx.compose.material3.*
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
@@ -42,6 +43,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.Screen
+import com.linku.im.screen.chat.composable.ChatBackground
 import com.linku.im.screen.chat.composable.ChatBottomSheet
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.screen.chat.composable.ChatTimestamp
@@ -61,7 +63,8 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = hiltViewModel(), cid: Int
+    viewModel: ChatViewModel = hiltViewModel(),
+    cid: Int
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
@@ -76,7 +79,7 @@ fun ChatScreen(
         viewModel.onEvent(ChatEvent.OnFileUriChange(uri))
     }
     val permissionState =
-        rememberPermissionState(permission = Manifest.permission.READ_EXTERNAL_STORAGE) {
+        rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE) {
             it.ifTrue { launcher.launch("image/*") }
         }
     LaunchedEffect(Unit) {
@@ -142,6 +145,7 @@ fun ChatScreen(
                     boxOffset = it
                 }
         ) {
+            ChatBackground(modifier = Modifier.fillMaxSize())
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
@@ -232,7 +236,10 @@ fun ChatScreen(
                                         imageVector = Icons.Rounded.Reply,
                                         contentDescription = ""
                                     )
-                                }
+                                },
+                                elevation = FilterChipDefaults.elevatedFilterChipElevation(
+                                    defaultElevation = 0.dp
+                                )
                             )
                         }
                         AnimatedVisibility(
@@ -253,7 +260,8 @@ fun ChatScreen(
                                     )
                                 },
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                elevation = FloatingActionButtonDefaults.loweredElevation()
                             )
                         }
                     }

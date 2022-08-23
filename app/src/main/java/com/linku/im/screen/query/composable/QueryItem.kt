@@ -27,6 +27,7 @@ import com.linku.domain.entity.Conversation
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
 import com.linku.im.ui.components.TextImage
+import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun QueryItem(
@@ -34,7 +35,7 @@ fun QueryItem(
     conversation: Conversation? = null,
     onClick: () -> Unit = {}
 ) {
-    val shimmerColor = MaterialTheme.colorScheme.outline * 0.3f
+    val shimmerColor = LocalTheme.current.onSurface * 0.8f
     val onShimmerColor = Color.White
     val shimmerAnimationSpec: InfiniteRepeatableSpec<Float> by lazy {
         infiniteRepeatable(
@@ -77,7 +78,7 @@ fun QueryItem(
             Text(
                 text = conversation?.name ?: "",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = LocalTheme.current.onSurface,
                 maxLines = 1,
                 modifier = Modifier
                     .fillMaxWidth()

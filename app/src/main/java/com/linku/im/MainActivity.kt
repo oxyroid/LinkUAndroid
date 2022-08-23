@@ -10,7 +10,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -34,6 +33,7 @@ import com.linku.im.screen.query.QueryScreen
 import com.linku.im.screen.sign.LoginScreen
 import com.linku.im.ui.theme.AppTheme
 import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -84,7 +84,7 @@ fun App() {
         LaunchedEffect(isDarkMode) {
             systemUiController.setStatusBarColor(
                 color = Color.Transparent,
-                darkIcons = false
+                darkIcons = !isDarkMode
             )
             systemUiController.setNavigationBarColor(
                 color = Color.Transparent,
@@ -96,18 +96,18 @@ fun App() {
             navController = LocalNavController.current,
             startDestination = Screen.MainScreen.route,
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
+                .background(LocalTheme.current.background)
                 .navigationBarsPadding(),
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { it },
-                    animationSpec = tween(durationMillis = 400)
+                    animationSpec = tween(400)
                 )
             },
             exitTransition = {
                 scaleOut(
                     targetScale = 0.8f,
-                    animationSpec = tween(durationMillis = 400),
+                    animationSpec = tween(400),
                     transformOrigin = TransformOrigin(0f, 0.5f)
                 )
             },

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -40,7 +41,7 @@ import com.linku.im.extension.times
 import com.linku.im.ui.components.TextImage
 import com.linku.im.ui.theme.LocalExpandColor
 import com.linku.im.ui.theme.LocalSpacing
-import com.linku.im.vm
+import com.linku.im.ui.theme.LocalTheme
 import java.util.*
 
 private val HORIZONTAL_IN_PADDING = 12.dp
@@ -59,18 +60,11 @@ fun ChatBubble(
     onProfile: (Int) -> Unit,
     onScroll: (Int) -> Unit
 ) {
-    val state = vm.readable
-    val isSystemInDarkMode = state.isDarkMode
-
     val isAnother = config.isAnother
-    val backgroundColor: Color = if (isAnother)
-        if (!isSystemInDarkMode) MaterialTheme.colorScheme.primary
-        else MaterialTheme.colorScheme.onSurface
-    else MaterialTheme.colorScheme.secondary
-    val contentColor: Color = if (isAnother)
-        if (!isSystemInDarkMode) MaterialTheme.colorScheme.onPrimary
-        else MaterialTheme.colorScheme.surface
-    else MaterialTheme.colorScheme.onSecondary
+    val backgroundColor: Color = if (isAnother) LocalTheme.current.bubbleStart
+    else LocalTheme.current.bubbleEnd
+    val contentColor: Color = if (isAnother) LocalTheme.current.onBubbleStart
+    else LocalTheme.current.onBubbleEnd
     Row(
         modifier = modifier
             .padding(
@@ -102,7 +96,7 @@ fun ChatBubble(
                 Icon(
                     imageVector = Icons.Sharp.Warning,
                     contentDescription = "Failed",
-                    tint = MaterialTheme.colorScheme.error,
+                    tint = LocalTheme.current.error,
                     modifier = Modifier
                         .size(LocalSpacing.current.large)
                         .align(Alignment.Bottom)
@@ -238,6 +232,9 @@ fun ChatBubble(
                                     ),
                                     textAlign = TextAlign.Start,
                                     style = MaterialTheme.typography.bodyMedium
+                                        .copy(
+                                            fontWeight = FontWeight.Bold
+                                        )
                                 )
                             }
                         }
@@ -274,6 +271,9 @@ fun ChatBubble(
                                     ),
                                     textAlign = TextAlign.Start,
                                     style = MaterialTheme.typography.bodyMedium
+                                        .copy(
+                                            fontWeight = FontWeight.Bold
+                                        )
                                 )
                             }
                         }
@@ -281,7 +281,7 @@ fun ChatBubble(
                     else -> {
                         Text(
                             text = stringResource(id = R.string.unknown_message_type),
-                            color = MaterialTheme.colorScheme.primary,
+                            color = LocalTheme.current.primary,
                             modifier = Modifier.padding(
                                 start = HORIZONTAL_IN_PADDING,
                                 end = HORIZONTAL_IN_PADDING,

@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.linku.im.ui.theme.LocalTheme
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -192,7 +193,7 @@ private fun Modifier.drawScrollbar(
 
     // Calculate thickness here to workaround https://issuetracker.google.com/issues/206972664
     val thickness = with(LocalDensity.current) { Thickness.toPx() }
-    val color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    val color = LocalTheme.current.onSurface.copy(alpha = 0.5f)
     Modifier
         .nestedScroll(nestedScrollConnection)
         .drawWithCache {

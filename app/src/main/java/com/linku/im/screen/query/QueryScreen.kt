@@ -23,12 +23,16 @@ import com.linku.im.R
 import com.linku.im.screen.Screen
 import com.linku.im.screen.query.composable.QueryItem
 import com.linku.im.ui.components.MaterialIconButton
-import com.linku.im.ui.components.TextInputFieldOne
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
+import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
+import com.linku.im.ui.components.TextField
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class
+)
 @Composable
 fun QueryScreen(
     viewModel: QueryViewModel = hiltViewModel()
@@ -49,12 +53,12 @@ fun QueryScreen(
         scaffoldState = scaffoldState
     ) { innerPadding ->
         CompositionLocalProvider(
-            LocalContentColor provides if (vm.readable.isDarkMode) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimary
+            LocalContentColor provides if (vm.readable.isDarkMode) LocalTheme.current.onSurface else LocalTheme.current.onPrimary
         ) {
             Column(
                 modifier = Modifier
                     .padding(innerPadding)
-                    .background(if (vm.readable.isDarkMode) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primary)
+                    .background(if (vm.readable.isDarkMode) LocalTheme.current.surface else LocalTheme.current.primary)
                     .statusBarsPadding()
                     .navigationBarsPadding()
             ) {
@@ -68,7 +72,8 @@ fun QueryScreen(
                         contentDescription = "back"
                     )
                     Spacer(modifier = Modifier.width(LocalSpacing.current.small))
-                    TextInputFieldOne(
+                    TextField(
+                        background = LocalTheme.current.surface,
                         textFieldValue = state.text,
                         onValueChange = { viewModel.onEvent(QueryEvent.OnText(it)) },
                         imeAction = ImeAction.Search,
@@ -85,7 +90,7 @@ fun QueryScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
-                            color = MaterialTheme.colorScheme.background,
+                            color = LocalTheme.current.background,
                         )
                 ) {
                     stickyHeader {

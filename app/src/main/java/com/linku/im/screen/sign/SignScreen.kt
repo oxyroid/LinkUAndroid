@@ -3,15 +3,12 @@ package com.linku.im.screen.sign
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,9 +22,10 @@ import com.google.accompanist.insets.ui.Scaffold
 import com.linku.im.R
 import com.linku.im.ui.components.MaterialButton
 import com.linku.im.ui.components.MaterialTextButton
-import com.linku.im.ui.components.TextInputFieldOne
+import com.linku.im.ui.components.TextField
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
+import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 
 @Composable
@@ -39,7 +37,7 @@ fun LoginScreen(
     val navController = LocalNavController.current
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
 
-    val focusRequester = remember(::FocusRequester)
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
@@ -58,8 +56,8 @@ fun LoginScreen(
 
     Scaffold(
         scaffoldState = scaffoldState,
-        backgroundColor = MaterialTheme.colorScheme.background,
-        contentColor = MaterialTheme.colorScheme.onBackground
+        backgroundColor = LocalTheme.current.background,
+        contentColor = LocalTheme.current.onBackground
     ) { innerPadding ->
         Box(
             contentAlignment = Alignment.Center,
@@ -75,9 +73,6 @@ fun LoginScreen(
                     .padding(PaddingValues(horizontal = LocalSpacing.current.extraLarge)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LaunchedEffect(Unit) {
-                    focusRequester.requestFocus()
-                }
                 LottieAnimation(
                     composition = composition,
                     modifier = Modifier
@@ -85,7 +80,8 @@ fun LoginScreen(
                         .size(160.dp),
                     iterations = LottieConstants.IterateForever
                 )
-                TextInputFieldOne(
+                TextField(
+                    background = LocalTheme.current.surface,
                     textFieldValue = state.email,
                     onValueChange = { viewModel.onEvent(SignEvent.OnEmail(it)) },
                     placeholder = stringResource(id = R.string.screen_login_tag_email),
@@ -98,7 +94,6 @@ fun LoginScreen(
                         }
                     ),
                     modifier = Modifier
-                        .focusRequester(focusRequester)
                 )
 
                 Spacer(
@@ -107,7 +102,8 @@ fun LoginScreen(
                         .height(LocalSpacing.current.medium)
                 )
 
-                TextInputFieldOne(
+                TextField(
+                    background = LocalTheme.current.surface,
                     textFieldValue = state.password,
                     onValueChange = { viewModel.onEvent(SignEvent.OnPassword(it)) },
                     placeholder = stringResource(id = R.string.screen_login_tag_password),
@@ -117,7 +113,7 @@ fun LoginScreen(
                     keyboardActions = KeyboardActions(
                         onDone = {
                             viewModel.onEvent(SignEvent.SignIn)
-                            focusRequester.captureFocus()
+                            focusManager.clearFocus()
                         }
                     )
                 )
@@ -136,7 +132,7 @@ fun LoginScreen(
                         .fillMaxWidth()
                 ) {
                     viewModel.onEvent(SignEvent.SignIn)
-                    focusRequester.captureFocus()
+                    focusManager.clearFocus()
                 }
                 MaterialTextButton(
                     textRes = R.string.screen_login_btn_register,
@@ -145,7 +141,7 @@ fun LoginScreen(
                         .fillMaxWidth()
                 ) {
                     viewModel.onEvent(SignEvent.SignUp)
-                    focusRequester.captureFocus()
+                    focusManager.clearFocus()
                 }
 
                 Spacer(modifier = Modifier.height(LocalSpacing.current.large))
