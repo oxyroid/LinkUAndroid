@@ -1,6 +1,7 @@
 package com.linku.im.screen.chat
 
 import android.Manifest
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,6 +12,7 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
@@ -41,26 +44,23 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
+import com.linku.domain.entity.Message
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.Screen
 import com.linku.im.screen.chat.composable.ChatBackground
 import com.linku.im.screen.chat.composable.ChatBottomSheet
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.screen.chat.composable.ChatTimestamp
+import com.linku.im.screen.chat.vo.MessageVO
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
+import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
-@OptIn(
-    ExperimentalPermissionsApi::class,
-    ExperimentalAnimationApi::class,
-    ExperimentalMaterial3Api::class,
-    ExperimentalMaterialApi::class,
-    ExperimentalFoundationApi::class
-)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
@@ -69,25 +69,20 @@ fun ChatScreen(
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
     val navController = LocalNavController.current
-
-    val context = LocalContext.current
-
     val hostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
-
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         viewModel.onEvent(ChatEvent.OnFileUriChange(uri))
     }
-    val permissionState =
-        rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE) {
-            it.ifTrue { launcher.launch("image/*") }
-        }
-    LaunchedEffect(Unit) {
-        if (cid == -1) navController.navigateUp()
+    val permissionState = rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE) {
+        it.ifTrue { launcher.launch("image/*") }
     }
+    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+    val offset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
 
     LaunchedEffect(Unit) {
         viewModel.onEvent(ChatEvent.Initial(cid))
+        if (cid == -1) navController.navigateUp()
     }
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
@@ -98,264 +93,77 @@ fun ChatScreen(
         }
     }
 
-    val firstVisibleItemIndex by remember {
-        derivedStateOf {
-            listState.firstVisibleItemIndex
-        }
-    }
-    val offset by remember {
-        derivedStateOf {
-            listState.firstVisibleItemScrollOffset
-        }
-    }
     LaunchedEffect(firstVisibleItemIndex, offset) {
         viewModel.onEvent(ChatEvent.OnScroll(firstVisibleItemIndex, offset))
     }
 
-
-    val backgroundColor by animateColorAsState(MaterialTheme.colorScheme.background)
-    val contentColor by animateColorAsState(MaterialTheme.colorScheme.onBackground)
-
-    Scaffold(
-        topBar = {
-            ToolBar(
-                onNavClick = { navController.navigateUp() },
-                actions = {
-                    state.videoChatAllowed.ifTrue {
-                        MaterialIconButton(
-                            icon = Icons.Sharp.Videocam,
-                            onClick = { },
-                            contentDescription = "video"
+    var boxOffset: IntSize? = null
+    ChatScaffold(
+        videoChatAllowed = state.videoChatAllowed,
+        title = state.title,
+        navController = navController,
+        listContent = {
+            ListContent(
+                messages = state.messages,
+                listState = listState,
+                onReply = {
+                    viewModel.onEvent(ChatEvent.Reply(it))
+                },
+                onPreview = {
+                    viewModel.onEvent(ChatEvent.OnFileUriChange(Uri.parse(it)))
+                },
+                onProfile = {
+                    navController.navigate(Screen.IntroduceScreen.withArgs(it))
+                },
+                onScroll = { position ->
+                    scope.launch {
+                        listState.animateScrollToItem(
+                            index = position,
+                            scrollOffset = boxOffset?.let { it.height / -2 } ?: 0
                         )
                     }
-                },
-                text = vm.readable.label ?: state.title
+                }
             )
         },
-        containerColor = backgroundColor,
-        contentColor = contentColor
-    ) { innerPadding ->
-        var boxOffset: IntSize? = null
-        Box(
-            Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .imePadding()
-                .onSizeChanged {
-                    boxOffset = it
-                }
-        ) {
-            ChatBackground(modifier = Modifier.fillMaxSize())
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                reverseLayout = true,
-                contentPadding = PaddingValues(vertical = LocalSpacing.current.extraSmall)
-            ) {
-                item {
-                    Spacer(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(150.dp)
+        bottomSheetContent = {
+            BottomSheetContent(
+                repliedMessage = state.repliedMessage,
+                onDismissReply = { viewModel.onEvent(ChatEvent.Reply(null)) },
+                onScrollToBottom = { scope.launch { listState.scrollToItem(0) } },
+                snackHostContent = { SnackbarHost(hostState) },
+                textFieldContent = {
+                    // Bottom Sheet
+                    ChatBottomSheet(
+                        text = state.textFieldValue,
+                        uri = state.uri,
+                        emojis = state.emojis,
+                        expended = state.expended,
+                        onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
+                        onFile = { permissionState.launchPermissionRequest() },
+                        onText = {
+                            viewModel.onEvent(ChatEvent.TextChange(it))
+                        },
+                        onEmoji = { viewModel.onEvent(ChatEvent.EmojiChange(it)) },
+                        onExpanded = { viewModel.onEvent(ChatEvent.Expanded(!state.expended)) },
+                        modifier = Modifier.navigationBarsPadding()
                     )
-                }
-
-                items(items = state.messages, key = { it.message.id }) { messageVO ->
-                    val dismissState = rememberDismissState(confirmStateChange = {
-                        if (it == DismissValue.DismissedToStart) {
-                            viewModel.onEvent(ChatEvent.Reply(messageVO.message.id))
-                        }
-                        false
-                    })
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        val config = messageVO.config
-                        val message = messageVO.message
-                        config.isShowTime.ifTrue {
-                            Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                            ChatTimestamp(message.timestamp)
-                            Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                        }
-                        SwipeToDismiss(
-                            state = dismissState,
-                            background = {},
-                            directions = setOf(
-                                DismissDirection.EndToStart
-                            )
-                        ) {
-                            ChatBubble(
-                                message = messageVO.message,
-                                config = messageVO.config,
-                                onPreview = {
-                                    viewModel.onEvent(ChatEvent.ShowImage(it))
-                                },
-                                onProfile = {
-                                    navController.navigate(Screen.IntroduceScreen.withArgs(it))
-                                },
-                                onScroll = { position ->
-                                    scope.launch {
-                                        listState.animateScrollToItem(
-                                            index = position,
-                                            scrollOffset = boxOffset?.let { it.height / -2 } ?: 0
-                                        )
-                                    }
-                                }
-                            )
-                        }
-
+                },
+                imagePreviewDialog = {
+                    PreviewDialog(uri = state.uri) {
+                        viewModel.onEvent(ChatEvent.OnFileUriChange(null))
                     }
                 }
-            }
-
-            Column(
-                modifier = Modifier.align(Alignment.BottomCenter)
-
-            ) {
-                // Fab and snackbar
-                Column(
-                    modifier = Modifier.animateContentSize()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(horizontal = LocalSpacing.current.medium)
-                    ) {
-                        AnimatedVisibility(
-                            visible = state.repliedMessage != null,
-                            enter = scaleIn(),
-                            exit = scaleOut(),
-                            modifier = Modifier
-                                .padding(end = LocalSpacing.current.medium)
-                        ) {
-                            ElevatedFilterChip(
-                                selected = true,
-                                onClick = { viewModel.onEvent(ChatEvent.Reply(null)) },
-                                label = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Reply,
-                                        contentDescription = ""
-                                    )
-                                },
-                                elevation = FilterChipDefaults.elevatedFilterChipElevation(
-                                    defaultElevation = 0.dp
-                                )
-                            )
-                        }
-                        AnimatedVisibility(
-                            visible = firstVisibleItemIndex != 0,
-                            enter = scaleIn(),
-                            exit = scaleOut()
-                        ) {
-                            SmallFloatingActionButton(
-                                onClick = {
-                                    scope.launch {
-                                        listState.scrollToItem(0)
-                                    }
-                                },
-                                content = {
-                                    Icon(
-                                        imageVector = Icons.Sharp.ExpandMore,
-                                        contentDescription = ""
-                                    )
-                                },
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                elevation = FloatingActionButtonDefaults.loweredElevation()
-                            )
-                        }
-                    }
-
-                    SnackbarHost(hostState)
-                }
-
-                // Image Preview Dialog
-                AnimatedContent(
-                    targetState = state.uri,
-                    modifier = Modifier
-                        .padding(LocalSpacing.current.extraSmall)
-                        .fillMaxWidth()
-                        .draggable(
-                            state = rememberDraggableState {
-                                if (it > 20) viewModel.onEvent(ChatEvent.OnFileUriChange(null))
-                            }, orientation = Orientation.Vertical
-                        ),
-                    transitionSpec = {
-                        slideInVertically { it } with slideOutVertically { -it }
-                    },
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    if (it == null) return@AnimatedContent
-                    Surface(
-                        shape = RoundedCornerShape(5),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
-                    ) {
-                        Box {
-                            AsyncImage(
-                                model = it,
-                                contentDescription = "",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(4 / 3f),
-                                contentScale = ContentScale.Crop
-                            )
-
-                            MaterialIconButton(
-                                icon = Icons.Sharp.ExpandCircleDown,
-                                onClick = { viewModel.onEvent(ChatEvent.OnFileUriChange(null)) },
-                                modifier = Modifier.align(Alignment.TopEnd),
-                                contentDescription = "close"
-                            )
-                        }
-                    }
-                }
-
-                // Bottom Sheet
-                ChatBottomSheet(
-                    text = state.textFieldValue,
-                    uri = state.uri,
-                    emojis = state.emojis,
-                    expended = state.expended,
-                    onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
-                    onFile = { permissionState.launchPermissionRequest() },
-                    onText = {
-                        viewModel.onEvent(ChatEvent.TextChange(it))
-                    },
-                    onEmoji = { viewModel.onEvent(ChatEvent.EmojiChange(it)) },
-                    onExpanded = { viewModel.onEvent(ChatEvent.Expanded(!state.expended)) },
-                    modifier = Modifier.navigationBarsPadding()
-                )
-            }
+            )
+        },
+        onListHeightChanged = {
+            boxOffset = it
         }
+    )
 
-        AnimatedVisibility(
-            visible = state.visitImage.isNotEmpty(),
-            modifier = Modifier
-                .fillMaxSize()
-                .combinedClickable(onDoubleClick = { viewModel.onEvent(ChatEvent.DismissImage) },
-                    onClick = {})
-        ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.background(MaterialTheme.colorScheme.background)
-            ) {
-                val model = ImageRequest.Builder(context).data(state.visitImage).build()
-                val loader = ImageLoader.Builder(context).components {
-                    add(ImageDecoderDecoder.Factory())
-                }.build()
-                val painter = rememberAsyncImagePainter(
-                    model = model, imageLoader = loader
-                )
-                Image(
-                    painter = painter,
-                    contentDescription = "",
-                    contentScale = ContentScale.FillWidth,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-        }
+    OriginPreview(image = state.visitImage) {
+        viewModel.onEvent(ChatEvent.DismissImage)
     }
+
     BackHandler(state.visitImage.isNotEmpty()) {
         viewModel.onEvent(ChatEvent.DismissImage)
     }
@@ -363,5 +171,275 @@ fun ChatScreen(
         state.scroll.handle {
             listState.animateScrollToItem(it)
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ChatScaffold(
+    videoChatAllowed: Boolean,
+    title: String,
+    navController: NavHostController,
+    listContent: @Composable () -> Unit,
+    bottomSheetContent: @Composable () -> Unit,
+    onListHeightChanged: (IntSize) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            ToolBar(
+                onNavClick = { navController.navigateUp() },
+                actions = {
+                    videoChatAllowed.ifTrue {
+                        MaterialIconButton(
+                            icon = Icons.Sharp.Videocam,
+                            onClick = { },
+                            contentDescription = "video"
+                        )
+                    }
+                },
+                text = vm.readable.label ?: title
+            )
+        },
+        containerColor = LocalTheme.current.background,
+        contentColor = LocalTheme.current.onBackground
+    ) { innerPadding ->
+        Box(
+            Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .imePadding()
+                .onSizeChanged { onListHeightChanged(it) }
+        ) {
+            ChatBackground(Modifier.fillMaxSize())
+            listContent()
+            Column(
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                bottomSheetContent()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun ListContent(
+    messages: List<MessageVO>,
+    listState: LazyListState,
+    onReply: (Int) -> Unit,
+    onPreview: (String) -> Unit,
+    onProfile: (Int) -> Unit,
+    onScroll: (Int) -> Unit,
+) {
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize(),
+        reverseLayout = true,
+        contentPadding = PaddingValues(vertical = LocalSpacing.current.extraSmall)
+    ) {
+        item {
+            Spacer(
+                Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+            )
+        }
+        items(
+            items = messages,
+            key = { it.message.id }
+        ) { messageVO ->
+            val dismissState = rememberDismissState(confirmStateChange = {
+                if (it == DismissValue.DismissedToStart) {
+                    onReply(messageVO.message.id)
+                }
+                false
+            })
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                val config = messageVO.config
+                val message = messageVO.message
+                config.isShowTime.ifTrue {
+                    Spacer(Modifier.height(LocalSpacing.current.extraSmall))
+                    ChatTimestamp(message.timestamp)
+                    Spacer(Modifier.height(LocalSpacing.current.extraSmall))
+                }
+                SwipeToDismiss(
+                    state = dismissState,
+                    background = {},
+                    directions = setOf(
+                        DismissDirection.EndToStart
+                    )
+                ) {
+                    ChatBubble(
+                        message = messageVO.message,
+                        config = messageVO.config,
+                        onPreview = { onPreview(it) },
+                        onProfile = { onProfile(it) },
+                        onScroll = { position -> onScroll(position) }
+                    )
+                }
+
+            }
+        }
+    }
+}
+
+@OptIn(
+    ExperimentalAnimationApi::class,
+    ExperimentalMaterial3Api::class
+)
+@Composable
+private fun BottomSheetContent(
+    repliedMessage: Message?,
+    onDismissReply: () -> Unit,
+    onScrollToBottom: () -> Unit,
+    snackHostContent: @Composable () -> Unit,
+    imagePreviewDialog: @Composable () -> Unit,
+    textFieldContent: @Composable () -> Unit
+) {
+    // Fab and snackbar
+    Column(
+        modifier = Modifier.animateContentSize()
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(
+                    horizontal = LocalSpacing.current.medium
+                )
+        ) {
+            AnimatedVisibility(
+                visible = repliedMessage != null,
+                enter = scaleIn(),
+                exit = scaleOut(),
+                modifier = Modifier
+                    .padding(end = LocalSpacing.current.medium)
+            ) {
+                ElevatedFilterChip(
+                    selected = true,
+                    onClick = { onDismissReply() },
+                    label = {
+                        Icon(
+                            imageVector = Icons.Rounded.Reply,
+                            contentDescription = ""
+                        )
+                    },
+                    elevation = FilterChipDefaults.elevatedFilterChipElevation(
+                        defaultElevation = 0.dp
+                    )
+                )
+            }
+            AnimatedVisibility(
+                visible = repliedMessage != null,
+                enter = scaleIn(),
+                exit = scaleOut()
+            ) {
+                SmallFloatingActionButton(
+                    onClick = { onScrollToBottom() },
+                    content = {
+                        Icon(
+                            imageVector = Icons.Sharp.ExpandMore,
+                            contentDescription = ""
+                        )
+                    },
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    elevation = FloatingActionButtonDefaults.loweredElevation()
+                )
+            }
+        }
+        snackHostContent()
+    }
+
+    // Image Preview Dialog
+    imagePreviewDialog()
+
+    textFieldContent()
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+private fun PreviewDialog(
+    uri: Uri?,
+    onDismissDialog: () -> Unit
+) {
+    AnimatedContent(
+        targetState = uri,
+        modifier = Modifier
+            .padding(LocalSpacing.current.extraSmall)
+            .fillMaxWidth()
+            .draggable(
+                state = rememberDraggableState {
+                    if (it > 20) onDismissDialog()
+                },
+                orientation = Orientation.Vertical
+            ),
+        transitionSpec = {
+            slideInVertically { it } with slideOutVertically { -it }
+        },
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        if (it == null) return@AnimatedContent
+        Surface(
+            shape = RoundedCornerShape(5),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        ) {
+            Box {
+                AsyncImage(
+                    model = it,
+                    contentDescription = "",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(4 / 3f),
+                    contentScale = ContentScale.Crop
+                )
+
+                MaterialIconButton(
+                    icon = Icons.Sharp.ExpandCircleDown,
+                    onClick = { onDismissDialog() },
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    contentDescription = "close"
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun OriginPreview(
+    image: String,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    AnimatedVisibility(
+        visible = image.isNotEmpty(),
+        modifier = Modifier
+            .fillMaxSize()
+            .combinedClickable(
+                onDoubleClick = onDismiss,
+                onClick = {}
+            )
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.background(MaterialTheme.colorScheme.background)
+        ) {
+            val model = ImageRequest.Builder(context).data(image).build()
+            val loader = ImageLoader.Builder(context).components {
+                add(ImageDecoderDecoder.Factory())
+            }.build()
+            val painter = rememberAsyncImagePainter(
+                model = model, imageLoader = loader
+            )
+            Image(
+                painter = painter,
+                contentDescription = "",
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
     }
 }
