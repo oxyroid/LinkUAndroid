@@ -45,7 +45,11 @@ fun MaterialTextButton(
         shape = RoundedCornerShape(8.dp),
         onClick = onClick,
         modifier = modifier,
-        enabled = enabled
+        enabled = enabled,
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = LocalTheme.current.primary,
+            disabledContentColor = LocalTheme.current.primaryDisable
+        )
     ) {
         Text(
             style = MaterialTheme.typography.titleMedium,

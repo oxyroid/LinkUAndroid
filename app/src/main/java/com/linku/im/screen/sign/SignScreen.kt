@@ -22,6 +22,7 @@ import com.google.accompanist.insets.ui.Scaffold
 import com.linku.im.R
 import com.linku.im.ui.components.MaterialButton
 import com.linku.im.ui.components.MaterialTextButton
+import com.linku.im.ui.components.PasswordTextField
 import com.linku.im.ui.components.TextField
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
@@ -102,13 +103,11 @@ fun LoginScreen(
                         .height(LocalSpacing.current.medium)
                 )
 
-                TextField(
-                    background = LocalTheme.current.surface,
+                PasswordTextField(
                     textFieldValue = state.password,
                     onValueChange = { viewModel.onEvent(SignEvent.OnPassword(it)) },
                     placeholder = stringResource(id = R.string.screen_login_tag_password),
                     enabled = !state.loading,
-                    keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done,
                     keyboardActions = KeyboardActions(
                         onDone = {
@@ -128,8 +127,7 @@ fun LoginScreen(
                     textRes = if (state.syncing) R.string.syncing else
                         R.string.screen_login_btn_login,
                     enabled = !state.loading,
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     viewModel.onEvent(SignEvent.SignIn)
                     focusManager.clearFocus()

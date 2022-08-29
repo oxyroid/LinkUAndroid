@@ -74,35 +74,36 @@ fun ChatTextField(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = LocalSpacing.current.extraSmall)
                 ) {
-                    CompositionLocalProvider(LocalContentColor provides LocalTheme.current.onSurface) {
+                    CompositionLocalProvider(
+                        LocalContentColor provides LocalTheme.current.onSurface.copy(alpha = .35f)
+                    ) {
                         MaterialIconButton(
                             icon = Icons.Sharp.EmojiEmotions,
-                            onClick = { onExpanded(!expended) },
-                            contentDescription = "emoji"
+                            onClick = { onExpanded(!expended) }
                         )
-                        val placeholder = when (uri) {
-                            null -> stringResource(R.string.screen_chat_input)
-                            else -> stringResource(R.string.screen_chat_input_image)
-                        }
                         OutlinedTextField(
                             value = text,
-                            onValueChange = { onText(it) },
+                            onValueChange = onText,
                             modifier = Modifier
                                 .weight(1f)
                                 .animateContentSize(),
                             placeholder = {
                                 Text(
-                                    text = placeholder,
-                                    color = LocalTheme.current.onBackground,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    text = when (uri) {
+                                        null -> stringResource(R.string.screen_chat_input)
+                                        else -> stringResource(R.string.screen_chat_input_image)
+                                    },
+                                    color = LocalTheme.current.onSurface,
                                     maxLines = 1,
+                                    fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
                                     overflow = TextOverflow.Ellipsis
                                 )
                             },
                             colors = TextFieldDefaults.outlinedTextFieldColors(
                                 focusedBorderColor = Color.Transparent,
                                 unfocusedBorderColor = Color.Transparent,
-                                cursorColor = LocalTheme.current.primary
+                                cursorColor = LocalTheme.current.primary,
+                                textColor = LocalTheme.current.onSurface
                             ),
                             keyboardOptions = KeyboardOptions(
                                 imeAction = ImeAction.Send,
