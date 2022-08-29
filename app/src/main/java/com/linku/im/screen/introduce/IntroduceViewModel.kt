@@ -1,5 +1,7 @@
 package com.linku.im.screen.introduce
 
+import android.net.Uri
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.*
@@ -20,6 +22,7 @@ import com.linku.im.R
 import com.linku.im.extension.ifFalse
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
+import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach

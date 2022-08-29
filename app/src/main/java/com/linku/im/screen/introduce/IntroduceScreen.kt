@@ -1,6 +1,7 @@
 package com.linku.im.screen.introduce
 
 import android.Manifest
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -52,6 +53,7 @@ import com.linku.im.extension.intervalClickable
 import com.linku.im.screen.Screen
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
+import com.linku.im.screen.introduce.util.SquireCropImage
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.theme.LocalNavController
@@ -59,6 +61,8 @@ import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.*
 
 @OptIn(
     ExperimentalMaterialApi::class,
@@ -71,9 +75,21 @@ fun IntroduceScreen(
 ) {
     val state = viewModel.readable
     val navController = LocalNavController.current
+    val context = LocalContext.current
 
+    val uCropLauncher = rememberLauncherForActivityResult(SquireCropImage()) { uri ->
+        uri?.let {
+            viewModel.onEvent(IntroduceEvent.UpdateAvatar(it))
+        }
+    }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { viewModel.onEvent(IntroduceEvent.UpdateAvatar(it)) }
+        uri?.let {
+            uCropLauncher.launch(
+                it to Uri.fromFile(
+                    File(context.cacheDir, "temp_image_file_${Date().time}")
+                )
+            )
+        }
     }
     val permissionState =
         rememberPermissionState(permission = Manifest.permission.READ_EXTERNAL_STORAGE) {

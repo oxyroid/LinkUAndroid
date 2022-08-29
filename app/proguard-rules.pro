@@ -136,3 +136,6 @@
 -dontwarn org.openjsse.**
 
 -keep class org.ocpsoft.prettytime.i18n.**
+-dontwarn com.yalantis.ucrop**
+-keep class com.yalantis.ucrop** { *; }
+-keep interface com.yalantis.ucrop** { *; }
