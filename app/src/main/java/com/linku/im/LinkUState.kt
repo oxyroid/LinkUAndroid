@@ -7,6 +7,5 @@ data class LinkUState(
     val label: String? = null,
     val isDarkMode: Boolean = false,
     val isReady: Boolean = false,
-    val dynamicEnabled: Boolean = false,
     val currentScreen: Screen = Screen.MainScreen
 )

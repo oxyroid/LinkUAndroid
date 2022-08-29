@@ -83,13 +83,6 @@ class LinkUViewModel @Inject constructor(
                     sessionUseCases.close()
                 }
             }
-            LinkUEvent.ToggleDynamic -> {
-                val saved = !readable.dynamicEnabled
-                settings.isDynamicMode = saved
-                writable = readable.copy(
-                    dynamicEnabled = saved
-                )
-            }
         }
     }
 
@@ -105,10 +98,25 @@ class LinkUViewModel @Inject constructor(
     private fun updateLabel(label: Label) {
         writable = readable.copy(
             label = when (label) {
-                Label.Default -> null
-                Label.Connecting -> applicationUseCases.getString(R.string.connecting)
+                Label.Default -> {
+                    writable = readable.copy(
+                        loading = false
+                    )
+                    null
+                }
+                Label.Connecting -> {
+                    writable = readable.copy(
+                        loading = true
+                    )
+                    applicationUseCases.getString(R.string.connecting)
+                }
                 Label.Failed -> applicationUseCases.getString(R.string.connected_failed)
-                Label.Subscribing -> applicationUseCases.getString(R.string.subscribing)
+                Label.Subscribing -> {
+                    writable = readable.copy(
+                        loading = true
+                    )
+                    applicationUseCases.getString(R.string.subscribing)
+                }
                 Label.SubscribedFailed -> applicationUseCases.getString(R.string.subscribe_failed)
                 Label.NoAuth -> applicationUseCases.getString(R.string.no_auth)
             }
@@ -165,7 +173,6 @@ class LinkUViewModel @Inject constructor(
 
     private fun initConfig() {
         val isDarkMode = settings.isDarkMode
-        val enableDynamic = settings.isDynamicMode
         emojiUseCases.initialize()
             .onEach { resource ->
                 when (resource) {
@@ -173,14 +180,12 @@ class LinkUViewModel @Inject constructor(
                     is Resource.Success -> {
                         writable = readable.copy(
                             isDarkMode = isDarkMode,
-                            dynamicEnabled = enableDynamic,
                             isReady = true
                         )
                     }
                     is Resource.Failure -> {
                         writable = readable.copy(
                             isDarkMode = isDarkMode,
-                            dynamicEnabled = enableDynamic,
                             isReady = true,
                         )
                         onMessage(resource.message)

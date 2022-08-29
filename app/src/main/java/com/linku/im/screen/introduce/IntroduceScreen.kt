@@ -43,6 +43,7 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
+import com.linku.domain.Event
 import com.linku.im.BuildConfig
 import com.linku.im.R
 import com.linku.im.extension.ifFalse
@@ -53,7 +54,6 @@ import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.theme.LocalExpandColor
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -62,29 +62,18 @@ import kotlinx.coroutines.launch
 
 @OptIn(
     ExperimentalMaterialApi::class,
-    ExperimentalMaterial3Api::class,
-    ExperimentalFoundationApi::class,
     ExperimentalPermissionsApi::class
 )
 @Composable
 fun IntroduceScreen(
-    uid: Int, viewModel: IntroduceViewModel = hiltViewModel()
+    uid: Int,
+    viewModel: IntroduceViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val state = viewModel.readable
-    val scope = rememberCoroutineScope()
-    val scaffoldState = rememberScaffoldState()
-
     val navController = LocalNavController.current
-    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
-    var dropdownMenuExpended by remember {
-        mutableStateOf(false)
-    }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let {
-            viewModel.onEvent(IntroduceEvent.UpdateAvatar(it))
-        }
+        uri?.let { viewModel.onEvent(IntroduceEvent.UpdateAvatar(it)) }
     }
     val permissionState =
         rememberPermissionState(permission = Manifest.permission.READ_EXTERNAL_STORAGE) {
@@ -99,51 +88,115 @@ fun IntroduceScreen(
         if (state.logout) navController.navigateUp()
     }
 
-    LaunchedEffect(viewModel.message, vm.message) {
-        viewModel.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
-        }
-        vm.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
-        }
-    }
-
     LaunchedEffect(state.runLauncher) {
-        state.runLauncher.handle {
-            permissionState.launchPermissionRequest()
-        }
+        state.runLauncher.handle { permissionState.launchPermissionRequest() }
     }
 
     LaunchedEffect(state.editEvent) {
-        state.editEvent.handle {
-            navController.navigate(Screen.EditScreen.withArgs(it))
-        }
+        state.editEvent.handle { navController.navigate(Screen.EditScreen.withArgs(it)) }
     }
 
+    ImagePreviewDialog(state.preview) { viewModel.onEvent(IntroduceEvent.DismissPreview) }
 
-    state.visitAvatar.isNotEmpty().ifTrue {
-        AlertDialog(text = {
-            AsyncImage(
-                model = state.visitAvatar,
-                contentDescription = "",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(LocalSpacing.current.small))
+    CircularProgressDialog(enable = with(state) { verifiedEmailStarting || uploading })
+
+    VerifiedEmailDialog(
+        enable = state.verifiedEmailDialogShowing,
+        verifying = state.verifiedEmailCodeVerifying,
+        error = state.verifiedEmailCodeMessage,
+        onVerified = { viewModel.onEvent(IntroduceEvent.VerifiedEmailCode(it)) },
+        onCanceled = { viewModel.onEvent(IntroduceEvent.CancelVerifiedEmail) }
+    )
+
+    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    IntroduceScaffold(
+        sheetState = sheetState,
+        avatar = state.avatar,
+        message = viewModel.message,
+        isOthers = state.isOthers,
+        dataProperties = state.dataProperties,
+        settingsProperties = state.settingsProperties,
+        topBar = {
+            var dropdownMenuExpended by remember { mutableStateOf(false) }
+            IntroduceTopBar(
+                onDropdownMenuRequest = { dropdownMenuExpended = true },
+                onDismissDropdownMenuRequest = { dropdownMenuExpended = false },
+                onNavClick = navController::navigateUp,
+                ownDropdown = {
+                    DropdownMenuItem(
+                        onClick = {
+                            viewModel.onEvent(IntroduceEvent.SignOut)
+                            dropdownMenuExpended = false
+                        },
+                        text = { Text(stringResource(R.string.sign_out)) }
+                    )
+                },
+                otherDropdown = {
+                    DropdownMenuItem(
+                        onClick = { dropdownMenuExpended = false },
+                        text = { Text(stringResource(R.string.share)) }
+                    )
+                },
+                dropdownMenuExpended = dropdownMenuExpended,
+                isOthers = state.isOthers
             )
-        }, confirmButton = {}, onDismissRequest = {
-            viewModel.onEvent(IntroduceEvent.DismissVisitAvatar)
-        })
-    }
+        },
+        sheetContent = {
+            IntroduceSheetContent(
+                label = state.actionsLabel,
+                actions = state.actions,
+                onDismissRequest = sheetState::hide
+            )
+        },
+        onPreview = { viewModel.onEvent(IntroduceEvent.AvatarClicked) },
+        onAction = { viewModel.onEvent(IntroduceEvent.Actions(it.label, it.actions)) },
+        toggleLogMode = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) }
+    )
 
-    with(state) {
-        verifiedEmailStarting || uploading
-    }.ifTrue {
-        AlertDialog(confirmButton = {},
+}
+
+@Composable
+private fun ImagePreviewDialog(
+    model: String,
+    onDismissRequest: () -> Unit
+) {
+    (model.isNotBlank()).ifTrue {
+        AlertDialog(
+            text = {
+                AsyncImage(
+                    model = model,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(LocalSpacing.current.small))
+                )
+            },
+            confirmButton = {},
+            onDismissRequest = { onDismissRequest() }
+        )
+    }
+}
+
+@Composable
+private fun CircularProgressDialog(enable: Boolean) {
+    if (enable)
+        AlertDialog(
+            confirmButton = {},
             onDismissRequest = {},
-            icon = { CircularProgressIndicator() })
-    }
+            icon = { CircularProgressIndicator() }
+        )
+}
 
-    state.verifiedEmailDialogShowing.ifTrue {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun VerifiedEmailDialog(
+    enable: Boolean,
+    verifying: Boolean,
+    error: String,
+    onVerified: (String) -> Unit,
+    onCanceled: () -> Unit
+) {
+    enable.ifTrue {
         var code by remember { mutableStateOf("") }
         AlertDialog(
             icon = {
@@ -162,20 +215,21 @@ fun IntroduceScreen(
                         textColor = LocalTheme.current.onBackground,
                         containerColor = LocalTheme.current.background
                     ),
-                    enabled = !state.verifiedEmailCodeVerifying,
+                    enabled = !verifying,
                     maxLines = 1
                 )
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.onEvent(IntroduceEvent.VerifiedEmailCode(code))
+                        onVerified(code)
                         code = ""
-                    }, enabled = code.isNotBlank() and !state.verifiedEmailCodeVerifying
+                    },
+                    enabled = code.isNotBlank() and !verifying
                 ) {
                     Text(
                         text = stringResource(
-                            id = if (state.verifiedEmailCodeVerifying) R.string.verifying
+                            id = if (verifying) R.string.verifying
                             else R.string.confirm
                         )
                     )
@@ -183,14 +237,14 @@ fun IntroduceScreen(
             },
             dismissButton = {
                 TextButton(
-                    onClick = { viewModel.onEvent(IntroduceEvent.CancelVerifiedEmail) },
-                    enabled = !state.verifiedEmailCodeVerifying
+                    onClick = onCanceled,
+                    enabled = !verifying
                 ) {
                     Text(text = stringResource(id = R.string.cancel))
                 }
             },
             title = {
-                val title = state.verifiedEmailCodeMessage.takeIf { it.isNotBlank() }
+                val title = error.takeIf { it.isNotBlank() }
                     ?: stringResource(id = R.string.email_verified_dialog_title)
                 Text(text = title, style = MaterialTheme.typography.titleMedium)
             },
@@ -200,45 +254,43 @@ fun IntroduceScreen(
             textContentColor = LocalTheme.current.onSurface
         )
     }
+}
 
+@OptIn(
+    ExperimentalMaterialApi::class,
+    ExperimentalMaterial3Api::class,
+    ExperimentalFoundationApi::class
+)
+@Composable
+private fun IntroduceScaffold(
+    isOthers: Boolean,
+    sheetState: ModalBottomSheetState,
+    avatar: String,
+    dataProperties: List<Property>,
+    settingsProperties: List<Property>,
+    message: Event<String>,
+    topBar: @Composable () -> Unit,
+    sheetContent: @Composable ColumnScope.() -> Unit,
+    onPreview: () -> Unit,
+    onAction: (IntroduceEvent.Actions) -> Unit,
+    toggleLogMode: () -> Unit
+) {
+    val scaffoldState = rememberScaffoldState()
+    LaunchedEffect(message, vm.message) {
+        message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
+        vm.message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
+    }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    BackHandler(sheetState.isVisible) { scope.launch { sheetState.hide() } }
     Scaffold(
         scaffoldState = scaffoldState
     ) { innerPadding ->
         ModalBottomSheetLayout(
             sheetState = sheetState,
-            sheetContent = {
-                LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
-                    item {
-                        Text(
-                            text = state.actionsLabel,
-                            style = MaterialTheme.typography.titleSmall.copy(color = LocalTheme.current.primary),
-                            modifier = Modifier.padding(LocalSpacing.current.medium)
-                        )
-                    }
-                    items(state.actions) {
-                        ListItem(text = {
-                            Text(
-                                text = it.text, color = LocalTheme.current.onBackground
-                            )
-                        },
-                            icon = {
-                                Icon(
-                                    imageVector = it.icon,
-                                    contentDescription = it.text,
-                                    tint = LocalTheme.current.onBackground
-                                )
-                            },
-                            modifier = Modifier
-                                .background(LocalTheme.current.background)
-                                .intervalClickable {
-                                    scope.launch {
-                                        it.onClick()
-                                        sheetState.hide()
-                                    }
-                                })
-                    }
-                }
-            },
+            sheetContent = sheetContent,
             sheetBackgroundColor = LocalTheme.current.background,
             sheetContentColor = LocalTheme.current.onBackground,
             modifier = Modifier
@@ -255,13 +307,14 @@ fun IntroduceScreen(
                         color = LocalTheme.current.primary,
                         contentColor = LocalTheme.current.onPrimary,
                         onClick = {
-                            viewModel.onEvent(IntroduceEvent.AvatarClicked)
-                            scope.launch {
-                                sheetState.show()
-                            }
-                        }) {
-                        val model =
-                            ImageRequest.Builder(context).data(state.avatar).crossfade(true).build()
+                            onPreview()
+                            scope.launch { sheetState.show() }
+                        }
+                    ) {
+                        val model = ImageRequest.Builder(context)
+                            .data(avatar)
+                            .crossfade(true)
+                            .build()
                         SubcomposeAsyncImage(
                             model = model,
                             contentDescription = "",
@@ -274,46 +327,47 @@ fun IntroduceScreen(
                 }
 
                 item {
-                    ProfileList(label = stringResource(id = R.string.account),
-                        items = state.dataProperties,
+                    ProfileList(
+                        label = stringResource(R.string.account),
+                        items = dataProperties,
                         onItemClick = { setting ->
-                            if (state.isOthers) return@ProfileList
+                            if (isOthers) return@ProfileList
                             if (setting is Property.Data) {
-                                viewModel.onEvent(
-                                    IntroduceEvent.Actions(
-                                        label = setting.key, actions = setting.actions
-                                    )
-                                )
-                                scope.launch {
-                                    sheetState.show()
-                                }
+                                IntroduceEvent.Actions(
+                                    label = setting.key,
+                                    actions = setting.actions
+                                ).also(onAction)
+                                scope.launch { sheetState.show() }
                             }
-                        })
+                        }
+                    )
                 }
 
-                if (state.settingsProperties.isNotEmpty()) {
+                if (settingsProperties.isNotEmpty()) {
                     item {
                         Spacer(
                             modifier = Modifier
                                 .height(LocalSpacing.current.medium)
                                 .fillMaxWidth()
-                                .background(LocalExpandColor.current.divider)
+                                .background(LocalTheme.current.divider)
                         )
                     }
                     item {
-                        ProfileList(label = stringResource(R.string.settings),
-                            items = state.settingsProperties,
-                            onItemClick = {})
+                        ProfileList(
+                            label = stringResource(R.string.settings),
+                            items = settingsProperties,
+                            onItemClick = {}
+                        )
                     }
                     item {
                         val versionLabel = stringResource(R.string.version_label)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(LocalExpandColor.current.divider)
+                                .background(LocalTheme.current.divider)
                                 .combinedClickable(
                                     onClick = {},
-                                    onLongClick = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) },
+                                    onLongClick = toggleLogMode,
                                     role = Role.Button
                                 ), contentAlignment = Alignment.Center
                         ) {
@@ -328,42 +382,83 @@ fun IntroduceScreen(
                     }
                 }
             }
+            topBar()
+        }
+    }
+}
 
-            ToolBar(
-                onNavClick = { navController.navigateUp() },
-                actions = {
-                    MaterialIconButton(
-                        icon = Icons.Sharp.MoreVert,
-                        onClick = { dropdownMenuExpended = true },
-                        contentDescription = "more"
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun IntroduceSheetContent(
+    label: String,
+    actions: List<Property.Data.Action>,
+    onDismissRequest: suspend () -> Unit
+) {
+    val scope = rememberCoroutineScope()
+    LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
+        item {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleSmall.copy(color = LocalTheme.current.primary),
+                modifier = Modifier.padding(LocalSpacing.current.medium)
+            )
+        }
+        items(actions) {
+            ListItem(
+                text = {
+                    Text(
+                        text = it.text,
+                        color = LocalTheme.current.onBackground
                     )
-                    DropdownMenu(expanded = dropdownMenuExpended,
-                        onDismissRequest = { dropdownMenuExpended = false }) {
-                        state.isOthers.ifFalse {
-                            DropdownMenuItem(onClick = {
-                                viewModel.onEvent(IntroduceEvent.SignOut)
-                                dropdownMenuExpended = false
-                            }, text = {
-                                Text(stringResource(R.string.sign_out))
-                            })
-                        }
-                        state.isOthers.ifTrue {
-                            DropdownMenuItem(onClick = { dropdownMenuExpended = false }, text = {
-                                Text(stringResource(R.string.share))
-                            })
+                },
+                icon = {
+                    Icon(
+                        imageVector = it.icon,
+                        contentDescription = it.text,
+                        tint = LocalTheme.current.onBackground
+                    )
+                },
+                modifier = Modifier
+                    .background(LocalTheme.current.background)
+                    .intervalClickable {
+                        scope.launch {
+                            it.onClick()
+                            onDismissRequest()
                         }
                     }
-                },
-                text = "",
-                backgroundColor = Color.Transparent,
-                contentColor = LocalTheme.current.onSurface
             )
         }
     }
+}
 
-    BackHandler(sheetState.isVisible) {
-        scope.launch {
-            sheetState.hide()
-        }
-    }
+@Composable
+private fun IntroduceTopBar(
+    isOthers: Boolean,
+    dropdownMenuExpended: Boolean,
+    onDropdownMenuRequest: () -> Unit,
+    onDismissDropdownMenuRequest: () -> Unit,
+    onNavClick: () -> Unit,
+    otherDropdown: @Composable ColumnScope.() -> Unit,
+    ownDropdown: @Composable ColumnScope.() -> Unit
+) {
+    ToolBar(
+        onNavClick = onNavClick,
+        actions = {
+            MaterialIconButton(
+                icon = Icons.Sharp.MoreVert,
+                onClick = onDropdownMenuRequest,
+                contentDescription = null
+            )
+            DropdownMenu(
+                expanded = dropdownMenuExpended,
+                onDismissRequest = onDismissDropdownMenuRequest
+            ) {
+                isOthers.ifFalse { ownDropdown() }
+                isOthers.ifTrue { otherDropdown() }
+            }
+        },
+        text = "",
+        backgroundColor = Color.Transparent,
+        contentColor = LocalTheme.current.onSurface
+    )
 }

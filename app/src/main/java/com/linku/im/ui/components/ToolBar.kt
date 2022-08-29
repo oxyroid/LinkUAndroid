@@ -17,12 +17,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linku.im.extension.ifTrue
-import com.linku.im.ui.theme.LocalContainerColor
+import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalTheme
 
-@OptIn(
-    ExperimentalAnimationApi::class
-)
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ToolBar(
     navIcon: ImageVector = Icons.Default.ArrowBack,
@@ -33,10 +31,9 @@ fun ToolBar(
     contentColor: Color = LocalTheme.current.onSurface
 ) {
     CompositionLocalProvider(
-        LocalContainerColor provides backgroundColor,
         LocalContentColor provides contentColor
     ) {
-        Column(Modifier.background(LocalContainerColor.current)) {
+        Column(Modifier.background(backgroundColor)) {
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             TopAppBar(
                 title = {
@@ -73,7 +70,7 @@ fun ToolBar(
                     )
                 },
                 actions = actions,
-                backgroundColor = LocalContainerColor.current,
+                backgroundColor = backgroundColor,
                 contentColor = LocalContentColor.current,
                 elevation = 0.dp
             )

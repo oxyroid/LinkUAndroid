@@ -77,8 +77,7 @@ fun App() {
     val isDarkMode = state.isDarkMode
     @OptIn(ExperimentalAnimationApi::class)
     AppTheme(
-        useDarkTheme = isDarkMode,
-        enableDynamic = state.dynamicEnabled
+        useDarkTheme = isDarkMode
     ) {
         val systemUiController = rememberSystemUiController()
         LaunchedEffect(isDarkMode) {

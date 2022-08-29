@@ -39,7 +39,6 @@ import com.linku.im.R
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
 import com.linku.im.ui.components.TextImage
-import com.linku.im.ui.theme.LocalExpandColor
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import java.util.*
@@ -70,14 +69,12 @@ fun ChatBubble(
             .padding(
                 start = HORIZONTAL_OUT_PADDING.let {
                     if (!isAnother) it * HORIZONTAL_OUT_PADDING_TIMES
-                    else it
+                    else 0.dp
                 },
                 end = HORIZONTAL_OUT_PADDING.let {
                     if (isAnother) it * HORIZONTAL_OUT_PADDING_TIMES
-                    else it
+                    else 0.dp
                 },
-                top = 6.dp,
-                bottom = if (config.isEndOfGroup) 6.dp else 0.dp
             )
             .fillMaxWidth(),
         horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End,
@@ -162,7 +159,7 @@ fun ChatBubble(
             )
         ) {
             val customTextSelectionColors = TextSelectionColors(
-                handleColor = LocalExpandColor.current.seed,
+                handleColor = LocalTheme.current.primary,
                 backgroundColor = ColorUtils.blendARGB(
                     backgroundColor.toArgb(),
                     Color.Black.toArgb(),

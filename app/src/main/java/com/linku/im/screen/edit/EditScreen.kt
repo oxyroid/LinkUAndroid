@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import com.linku.im.screen.introduce.IntroduceEvent
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditScreen(
     type: IntroduceEvent.Edit.Type?
@@ -22,8 +22,8 @@ fun EditScreen(
 
     Scaffold(
         topBar = { ToolBar(onNavClick = { /*TODO*/ }, actions = {}, text = "") },
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        backgroundColor = MaterialTheme.colorScheme.background,
+        contentColor = LocalTheme.current.onBackground,
+        backgroundColor = LocalTheme.current.background,
     ) { innerPadding ->
         Column(
             modifier = Modifier

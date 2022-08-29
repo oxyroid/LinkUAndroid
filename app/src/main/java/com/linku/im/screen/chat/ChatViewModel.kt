@@ -19,6 +19,7 @@ import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.chat.composable.BubbleConfig
 import com.linku.im.screen.chat.composable.ReplyConfig
 import com.linku.im.screen.chat.vo.MessageVO
+import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -38,7 +39,7 @@ class ChatViewModel @Inject constructor(
 
     override fun onEvent(event: ChatEvent) {
         when (event) {
-            is ChatEvent.Initial -> initial(event)
+            is ChatEvent.Initialize -> initial(event)
             ChatEvent.SendMessage -> {
                 when {
                     readable.uri == null -> sendTextMessage()
@@ -103,23 +104,24 @@ class ChatViewModel @Inject constructor(
     }
 
 
-    private fun initial(event: ChatEvent.Initial) {
+    private fun initial(event: ChatEvent.Initialize) {
         writable = readable.copy(
             cid = event.cid
         )
         conversationUseCases.observeConversation(event.cid)
             .onEach { conversation ->
                 writable = readable.copy(
+                    loading = false,
                     title = conversation.name,
                     cid = conversation.id,
-                    type = conversation.type,
-                    videoChatAllowed = conversation.type == Conversation.Type.PM
+                    type = conversation.type
                 )
             }
             .launchIn(viewModelScope)
 
         messageUseCases.observeMessages(event.cid)
             .onEach { messages ->
+                val loading = vm.readable.loading
                 writable = readable.copy(
                     messages = messages
                         .mapIndexedNotNull { index, message ->
@@ -195,7 +197,7 @@ class ChatViewModel @Inject constructor(
                                 else -> null
                             }
                         },
-                    scroll = if (readable.firstVisibleIndex == 0 && readable.offset == 0 && !readable.loading)
+                    scroll = if (readable.firstVisibleIndex == 0 && readable.offset == 0 && !loading)
                         eventOf(0) else readable.scroll
                 )
             }

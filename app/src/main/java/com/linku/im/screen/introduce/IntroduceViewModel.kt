@@ -62,7 +62,7 @@ class IntroduceViewModel @Inject constructor(
                         icon = Icons.Sharp.Visibility,
                         onClick = {
                             writable = readable.copy(
-                                visitAvatar = readable.avatar
+                                preview = readable.avatar
                             )
                         }
                     ).also(::add)
@@ -79,8 +79,8 @@ class IntroduceViewModel @Inject constructor(
                     }
                 })
             }
-            IntroduceEvent.DismissVisitAvatar -> writable = readable.copy(
-                visitAvatar = ""
+            IntroduceEvent.DismissPreview -> writable = readable.copy(
+                preview = ""
             )
             is IntroduceEvent.UpdateAvatar -> {
                 val uri = event.uri

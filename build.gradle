@@ -10,6 +10,7 @@ buildscript {
         retrofit_version = "2.9.0"
         accompanist_version = "0.26.1-alpha"
         acraVersion = "5.9.6"
+        appyx_version = "1.0-alpha06"
     }
     dependencies {
         classpath "com.google.dagger:hilt-android-gradle-plugin:$hilt_version"

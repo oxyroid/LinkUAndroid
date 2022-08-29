@@ -18,6 +18,6 @@ data class IntroduceState(
     val settingsProperties: List<Property> = emptyList(),
     val editEvent: Event<IntroduceEvent.Edit.Type> = Event.Handled(),
     val avatar: String = "",
-    val visitAvatar: String = "",
+    val preview: String = "",
     val runLauncher: Event<Unit> = Event.Handled()
 )

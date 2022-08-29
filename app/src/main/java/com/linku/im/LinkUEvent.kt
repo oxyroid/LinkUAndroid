@@ -9,7 +9,6 @@ package com.linku.im
 sealed class LinkUEvent {
     object InitConfig : LinkUEvent()
     object ToggleDarkMode : LinkUEvent()
-    object ToggleDynamic : LinkUEvent()
     object Disconnect : LinkUEvent()
     object InitSession : LinkUEvent()
 }

@@ -11,7 +11,7 @@ sealed class IntroduceEvent {
     object CancelVerifiedEmail : IntroduceEvent()
     object SignOut : IntroduceEvent()
     object AvatarClicked : IntroduceEvent()
-    object DismissVisitAvatar : IntroduceEvent()
+    object DismissPreview : IntroduceEvent()
     data class UpdateAvatar(val uri: Uri?) : IntroduceEvent()
 
     data class Actions(

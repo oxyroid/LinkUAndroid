@@ -14,7 +14,7 @@ fun MaterialIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = LocalContentColor.current,
-    contentDescription: String = icon.name
+    contentDescription: String? = icon.name
 ) {
     IconButton(onClick = onClick, modifier) {
         Icon(

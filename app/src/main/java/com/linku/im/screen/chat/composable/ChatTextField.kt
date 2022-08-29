@@ -21,12 +21,8 @@ import androidx.compose.material.icons.sharp.Send
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -45,7 +41,7 @@ import com.linku.im.ui.theme.LocalTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatBottomSheet(
+fun ChatTextField(
     text: TextFieldValue,
     uri: Uri?,
     emojis: List<Emoji>,
@@ -57,12 +53,8 @@ fun ChatBottomSheet(
     onExpanded: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val focusRequester = remember(::FocusRequester)
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
-
     Column(
-        modifier = modifier
-            .fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -97,8 +89,7 @@ fun ChatBottomSheet(
                             onValueChange = { onText(it) },
                             modifier = Modifier
                                 .weight(1f)
-                                .focusRequester(focusRequester)
-                                .animateContentSize { _, _ -> },
+                                .animateContentSize(),
                             placeholder = {
                                 Text(
                                     text = placeholder,

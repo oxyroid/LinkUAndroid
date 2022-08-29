@@ -16,12 +16,11 @@ data class ChatState(
     val emojis: List<Emoji> = emptyList(),
     val expended: Boolean = false,
     val uri: Uri? = null,
-    val loading: Boolean = true,
     val messages: List<MessageVO> = emptyList(),
     val firstVisibleIndex: Int = 0,
     val offset: Int = 0,
     val repliedMessage: Message? = null,
     val visitImage: String = "",
-    val videoChatAllowed: Boolean = false,
-    val scroll: Event<Int> = Event.Handled()
+    val scroll: Event<Int> = Event.Handled(),
+    val loading: Boolean = true
 )

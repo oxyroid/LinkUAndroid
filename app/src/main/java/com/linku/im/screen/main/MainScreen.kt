@@ -29,36 +29,18 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
 import com.linku.im.screen.Screen
 import com.linku.im.screen.main.composable.ConversationItem
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.theme.*
+import com.linku.im.ui.theme.LocalAnimatedColor
+import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalSpacing
+import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.launch
-
-private sealed class Selection(
-    open val resId: Int,
-    open val icon: ImageVector
-) {
-    data class Route(
-        override val resId: Int,
-        val route: String,
-        override val icon: ImageVector
-    ) : Selection(resId, icon)
-
-    data class Switch(
-        override val resId: Int,
-        val value: Boolean,
-        val onIcon: ImageVector,
-        val offIcon: ImageVector = onIcon,
-        val onClick: () -> Unit
-    ) : Selection(resId, if (value) onIcon else offIcon)
-}
-
 
 @OptIn(
     ExperimentalFoundationApi::class,
@@ -73,9 +55,7 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val pagerState = rememberPagerState()
-    val hostState = remember {
-        SnackbarHostState()
-    }
+    val hostState = remember { SnackbarHostState() }
 
     val navController = LocalNavController.current
     val selections = buildList {
@@ -96,22 +76,13 @@ fun MainScreen(
             onClick = {
                 vm.onEvent(LinkUEvent.ToggleDarkMode)
             }).also(::add)
-        supportDynamic.ifTrue {
-            Selection.Switch(
-                resId = R.string.toggle_dynamic, value = vm.readable.dynamicEnabled, onClick = {
-                    vm.onEvent(LinkUEvent.ToggleDynamic)
-                }, onIcon = Icons.Sharp.FormatPaint
-            ).also(::add)
-        }
     }
 
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
             hostState.showSnackbar(it)
         }
-        vm.message.handle {
-            hostState.showSnackbar(it)
-        }
+        vm.message.handle { hostState.showSnackbar(it) }
     }
     Scaffold(
         topBar = {
@@ -192,18 +163,20 @@ fun MainScreen(
                     pages.forEachIndexed { index, page ->
                         Tab(
                             selected = pagerState.currentPage == index,
-                            onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
                             text = {
                                 Text(
-                                    text = page, style = MaterialTheme.typography.titleSmall
+                                    text = page,
+                                    style = MaterialTheme.typography.titleSmall
                                 )
                             },
+                            onClick = {
+                                scope.launch { pagerState.animateScrollToPage(index) }
+                            },
                             selectedContentColor = LocalAnimatedColor.current.onSurfaceColor,
-                            unselectedContentColor = LocalAnimatedColor.current.onSurfaceColor * 0.4f
+                            unselectedContentColor = LocalAnimatedColor.current.onSurfaceColor * 0.6f,
+                            modifier = Modifier
+                                .padding(LocalSpacing.current.small)
+                                .clip(RoundedCornerShape(LocalSpacing.current.extraSmall))
                         )
                     }
                 },
@@ -302,4 +275,23 @@ fun MainScreen(
             }
         }
     }
+}
+
+private sealed class Selection(
+    open val resId: Int,
+    open val icon: ImageVector
+) {
+    data class Route(
+        override val resId: Int,
+        val route: String,
+        override val icon: ImageVector
+    ) : Selection(resId, icon)
+
+    data class Switch(
+        override val resId: Int,
+        val value: Boolean,
+        val onIcon: ImageVector,
+        val offIcon: ImageVector = onIcon,
+        val onClick: () -> Unit
+    ) : Selection(resId, if (value) onIcon else offIcon)
 }

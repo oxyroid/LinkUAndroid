@@ -19,20 +19,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Reply
 import androidx.compose.material.icons.sharp.ExpandCircleDown
 import androidx.compose.material.icons.sharp.ExpandMore
+import androidx.compose.material.icons.sharp.Reply
 import androidx.compose.material.icons.sharp.Videocam
 import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,12 +47,12 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
+import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.Screen
-import com.linku.im.screen.chat.composable.ChatBackground
-import com.linku.im.screen.chat.composable.ChatBottomSheet
 import com.linku.im.screen.chat.composable.ChatBubble
+import com.linku.im.screen.chat.composable.ChatTextField
 import com.linku.im.screen.chat.composable.ChatTimestamp
 import com.linku.im.screen.chat.vo.MessageVO
 import com.linku.im.ui.components.MaterialIconButton
@@ -81,7 +84,7 @@ fun ChatScreen(
     val offset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
 
     LaunchedEffect(Unit) {
-        viewModel.onEvent(ChatEvent.Initial(cid))
+        viewModel.onEvent(ChatEvent.Initialize(cid))
         if (cid == -1) navController.navigateUp()
     }
     LaunchedEffect(viewModel.message, vm.message) {
@@ -97,29 +100,30 @@ fun ChatScreen(
         viewModel.onEvent(ChatEvent.OnScroll(firstVisibleItemIndex, offset))
     }
 
-    var boxOffset: IntSize? = null
+    val boxOffset = remember { mutableStateOf<IntSize?>(null) }
     ChatScaffold(
-        videoChatAllowed = state.videoChatAllowed,
+        type = state.type,
         title = state.title,
         navController = navController,
         listContent = {
             ListContent(
+                loading = state.loading,
                 messages = state.messages,
                 listState = listState,
                 onReply = {
                     viewModel.onEvent(ChatEvent.Reply(it))
                 },
                 onPreview = {
-                    viewModel.onEvent(ChatEvent.OnFileUriChange(Uri.parse(it)))
+                    viewModel.onEvent(ChatEvent.ShowImage(it))
                 },
                 onProfile = {
                     navController.navigate(Screen.IntroduceScreen.withArgs(it))
                 },
                 onScroll = { position ->
                     scope.launch {
-                        listState.animateScrollToItem(
+                        listState.scrollToItem(
                             index = position,
-                            scrollOffset = boxOffset?.let { it.height / -2 } ?: 0
+                            scrollOffset = boxOffset.value?.let { it.height / -2 } ?: 0
                         )
                     }
                 }
@@ -128,48 +132,42 @@ fun ChatScreen(
         bottomSheetContent = {
             BottomSheetContent(
                 repliedMessage = state.repliedMessage,
+                hasScrolled = firstVisibleItemIndex != 0,
                 onDismissReply = { viewModel.onEvent(ChatEvent.Reply(null)) },
                 onScrollToBottom = { scope.launch { listState.scrollToItem(0) } },
+                dialogContent = {
+                    PreviewDialog(uri = state.uri) {
+                        viewModel.onEvent(ChatEvent.OnFileUriChange(null))
+                    }
+                },
                 snackHostContent = { SnackbarHost(hostState) },
-                textFieldContent = {
+                content = {
                     // Bottom Sheet
-                    ChatBottomSheet(
+                    ChatTextField(
                         text = state.textFieldValue,
                         uri = state.uri,
                         emojis = state.emojis,
                         expended = state.expended,
                         onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
                         onFile = { permissionState.launchPermissionRequest() },
-                        onText = {
-                            viewModel.onEvent(ChatEvent.TextChange(it))
-                        },
+                        onText = { viewModel.onEvent(ChatEvent.TextChange(it)) },
                         onEmoji = { viewModel.onEvent(ChatEvent.EmojiChange(it)) },
                         onExpanded = { viewModel.onEvent(ChatEvent.Expanded(!state.expended)) },
                         modifier = Modifier.navigationBarsPadding()
                     )
-                },
-                imagePreviewDialog = {
-                    PreviewDialog(uri = state.uri) {
-                        viewModel.onEvent(ChatEvent.OnFileUriChange(null))
-                    }
                 }
             )
         },
-        onListHeightChanged = {
-            boxOffset = it
-        }
+        onListHeightChanged = { boxOffset.value = it }
     )
 
-    OriginPreview(image = state.visitImage) {
-        viewModel.onEvent(ChatEvent.DismissImage)
-    }
+    OriginPreview(state.visitImage) { viewModel.onEvent(ChatEvent.DismissImage) }
 
-    BackHandler(state.visitImage.isNotEmpty()) {
-        viewModel.onEvent(ChatEvent.DismissImage)
-    }
+    BackHandler(state.visitImage.isNotEmpty()) { viewModel.onEvent(ChatEvent.DismissImage) }
+
     LaunchedEffect(state.scroll) {
         state.scroll.handle {
-            listState.animateScrollToItem(it)
+            listState.scrollToItem(it)
         }
     }
 }
@@ -177,7 +175,7 @@ fun ChatScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChatScaffold(
-    videoChatAllowed: Boolean,
+    type: Conversation.Type,
     title: String,
     navController: NavHostController,
     listContent: @Composable () -> Unit,
@@ -187,13 +185,12 @@ private fun ChatScaffold(
     Scaffold(
         topBar = {
             ToolBar(
-                onNavClick = { navController.navigateUp() },
+                onNavClick = navController::navigateUp,
                 actions = {
-                    videoChatAllowed.ifTrue {
+                    (type == Conversation.Type.PM).ifTrue {
                         MaterialIconButton(
                             icon = Icons.Sharp.Videocam,
-                            onClick = { },
-                            contentDescription = "video"
+                            onClick = { }
                         )
                     }
                 },
@@ -203,18 +200,20 @@ private fun ChatScaffold(
         containerColor = LocalTheme.current.background,
         contentColor = LocalTheme.current.onBackground
     ) { innerPadding ->
+        val chatBackgroundColor = LocalTheme.current.chatBackground
         Box(
             Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
                 .imePadding()
-                .onSizeChanged { onListHeightChanged(it) }
+                .drawWithContent {
+                    drawRect(color = chatBackgroundColor)
+                    drawContent()
+                }
+                .onSizeChanged(onListHeightChanged)
         ) {
-            ChatBackground(Modifier.fillMaxSize())
             listContent()
-            Column(
-                modifier = Modifier.align(Alignment.BottomCenter)
-            ) {
+            Column(Modifier.align(Alignment.BottomCenter)) {
                 bottomSheetContent()
             }
         }
@@ -224,80 +223,101 @@ private fun ChatScaffold(
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun ListContent(
+    loading: Boolean,
     messages: List<MessageVO>,
     listState: LazyListState,
+    spacing: Dp = 150.dp,
     onReply: (Int) -> Unit,
     onPreview: (String) -> Unit,
     onProfile: (Int) -> Unit,
     onScroll: (Int) -> Unit,
 ) {
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize(),
-        reverseLayout = true,
-        contentPadding = PaddingValues(vertical = LocalSpacing.current.extraSmall)
-    ) {
-        item {
-            Spacer(
-                Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
+    if (loading) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = spacing)
+        ) {
+            CircularProgressIndicator(
+                color = LocalTheme.current.onPrimary
             )
         }
-        items(
-            items = messages,
-            key = { it.message.id }
-        ) { messageVO ->
-            val dismissState = rememberDismissState(confirmStateChange = {
-                if (it == DismissValue.DismissedToStart) {
-                    onReply(messageVO.message.id)
-                }
-                false
-            })
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                val config = messageVO.config
-                val message = messageVO.message
-                config.isShowTime.ifTrue {
-                    Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                    ChatTimestamp(message.timestamp)
-                    Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                }
-                SwipeToDismiss(
-                    state = dismissState,
-                    background = {},
-                    directions = setOf(
-                        DismissDirection.EndToStart
-                    )
-                ) {
-                    ChatBubble(
-                        message = messageVO.message,
-                        config = messageVO.config,
-                        onPreview = { onPreview(it) },
-                        onProfile = { onProfile(it) },
-                        onScroll = { position -> onScroll(position) }
-                    )
-                }
-
+    } else {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            reverseLayout = true,
+            contentPadding = PaddingValues(
+                vertical = LocalSpacing.current.extraSmall,
+                horizontal = LocalSpacing.current.medium
+            )
+        ) {
+            item {
+                Spacer(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(spacing)
+                )
             }
+            items(
+                items = messages,
+                key = { it.message.id }
+            ) { messageVO ->
+                val dismissState = rememberDismissState {
+                    if (it == DismissValue.DismissedToStart) {
+                        onReply(messageVO.message.id)
+                    }
+                    false
+                }
+
+                val config = messageVO.config
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .padding(
+                            top = 6.dp,
+                            bottom = if (config.isEndOfGroup) 6.dp else 0.dp
+                        )
+                ) {
+                    val message = messageVO.message
+                    config.isShowTime.ifTrue {
+                        Spacer(Modifier.height(LocalSpacing.current.extraSmall))
+                        ChatTimestamp(message.timestamp)
+                        Spacer(Modifier.height(LocalSpacing.current.extraSmall))
+                    }
+                    SwipeToDismiss(
+                        state = dismissState,
+                        background = { },
+                        directions = setOf(
+                            DismissDirection.EndToStart
+                        )
+                    ) {
+                        ChatBubble(
+                            message = messageVO.message,
+                            config = messageVO.config,
+                            onPreview = onPreview,
+                            onProfile = onProfile,
+                            onScroll = onScroll
+                        )
+                    }
+                }
+            }
+
         }
     }
 }
 
-@OptIn(
-    ExperimentalAnimationApi::class,
-    ExperimentalMaterial3Api::class
-)
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun BottomSheetContent(
     repliedMessage: Message?,
+    hasScrolled: Boolean,
     onDismissReply: () -> Unit,
     onScrollToBottom: () -> Unit,
     snackHostContent: @Composable () -> Unit,
-    imagePreviewDialog: @Composable () -> Unit,
-    textFieldContent: @Composable () -> Unit
+    dialogContent: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     // Fab and snackbar
     Column(
@@ -305,46 +325,50 @@ private fun BottomSheetContent(
     ) {
         Row(
             modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize()
                 .padding(
                     horizontal = LocalSpacing.current.medium
                 )
         ) {
             AnimatedVisibility(
-                visible = repliedMessage != null,
+                visible = hasScrolled,
                 enter = scaleIn(),
                 exit = scaleOut(),
                 modifier = Modifier
-                    .padding(end = LocalSpacing.current.medium)
+                    .padding(end = LocalSpacing.current.small)
             ) {
-                ElevatedFilterChip(
-                    selected = true,
-                    onClick = { onDismissReply() },
-                    label = {
+                SmallFloatingActionButton(
+                    onClick = onScrollToBottom,
+                    content = {
                         Icon(
-                            imageVector = Icons.Rounded.Reply,
-                            contentDescription = ""
+                            imageVector = Icons.Sharp.ExpandMore,
+                            contentDescription = null,
+                            tint = LocalTheme.current.onPrimary
                         )
                     },
-                    elevation = FilterChipDefaults.elevatedFilterChipElevation(
-                        defaultElevation = 0.dp
-                    )
+                    containerColor = LocalTheme.current.primary,
+                    contentColor = LocalTheme.current.onPrimary,
+                    elevation = FloatingActionButtonDefaults.loweredElevation()
                 )
             }
+
             AnimatedVisibility(
                 visible = repliedMessage != null,
                 enter = scaleIn(),
                 exit = scaleOut()
             ) {
                 SmallFloatingActionButton(
-                    onClick = { onScrollToBottom() },
+                    onClick = onDismissReply,
                     content = {
                         Icon(
-                            imageVector = Icons.Sharp.ExpandMore,
-                            contentDescription = ""
+                            imageVector = Icons.Sharp.Reply,
+                            contentDescription = null,
+                            tint = LocalTheme.current.onPrimary
                         )
                     },
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    containerColor = LocalTheme.current.primary,
+                    contentColor = LocalTheme.current.onPrimary,
                     elevation = FloatingActionButtonDefaults.loweredElevation()
                 )
             }
@@ -353,9 +377,8 @@ private fun BottomSheetContent(
     }
 
     // Image Preview Dialog
-    imagePreviewDialog()
-
-    textFieldContent()
+    dialogContent()
+    content()
 }
 
 @OptIn(ExperimentalAnimationApi::class)
@@ -370,9 +393,7 @@ private fun PreviewDialog(
             .padding(LocalSpacing.current.extraSmall)
             .fillMaxWidth()
             .draggable(
-                state = rememberDraggableState {
-                    if (it > 20) onDismissDialog()
-                },
+                state = rememberDraggableState { if (it > 20) onDismissDialog() },
                 orientation = Orientation.Vertical
             ),
         transitionSpec = {
@@ -383,12 +404,12 @@ private fun PreviewDialog(
         if (it == null) return@AnimatedContent
         Surface(
             shape = RoundedCornerShape(5),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            border = BorderStroke(1.dp, LocalTheme.current.divider)
         ) {
             Box {
                 AsyncImage(
                     model = it,
-                    contentDescription = "",
+                    contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(4 / 3f),
@@ -399,7 +420,7 @@ private fun PreviewDialog(
                     icon = Icons.Sharp.ExpandCircleDown,
                     onClick = { onDismissDialog() },
                     modifier = Modifier.align(Alignment.TopEnd),
-                    contentDescription = "close"
+                    contentDescription = null
                 )
             }
         }
@@ -424,7 +445,7 @@ private fun OriginPreview(
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.background(MaterialTheme.colorScheme.background)
+            modifier = Modifier.background(LocalTheme.current.background)
         ) {
             val model = ImageRequest.Builder(context).data(image).build()
             val loader = ImageLoader.Builder(context).components {
@@ -435,7 +456,7 @@ private fun OriginPreview(
             )
             Image(
                 painter = painter,
-                contentDescription = "",
+                contentDescription = null,
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier.fillMaxSize()
             )

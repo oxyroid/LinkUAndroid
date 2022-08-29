@@ -1,6 +1,5 @@
 package com.linku.im.screen.chat.composable
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,9 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.linku.im.extension.friendlyFormatted
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
-import java.util.*
 
-@SuppressLint("SimpleDateFormat")
 @Composable
 fun ChatTimestamp(timestamp: Long) {
     Text(
