@@ -22,5 +22,6 @@ data class ChatState(
     val repliedMessage: Message? = null,
     val visitImage: String = "",
     val scroll: Event<Int> = Event.Handled(),
-    val loading: Boolean = true
+    val loading: Boolean = true,
+    val focusMessageId: Int? = null
 )

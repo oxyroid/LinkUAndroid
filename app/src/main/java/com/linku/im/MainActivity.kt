@@ -95,8 +95,7 @@ fun App() {
             navController = LocalNavController.current,
             startDestination = Screen.MainScreen.route,
             modifier = Modifier
-                .background(LocalTheme.current.background)
-                .navigationBarsPadding(),
+                .background(LocalTheme.current.background),
             enterTransition = {
                 slideInHorizontally(
                     initialOffsetX = { it },
@@ -110,12 +109,8 @@ fun App() {
                     transformOrigin = TransformOrigin(0f, 0.5f)
                 )
             },
-            popEnterTransition = {
-                fadeIn()
-            },
-            popExitTransition = {
-                fadeOut()
-            }
+            popEnterTransition = { fadeIn() },
+            popExitTransition = { fadeOut() }
         ) {
             composable(
                 route = Screen.MainScreen.route

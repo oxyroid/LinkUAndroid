@@ -15,4 +15,6 @@ sealed class ChatEvent {
     object ReadAll : ChatEvent()
     data class ShowImage(val img: String) : ChatEvent()
     object DismissImage : ChatEvent()
+    data class FocusMessage(val mid: Int) : ChatEvent()
+    object LoseFocusMessage : ChatEvent()
 }

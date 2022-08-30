@@ -32,6 +32,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
@@ -82,6 +83,7 @@ fun ChatScreen(
     }
     val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
     val offset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
+    val blurColor by animateColorAsState(if (state.focusMessageId != null) Color(0x88000000) else Color.Transparent)
 
     LaunchedEffect(Unit) {
         viewModel.onEvent(ChatEvent.Initialize(cid))
@@ -104,6 +106,7 @@ fun ChatScreen(
     ChatScaffold(
         type = state.type,
         title = state.title,
+        blurColor = blurColor,
         navController = navController,
         listContent = {
             ListContent(
@@ -126,17 +129,24 @@ fun ChatScreen(
                             scrollOffset = boxOffset.value?.let { it.height / -2 } ?: 0
                         )
                     }
-                }
+                },
+                onFocus = { viewModel.onEvent(ChatEvent.FocusMessage(it)) },
+                onFocusDismiss = { viewModel.onEvent(ChatEvent.LoseFocusMessage) },
+                focusMessageId = state.focusMessageId,
+                blurColor = blurColor,
+                modifier = Modifier.fillMaxWidth()
             )
         },
         bottomSheetContent = {
             BottomSheetContent(
+                modifier = Modifier.fillMaxWidth(),
+                blurColor = blurColor,
                 repliedMessage = state.repliedMessage,
                 hasScrolled = firstVisibleItemIndex != 0,
                 onDismissReply = { viewModel.onEvent(ChatEvent.Reply(null)) },
                 onScrollToBottom = { scope.launch { listState.scrollToItem(0) } },
                 dialogContent = {
-                    PreviewDialog(uri = state.uri) {
+                    PreviewDialog(state.uri) {
                         viewModel.onEvent(ChatEvent.OnFileUriChange(null))
                     }
                 },
@@ -148,12 +158,12 @@ fun ChatScreen(
                         uri = state.uri,
                         emojis = state.emojis,
                         expended = state.expended,
+                        blurColor = blurColor,
                         onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
                         onFile = { permissionState.launchPermissionRequest() },
                         onText = { viewModel.onEvent(ChatEvent.TextChange(it)) },
                         onEmoji = { viewModel.onEvent(ChatEvent.EmojiChange(it)) },
-                        onExpanded = { viewModel.onEvent(ChatEvent.Expanded(!state.expended)) },
-                        modifier = Modifier.navigationBarsPadding()
+                        onExpanded = { viewModel.onEvent(ChatEvent.Expanded(!state.expended)) }
                     )
                 }
             )
@@ -164,6 +174,8 @@ fun ChatScreen(
     OriginPreview(state.visitImage) { viewModel.onEvent(ChatEvent.DismissImage) }
 
     BackHandler(state.visitImage.isNotEmpty()) { viewModel.onEvent(ChatEvent.DismissImage) }
+
+    BackHandler(state.focusMessageId != null) { viewModel.onEvent(ChatEvent.LoseFocusMessage) }
 
     LaunchedEffect(state.scroll) {
         state.scroll.handle {
@@ -178,8 +190,9 @@ private fun ChatScaffold(
     type: Conversation.Type,
     title: String,
     navController: NavHostController,
-    listContent: @Composable () -> Unit,
-    bottomSheetContent: @Composable () -> Unit,
+    blurColor: Color,
+    listContent: @Composable BoxScope.() -> Unit,
+    bottomSheetContent: @Composable BoxScope.() -> Unit,
     onListHeightChanged: (IntSize) -> Unit
 ) {
     Scaffold(
@@ -194,7 +207,11 @@ private fun ChatScaffold(
                         )
                     }
                 },
-                text = vm.readable.label ?: title
+                text = vm.readable.label ?: title,
+                modifier = Modifier.drawWithContent {
+                    drawContent()
+                    drawRect(blurColor)
+                }
             )
         },
         containerColor = LocalTheme.current.background,
@@ -203,19 +220,17 @@ private fun ChatScaffold(
         val chatBackgroundColor = LocalTheme.current.chatBackground
         Box(
             Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
-                .imePadding()
+                .padding(innerPadding)
                 .drawWithContent {
-                    drawRect(color = chatBackgroundColor)
+                    drawRect(chatBackgroundColor)
                     drawContent()
                 }
-                .onSizeChanged(onListHeightChanged)
+                .onSizeChanged(onListHeightChanged),
+            contentAlignment = Alignment.BottomCenter
         ) {
             listContent()
-            Column(Modifier.align(Alignment.BottomCenter)) {
-                bottomSheetContent()
-            }
+            bottomSheetContent()
         }
     }
 }
@@ -225,18 +240,23 @@ private fun ChatScaffold(
 private fun ListContent(
     loading: Boolean,
     messages: List<MessageVO>,
+    focusMessageId: Int?,
+    blurColor: Color,
     listState: LazyListState,
     spacing: Dp = 150.dp,
     onReply: (Int) -> Unit,
     onPreview: (String) -> Unit,
     onProfile: (Int) -> Unit,
     onScroll: (Int) -> Unit,
+    onFocus: (Int) -> Unit,
+    onFocusDismiss: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     if (loading) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = modifier
+                .fillMaxWidth()
                 .padding(bottom = spacing)
         ) {
             CircularProgressIndicator(
@@ -246,7 +266,12 @@ private fun ListContent(
     } else {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier
+                .fillMaxWidth()
+                .drawWithContent {
+                    drawRect(blurColor)
+                    drawContent()
+                },
             reverseLayout = true,
             contentPadding = PaddingValues(
                 vertical = LocalSpacing.current.extraSmall,
@@ -283,7 +308,10 @@ private fun ListContent(
                     val message = messageVO.message
                     config.isShowTime.ifTrue {
                         Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                        ChatTimestamp(message.timestamp)
+                        ChatTimestamp(
+                            timestamp = message.timestamp,
+                            blurColor = blurColor
+                        )
                         Spacer(Modifier.height(LocalSpacing.current.extraSmall))
                     }
                     SwipeToDismiss(
@@ -294,11 +322,16 @@ private fun ListContent(
                         )
                     ) {
                         ChatBubble(
-                            message = messageVO.message,
+                            message = message,
                             config = messageVO.config,
+                            hasFocus = focusMessageId == message.id,
+                            isOtherMessageHasFocus = focusMessageId != null && focusMessageId != message.id,
                             onPreview = onPreview,
                             onProfile = onProfile,
-                            onScroll = onScroll
+                            onScroll = onScroll,
+                            onFocus = onFocus,
+                            onFocusDismiss = onFocusDismiss,
+                            blurColor = blurColor
                         )
                     }
                 }
@@ -313,16 +346,16 @@ private fun ListContent(
 private fun BottomSheetContent(
     repliedMessage: Message?,
     hasScrolled: Boolean,
+    blurColor: Color,
     onDismissReply: () -> Unit,
     onScrollToBottom: () -> Unit,
     snackHostContent: @Composable () -> Unit,
     dialogContent: @Composable () -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     // Fab and snackbar
-    Column(
-        modifier = Modifier.animateContentSize()
-    ) {
+    Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -349,7 +382,12 @@ private fun BottomSheetContent(
                     },
                     containerColor = LocalTheme.current.primary,
                     contentColor = LocalTheme.current.onPrimary,
-                    elevation = FloatingActionButtonDefaults.loweredElevation()
+                    elevation = FloatingActionButtonDefaults.loweredElevation(),
+                    modifier = Modifier
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(blurColor)
+                        }
                 )
             }
 
@@ -369,16 +407,20 @@ private fun BottomSheetContent(
                     },
                     containerColor = LocalTheme.current.primary,
                     contentColor = LocalTheme.current.onPrimary,
-                    elevation = FloatingActionButtonDefaults.loweredElevation()
+                    elevation = FloatingActionButtonDefaults.loweredElevation(),
+                    modifier = Modifier
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(blurColor)
+                        }
                 )
             }
         }
         snackHostContent()
+        // Image Preview Dialog
+        dialogContent()
+        content()
     }
-
-    // Image Preview Dialog
-    dialogContent()
-    content()
 }
 
 @OptIn(ExperimentalAnimationApi::class)

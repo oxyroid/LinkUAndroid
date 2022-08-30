@@ -28,12 +28,13 @@ fun ToolBar(
     actions: @Composable (RowScope.() -> Unit),
     text: String,
     backgroundColor: Color = LocalTheme.current.surface,
-    contentColor: Color = LocalTheme.current.onSurface
+    contentColor: Color = LocalTheme.current.onSurface,
+    modifier: Modifier = Modifier
 ) {
     CompositionLocalProvider(
         LocalContentColor provides contentColor
     ) {
-        Column(Modifier.background(backgroundColor)) {
+        Column(modifier.background(backgroundColor)) {
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             TopAppBar(
                 title = {

@@ -9,7 +9,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Text
@@ -23,6 +23,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -44,6 +46,7 @@ import com.linku.im.ui.theme.LocalTheme
 fun ChatTextField(
     text: TextFieldValue,
     uri: Uri?,
+    blurColor: Color,
     emojis: List<Emoji>,
     expended: Boolean,
     onSend: () -> Unit,
@@ -64,11 +67,17 @@ fun ChatTextField(
                     vertical = LocalSpacing.current.extraSmall
                 )
         ) {
+            // Real Text Field
             Surface(
-                shape = RoundedCornerShape(50),
                 color = LocalTheme.current.surface,
                 contentColor = LocalTheme.current.onSurface,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(CircleShape)
+                    .drawWithContent {
+                        drawContent()
+                        drawRect(blurColor)
+                    }
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -147,6 +156,10 @@ fun ChatTextField(
         LazyHorizontalGrid(
             modifier = Modifier
                 .fillMaxWidth()
+                .drawWithContent {
+                    drawContent()
+                    drawRect(blurColor)
+                }
                 .height((expended.ifTrue { 144.dp }
                     ?: LocalSpacing.current.large) + LocalSpacing.current.large)
                 .background(LocalTheme.current.surface)

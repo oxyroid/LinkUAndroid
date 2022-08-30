@@ -100,6 +100,14 @@ class ChatViewModel @Inject constructor(
             is ChatEvent.ShowImage -> writable = readable.copy(
                 visitImage = event.img
             )
+
+            is ChatEvent.FocusMessage -> writable = readable.copy(
+                focusMessageId = event.mid
+            )
+
+            ChatEvent.LoseFocusMessage -> writable = readable.copy(
+                focusMessageId = null
+            )
         }
     }
 

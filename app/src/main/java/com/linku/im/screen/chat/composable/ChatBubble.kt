@@ -1,32 +1,31 @@
 package com.linku.im.screen.chat.composable
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.LocalTextSelectionColors
-import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.sharp.ContentCopy
+import androidx.compose.material.icons.sharp.Reply
 import androidx.compose.material.icons.sharp.Warning
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.ColorUtils
 import coil.ImageLoader
 import coil.compose.*
 import coil.decode.ImageDecoderDecoder
@@ -50,20 +49,28 @@ private const val HORIZONTAL_OUT_PADDING_TIMES = 3
 private val BUBBLE_CORNER = 12.dp
 private val BUBBLE_SPECIAL_CORNER = 0.dp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatBubble(
     message: Message,
     config: BubbleConfig,
+    hasFocus: Boolean,
+    isOtherMessageHasFocus: Boolean,
+    blurColor: Color,
     modifier: Modifier = Modifier,
     onPreview: (String) -> Unit,
     onProfile: (Int) -> Unit,
-    onScroll: (Int) -> Unit
+    onScroll: (Int) -> Unit,
+    onFocus: (Int) -> Unit,
+    onFocusDismiss: () -> Unit
 ) {
     val isAnother = config.isAnother
     val backgroundColor: Color = if (isAnother) LocalTheme.current.bubbleStart
     else LocalTheme.current.bubbleEnd
     val contentColor: Color = if (isAnother) LocalTheme.current.onBubbleStart
     else LocalTheme.current.onBubbleEnd
+
+    val hapticFeedback = LocalHapticFeedback.current
     Row(
         modifier = modifier
             .padding(
@@ -109,6 +116,10 @@ fun ChatBubble(
                     modifier = Modifier
                         .size(LocalSpacing.current.largest)
                         .clip(RoundedCornerShape(50))
+                        .drawWithContent {
+                            drawContent()
+                            drawRect(blurColor)
+                        }
                         .intervalClickable { onProfile(message.uid) },
                     error = {
                         TextImage(
@@ -152,20 +163,26 @@ fun ChatBubble(
             bottomEnd = if (config.isEndOfGroup) BUBBLE_SPECIAL_CORNER else BUBBLE_CORNER,
             topStart = BUBBLE_CORNER
         )
-        Card(
-            shape = shape,
-            colors = CardDefaults.cardColors(
-                containerColor = backgroundColor
-            )
+        Column(
+            modifier = Modifier
+                .clip(shape)
+                .combinedClickable(
+                    interactionSource = remember {
+                        MutableInteractionSource()
+                    },
+                    indication = LocalIndication.current,
+                    onClick = { },
+                    onLongClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onFocus(message.id)
+                    }
+                )
+                .drawWithContent {
+                    drawRect(backgroundColor)
+                    drawContent()
+                    if (isOtherMessageHasFocus) drawRect(blurColor)
+                }
         ) {
-            val customTextSelectionColors = TextSelectionColors(
-                handleColor = LocalTheme.current.primary,
-                backgroundColor = ColorUtils.blendARGB(
-                    backgroundColor.toArgb(),
-                    Color.Black.toArgb(),
-                    0.2f
-                ).let(::Color)
-            )
             val nameVisibility = config is BubbleConfig.Multi && config.nameVisibility
             if (nameVisibility) {
                 Text(
@@ -185,9 +202,15 @@ fun ChatBubble(
                 reply?.let {
                     Row(
                         modifier = Modifier
-                            .intervalClickable {
-                                if (it.index != -1) onScroll(it.index)
-                            }
+                            .combinedClickable(
+                                interactionSource = MutableInteractionSource(),
+                                indication = LocalIndication.current,
+                                onClick = { if (it.index != -1) onScroll(it.index) },
+                                onLongClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onFocus(message.id)
+                                }
+                            )
                             .padding(
                                 start = HORIZONTAL_IN_PADDING,
                                 end = HORIZONTAL_IN_PADDING,
@@ -216,25 +239,22 @@ fun ChatBubble(
                 }
                 when (message) {
                     is TextMessage -> {
-                        CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
-                            SelectionContainer {
-                                Text(
-                                    text = message.text,
-                                    color = contentColor,
-                                    modifier = Modifier.padding(
-                                        start = HORIZONTAL_IN_PADDING,
-                                        end = HORIZONTAL_IN_PADDING,
-                                        top = if (reply == null) VERTICAL_IN_PADDING else VERTICAL_IN_PADDING / 2,
-                                        bottom = VERTICAL_IN_PADDING,
-                                    ),
-                                    textAlign = TextAlign.Start,
-                                    style = MaterialTheme.typography.bodyMedium
-                                        .copy(
-                                            fontWeight = FontWeight.Bold
-                                        )
+                        Text(
+                            text = message.text,
+                            color = contentColor,
+                            modifier = Modifier
+                                .padding(
+                                    start = HORIZONTAL_IN_PADDING,
+                                    end = HORIZONTAL_IN_PADDING,
+                                    top = if (reply == null) VERTICAL_IN_PADDING else VERTICAL_IN_PADDING / 2,
+                                    bottom = VERTICAL_IN_PADDING,
+                                ),
+                            textAlign = TextAlign.Start,
+                            style = MaterialTheme.typography.bodyMedium
+                                .copy(
+                                    fontWeight = FontWeight.Bold
                                 )
-                            }
-                        }
+                        )
                     }
                     is ImageMessage -> {
                         Image(
@@ -242,8 +262,16 @@ fun ChatBubble(
                             contentColor = contentColor,
                             message = message,
                             contentDescription = "Image Message",
-                            onClick = { onPreview(it) },
-                            isPending = config.sendState == Message.STATE_PENDING
+                            isPending = config.sendState == Message.STATE_PENDING,
+                            modifier = Modifier.combinedClickable(
+                                interactionSource = MutableInteractionSource(),
+                                indication = LocalIndication.current,
+                                onClick = { onPreview(message.url) },
+                                onLongClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onFocus(message.id)
+                                }
+                            )
                         )
                     }
                     is GraphicsMessage -> {
@@ -253,26 +281,32 @@ fun ChatBubble(
                                 contentColor = contentColor,
                                 message = message,
                                 contentDescription = "Graphics Message",
-                                onClick = { onPreview(it) },
-                                isPending = config.sendState == Message.STATE_PENDING
+                                isPending = config.sendState == Message.STATE_PENDING,
+                                modifier = Modifier.combinedClickable(
+                                    interactionSource = MutableInteractionSource(),
+                                    indication = LocalIndication.current,
+                                    onClick = { onPreview(message.url) },
+                                    onLongClick = {
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        onFocus(message.id)
+                                    }
+                                )
                             )
-                            CompositionLocalProvider(LocalTextSelectionColors provides customTextSelectionColors) {
-                                Text(
-                                    text = message.text,
-                                    color = contentColor,
-                                    modifier = Modifier.padding(
+                            Text(
+                                text = message.text,
+                                color = contentColor,
+                                modifier = Modifier
+                                    .padding(
                                         start = HORIZONTAL_IN_PADDING,
                                         end = HORIZONTAL_IN_PADDING,
                                         top = VERTICAL_IN_PADDING,
                                         bottom = VERTICAL_IN_PADDING,
                                     ),
-                                    textAlign = TextAlign.Start,
-                                    style = MaterialTheme.typography.bodyMedium
-                                        .copy(
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                textAlign = TextAlign.Start,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = FontWeight.Bold
                                 )
-                            }
+                            )
                         }
                     }
                     else -> {
@@ -291,11 +325,41 @@ fun ChatBubble(
                     }
                 }
             }
+            DropdownMenu(
+                expanded = hasFocus,
+                onDismissRequest = {
+                    onFocusDismiss()
+                }
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.dropdown_copy)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Sharp.ContentCopy,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        onFocusDismiss()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.dropdown_reply)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Sharp.Reply,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        onFocusDismiss()
+                    }
+                )
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Image(
     backgroundColor: Color,
@@ -303,7 +367,7 @@ private fun Image(
     message: Message,
     isPending: Boolean = false,
     contentDescription: String? = null,
-    onClick: (String) -> Unit
+    modifier: Modifier = Modifier
 ) {
     val realUrl = when (message) {
         is ImageMessage -> message.url
@@ -312,10 +376,9 @@ private fun Image(
     }
     Surface(
         shape = RoundedCornerShape(5),
-        modifier = Modifier.padding(4.dp),
+        modifier = modifier.padding(4.dp),
         color = backgroundColor,
-        contentColor = contentColor,
-        onClick = { onClick(realUrl) }
+        contentColor = contentColor
     ) {
         val model = ImageRequest.Builder(LocalContext.current)
             .data(realUrl)

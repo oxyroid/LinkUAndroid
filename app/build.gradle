@@ -15,8 +15,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 33
-        versionCode 80
-        versionName "0.12.8"
+        versionCode 88
+        versionName "0.12.16"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -99,7 +99,6 @@ dependencies {
 
     // lottie
     implementation "com.airbnb.android:lottie-compose:5.2.0"
-
 
     // retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"

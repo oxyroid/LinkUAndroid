@@ -73,4 +73,6 @@
     <string name="profile_avatar_label">头像</string>
     <string name="save">保存</string>
     <string name="syncing">同步中…</string>
+    <string name="dropdown_copy">复制</string>
+    <string name="dropdown_reply">回复</string>
 </resources>
