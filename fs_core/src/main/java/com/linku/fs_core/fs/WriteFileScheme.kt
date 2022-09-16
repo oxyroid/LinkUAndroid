@@ -6,6 +6,7 @@ import java.io.File
 
 interface WriteFileScheme : FileScheme {
     fun put(uri: Uri?): File?
+    fun encrypt(text: String): String
 }
 
 fun WriteFileScheme.cache(uri: Uri?): Uri? {

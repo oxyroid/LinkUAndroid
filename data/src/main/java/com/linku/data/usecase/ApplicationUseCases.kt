@@ -31,7 +31,7 @@ data class GetStringUseCase @Inject constructor(
 data class ToastUseCase @Inject constructor(
     @ApplicationContext val context: Context
 ) {
-    operator fun invoke(text: String, duration: Int = Toast.LENGTH_SHORT) {
+    operator fun invoke(text: String?, duration: Int = Toast.LENGTH_SHORT) {
         Toast.makeText(context, text, duration).show()
     }
 }

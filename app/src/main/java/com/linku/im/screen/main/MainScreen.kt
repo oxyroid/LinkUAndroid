@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.*
@@ -19,10 +20,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.os.bundleOf
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -84,6 +87,7 @@ fun MainScreen(
         }
         vm.message.handle { hostState.showSnackbar(it) }
     }
+    val theme = LocalTheme.current
     Scaffold(
         topBar = {
             val vmState = vm.readable
@@ -97,7 +101,9 @@ fun MainScreen(
                 actions = {
                     MaterialIconButton(
                         icon = Icons.Sharp.Search,
-                        onClick = { navController.navigate(Screen.QueryScreen.route) },
+                        onClick = {
+                            navController.navigate(R.id.action_mainFragment_to_queryFragment)
+                        },
                         contentDescription = "search"
                     )
                 },
@@ -112,16 +118,17 @@ fun MainScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 FloatingActionButton(
-                    onClick = { viewModel.onEvent(MainEvent.StartToCreateConversation) },
+                    onClick = { navController.navigate(R.id.action_mainFragment_to_createFragment) },
                     modifier = Modifier
                         .padding(LocalSpacing.current.medium)
                         .align(Alignment.End),
                     elevation = FloatingActionButtonDefaults.loweredElevation(),
-                    containerColor = LocalTheme.current.primary,
-                    contentColor = LocalTheme.current.onPrimary
+                    containerColor = theme.primary,
+                    contentColor = theme.onPrimary
                 ) {
                     Icon(
-                        imageVector = Icons.Sharp.Add, contentDescription = "create conversation"
+                        imageVector = Icons.Sharp.Add,
+                        contentDescription = null
                     )
                 }
                 SnackbarHost(hostState = hostState)
@@ -137,7 +144,12 @@ fun MainScreen(
             stringResource(R.string.tab_more)
         )
         Column(
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .drawWithContent {
+                    drawRect(theme.background)
+                    drawContent()
+                }
+                .padding(innerPadding)
         ) {
             TabRow(
                 selectedTabIndex = pagerState.currentPage,
@@ -154,7 +166,7 @@ fun MainScreen(
                                     topEnd = LocalSpacing.current.extraSmall
                                 )
                             ),
-                        color = LocalTheme.current.primary,
+                        color = theme.primary,
                         height = LocalSpacing.current.extraSmall
                     )
                 },
@@ -180,8 +192,8 @@ fun MainScreen(
                         )
                     }
                 },
-                containerColor = LocalTheme.current.surface,
-                contentColor = LocalTheme.current.onSurface
+                containerColor = theme.surface,
+                contentColor = theme.onSurface
             )
             HorizontalPager(
                 count = pages.size,
@@ -213,8 +225,8 @@ fun MainScreen(
                                                 .size(LocalSpacing.current.small)
                                                 .background(
                                                     color = if (selection.value) Color.Green
-                                                    else LocalTheme.current.error,
-                                                    shape = RoundedCornerShape(50)
+                                                    else theme.error,
+                                                    shape = CircleShape
                                                 )
                                         )
                                     }
@@ -229,8 +241,8 @@ fun MainScreen(
                                                     Screen.IntroduceScreen -> {
                                                         navController.navigate(
                                                             if (vm.authenticator.currentUID == null)
-                                                                Screen.LoginScreen.route
-                                                            else selection.route
+                                                                R.id.action_mainFragment_to_signFragment
+                                                            else R.id.action_mainFragment_to_introduceFragment
                                                         )
                                                     }
                                                     Screen.MainScreen -> {}
@@ -241,10 +253,10 @@ fun MainScreen(
                                         }
                                     },
                                 colors = ListItemDefaults.colors(
-                                    containerColor = LocalTheme.current.surface,
-                                    leadingIconColor = LocalTheme.current.onSurface,
-                                    trailingIconColor = LocalTheme.current.onSurface,
-                                    headlineColor = LocalTheme.current.onSurface
+                                    containerColor = theme.surface,
+                                    leadingIconColor = theme.onSurface * 0.6f,
+                                    trailingIconColor = theme.onSurface * 0.6f,
+                                    headlineColor = theme.onSurface
                                 )
                             )
                         }
@@ -252,7 +264,7 @@ fun MainScreen(
                 } else {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        userScrollEnabled = !state.loading
+                        userScrollEnabled = !state.loadingConversations
                     ) {
                         val conversations = when (page) {
                             0 -> state.conversations
@@ -266,7 +278,12 @@ fun MainScreen(
                                 unreadCount = index / 2,
                                 modifier = Modifier.animateItemPlacement()
                             ) {
-                                navController.navigate(Screen.ChatScreen.withArgs(conversation.id))
+                                navController.navigate(
+                                    R.id.action_mainFragment_to_chatFragment,
+                                    bundleOf(
+                                        "cid" to conversation.id
+                                    )
+                                )
                             }
                             if (index != conversations.lastIndex) Divider()
                         }

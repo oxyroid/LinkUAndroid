@@ -1,6 +1,6 @@
 package com.linku.domain.service
 
-import com.linku.domain.Result
+import com.linku.domain.BackendResult
 import okhttp3.MultipartBody
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -11,5 +11,5 @@ interface FileService {
     @POST("file/upload")
     suspend fun upload(
         @Part file: MultipartBody.Part
-    ): Result<String>
+    ): BackendResult<String>
 }

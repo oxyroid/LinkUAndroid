@@ -30,9 +30,6 @@ interface MessageDao {
     @Query("UPDATE MESSAGE SET sendState = 2 WHERE uuid = :uuid")
     suspend fun failedStagingMessage(uuid: String)
 
-    @Query("UPDATE MESSAGE SET sendState = 0 WHERE uuid = :uuid")
-    suspend fun resendStagingMessage(uuid: String)
-
     @Query("SELECT * FROM Message")
     suspend fun getAll(): List<Message>
 
@@ -50,6 +47,9 @@ interface MessageDao {
 
     @Query("DELETE FROM Message WHERE sendState = 0 OR sendState = 2")
     suspend fun clearStagingMessages()
+
+    @Query("SELECT * FROM Message ORDER BY timestamp DESC LIMIT 1")
+    fun getLatestMessage(): Message?
 
     @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC LIMIT 1")
     fun getLatestMessageByCid(cid: Int): Flow<Message?>

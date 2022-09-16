@@ -1,6 +1,6 @@
 package com.linku.domain.service
 
-import com.linku.domain.Result
+import com.linku.domain.BackendResult
 import com.linku.domain.entity.MessageDTO
 import retrofit2.http.*
 
@@ -12,40 +12,40 @@ interface MessageService {
         @Field("content") content: String,
         @Field("type") type: String?,
         @Field("uuid") uuid: String
-    ): Result<MessageDTO>
+    ): BackendResult<MessageDTO>
 
     @GET("chats/msg/{mid}")
-    suspend fun getMessageById(@Path("mid") mid: Int): Result<MessageDTO>
+    suspend fun getMessageById(@Path("mid") mid: Int): BackendResult<MessageDTO>
 
     @GET("chats/read/{mid}")
-    suspend fun read(@Path("mid") mid: Int): Result<Unit>
+    suspend fun read(@Path("mid") mid: Int): BackendResult<Unit>
 
     @GET("chats/read")
-    suspend fun readAll(): Result<Unit>
+    suspend fun readAll(): BackendResult<Unit>
 
     @GET("chats/msg")
-    suspend fun getUnreadMessages(): Result<List<MessageDTO>>
+    suspend fun getUnreadMessages(): BackendResult<List<MessageDTO>>
 
     @GET("chats/msg/pre")
-    suspend fun getMessageAfter(@Query("date") timestamp: Long): Result<List<MessageDTO>>
+    suspend fun getMessageAfter(@Query("date") timestamp: Long): BackendResult<List<MessageDTO>>
 
     @FormUrlEncoded
     @POST("chats/contact/request")
     suspend fun request(
         @Field("content") content: String? = null
-    ): Result<Unit>
+    ): BackendResult<Unit>
 
     @FormUrlEncoded
     @POST("chats/contact/request/{mid}/reject")
     suspend fun rejectRequest(
         @Path("mid") mid: Int,
         @Field("content") content: String? = null
-    ): Result<Unit>
+    ): BackendResult<Unit>
 
     @POST("chats/contact/request/{mid}/accept")
     suspend fun acceptRequest(
         @Path("mid") mid: Int
-    ): Result<Unit>
+    ): BackendResult<Unit>
 
 
 }

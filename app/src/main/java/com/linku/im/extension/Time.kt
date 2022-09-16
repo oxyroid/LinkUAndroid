@@ -6,7 +6,7 @@ val Long.friendlyFormatted
     get() = run {
         val calendar = Calendar.getInstance()
         calendar.time = Date(this)
-        if (isToday) {
+        isToday.ifTrue {
             val hour = calendar.get(Calendar.HOUR_OF_DAY).toString()
                 .let {
                     if (it.length < 2) "0$it"
@@ -18,7 +18,7 @@ val Long.friendlyFormatted
                     else it
                 }
             "$hour:$minute"
-        } else {
+        } ?: run {
             val month = (calendar.get(Calendar.MONTH) + 1).toString()
             val day = calendar.get(Calendar.DAY_OF_MONTH).toString()
                 .let {
@@ -43,3 +43,13 @@ val Long.isToday: Boolean
             }
         current.equals(todayBegin) || current.after(todayBegin)
     }
+
+fun Long.isSameDay(another: Long): Boolean = kotlin.run {
+    val calendar = Calendar.getInstance().apply {
+        time = Date(this@isSameDay)
+    }
+    val anotherCalendar = Calendar.getInstance().apply {
+        time = Date(another)
+    }
+    calendar.get(Calendar.DAY_OF_YEAR) == anotherCalendar.get(Calendar.DAY_OF_YEAR)
+}

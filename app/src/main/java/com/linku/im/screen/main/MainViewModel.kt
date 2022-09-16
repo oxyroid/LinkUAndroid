@@ -16,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -47,11 +48,7 @@ class MainViewModel @Inject constructor(
 
     override fun onEvent(event: MainEvent) {
         when (event) {
-            is MainEvent.CreateConversation -> {
-
-            }
             MainEvent.GetConversations -> getAllConversations()
-            MainEvent.StartToCreateConversation -> {}
         }
     }
 
@@ -65,8 +62,7 @@ class MainViewModel @Inject constructor(
                         .map { it.toMainUI() },
                     contracts = conversations
                         .filter { it.type == Conversation.Type.PM }
-                        .map { it.toMainUI() },
-                    loading = false
+                        .map { it.toMainUI() }
                 )
                 getAllConversationsJob?.cancel()
                 getAllConversationsJob = viewModelScope.launch {
@@ -113,17 +109,18 @@ class MainViewModel @Inject constructor(
             .launchIn(viewModelScope)
         conversationUseCases.fetchConversations()
             .onEach { resource ->
-                writable = when (resource) {
-                    Resource.Loading -> readable.copy(
-                        loading = true
+                when (resource) {
+                    Resource.Loading -> writable = readable.copy(
+                        loadingConversations = true
                     )
-                    is Resource.Success -> readable.copy(
-                        loading = false
-                    )
-                    is Resource.Failure -> readable.copy(
-                        loading = false
-                    )
+                    is Resource.Success -> {}
+                    is Resource.Failure -> {}
                 }
+            }
+            .onCompletion {
+                writable = readable.copy(
+                    loadingConversations = false
+                )
             }
             .launchIn(viewModelScope)
     }

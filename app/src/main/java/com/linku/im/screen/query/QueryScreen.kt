@@ -18,16 +18,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.core.os.bundleOf
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.im.R
-import com.linku.im.screen.Screen
-import com.linku.im.screen.query.composable.QueryItem
+import com.linku.im.screen.query.composable.QueryConversationItem
+import com.linku.im.screen.query.composable.QueryUserItem
 import com.linku.im.ui.components.MaterialIconButton
+import com.linku.im.ui.components.TextField
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
-import com.linku.im.ui.components.TextField
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -88,33 +89,104 @@ fun QueryScreen(
                 }
                 LazyColumn(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .weight(1f)
                         .background(
                             color = LocalTheme.current.background,
                         )
                 ) {
-                    stickyHeader {
-                        Row(
-                            modifier = Modifier.padding(horizontal = LocalSpacing.current.medium)
-                        ) {
-                            ElevatedFilterChip(
-                                selected = state.isDescription,
-                                onClick = { viewModel.onEvent(QueryEvent.ToggleIncludeDescription) },
-                                label = {
-                                    Text(
-                                        text = stringResource(id = R.string.query_filter_description),
-                                        style = MaterialTheme.typography.titleSmall
+                    if (state.conversations.isNotEmpty())
+                        stickyHeader {
+                            Surface(
+                                color = (
+                                        if (vm.readable.isDarkMode) LocalTheme.current.surface
+                                        else LocalTheme.current.primary
+                                        ).copy(alpha = 0.8f),
+                                contentColor = if (vm.readable.isDarkMode) LocalTheme.current.onSurface
+                                else LocalTheme.current.onPrimary,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.query_result_conversation),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(
+                                        horizontal = LocalSpacing.current.medium,
+                                        vertical = LocalSpacing.current.extraSmall
                                     )
-                                }
+                                )
+                            }
+                        }
+                    items(state.conversations) { conversation ->
+                        QueryConversationItem(conversation = conversation) {
+                            navController.navigate(
+                                R.id.action_queryFragment_to_chatFragment,
+                                bundleOf(
+                                    "cid" to conversation.id
+                                )
                             )
                         }
-
                     }
-                    items(state.conversations) { conversation ->
-                        QueryItem(conversation = conversation) {
-                            navController.navigate(Screen.ChatScreen.withArgs(conversation.id))
+                    if (state.users.isNotEmpty())
+                        stickyHeader {
+                            Surface(
+                                color = (
+                                        if (vm.readable.isDarkMode) LocalTheme.current.surface
+                                        else LocalTheme.current.primary
+                                        ).copy(alpha = 0.8f),
+                                contentColor = if (vm.readable.isDarkMode) LocalTheme.current.onSurface
+                                else LocalTheme.current.onPrimary,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.query_result_user),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(
+                                        horizontal = LocalSpacing.current.medium,
+                                        vertical = LocalSpacing.current.extraSmall
+                                    )
+                                )
+                            }
+                        }
+                    items(state.users) { user ->
+                        QueryUserItem(user = user) {
+                            navController.navigate(
+                                R.id.action_queryFragment_to_introduceFragment,
+                                bundleOf(
+                                    "uid" to user.id
+                                )
+                            )
                         }
                     }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = LocalTheme.current.background,
+                        )
+                        .imePadding(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    FilterChip(
+                        selected = state.isDescription,
+                        onClick = { viewModel.onEvent(QueryEvent.ToggleIncludeDescription) },
+                        label = {
+                            Text(
+                                text = stringResource(R.string.query_filter_description),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+                    )
+                    FilterChip(
+                        selected = state.isEmail,
+                        onClick = { viewModel.onEvent(QueryEvent.ToggleIncludeEmail) },
+                        label = {
+                            Text(
+                                text = stringResource(R.string.query_filter_email),
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+                    )
                 }
             }
         }

@@ -10,6 +10,7 @@ import com.linku.domain.service.AuthService
 import com.linku.domain.service.ConversationService
 import com.linku.domain.service.NotificationService
 import com.linku.domain.service.SessionService
+import com.linku.domain.toResult
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import okhttp3.WebSocket
@@ -65,39 +66,36 @@ class SessionRepositoryImpl @Inject constructor(
             trySend(Resource.Failure("You must subscribe it before the session has been initialized."))
         }
         sessionState.tryEmit(Subscribing)
-        try {
-            authService.subscribe()
-                .handleUnit {
-                    sessionState.tryEmit(Subscribed)
-                    trySend(Resource.Success(Unit))
-                    sessionService.onMessage()
-                        .onEach {
-                            messageDao.insert(it)
-                            notificationService.onCollected(it)
-                            val cid = it.cid
-                            if (conversationDao.getById(it.id) == null) {
-                                launch {
-                                    conversationService.getConversationById(cid)
-                                        .handle { dto ->
-                                            conversationDao.insert(dto.toConversation())
-                                        }
-                                        .catch { _, _ ->
-                                            error("Cannot to save conversation, cid = $cid")
-                                        }
-                                }
+        authService.subscribe()
+            .toResult()
+            .onSuccess {
+                sessionState.tryEmit(Subscribed)
+                trySend(Resource.Success(Unit))
+                sessionService.onMessage()
+                    .onEach {
+                        messageDao.insert(it)
+                        notificationService.onCollected(it)
+                        val cid = it.cid
+                        if (conversationDao.getById(it.id) == null) {
+                            launch {
+                                conversationService.getConversationById(cid)
+                                    .toResult()
+                                    .onSuccess { dto ->
+                                        conversationDao.insert(dto.toConversation())
+                                    }
+                                    .onFailure {
+                                        error("Cannot to save conversation, cid = $cid")
+                                    }
                             }
                         }
-                        .launchIn(this)
-                }
-                .catch { message, code ->
-                    sessionState.tryEmit(Failed(message))
-                    trySend(Resource.Failure(message, code))
-                }
-        } catch (e: Exception) {
-            val message = e.message ?: "Cannot subscribe this session."
-            sessionState.tryEmit(Failed(message))
-            trySend(Resource.Failure(message))
-        }
+                    }
+                    .launchIn(this)
+            }
+            .onFailure {
+                val message = it.message
+                sessionState.tryEmit(Failed(message))
+                trySend(Resource.Failure(message))
+            }
 
     }
 

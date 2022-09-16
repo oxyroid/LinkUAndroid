@@ -17,7 +17,10 @@ abstract class BaseViewModel<S, E>(emptyState: S) : ViewModel() {
     /**
      * Observe this to update UI
      */
-    private var _state = mutableStateOf(emptyState)
+    private var _state = mutableStateOf(
+//        Proxy.newProxyInstance(S::class.javaClass.classLoader)
+        emptyState
+    )
     protected var writable by _state
     val readable: S by _state
 
@@ -35,7 +38,7 @@ abstract class BaseViewModel<S, E>(emptyState: S) : ViewModel() {
      */
     abstract fun onEvent(event: E)
 
-    protected fun onMessage(message: String) {
-        this.message = eventOf(message)
+    protected fun onMessage(message: String?) {
+        this.message = eventOf(message ?: return)
     }
 }

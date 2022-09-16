@@ -1,13 +1,13 @@
 package com.linku.im.ui.theme
 
-import android.os.Build
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import androidx.compose.ui.platform.LocalView
+import androidx.navigation.findNavController
 import com.linku.im.vm
 
 
@@ -47,7 +47,7 @@ fun AppTheme(
     }
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),
-        LocalNavController provides rememberAnimatedNavController(),
+        LocalNavController provides LocalView.current.findNavController(),
         LocalAnimatedColor provides animatedColor,
         LocalTheme provides colors
     ) {

@@ -31,13 +31,13 @@ class LinkUViewModel @Inject constructor(
         sessionUseCases.state()
             .onEach { state ->
                 when (state) {
-                    SessionRepository.State.Default -> updateLabel(Label.NoAuth)
-                    SessionRepository.State.Connecting -> updateLabel(Label.Connecting)
+                    SessionRepository.State.Default -> deliverState(Label.NoAuth)
+                    SessionRepository.State.Connecting -> deliverState(Label.Connecting)
                     SessionRepository.State.Connected -> {}
-                    SessionRepository.State.Subscribing -> updateLabel(Label.Subscribing)
-                    SessionRepository.State.Subscribed -> updateLabel(Label.Default)
-                    is SessionRepository.State.Failed -> updateLabel(Label.Failed)
-                    SessionRepository.State.Lost -> updateLabel(Label.Failed)
+                    SessionRepository.State.Subscribing -> deliverState(Label.Subscribing)
+                    SessionRepository.State.Subscribed -> deliverState(Label.Default)
+                    is SessionRepository.State.Failed -> deliverState(Label.Failed)
+                    SessionRepository.State.Lost -> deliverState(Label.Failed)
                 }
             }
             .launchIn(viewModelScope)
@@ -95,7 +95,7 @@ class LinkUViewModel @Inject constructor(
         object NoAuth : Label()
     }
 
-    private fun updateLabel(label: Label) {
+    private fun deliverState(label: Label) {
         writable = readable.copy(
             label = when (label) {
                 Label.Default -> {
@@ -140,25 +140,35 @@ class LinkUViewModel @Inject constructor(
                         sessionUseCases.subscribe()
                             .onEach { subscribeResource ->
                                 when (subscribeResource) {
-                                    Resource.Loading -> {}
+                                    Resource.Loading -> {
+                                        writable = readable.copy(
+                                            isSyncingReady = false
+                                        )
+                                    }
                                     is Resource.Success -> {
                                         messageUseCases.fetchUnreadMessages()
-                                        updateLabel(Label.Default)
+                                        deliverState(Label.Default)
+                                        writable = readable.copy(
+                                            isSyncingReady = true
+                                        )
                                     }
                                     is Resource.Failure -> {
-                                        updateLabel(Label.SubscribedFailed)
+                                        deliverState(Label.SubscribedFailed)
                                         delay(3000)
                                         settings.debug {
                                             applicationUseCases.toast(subscribeResource.message)
                                         }
                                         onEvent(LinkUEvent.InitSession)
+                                        writable = readable.copy(
+                                            isSyncingReady = true
+                                        )
                                     }
                                 }
                             }
                             .launchIn(viewModelScope)
                     }
                     is Resource.Failure -> {
-                        updateLabel(Label.Failed)
+                        deliverState(Label.Failed)
                         delay(3000)
                         settings.debug {
                             applicationUseCases.toast(resource.message)
@@ -180,13 +190,13 @@ class LinkUViewModel @Inject constructor(
                     is Resource.Success -> {
                         writable = readable.copy(
                             isDarkMode = isDarkMode,
-                            isReady = true
+                            isEmojiReady = true
                         )
                     }
                     is Resource.Failure -> {
                         writable = readable.copy(
                             isDarkMode = isDarkMode,
-                            isReady = true,
+                            isEmojiReady = true,
                         )
                         onMessage(resource.message)
                     }

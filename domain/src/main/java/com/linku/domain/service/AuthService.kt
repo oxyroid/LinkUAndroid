@@ -1,7 +1,7 @@
 package com.linku.domain.service
 
 import com.linku.domain.Authenticator
-import com.linku.domain.Result
+import com.linku.domain.BackendResult
 import retrofit2.http.*
 
 interface AuthService {
@@ -12,32 +12,32 @@ interface AuthService {
         @Field("password") password: String,
         @Field("name") name: String,
         @Field("realname") realName: String?
-    ): Result<Unit>
+    ): BackendResult<Unit>
 
     @FormUrlEncoded
     @POST("auth/signin")
     suspend fun signIn(
         @Field("email") email: String,
         @Field("password") password: String
-    ): Result<Authenticator.Token>
+    ): BackendResult<Authenticator.Token>
 
     @POST("auth/token")
-    suspend fun token(): Result<String>
+    suspend fun token(): BackendResult<String>
 
     @GET("auth/email")
-    suspend fun verifyEmail(): Result<Unit>
+    suspend fun verifyEmail(): BackendResult<Unit>
 
     @GET("auth/email/{code}")
-    suspend fun verifyEmailCode(@Path("code") code: String): Result<Unit>
+    suspend fun verifyEmailCode(@Path("code") code: String): BackendResult<Unit>
 
     @GET("auth/forget")
-    suspend fun forgetPassword(): Result<Unit>
+    suspend fun forgetPassword(): BackendResult<Unit>
 
     @FormUrlEncoded
     @POST("auth/forget/{code}")
-    suspend fun forgetPasswordVerify(@Path("code") code: String): Result<Unit>
+    suspend fun forgetPasswordVerify(@Path("code") code: String): BackendResult<Unit>
 
     @GET("chats/mqtt")
-    suspend fun subscribe(): Result<Unit>
+    suspend fun subscribe(): BackendResult<Unit>
 
 }

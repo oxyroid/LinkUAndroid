@@ -15,10 +15,28 @@ data class MessageUseCases @Inject constructor(
     val textMessage: TextMessageUseCase,
     val imageMessage: ImageMessageUseCase,
     val graphicsMessage: GraphicsMessageUseCase,
+    val cancelMessage: CancelMessageUseCase,
+    val resendMessage: ResendMessageUseCase,
     val getMessage: GetMessageUseCase,
     val fetchUnreadMessages: FetchUnreadMessagesUseCase,
     val fetchMessagesAtLeastUseCase: FetchMessagesAtLeastUseCase,
 )
+
+data class CancelMessageUseCase @Inject constructor(
+    val repository: MessageRepository
+) {
+    suspend operator fun invoke(mid: Int) {
+        repository.cancelMessage(mid)
+    }
+}
+
+data class ResendMessageUseCase @Inject constructor(
+    val repository: MessageRepository
+) {
+    suspend operator fun invoke(mid: Int) {
+        repository.resendMessage(mid)
+    }
+}
 
 data class FetchUnreadMessagesUseCase @Inject constructor(
     val repository: MessageRepository

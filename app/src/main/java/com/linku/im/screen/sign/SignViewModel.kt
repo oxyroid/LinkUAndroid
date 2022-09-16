@@ -4,13 +4,14 @@ import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
 import com.linku.data.usecase.MessageUseCases
-import com.linku.domain.Resource
 import com.linku.domain.eventOf
+import com.linku.domain.repository.AuthRepository
 import com.linku.im.R
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -46,28 +47,23 @@ class SignViewModel @Inject constructor(
         authUseCases.signIn(email, password)
             .onEach { resource ->
                 writable = when (resource) {
-                    Resource.Loading -> readable.copy(
+                    AuthRepository.SignInState.Start -> readable.copy(
                         loading = true,
                     )
-                    is Resource.Success -> {
-                        when (resource.data) {
-                            0.5f -> {
-                                readable.copy(
-                                    syncing = true
-                                )
-                            }
-                            1f -> {
-                                onMessage(applicationUseCases.getString(R.string.log_in_success))
-                                readable.copy(
-                                    syncing = false,
-                                    loading = false,
-                                    loginEvent = eventOf(Unit)
-                                )
-                            }
-                            else -> readable
-                        }
+                    AuthRepository.SignInState.Syncing -> {
+                        readable.copy(
+                            syncing = true
+                        )
                     }
-                    is Resource.Failure -> {
+                    AuthRepository.SignInState.Completed -> {
+                        onMessage(applicationUseCases.getString(R.string.log_in_success))
+                        readable.copy(
+                            syncing = false,
+                            loading = false,
+                            loginEvent = eventOf(Unit)
+                        )
+                    }
+                    is AuthRepository.SignInState.Failed -> {
                         onMessage(resource.message)
                         readable.copy(
                             loading = false
@@ -89,25 +85,24 @@ class SignViewModel @Inject constructor(
             )
             return
         }
-        authUseCases.signUp(email, password, email)
-            .onEach { resource ->
-                writable = when (resource) {
-                    Resource.Loading -> readable.copy(
-                        loading = true,
+        viewModelScope.launch {
+            writable = readable.copy(
+                loading = true
+            )
+            authUseCases.signUp(email, password, email)
+                .onSuccess {
+                    onMessage(applicationUseCases.getString(R.string.register_success))
+                    writable = readable.copy(
+                        loading = false
                     )
-                    is Resource.Success -> {
-                        onMessage(applicationUseCases.getString(R.string.register_success))
-                        readable.copy(
-                            loading = false
-                        )
-                    }
-                    is Resource.Failure -> {
-                        onMessage(resource.message)
-                        readable.copy(
-                            loading = false
-                        )
-                    }
                 }
-            }.launchIn(viewModelScope)
+                .onFailure {
+                    onMessage(it.message)
+                    writable = readable.copy(
+                        loading = false
+                    )
+                }
+
+        }
     }
 }

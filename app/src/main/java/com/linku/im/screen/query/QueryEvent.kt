@@ -6,4 +6,5 @@ sealed class QueryEvent {
     object Query : QueryEvent()
     data class OnText(val text: TextFieldValue) : QueryEvent()
     object ToggleIncludeDescription : QueryEvent()
+    object ToggleIncludeEmail : QueryEvent()
 }

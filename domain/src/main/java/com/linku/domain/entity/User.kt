@@ -31,7 +31,7 @@ data class UserDTO(
     @SerialName("role")
     val role: String = "",
     @SerialName("is_verified")
-    val verified: Boolean,
+    val verified: Boolean = false,
     @SerialName("real_name")
     val realName: String? = null,
     @SerialName("avatar")

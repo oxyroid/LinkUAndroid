@@ -31,7 +31,9 @@ interface MessageRepository {
         reply: Int?
     ): Flow<Resource<Unit>>
 
-    suspend fun resendStagingMessage(uuid: String)
+    suspend fun cancelMessage(mid: Int)
+
+    suspend fun resendMessage(mid: Int)
 
     suspend fun fetchUnreadMessages()
 

@@ -5,11 +5,11 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,7 +30,7 @@ import com.linku.im.ui.components.TextImage
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
-fun QueryItem(
+fun QueryConversationItem(
     modifier: Modifier = Modifier,
     conversation: Conversation? = null,
     onClick: () -> Unit = {}
@@ -119,7 +119,6 @@ fun QueryItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CircleHeadPicture(
     model: Any?,
@@ -128,7 +127,7 @@ private fun CircleHeadPicture(
     placeholder: @Composable (String?) -> Unit = {}
 ) {
     Card(
-        shape = RoundedCornerShape(100),
+        shape = CircleShape,
         modifier = modifier
             .padding(vertical = 8.dp)
             .fillMaxHeight()

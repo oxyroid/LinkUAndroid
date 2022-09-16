@@ -8,6 +8,7 @@ import com.linku.domain.repository.ConversationRepository
 import com.linku.domain.resourceFlow
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.service.ConversationService
+import com.linku.domain.toResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -16,43 +17,49 @@ class ConversationRepositoryImpl @Inject constructor(
     private val conversationDao: ConversationDao,
     private val conversationService: ConversationService
 ) : ConversationRepository {
-    override fun observeConversation(cid: Int): Flow<Conversation> {
-        return try {
-            conversationDao.observeConversation(cid)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            flow { }
-        }
+    override fun observeConversation(cid: Int): Flow<Conversation> = runCatching {
+        conversationDao.observeConversation(cid)
     }
+        .getOrNull()
+        ?: flow { }
 
-    override fun observeConversations(): Flow<List<Conversation>> {
-        return try {
-            conversationDao.observeConversations()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            flow { }
-        }
+    override fun observeConversations(): Flow<List<Conversation>> = kotlin.runCatching {
+        conversationDao.observeConversations()
     }
+        .getOrNull()
+        ?: flow { }
 
     override fun fetchConversation(cid: Int): Flow<Resource<Unit>> = resourceFlow {
-        conversationService.getConversationById(cid)
-            .handle { conversation ->
-                // TODO save different type conversations
-                if (conversationDao.getById(conversation.id) == null) {
-                    conversationDao.insert(conversation.toConversation())
+        runCatching {
+            conversationService.getConversationById(cid).toResult()
+                .onSuccess { conversation ->
+                    // TODO save different type conversations
+                    if (conversationDao.getById(conversation.id) == null) {
+                        conversationDao.insert(conversation.toConversation())
+                    }
+                    emitResource(Unit)
                 }
-                emitResource(Unit)
-            }
-            .catch(::emitResource)
+                .onFailure {
+                    emitResource(it.message)
+                }
+        }.onFailure {
+            emitResource(it.message)
+        }
     }
 
     override fun fetchConversations(): Flow<Resource<Unit>> = resourceFlow {
-        conversationService.getConversationsBySelf()
-            .handle { conversations ->
-                conversations.forEach { conversationDao.insert(it.toConversation()) }
-                emitResource(Unit)
-            }
-            .catch(::emitResource)
+        runCatching {
+            conversationService.getConversationsBySelf().toResult()
+                .onSuccess { conversations ->
+                    conversations.forEach { conversationDao.insert(it.toConversation()) }
+                    emitResource(Unit)
+                }
+                .onFailure {
+                    emitResource(it.message)
+                }
+        }.onFailure {
+            emitResource(it.message)
+        }
     }
 
 
@@ -60,8 +67,12 @@ class ConversationRepositoryImpl @Inject constructor(
         name: String?,
         description: String?
     ): Flow<Resource<List<Conversation>>> = resourceFlow {
-        conversationService.queryConversations(name, description)
-            .handle { conversations -> emitResource(conversations.map { it.toConversation() }) }
-            .catch(::emitResource)
+        runCatching {
+            conversationService.queryConversations(name, description).toResult()
+                .onSuccess { conversations -> emitResource(conversations.map { it.toConversation() }) }
+                .onFailure { emitResource(it.message) }
+        }.onFailure {
+            emitResource(it.message)
+        }
     }
 }

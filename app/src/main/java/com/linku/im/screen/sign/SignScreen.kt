@@ -6,8 +6,11 @@ import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -30,7 +33,7 @@ import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 
 @Composable
-fun LoginScreen(
+fun SignScreen(
     viewModel: SignViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
@@ -39,6 +42,7 @@ fun LoginScreen(
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
 
     val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
@@ -91,10 +95,9 @@ fun LoginScreen(
                     imeAction = ImeAction.Next,
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            // TODO
+                            focusRequester.requestFocus()
                         }
-                    ),
-                    modifier = Modifier
+                    )
                 )
 
                 Spacer(
@@ -114,7 +117,8 @@ fun LoginScreen(
                             viewModel.onEvent(SignEvent.SignIn)
                             focusManager.clearFocus()
                         }
-                    )
+                    ),
+                    modifier = Modifier.focusRequester(focusRequester)
                 )
 
                 Spacer(

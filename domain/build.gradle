@@ -8,11 +8,11 @@ plugins {
 
 android {
     namespace 'com.linku.domain'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         minSdk 26
-        targetSdk 32
+        targetSdk 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
 
     // hilt
@@ -59,4 +59,5 @@ dependencies {
 
     // Json
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0'
+
 }

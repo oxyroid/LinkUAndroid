@@ -1,10 +1,10 @@
-package com.linku.data
+package com.linku.data.authenticator
 
 import com.linku.data.usecase.SettingUseCase
 import com.linku.domain.Authenticator
 import kotlinx.coroutines.flow.*
 
-class DefaultAuthenticator(
+class PreferenceAuthenticator(
     private val settings: SettingUseCase
 ) : Authenticator {
     override val currentUID: Int?

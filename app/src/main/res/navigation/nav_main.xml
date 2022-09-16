@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_main"
+    app:startDestination="@id/mainFragment">
+
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.linku.im.screen.main.MainFragment"
+        android:label="MainFragment">
+        <action
+            android:id="@+id/action_mainFragment_to_chatFragment"
+            app:destination="@id/chatFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right" />
+        <action
+            android:id="@+id/action_mainFragment_to_createFragment"
+            app:destination="@id/createFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right"  />
+        <action
+            android:id="@+id/action_mainFragment_to_introduceFragment"
+            app:destination="@id/introduceFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right"  />
+        <action
+            android:id="@+id/action_mainFragment_to_signFragment"
+            app:destination="@id/signFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right" />
+        <action
+            android:id="@+id/action_mainFragment_to_queryFragment"
+            app:destination="@id/queryFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right"  />
+    </fragment>
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.linku.im.screen.chat.ChatFragment"
+        android:label="ChatFragment">
+        <argument
+            android:name="cid"
+            android:defaultValue="-1"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_chatFragment_to_introduceFragment"
+            app:destination="@id/introduceFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right" />
+    </fragment>
+    <fragment
+        android:id="@+id/createFragment"
+        android:name="com.linku.im.screen.create.CreateFragment"
+        android:label="CreateFragment" />
+    <fragment
+        android:id="@+id/editFragment"
+        android:name="com.linku.im.screen.edit.EditFragment"
+        android:label="EditFragment" >
+
+        <argument
+            android:name="type"
+            android:defaultValue="-1"
+            app:argType="integer" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/introduceFragment"
+        android:name="com.linku.im.screen.introduce.IntroduceFragment"
+        android:label="IntroduceFragment" >
+
+        <argument
+            android:name="uid"
+            android:defaultValue="-1"
+            app:argType="integer" />
+
+        <action
+            android:id="@+id/action_introduceFragment_to_editFragment"
+            app:destination="@id/editFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right"/>
+
+    </fragment>
+    <fragment
+        android:id="@+id/signFragment"
+        android:name="com.linku.im.screen.sign.SignFragment"
+        android:label="SignFragment" />
+    <fragment
+        android:id="@+id/queryFragment"
+        android:name="com.linku.im.screen.query.QueryFragment"
+        android:label="QueryFragment" >
+        <action
+            android:id="@+id/action_queryFragment_to_chatFragment"
+            app:destination="@id/chatFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right" />
+        <action
+            android:id="@+id/action_queryFragment_to_introduceFragment"
+            app:destination="@id/introduceFragment"
+            app:enterAnim="@anim/slide_from_right"
+            app:exitAnim="@anim/popup_out"
+            app:popEnterAnim="@anim/popup_in"
+            app:popExitAnim="@anim/leave_from_right"  />
+    </fragment>
+</navigation>

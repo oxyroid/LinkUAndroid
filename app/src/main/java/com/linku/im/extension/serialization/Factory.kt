@@ -25,7 +25,7 @@ internal class Factory(
         annotations: Array<out Annotation>,
         retrofit: Retrofit
     ): Converter<ResponseBody, *>? {
-        val loader = serializer.serializer(type)
+        val loader = (serializer.serializer(type))
         return DeserializationStrategyConverter(loader, serializer)
     }
 
@@ -36,7 +36,7 @@ internal class Factory(
         methodAnnotations: Array<out Annotation>,
         retrofit: Retrofit
     ): Converter<*, RequestBody>? {
-        val saver = serializer.serializer(type)
+        val saver = (serializer.serializer(type))
         return SerializationStrategyConverter(contentType, saver, serializer)
     }
 }

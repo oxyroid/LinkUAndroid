@@ -50,7 +50,6 @@ class SessionServiceImpl @Inject constructor(
                     try {
                         json.decodeFromString<SocketPackage<MessageDTO>>(text).data.toMessage()
                     } catch (e: MissingFieldException) {
-                        error("SessionServiceImpl_onMessage_MissingFieldException\nJson:$text")
                         null
                     } catch (e: Exception) {
                         error(e.message)

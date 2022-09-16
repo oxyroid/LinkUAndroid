@@ -34,9 +34,7 @@ fun IntroduceItem(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .intervalClickable(
-                        onClick = onClick
-                    )
+                    .intervalClickable(onClick = onClick)
                     .background(LocalTheme.current.background)
                     .padding(
                         horizontal = PADDING_X,

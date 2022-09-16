@@ -1,7 +1,5 @@
 package com.linku.im.screen.introduce
 
-import android.net.Uri
-import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.*
@@ -22,7 +20,6 @@ import com.linku.im.R
 import com.linku.im.extension.ifFalse
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
-import com.yalantis.ucrop.UCrop
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -116,48 +113,47 @@ class IntroduceViewModel @Inject constructor(
     }
 
     private fun verifiedEmail() {
-        authUseCases.verifiedEmail()
-            .onEach { resource ->
-                writable = when (resource) {
-                    Resource.Loading -> readable.copy(
-                        verifiedEmailStarting = true
-                    )
-                    is Resource.Success -> readable.copy(
+        viewModelScope.launch {
+            writable = readable.copy(
+                verifiedEmailStarting = true
+            )
+            authUseCases.verifiedEmail()
+                .onSuccess {
+                    writable = readable.copy(
                         verifiedEmailStarting = false,
                         verifiedEmailDialogShowing = true
                     )
-                    is Resource.Failure -> {
-                        onMessage(resource.message)
-                        readable.copy(
-                            verifiedEmailStarting = false,
-                        )
-                    }
                 }
-            }
-            .launchIn(viewModelScope)
+                .onFailure {
+                    onMessage(it.message)
+                    writable = readable.copy(
+                        verifiedEmailStarting = false,
+                    )
+                }
+        }
     }
 
     private fun verifiedEmailCode(code: String) {
-        authUseCases.verifiedEmailCode(code)
-            .onEach { resource ->
-                when (resource) {
-                    Resource.Loading -> writable = readable.copy(
-                        verifiedEmailCodeVerifying = true,
-                        verifiedEmailCodeMessage = ""
-                    )
-                    is Resource.Success -> {
-                        writable = readable.copy(
-                            verifiedEmailCodeVerifying = false,
-                        )
-                        onEvent(IntroduceEvent.FetchIntroduce(readable.uid))
-                    }
-                    is Resource.Failure -> writable = readable.copy(
+        viewModelScope.launch {
+            writable = readable.copy(
+                verifiedEmailCodeVerifying = true,
+                verifiedEmailCodeMessage = ""
+            )
+            authUseCases.verifiedEmailCode(code)
+                .onSuccess {
+                    writable = readable.copy(
                         verifiedEmailCodeVerifying = false,
-                        verifiedEmailCodeMessage = resource.message
+                    )
+                    onEvent(IntroduceEvent.FetchIntroduce(readable.uid))
+                }
+                .onFailure {
+                    writable = readable.copy(
+                        verifiedEmailCodeVerifying = false,
+                        verifiedEmailCodeMessage = it.message ?: ""
                     )
                 }
-            }
-            .launchIn(viewModelScope)
+
+        }
     }
 
     private fun cancelVerifiedEmail() {
@@ -185,20 +181,9 @@ class IntroduceViewModel @Inject constructor(
     }
 
     private fun signOut() {
-        authUseCases.signOut()
-            .onEach { resource ->
-                writable = when (resource) {
-                    Resource.Loading -> readable.copy(uploading = true)
-                    is Resource.Success -> writable.copy(uploading = false, logout = true)
-                    is Resource.Failure -> {
-                        onMessage(getString(R.string.sign_out_failed))
-                        writable.copy(
-                            uploading = false,
-                        )
-                    }
-                }
-            }
-            .launchIn(viewModelScope)
+        viewModelScope.launch {
+            authUseCases.signOut()
+        }
     }
 
     private fun onActions(label: String, actions: List<Property.Data.Action>) {
@@ -284,6 +269,13 @@ class IntroduceViewModel @Inject constructor(
         }
     }
 
+
+    private fun getString(@StringRes resId: Int): String = applicationUseCases.getString(resId)
+
+    private fun CharSequence?.checkEmpty(): CharSequence =
+        if (isNullOrBlank()) getString(R.string.unknown) else this
+
+
     private fun makeSettingsProperties(): List<Property> = buildList {
         if (readable.isOthers) return@buildList
         val notification = getString(R.string.profile_settings_notification)
@@ -291,15 +283,11 @@ class IntroduceViewModel @Inject constructor(
         val dataSource = getString(R.string.profile_settings_datasource)
         val theme = getString(R.string.profile_settings_theme)
         val language = getString(R.string.profile_settings_language)
-        Property.Folder(notification, Icons.Sharp.Notifications).also(::add)
-        Property.Folder(safe, Icons.Sharp.Lock).also(::add)
-        Property.Folder(dataSource, Icons.Sharp.DateRange).also(::add)
-        Property.Folder(theme, Icons.Sharp.FormatPaint).also(::add)
-        Property.Folder(language, Icons.Sharp.Language).also(::add)
+        Property.Folder(notification, Icons.Sharp.Notifications).addIt()
+        Property.Folder(safe, Icons.Sharp.Lock).addIt()
+        Property.Folder(dataSource, Icons.Sharp.DateRange).addIt()
+        Property.Folder(theme, Icons.Sharp.FormatPaint).addIt()
+        Property.Folder(language, Icons.Sharp.Language).addIt()
     }
-
-    private fun getString(@StringRes resId: Int): String = applicationUseCases.getString(resId)
-
-    private fun CharSequence?.checkEmpty(): CharSequence =
-        if (isNullOrBlank()) getString(R.string.unknown) else this
+    context(MutableList<E>) private fun <E> E.addIt() = add(this)
 }

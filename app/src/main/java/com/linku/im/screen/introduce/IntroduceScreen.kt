@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.os.bundleOf
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
@@ -50,7 +51,6 @@ import com.linku.im.R
 import com.linku.im.extension.ifFalse
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
-import com.linku.im.screen.Screen
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.screen.introduce.util.SquireCropImage
@@ -91,10 +91,9 @@ fun IntroduceScreen(
             )
         }
     }
-    val permissionState =
-        rememberPermissionState(permission = Manifest.permission.READ_EXTERNAL_STORAGE) {
-            it.ifTrue { launcher.launch("image/*") }
-        }
+    val permissionState = rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE) {
+        it.ifTrue { launcher.launch("image/*") }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.onEvent(IntroduceEvent.FetchIntroduce(uid))
@@ -109,7 +108,14 @@ fun IntroduceScreen(
     }
 
     LaunchedEffect(state.editEvent) {
-        state.editEvent.handle { navController.navigate(Screen.EditScreen.withArgs(it)) }
+        state.editEvent.handle {
+            navController.navigate(
+                R.id.action_introduceFragment_to_editFragment,
+                bundleOf(
+                    "type" to it.code
+                )
+            )
+        }
     }
 
     ImagePreviewDialog(state.preview) { viewModel.onEvent(IntroduceEvent.DismissPreview) }
@@ -302,7 +308,8 @@ private fun IntroduceScaffold(
 
     BackHandler(sheetState.isVisible) { scope.launch { sheetState.hide() } }
     Scaffold(
-        scaffoldState = scaffoldState
+        scaffoldState = scaffoldState,
+        modifier = Modifier.navigationBarsPadding()
     ) { innerPadding ->
         ModalBottomSheetLayout(
             sheetState = sheetState,
@@ -316,7 +323,6 @@ private fun IntroduceScaffold(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .navigationBarsPadding()
             ) {
                 item {
                     Surface(

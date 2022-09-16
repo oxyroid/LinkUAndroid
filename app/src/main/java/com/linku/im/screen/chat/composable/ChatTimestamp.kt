@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
@@ -18,20 +19,14 @@ import com.linku.im.ui.theme.LocalTheme
 @Composable
 fun ChatTimestamp(
     timestamp: Long,
-    blurColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val friendlyFormatted = remember(timestamp) { timestamp.friendlyFormatted }
     Text(
-        text = timestamp.friendlyFormatted,
+        text = friendlyFormatted,
         modifier = modifier
             .clip(RoundedCornerShape(30))
-            .background(
-                color = LocalTheme.current.surface,
-            )
-            .drawWithContent {
-                drawContent()
-                drawRect(blurColor)
-            }
+            .background(LocalTheme.current.background)
             .padding(
                 vertical = LocalSpacing.current.extraSmall,
                 horizontal = LocalSpacing.current.small

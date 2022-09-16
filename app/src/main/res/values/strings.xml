@@ -47,7 +47,8 @@
     <string name="verifying">验证中</string>
     <string name="toggle_dynamic">动态主题</string>
     <string name="query_input">输入关键字…</string>
-    <string name="query_filter_description">仅查询简介</string>
+    <string name="query_filter_description">会话仅查询简介</string>
+    <string name="query_filter_email">用户仅查询邮箱</string>
     <string name="screen_chat_input_image">输入描述信息…</string>
     <string name="unknown_message_type">[未知消息类型]</string>
     <string name="image_message">[图片消息]</string>
@@ -75,4 +76,8 @@
     <string name="syncing">同步中…</string>
     <string name="dropdown_copy">复制</string>
     <string name="dropdown_reply">回复</string>
+    <string name="dropdown_cancel">取消</string>
+    <string name="dropdown_retry">重试</string>
+    <string name="query_result_conversation">会话</string>
+    <string name="query_result_user">用户</string>
 </resources>

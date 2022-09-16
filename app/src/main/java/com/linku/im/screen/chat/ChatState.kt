@@ -20,8 +20,9 @@ data class ChatState(
     val firstVisibleIndex: Int = 0,
     val offset: Int = 0,
     val repliedMessage: Message? = null,
-    val visitImage: String = "",
+    val preview: Preview? = null,
     val scroll: Event<Int> = Event.Handled(),
-    val loading: Boolean = true,
     val focusMessageId: Int? = null
-)
+) {
+    data class Preview(val s: String)
+}

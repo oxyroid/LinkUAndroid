@@ -1,7 +1,7 @@
 package com.linku.im.di
 
 import android.content.Context
-import com.linku.data.DefaultAuthenticator
+import com.linku.data.authenticator.PreferenceAuthenticator
 import com.linku.data.repository.*
 import com.linku.data.service.TwitterEmojiService
 import com.linku.data.usecase.*
@@ -30,7 +30,7 @@ object AppModule {
     @Singleton
     fun provideAuthenticator(
         settingUseCase: SettingUseCase
-    ): Authenticator = DefaultAuthenticator(
+    ): Authenticator = PreferenceAuthenticator(
         settings = settingUseCase
     )
 

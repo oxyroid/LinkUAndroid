@@ -24,7 +24,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -46,7 +45,6 @@ import com.linku.im.ui.theme.LocalTheme
 fun ChatTextField(
     text: TextFieldValue,
     uri: Uri?,
-    blurColor: Color,
     emojis: List<Emoji>,
     expended: Boolean,
     onSend: () -> Unit,
@@ -74,10 +72,6 @@ fun ChatTextField(
                 modifier = Modifier
                     .weight(1f)
                     .clip(CircleShape)
-                    .drawWithContent {
-                        drawContent()
-                        drawRect(blurColor)
-                    }
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -139,7 +133,9 @@ fun ChatTextField(
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = LocalTheme.current.primary,
                     contentColor = LocalTheme.current.onPrimary
-                )
+                ),
+                modifier = Modifier
+                    .clip(IconButtonDefaults.filledShape)
             ) {
                 Icon(
                     imageVector = (text.text.isNotBlank() || uri != null)
@@ -156,10 +152,6 @@ fun ChatTextField(
         LazyHorizontalGrid(
             modifier = Modifier
                 .fillMaxWidth()
-                .drawWithContent {
-                    drawContent()
-                    drawRect(blurColor)
-                }
                 .height((expended.ifTrue { 144.dp }
                     ?: LocalSpacing.current.large) + LocalSpacing.current.large)
                 .background(LocalTheme.current.surface)

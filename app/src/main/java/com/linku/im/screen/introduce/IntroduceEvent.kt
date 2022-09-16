@@ -20,7 +20,7 @@ sealed class IntroduceEvent {
     ) : IntroduceEvent()
 
     data class Edit(val type: Type) : IntroduceEvent() {
-        sealed class Type(private val code: Int) {
+        sealed class Type(val code: Int) {
             object Name : Type(0)
             object NickName : Type(1)
             object Description : Type(2)

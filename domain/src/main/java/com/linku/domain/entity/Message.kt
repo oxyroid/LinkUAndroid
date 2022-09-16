@@ -21,7 +21,7 @@ open class Message(
     open val timestamp: Long,
     open val uuid: String,
     open val sendState: Int
-) {
+): Replyable {
     sealed class Type(private val text: String) {
         object Text : Type("text")
         object Image : Type("image")
@@ -40,7 +40,7 @@ open class Message(
         override fun toString(): String = text
     }
 
-    fun reply(): Int? = when (this) {
+    override fun reply(): Int? = when (this) {
         is TextMessage -> reply
         is ImageMessage -> reply
         is GraphicsMessage -> reply
@@ -48,6 +48,16 @@ open class Message(
     }
 
     companion object {
+        val PREVIEW = TextMessage(
+            id = 1,
+            cid = 1,
+            uid = 1,
+            text = "Preview Message",
+            timestamp = System.currentTimeMillis(),
+            uuid = "",
+            reply = 1,
+            sendState = Message.STATE_SEND
+        )
         const val STATE_PENDING = 0
         const val STATE_SEND = 1
         const val STATE_FAILED = 2
@@ -58,11 +68,7 @@ open class Message(
         is TextMessage, is ImageMessage, is GraphicsMessage -> this
         else -> when (type) {
             Type.Text -> {
-                val textContent = try {
-                    json.decodeFromString(content)
-                } catch (e: Exception) {
-                    TextContent(content, null)
-                }
+                val textContent = TextContent.decode(content)
                 TextMessage(
                     id = id,
                     cid = cid,
@@ -75,7 +81,7 @@ open class Message(
                 )
             }
             Type.Image -> {
-                val imageContent = json.decodeFromString<ImageContent>(content)
+                val imageContent = ImageContent.decode(content)
                 ImageMessage(
                     id = id,
                     cid = cid,
@@ -88,7 +94,7 @@ open class Message(
                 )
             }
             Type.Graphics -> {
-                val graphicsContent = json.decodeFromString<GraphicsContent>(content)
+                val graphicsContent = GraphicsContent.decode(content)
                 GraphicsMessage(
                     id = id,
                     cid = cid,
@@ -104,6 +110,10 @@ open class Message(
             else -> this
         }
     }
+}
+
+interface Replyable {
+    fun reply(): Int?
 }
 
 data class TextMessage(
@@ -185,11 +195,7 @@ data class MessageDTO(
 
     fun toMessage() = when (Message.Type.parse(type)) {
         Message.Type.Text -> {
-            val textContent = try {
-                json.decodeFromString(content)
-            } catch (e: Exception) {
-                TextContent(content, null)
-            }
+            val textContent = TextContent.decode(content)
             TextMessage(
                 id = id,
                 cid = cid,
@@ -202,7 +208,7 @@ data class MessageDTO(
             )
         }
         Message.Type.Image -> {
-            val imageContent = json.decodeFromString<ImageContent>(content)
+            val imageContent = ImageContent.decode(content)
             ImageMessage(
                 id = id,
                 cid = cid,
@@ -215,7 +221,7 @@ data class MessageDTO(
             )
         }
         Message.Type.Graphics -> {
-            val graphicsContent = json.decodeFromString<GraphicsContent>(content)
+            val graphicsContent = GraphicsContent.decode(content)
             GraphicsMessage(
                 id = id,
                 cid = cid,
@@ -247,7 +253,13 @@ data class TextContent(
     val text: String,
     @SerialName("reply")
     val reply: Int?
-)
+) {
+    companion object {
+        fun decode(s: String): TextContent = runCatching {
+            json.decodeFromString<TextContent>(s)
+        }.getOrElse { TextContent("", null) }
+    }
+}
 
 
 @Serializable
@@ -256,7 +268,15 @@ data class ImageContent(
     val url: String,
     @SerialName("reply")
     val reply: Int?
-)
+) {
+    companion object {
+        fun decode(s: String): ImageContent = runCatching {
+            json.decodeFromString<ImageContent>(s)
+        }.getOrElse {
+            ImageContent("", null)
+        }
+    }
+}
 
 
 @Serializable
@@ -267,4 +287,11 @@ data class GraphicsContent(
     val url: String,
     @SerialName("reply")
     val reply: Int?
-)
+) {
+    companion object {
+        fun decode(s: String): GraphicsContent = runCatching {
+            json.decodeFromString<GraphicsContent>(s)
+        }.getOrElse { GraphicsContent("", "", null) }
+    }
+}
+

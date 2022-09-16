@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.net.toFile
 import com.linku.fs_android.util.Resolver
+import com.linku.fs_core.crypto.CryptoManager
 import com.linku.fs_core.fs.WriteFileScheme
 import com.linku.fs_core.logger.Logger
 import java.io.File
@@ -18,7 +19,8 @@ import java.util.*
 class WriteFileSchemeImpl30(
     private val context: Context,
     logger: Logger,
-    private val resolver: Resolver
+    private val resolver: Resolver,
+    private val cryptoManager: CryptoManager
 ) : WriteFileScheme {
     override fun put(uri: Uri?): File? {
         uri ?: return null
@@ -45,6 +47,14 @@ class WriteFileSchemeImpl30(
             e.printStackTrace()
             null
         }
+    }
 
+    override fun encrypt(text: String): String {
+        val bytes = text.encodeToByteArray()
+        val file = File(context.filesDir, "secret.txt")
+        if (!file.exists()) file.createNewFile()
+        return file.outputStream().use {
+            cryptoManager.encrypt(bytes, it).decodeToString()
+        }
     }
 }

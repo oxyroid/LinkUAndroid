@@ -128,7 +128,7 @@ fun ConversationItem(
         when {
             (unreadCount != 0) -> {
                 Surface(
-                    shape = RoundedCornerShape(100),
+                    shape = CircleShape,
                     color = LocalTheme.current.primary
                 ) {
                     Text(
@@ -171,7 +171,7 @@ private fun CircleHeadPicture(
             .padding(vertical = 8.dp)
             .fillMaxHeight()
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(100)),
+            .clip(CircleShape),
         error = {
             placeholder(name)
         },
