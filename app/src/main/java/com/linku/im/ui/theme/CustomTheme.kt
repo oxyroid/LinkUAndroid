@@ -20,7 +20,8 @@ data class CustomTheme(
     val bubbleStart: Color,
     val onBubbleStart: Color,
     val divider: Color,
-    val error: Color
+    val error: Color,
+    val onError: Color
 )
 
 val defaultLight = CustomTheme(
@@ -40,7 +41,8 @@ val defaultLight = CustomTheme(
     bubbleEnd = Color(0xff5a91de),
     onBubbleEnd = Color(0xffdcf7fa),
     divider = Color(0xFFf0f0f0),
-    error = Color(0xFFBA1A1A)
+    error = Color(0xFFBA1A1A),
+    onError = Color.White
 )
 val defaultDark = CustomTheme(
     primary = Color(0xff42b6fe),
@@ -59,7 +61,8 @@ val defaultDark = CustomTheme(
     bubbleEnd = Color(0xff387ab4),
     onBubbleEnd = Color(0xffeef5f9),
     divider = Color(0xFF0A0A0A),
-    error = Color(0xFFBA1A1A)
+    error = Color(0xfff2b8b5),
+    onError = Color(0xff601410)
 )
 
 val LocalTheme = staticCompositionLocalOf<CustomTheme> { error("no theme provided") }

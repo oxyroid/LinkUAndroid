@@ -23,13 +23,13 @@ import com.linku.im.ui.theme.LocalTheme
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ToolBar(
-    navIcon: ImageVector = Icons.Default.ArrowBack,
     onNavClick: () -> Unit,
     actions: @Composable (RowScope.() -> Unit),
     text: String,
+    modifier: Modifier = Modifier,
+    navIcon: ImageVector = Icons.Default.ArrowBack,
     backgroundColor: Color = LocalTheme.current.surface,
     contentColor: Color = LocalTheme.current.onSurface,
-    modifier: Modifier = Modifier
 ) {
     CompositionLocalProvider(
         LocalContentColor provides contentColor

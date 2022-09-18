@@ -100,7 +100,8 @@ fun IntroduceScreen(
     }
 
     LaunchedEffect(state.logout) {
-        if (state.logout) navController.navigateUp()
+        if (state.logout)
+            navController.popBackStack()
     }
 
     LaunchedEffect(state.runLauncher) {

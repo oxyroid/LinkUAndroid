@@ -11,7 +11,6 @@ import androidx.navigation.findNavController
 import com.linku.im.vm
 
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppTheme(
     useDarkTheme: Boolean = isSystemInDarkTheme(),

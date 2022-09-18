@@ -23,16 +23,16 @@ import androidx.recyclerview.widget.RecyclerView.LayoutManager
 
 @Composable
 fun <T : Any> NativeLazyList(
-    list: List<T> = emptyList(),
     item: @Composable (T) -> Unit,
+    modifier: Modifier = Modifier,
+    list: List<T> = emptyList(),
     layoutManager: LayoutManager = LinearLayoutManager(
         LocalContext.current,
         LinearLayoutManager.VERTICAL,
         false
     ),
     isItemsTheSame: (T, T) -> Boolean = { old, new -> old == new },
-    isContentsTheSame: (T, T) -> Boolean = { old, new -> old == new },
-    modifier: Modifier = Modifier
+    isContentsTheSame: (T, T) -> Boolean = { old, new -> old == new }
 ) {
     val callback = remember(isItemsTheSame, isContentsTheSame) {
         object : DiffUtil.ItemCallback<T>() {
@@ -78,21 +78,3 @@ internal class NativeLazyListAdapter<T>(
 }
 
 internal class NativeLazyListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-
-@Composable
-@Preview
-internal fun NativeLazyListTest() {
-    NativeLazyList(
-        list = listOf("1", "2", "3"),
-        item = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = it)
-            }
-        }
-    )
-}

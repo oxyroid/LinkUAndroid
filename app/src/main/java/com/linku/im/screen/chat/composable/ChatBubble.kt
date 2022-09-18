@@ -60,7 +60,6 @@ fun ChatBubble(
     message: Message,
     config: BubbleConfig,
     hasFocus: Boolean,
-    lossFocus: Boolean,
     modifier: Modifier = Modifier,
     onPreview: (String) -> Unit,
     onProfile: (Int) -> Unit,
@@ -502,9 +501,9 @@ private fun ThumbView(
     backgroundColor: Color,
     contentColor: Color,
     message: Message,
+    modifier: Modifier = Modifier,
     isPending: Boolean = false,
     contentDescription: String? = null,
-    modifier: Modifier = Modifier
 ) {
     val realUrl = when (message) {
         is ImageMessage -> message.url
@@ -571,7 +570,6 @@ fun ChatBubbleConstraintPreview1() {
             )
         ),
         hasFocus = false,
-        lossFocus = false,
         onPreview = { },
         onProfile = {},
         onScroll = {},
@@ -608,7 +606,6 @@ fun ChatBubbleConstraintPreview2() {
             )
         ),
         hasFocus = false,
-        lossFocus = false,
         onPreview = {},
         onProfile = {},
         onScroll = {},
@@ -645,7 +642,6 @@ fun ChatBubbleConstraintPreview1Dark() {
             )
         ),
         hasFocus = false,
-        lossFocus = false,
         onPreview = {},
         onProfile = {},
         onScroll = {},
@@ -682,7 +678,6 @@ fun ChatBubbleConstraintPreview2Dark() {
             )
         ),
         hasFocus = false,
-        lossFocus = false,
         onPreview = {},
         onReply = {},
         onProfile = {},

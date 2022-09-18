@@ -15,6 +15,8 @@ import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.TextMessage
 import com.linku.domain.eventOf
 import com.linku.domain.service.NotificationService
+import com.linku.domain.struct.LinkedNode
+import com.linku.domain.struct.hasNext
 import com.linku.im.Constants
 import com.linku.im.R
 import com.linku.im.extension.isSameDay
@@ -49,187 +51,200 @@ class ChatViewModel @Inject constructor(
     override fun onEvent(event: ChatEvent) {
         when (event) {
             is ChatEvent.Initialize -> initial(event)
-            ChatEvent.SendMessage -> {
-                when {
-                    readable.uri == null -> sendTextMessage()
-                    readable.textFieldValue.text.isBlank() -> sendImageMessage()
-                    else -> sendGraphicsMessage()
-                }
-            }
-            is ChatEvent.TextChange -> onTextChange(event)
-            is ChatEvent.OnScroll -> {
-                writable = readable.copy(
-                    firstVisibleIndex = event.index,
-                    offset = event.offset
-                )
-            }
-            ChatEvent.ReadAll -> {
-
-            }
-            is ChatEvent.OnFileUriChange -> {
-                writable = readable.copy(
-                    uri = event.uri,
-                )
-            }
-            is ChatEvent.EmojiChange -> {
-                val textFieldValue = readable.textFieldValue
-                val leftText = textFieldValue.text.subSequence(0, textFieldValue.selection.start)
-                val rightText = textFieldValue.text.subSequence(
-                    textFieldValue.selection.end,
-                    textFieldValue.text.length
-                )
-                writable = readable.copy(
-                    textFieldValue = TextFieldValue(
-                        text = "${leftText}${event.emoji}${rightText}",
-                        selection = TextRange(textFieldValue.selection.start + event.emoji.length)
-                    )
-                )
-            }
-            is ChatEvent.Expanded -> writable = readable.copy(
-                expended = event.value
-            )
-            is ChatEvent.Reply -> {
-                viewModelScope.launch {
-                    writable = readable.copy(
-                        repliedMessage = event.mid?.let {
-                            messageUseCases
-                                .getMessage(it, Strategy.OnlyCache)
-                                ?.let { message ->
-                                    if (message == readable.repliedMessage) null
-                                    else message
-                                }
-
-                        }
-                    )
-                }
-            }
-            is ChatEvent.Preview -> writable = readable.copy(
-                preview = event.preview
-            )
-            ChatEvent.DismissPreview -> writable = readable.copy(
-                preview = null
-            )
-
-            is ChatEvent.FocusMessage -> writable = readable.copy(
-                focusMessageId = event.mid
-            )
-
-            ChatEvent.LoseFocusMessage -> writable = readable.copy(
-                focusMessageId = null
-            )
-            is ChatEvent.CancelMessage -> TODO()
+            is ChatEvent.OnTextChange -> onTextChange(event)
+            is ChatEvent.OnScroll -> onScroll(event)
+            is ChatEvent.OnFile -> onFile(event)
+            is ChatEvent.OnEmoji -> onEmoji(event)
+            is ChatEvent.OnExpanded -> onExpanded(event)
+            is ChatEvent.OnReply -> onReply(event)
+            is ChatEvent.OnPreview -> onPreview(event)
+            is ChatEvent.OnFocus -> onFocus(event)
             is ChatEvent.ResendMessage -> TODO()
-            ChatEvent.Syncing -> {
-                messageUseCases.observeMessages(readable.cid)
-                    .onEach { messages ->
-                        syncingMessagesJob?.cancel()
-                        debug {
-                            syncingTime++
-                            Log.e("CVM", "syncing:$syncingTime ")
-                        }
-                        syncingMessagesJob = viewModelScope.launch {
-                            writable = readable.copy(
-                                messages = messages
-                                    .mapIndexedNotNull { index, message ->
-                                        val next = if (index == messages.lastIndex) null
-                                        else messages[index + 1]
-                                        val pre = if (index == 0) null
-                                        else messages[index - 1]
-                                        val isShowTime = any {
-                                            suggest { next == null }
-                                            suggest {
-                                                checkNotNull(next)
-                                                if (message.timestamp.isToday) message.timestamp - next.timestamp >=
-                                                        Constants.CHAT_LABEL_MIN_DURATION
-                                                else !message.timestamp.isSameDay(next.timestamp)
-                                            }
-                                        }
-                                        val isAnother = authenticator.currentUID != message.uid
-                                        val repliedMid = message.reply()
-                                        val repliedMessage =
-                                            if (repliedMid == null) null else messageUseCases.getMessage(
-                                                repliedMid,
-                                                Strategy.Memory
-                                            )
-                                        val replyConfig = if (repliedMessage == null) null
-                                        else ReplyConfig(
-                                            targetMid = repliedMid!!,
-                                            index = messages.indexOfFirst { it.id == repliedMid },
-                                            display = when (repliedMessage) {
-                                                is TextMessage -> repliedMessage.text
-                                                is ImageMessage -> applicationUseCases.getString(R.string.image_message)
-                                                is GraphicsMessage -> applicationUseCases.getString(
-                                                    R.string.graphics_message
-                                                )
-                                                else -> applicationUseCases.getString(R.string.unknown_message_type)
-                                            }
+            is ChatEvent.CancelMessage -> TODO()
+            ChatEvent.ReadAll -> TODO()
+            ChatEvent.SendMessage -> sendMessage()
+            ChatEvent.Syncing -> syncing()
+        }
+    }
+
+    private fun syncing() {
+        messageUseCases.observeMessages(readable.cid)
+            .onEach { messages ->
+                syncingMessagesJob?.cancel()
+                debug {
+                    syncingTime++
+                    Log.e("CVM", "syncing:$syncingTime ")
+                }
+                syncingMessagesJob = viewModelScope.launch {
+                    writable = readable.copy(
+                        messages = messages
+                            .mapIndexedNotNull { index, message ->
+                                val next = if (index == messages.lastIndex) null
+                                else messages[index + 1]
+                                val pre = if (index == 0) null
+                                else messages[index - 1]
+                                val isShowTime = any {
+                                    suggest { next == null }
+                                    suggest {
+                                        checkNotNull(next)
+                                        if (message.timestamp.isToday) message.timestamp - next.timestamp >=
+                                                Constants.CHAT_LABEL_MIN_DURATION
+                                        else !message.timestamp.isSameDay(next.timestamp)
+                                    }
+                                }
+                                val isAnother = authenticator.currentUID != message.uid
+                                val repliedMid = message.reply()
+                                val repliedMessage =
+                                    if (repliedMid == null) null else messageUseCases.getMessage(
+                                        repliedMid,
+                                        Strategy.Memory
+                                    )
+                                val replyConfig = if (repliedMessage == null) null
+                                else ReplyConfig(
+                                    targetMid = repliedMid!!,
+                                    index = messages.indexOfFirst { it.id == repliedMid },
+                                    display = when (repliedMessage) {
+                                        is TextMessage -> repliedMessage.text
+                                        is ImageMessage -> applicationUseCases.getString(R.string.image_message)
+                                        is GraphicsMessage -> applicationUseCases.getString(
+                                            R.string.graphics_message
                                         )
-                                        when (readable.type) {
-                                            Conversation.Type.PM -> {
-                                                MessageVO(
-                                                    message = message,
-                                                    config = BubbleConfig.PM(
-                                                        sendState = message.sendState,
-                                                        another = isAnother,
-                                                        isShowTime = isShowTime,
-                                                        isEndOfGroup = message.uid != pre?.uid,
-                                                        reply = replyConfig
-                                                    )
-                                                )
-                                            }
-                                            Conversation.Type.GROUP -> {
-                                                val user = if (isAnother) userUseCases.findUser(
-                                                    message.uid,
-                                                    Strategy.Memory
-                                                ) else null
-                                                // [isShowTime] property
-                                                // The premise is that it must not be yourself,
-                                                // If this message is the bottom message
-                                                // or one level lower than it and this message is not sent by one person.
+                                        else -> applicationUseCases.getString(R.string.unknown_message_type)
+                                    }
+                                )
+                                when (readable.type) {
+                                    Conversation.Type.PM -> {
+                                        MessageVO(
+                                            message = message,
+                                            config = BubbleConfig.PM(
+                                                sendState = message.sendState,
+                                                another = isAnother,
+                                                isShowTime = isShowTime,
+                                                isEndOfGroup = message.uid != pre?.uid,
+                                                reply = replyConfig
+                                            )
+                                        )
+                                    }
+                                    Conversation.Type.GROUP -> {
+                                        val user = if (isAnother) userUseCases.findUser(
+                                            message.uid,
+                                            Strategy.Memory
+                                        ) else null
+                                        // [isShowTime] property
+                                        // The premise is that it must not be yourself,
+                                        // If this message is the bottom message
+                                        // or one level lower than it and this message is not sent by one person.
 
-                                                // [isShowAvatar] property
-                                                // The premise is that it must not be yourself,
-                                                // If this message is the top message
-                                                // or one level higher than it and this message is not sent by one person.
+                                        // [isShowAvatar] property
+                                        // The premise is that it must not be yourself,
+                                        // If this message is the top message
+                                        // or one level higher than it and this message is not sent by one person.
 
-                                                MessageVO(
-                                                    message = message,
-                                                    config = BubbleConfig.Group(
-                                                        sendState = message.sendState,
-                                                        other = isAnother,
-                                                        isShowTime = isShowTime,
-                                                        avatarVisibility = all {
-                                                            suggest { isAnother }
-                                                            suggestAny {
-                                                                it.suggest { index == 0 }
-                                                                it.suggest { messages[index - 1].uid != message.uid }
-                                                            }
-                                                        },
-                                                        nameVisibility = all {
-                                                            suggest { isAnother }
-                                                            suggestAny {
-                                                                it.suggest { index == messages.lastIndex }
-                                                                it.suggest { messages[index + 1].uid != message.uid }
-                                                            }
-                                                        },
-                                                        name = user?.name ?: "",
-                                                        avatar = user?.avatar ?: "",
-                                                        isEndOfGroup = message.uid != pre?.uid,
-                                                        reply = replyConfig
-                                                    )
-                                                )
-                                            }
-                                            else -> null
-                                        }
-                                    },
-                                scroll = if (readable.firstVisibleIndex == 0 && readable.offset == 0)
-                                    eventOf(0) else readable.scroll
-                            )
-                        }
-                    }
-                    .launchIn(viewModelScope)
-
+                                        MessageVO(
+                                            message = message,
+                                            config = BubbleConfig.Group(
+                                                sendState = message.sendState,
+                                                other = isAnother,
+                                                isShowTime = isShowTime,
+                                                avatarVisibility = all {
+                                                    suggest { isAnother }
+                                                    suggestAny {
+                                                        it.suggest { index == 0 }
+                                                        it.suggest { messages[index - 1].uid != message.uid }
+                                                    }
+                                                },
+                                                nameVisibility = all {
+                                                    suggest { isAnother }
+                                                    suggestAny {
+                                                        it.suggest { index == messages.lastIndex }
+                                                        it.suggest { messages[index + 1].uid != message.uid }
+                                                    }
+                                                },
+                                                name = user?.name ?: "",
+                                                avatar = user?.avatar ?: "",
+                                                isEndOfGroup = message.uid != pre?.uid,
+                                                reply = replyConfig
+                                            )
+                                        )
+                                    }
+                                    else -> null
+                                }
+                            },
+                        scroll = if (readable.firstVisibleIndex == 0 && readable.offset == 0)
+                            eventOf(0) else readable.scroll
+                    )
+                }
             }
+            .launchIn(viewModelScope)
+    }
+
+    private fun onFocus(event: ChatEvent.OnFocus) {
+        writable = readable.copy(
+            focusMessageId = event.mid
+        )
+    }
+
+    private fun onPreview(event: ChatEvent.OnPreview) {
+        writable = readable.copy(
+            preview = event.preview
+        )
+    }
+
+    private fun onReply(event: ChatEvent.OnReply) {
+        viewModelScope.launch {
+            writable = readable.copy(
+                repliedMessage = event.mid?.let {
+                    messageUseCases
+                        .getMessage(it, Strategy.OnlyCache)
+                        ?.let { message ->
+                            if (message == readable.repliedMessage) null
+                            else message
+                        }
+
+                }
+            )
+        }
+    }
+
+    private fun onExpanded(event: ChatEvent.OnExpanded) {
+        writable = readable.copy(
+            expended = event.value
+        )
+    }
+
+    private fun onEmoji(event: ChatEvent.OnEmoji) {
+        val textFieldValue = readable.textFieldValue
+        val leftText = textFieldValue.text.subSequence(0, textFieldValue.selection.start)
+        val rightText = textFieldValue.text.subSequence(
+            textFieldValue.selection.end,
+            textFieldValue.text.length
+        )
+        writable = readable.copy(
+            textFieldValue = TextFieldValue(
+                text = "${leftText}${event.emoji}${rightText}",
+                selection = TextRange(textFieldValue.selection.start + event.emoji.length)
+            )
+        )
+    }
+
+    private fun onFile(event: ChatEvent.OnFile) {
+        writable = readable.copy(
+            uri = event.uri,
+        )
+    }
+
+    private fun onScroll(event: ChatEvent.OnScroll) {
+        writable = readable.copy(
+            firstVisibleIndex = event.index,
+            offset = event.offset
+        )
+    }
+
+    private fun sendMessage() {
+        when {
+            readable.uri == null -> sendTextMessage()
+            readable.textFieldValue.text.isBlank() -> sendImageMessage()
+            else -> sendGraphicsMessage()
         }
     }
 
@@ -246,9 +261,6 @@ class ChatViewModel @Inject constructor(
                 )
             }
             .launchIn(viewModelScope)
-
-
-
 
         conversationUseCases.fetchConversation(event.cid).launchIn(viewModelScope)
 
@@ -291,7 +303,7 @@ class ChatViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun onTextChange(event: ChatEvent.TextChange) {
+    private fun onTextChange(event: ChatEvent.OnTextChange) {
         writable = readable.copy(textFieldValue = event.text)
     }
 
@@ -348,5 +360,4 @@ class ChatViewModel @Inject constructor(
             .launchIn(viewModelScope)
 
     }
-
 }

@@ -19,6 +19,7 @@ import com.linku.domain.service.MessageService
 import com.linku.domain.toResult
 import com.linku.fs_android.writeFs
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import okhttp3.MediaType
@@ -48,7 +49,7 @@ class AuthRepositoryImpl @Inject constructor(
                 .onSuccess { token ->
                     authenticator.update(token.id, token.token)
                     trySend(AuthRepository.SignInState.Syncing)
-                    launch {
+                    launch(Dispatchers.IO) {
                         // Get latest message timestamp from local database at first.
                         // If there is no message at all, 3 days ago instead.
                         // Then fetch messages from server.
@@ -71,6 +72,7 @@ class AuthRepositoryImpl @Inject constructor(
                                         }
                                     }
                                 }
+                                trySend(AuthRepository.SignInState.Completed)
                             }
                     }
                 }

@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.ExpandCircleDown
 import androidx.compose.material.icons.sharp.ExpandMore
 import androidx.compose.material.icons.sharp.Reply
-import androidx.compose.material.icons.sharp.Videocam
 import androidx.compose.material3.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -41,23 +40,22 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.os.bundleOf
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
-import androidx.recyclerview.widget.LinearLayoutManager
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
-import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
+import com.linku.domain.struct.LinkedNode
+import com.linku.domain.struct.hasNext
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.screen.chat.composable.ChatTextField
 import com.linku.im.screen.chat.composable.ChatTimestamp
+import com.linku.im.screen.chat.composable.ChatTopBar
 import com.linku.im.screen.chat.vo.MessageVO
+import com.linku.im.ui.components.MaterialButton
 import com.linku.im.ui.components.MaterialIconButton
-import com.linku.im.ui.components.NativeLazyList
-import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -75,17 +73,13 @@ fun ChatScreen(
     val scope = rememberCoroutineScope()
     val navController = LocalNavController.current
     val hostState = remember { SnackbarHostState() }
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = Int.MAX_VALUE
-    )
+    val listState = rememberLazyListState()
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        viewModel.onEvent(ChatEvent.OnFileUriChange(uri))
+        viewModel.onEvent(ChatEvent.OnFile(uri))
     }
     val permissionState = rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE) {
         it.ifTrue { launcher.launch("image/*") }
     }
-    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
-    val offset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
     val isAtTop by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0
@@ -94,7 +88,7 @@ fun ChatScreen(
 
     LaunchedEffect(Unit) {
         viewModel.onEvent(ChatEvent.Initialize(cid))
-        if (cid == -1) navController.navigateUp()
+        if (cid == -1) navController.popBackStack()
     }
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
@@ -105,6 +99,8 @@ fun ChatScreen(
         }
     }
 
+    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+    val offset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
     LaunchedEffect(firstVisibleItemIndex, offset) {
         viewModel.onEvent(ChatEvent.OnScroll(firstVisibleItemIndex, offset))
     }
@@ -116,30 +112,55 @@ fun ChatScreen(
     }
 
     val boxOffset = remember { mutableStateOf<IntSize?>(null) }
+
+    var node: LinkedNode<ChatScreenMode> by remember {
+        mutableStateOf(LinkedNode(ChatScreenMode.Messages))
+    }
+
     ChatScaffold(
-        type = state.type,
-        title = state.title,
-        navController = navController,
+        node = node,
+        topBar = {
+            val label = remember(vm.readable.label, state.title) {
+                vm.readable.label ?: state.title
+            }
+            ChatTopBar(
+                label = label,
+                node = node,
+                onClick = { mode ->
+                    when (mode) {
+                        ChatScreenMode.Messages -> node =
+                            LinkedNode(ChatScreenMode.ChannelDetail, node)
+                        ChatScreenMode.ChannelDetail -> {}
+                        is ChatScreenMode.MemberDetail -> {}
+                        is ChatScreenMode.MessageDetail -> {}
+                    }
+                },
+                onNavClick = { mode ->
+                    when (mode) {
+                        ChatScreenMode.Messages -> navController.popBackStack()
+                        else -> {
+                            node = node.next ?: node
+                        }
+                    }
+                }
+            )
+        },
         listContent = {
             ListContent(
                 loading = !vm.readable.isSyncingReady,
                 listState = listState,
                 messages = state.messages,
                 focusMessageId = state.focusMessageId,
-                onReply = {
-                    viewModel.onEvent(ChatEvent.Reply(it))
-                },
+                onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
                 onResend = { viewModel.onEvent(ChatEvent.ResendMessage(it)) },
                 onCancel = { viewModel.onEvent(ChatEvent.CancelMessage(it)) },
-                onPreview = { s ->
-                    viewModel.onEvent(ChatEvent.Preview(ChatState.Preview(s)))
+                onPreview = { url ->
+                    viewModel.onEvent(ChatEvent.OnPreview(url))
                 },
                 onProfile = {
                     navController.navigate(
                         R.id.action_chatFragment_to_introduceFragment,
-                        bundleOf(
-                            "uid" to it
-                        )
+                        bundleOf("uid" to it)
                     )
                 },
                 onScroll = { position ->
@@ -150,8 +171,8 @@ fun ChatScreen(
                         )
                     }
                 },
-                onFocus = { viewModel.onEvent(ChatEvent.FocusMessage(it)) },
-                onFocusDismiss = { viewModel.onEvent(ChatEvent.LoseFocusMessage) },
+                onFocus = { viewModel.onEvent(ChatEvent.OnFocus(it)) },
+                onFocusDismiss = { viewModel.onEvent(ChatEvent.OnFocus(null)) },
                 modifier = Modifier.fillMaxWidth()
             )
         },
@@ -160,7 +181,7 @@ fun ChatScreen(
                 modifier = Modifier.fillMaxWidth(),
                 repliedMessage = state.repliedMessage,
                 hasScrolled = !isAtTop,
-                onDismissReply = { viewModel.onEvent(ChatEvent.Reply(null)) },
+                onDismissReply = { viewModel.onEvent(ChatEvent.OnReply(null)) },
                 onScrollToBottom = {
                     scope.launch {
                         listState.scrollToItem(0)
@@ -168,7 +189,7 @@ fun ChatScreen(
                 },
                 dialogContent = {
                     PreviewDialog(state.uri) {
-                        viewModel.onEvent(ChatEvent.OnFileUriChange(null))
+                        viewModel.onEvent(ChatEvent.OnFile(null))
                     }
                 },
                 snackHostContent = { SnackbarHost(hostState) },
@@ -181,22 +202,52 @@ fun ChatScreen(
                         expended = state.expended,
                         onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
                         onFile = { permissionState.launchPermissionRequest() },
-                        onText = { viewModel.onEvent(ChatEvent.TextChange(it)) },
-                        onEmoji = { viewModel.onEvent(ChatEvent.EmojiChange(it)) },
-                        onExpanded = { viewModel.onEvent(ChatEvent.Expanded(!state.expended)) }
+                        onText = { viewModel.onEvent(ChatEvent.OnTextChange(it)) },
+                        onEmoji = { viewModel.onEvent(ChatEvent.OnEmoji(it)) },
+                        onExpanded = { viewModel.onEvent(ChatEvent.OnExpanded(!state.expended)) }
                     )
                 }
             )
         },
         originPreview = {
             OriginPreview(preview = state.preview,
-                onDismiss = { viewModel.onEvent(ChatEvent.DismissPreview) })
+                onDismiss = { viewModel.onEvent(ChatEvent.OnPreview(null)) })
         },
-        onListHeightChanged = { boxOffset.value = it })
+        onListHeightChanged = { boxOffset.value = it },
+        channelDetailContent = { innerPadding ->
+            Column(
+                verticalArrangement = Arrangement.spacedBy(
+                    LocalSpacing.current.extraSmall,
+                    Alignment.Bottom
+                ),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = LocalSpacing.current.medium)
+            ) {
+                MaterialButton(
+                    textRes = R.string.channel_add_to_desktop,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
 
-    BackHandler(state.preview != null) { viewModel.onEvent(ChatEvent.DismissPreview) }
+                }
+                MaterialButton(
+                    textRes = R.string.channel_exit,
+                    containerColor = LocalTheme.current.error,
+                    contentColor = LocalTheme.current.onError,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
 
-    BackHandler(state.focusMessageId != null) { viewModel.onEvent(ChatEvent.LoseFocusMessage) }
+                }
+            }
+        }
+    )
+
+    BackHandler(state.preview != null) { viewModel.onEvent(ChatEvent.OnPreview(null)) }
+
+    BackHandler(state.focusMessageId != null) { viewModel.onEvent(ChatEvent.OnFocus(null)) }
+
+    BackHandler(node.hasNext) { node = node.next ?: node }
 
     LaunchedEffect(state.scroll) {
         state.scroll.handle {
@@ -205,47 +256,82 @@ fun ChatScreen(
     }
 }
 
+
 @Composable
 private fun ChatScaffold(
-    type: Conversation.Type,
-    title: String,
-    navController: NavController,
+    node: LinkedNode<ChatScreenMode>,
+    topBar: @Composable () -> Unit,
     listContent: @Composable BoxScope.() -> Unit,
     bottomSheetContent: @Composable BoxScope.() -> Unit,
+    channelDetailContent: @Composable (PaddingValues) -> Unit,
     originPreview: @Composable BoxScope.() -> Unit,
     onListHeightChanged: (IntSize) -> Unit
 ) {
     Scaffold(
-        topBar = {
-            ToolBar(
-                onNavClick = navController::navigateUp,
-                actions = {
-                    (type == Conversation.Type.PM).ifTrue {
-                        MaterialIconButton(icon = Icons.Sharp.Videocam, onClick = { })
-                    }
-                },
-                text = vm.readable.label ?: title
-            )
-        },
+        topBar = topBar,
         backgroundColor = LocalTheme.current.background,
         contentColor = LocalTheme.current.onBackground,
         modifier = Modifier.navigationBarsPadding()
     ) { innerPadding ->
-        val chatBackgroundColor = LocalTheme.current.chatBackground
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .imePadding()
-                .drawWithContent {
-                    drawRect(chatBackgroundColor)
-                    drawContent()
+        Crossfade(node.value) { mode ->
+            when (mode) {
+                ChatScreenMode.Messages -> {
+                    val chatBackgroundColor = LocalTheme.current.chatBackground
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .imePadding()
+                            .drawWithContent {
+                                drawRect(chatBackgroundColor)
+                                drawContent()
+                            }
+                            .onSizeChanged(onListHeightChanged),
+                        contentAlignment = Alignment.BottomCenter) {
+                        listContent()
+                        bottomSheetContent()
+                        originPreview()
+                    }
                 }
-                .onSizeChanged(onListHeightChanged), contentAlignment = Alignment.BottomCenter) {
-            listContent()
-            bottomSheetContent()
-            originPreview()
+                ChatScreenMode.ChannelDetail -> Box(Modifier.fillMaxSize()) {
+                    channelDetailContent(innerPadding)
+                }
+                is ChatScreenMode.MemberDetail -> TODO()
+                is ChatScreenMode.MessageDetail -> TODO()
+            }
         }
+//        AnimatedContent(
+//            targetState = node,
+//            transitionSpec = {
+//                fadeIn() + slideInHorizontally { it } with fadeOut() + slideOutHorizontally { it }
+//            }
+//        ) {
+//            when (it.value) {
+//                ChatScreenMode.Messages -> {
+//                    val chatBackgroundColor = LocalTheme.current.chatBackground
+//                    Box(
+//                        Modifier
+//                            .fillMaxSize()
+//                            .padding(innerPadding)
+//                            .imePadding()
+//                            .drawWithContent {
+//                                drawRect(chatBackgroundColor)
+//                                drawContent()
+//                            }
+//                            .onSizeChanged(onListHeightChanged),
+//                        contentAlignment = Alignment.BottomCenter) {
+//                        listContent()
+//                        bottomSheetContent()
+//                        originPreview()
+//                    }
+//                }
+//                ChatScreenMode.ChannelDetail -> Box(Modifier.fillMaxSize()) {
+//                    channelDetailContent(innerPadding)
+//                }
+//                is ChatScreenMode.MemberDetail -> TODO()
+//                is ChatScreenMode.MessageDetail -> TODO()
+//            }
+//        }
     }
 }
 
@@ -299,7 +385,6 @@ private fun ListContent(
                         message = current.message,
                         config = config,
                         hasFocus = focusMessageId == current.message.id,
-                        lossFocus = focusMessageId != null && focusMessageId != current.message.id,
                         onPreview = onPreview,
                         onProfile = onProfile,
                         onScroll = onScroll,
@@ -375,7 +460,9 @@ private fun BottomSheetContent(
             }
 
             AnimatedVisibility(
-                visible = repliedMessage != null, enter = scaleIn(), exit = scaleOut()
+                visible = repliedMessage != null,
+                enter = scaleIn(),
+                exit = scaleOut()
             ) {
                 SmallFloatingActionButton(
                     onClick = onDismissReply,
@@ -404,7 +491,8 @@ private fun BottomSheetContent(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun PreviewDialog(
-    uri: Uri?, onDismiss: () -> Unit
+    uri: Uri?,
+    onDismiss: () -> Unit
 ) {
     AnimatedContent(
         targetState = uri,
@@ -448,10 +536,11 @@ private fun PreviewDialog(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BoxScope.OriginPreview(
-    preview: ChatState.Preview?, delay: Long = 120L, onDismiss: () -> Unit
+    preview: String?,
+    delay: Long = 120L,
+    onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val image = preview?.s
 
 //    val configuration = LocalConfiguration.current
 //    val screenDensity = configuration.densityDpi / 160f
@@ -481,8 +570,8 @@ private fun BoxScope.OriginPreview(
         transitionSpec = { tween(duration) }) {
         if (!it) Color.Transparent else LocalTheme.current.background
     }
-    val model = remember(image) {
-        ImageRequest.Builder(context).data(image).build()
+    val model = remember(preview) {
+        ImageRequest.Builder(context).data(preview).build()
     }
 //    val loader = remember {
 //        ImageLoader.Builder(context)
@@ -513,71 +602,10 @@ private fun BoxScope.OriginPreview(
             modifier = Modifier.fillMaxSize()
         )
     }
-    LaunchedEffect(image) {
-        if (!image.isNullOrEmpty()) {
+    LaunchedEffect(preview) {
+        if (!preview.isNullOrEmpty()) {
             delay(delay)
             state = true
         }
     }
-}
-
-@Composable
-internal fun NativeListContent(
-    messages: List<MessageVO>,
-    focusMessageId: Int?,
-    onReply: (Int) -> Unit,
-    onCancel: (Int) -> Unit,
-    onPreview: (String) -> Unit,
-    onProfile: (Int) -> Unit,
-    onScroll: (Int) -> Unit,
-    onFocus: (Int) -> Unit,
-    onFocusDismiss: () -> Unit,
-    onResend: (Int) -> Unit,
-    modifier: Modifier
-) {
-    NativeLazyList(
-        list = messages,
-        item = { messageVO ->
-            val message = remember(messageVO) {
-                messageVO.message
-            }
-            val config = remember(messageVO) {
-                messageVO.config
-            }
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(
-                    top = 6.dp, bottom = if (config.isEndOfGroup) 6.dp else 0.dp
-                )
-            ) {
-                config.isShowTime.ifTrue {
-                    Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                    ChatTimestamp(timestamp = message.timestamp)
-                    Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                }
-                val replyDisabled = remember(config.sendState) {
-                    config.sendState == Message.STATE_PENDING || config.sendState == Message.STATE_FAILED
-                }
-                ChatBubble(
-                    message = message,
-                    config = messageVO.config,
-                    hasFocus = focusMessageId == message.id,
-                    lossFocus = focusMessageId != null && focusMessageId != message.id,
-                    onPreview = onPreview,
-                    onProfile = onProfile,
-                    onScroll = onScroll,
-                    onFocus = onFocus,
-                    onDismissFocus = onFocusDismiss,
-                    onReply = onReply,
-                    onResend = onResend,
-                    onCancel = onCancel
-                )
-            }
-        },
-        layoutManager = LinearLayoutManager(
-            LocalContext.current, LinearLayoutManager.VERTICAL, true
-        ),
-        isContentsTheSame = { old, new -> old.config == new.config },
-        modifier = modifier.fillMaxSize()
-    )
 }

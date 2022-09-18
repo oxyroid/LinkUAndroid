@@ -23,7 +23,6 @@ import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
-import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.User
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
@@ -139,12 +138,8 @@ private fun CircleHeadPicture(
             contentDescription = name,
             modifier = Modifier
                 .fillMaxSize(),
-            error = {
-                placeholder(name)
-            },
-            loading = {
-                placeholder(name)
-            }
+            error = { placeholder(name) },
+            loading = { placeholder(name) }
         )
     }
 }

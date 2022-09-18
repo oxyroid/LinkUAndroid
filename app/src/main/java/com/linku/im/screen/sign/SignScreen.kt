@@ -55,7 +55,7 @@ fun SignScreen(
 
     LaunchedEffect(state.loginEvent) {
         state.loginEvent.handle {
-            navController.navigateUp()
+            navController.popBackStack()
         }
     }
 

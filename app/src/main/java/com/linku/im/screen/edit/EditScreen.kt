@@ -18,7 +18,7 @@ fun EditScreen(
     type: IntroduceEvent.Edit.Type?
 ) {
     val navController = LocalNavController.current
-    LaunchedEffect(Unit) { type ?: run { navController.navigateUp() } }
+    LaunchedEffect(Unit) { type ?: run { navController.popBackStack() } }
 
     Scaffold(
         topBar = { ToolBar(onNavClick = { /*TODO*/ }, actions = {}, text = "") },

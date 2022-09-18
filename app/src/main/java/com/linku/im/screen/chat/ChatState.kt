@@ -20,9 +20,7 @@ data class ChatState(
     val firstVisibleIndex: Int = 0,
     val offset: Int = 0,
     val repliedMessage: Message? = null,
-    val preview: Preview? = null,
+    val preview: String? = null,
     val scroll: Event<Int> = Event.Handled(),
     val focusMessageId: Int? = null
-) {
-    data class Preview(val s: String)
-}
+)

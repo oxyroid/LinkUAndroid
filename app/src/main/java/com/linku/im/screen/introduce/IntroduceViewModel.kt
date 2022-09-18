@@ -183,6 +183,9 @@ class IntroduceViewModel @Inject constructor(
     private fun signOut() {
         viewModelScope.launch {
             authUseCases.signOut()
+            writable = readable.copy(
+                logout = true
+            )
         }
     }
 

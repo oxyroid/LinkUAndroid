@@ -80,4 +80,6 @@
     <string name="dropdown_retry">重试</string>
     <string name="query_result_conversation">会话</string>
     <string name="query_result_user">用户</string>
+    <string name="channel_exit">退出频道</string>
+    <string name="channel_add_to_desktop">添加到桌面</string>
 </resources>

@@ -4,6 +4,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -14,6 +15,10 @@ fun MaterialButton(
     textRes: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    containerColor: Color = LocalTheme.current.primary,
+    contentColor: Color = LocalTheme.current.onPrimary,
+    disabledContainerColor: Color = containerColor.copy(alpha = 0.12f),
+    disabledContentColor: Color = containerColor.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
     Button(
@@ -22,10 +27,10 @@ fun MaterialButton(
         enabled = enabled,
         modifier = modifier,
         colors = ButtonDefaults.buttonColors(
-            containerColor = LocalTheme.current.primary,
-            contentColor = LocalTheme.current.onPrimary,
-            disabledContainerColor = LocalTheme.current.primaryDisable,
-            disabledContentColor = LocalTheme.current.onPrimaryDisable
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = disabledContainerColor,
+            disabledContentColor = disabledContentColor
         )
     ) {
         Text(
