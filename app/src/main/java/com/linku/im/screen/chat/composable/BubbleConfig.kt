@@ -32,7 +32,7 @@ sealed class BubbleConfig(
 }
 
 data class ReplyConfig(
-    val targetMid: Int,
+    val repliedMid: Int,
     val index: Int,
     val display: String
 )

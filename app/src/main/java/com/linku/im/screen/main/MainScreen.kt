@@ -35,10 +35,9 @@ import com.linku.im.R
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
 import com.linku.im.screen.Screen
-import com.linku.im.screen.main.composable.ConversationItem
 import com.linku.im.ui.components.MaterialIconButton
+import com.linku.im.ui.components.PinnedConversationItem
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.theme.LocalAnimatedColor
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -184,8 +183,8 @@ fun MainScreen(
                             onClick = {
                                 scope.launch { pagerState.animateScrollToPage(index) }
                             },
-                            selectedContentColor = LocalAnimatedColor.current.onSurfaceColor,
-                            unselectedContentColor = LocalAnimatedColor.current.onSurfaceColor * 0.6f,
+                            selectedContentColor = theme.onSurface,
+                            unselectedContentColor = theme.onSurface * 0.6f,
                             modifier = Modifier
                                 .padding(LocalSpacing.current.small)
                                 .clip(RoundedCornerShape(LocalSpacing.current.extraSmall))
@@ -272,7 +271,7 @@ fun MainScreen(
                             else -> emptyList()
                         }
                         itemsIndexed(conversations) { index, conversation ->
-                            ConversationItem(
+                            PinnedConversationItem(
                                 conversation = conversation,
                                 pinned = index < 1,
                                 unreadCount = index / 2,

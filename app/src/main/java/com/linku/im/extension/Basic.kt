@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.linku.im.extension
 
 import android.content.Context
@@ -16,3 +17,6 @@ inline fun <R> Boolean?.ifFalse(block: () -> R): R? {
 fun Context.toast(text: String, duration: Int = Toast.LENGTH_SHORT) {
     Toast.makeText(this, text, duration).show()
 }
+
+inline fun <K, V> MutableMap<K, V>.getOrPutNullable(k: K, block: () -> V?): V? =
+    get(k) ?: block()?.also { put(k, it) }

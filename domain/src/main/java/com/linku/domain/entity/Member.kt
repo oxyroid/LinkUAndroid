@@ -11,8 +11,8 @@ data class Member(
     val cid: Int,
     @SerialName("uid")
     val uid: Int,
-    @SerialName("name")
-    val name: String,
-    @SerialName("root")
+    @SerialName("conv_nickname")
+    val name: String? = null,
+    @SerialName("is_admin")
     val root: Boolean
 )

@@ -44,6 +44,10 @@ fun MaterialTextButton(
     textRes: Int,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    containerColor: Color = Color.Transparent,
+    contentColor: Color = LocalTheme.current.primary,
+    disabledContainerColor: Color = Color.Transparent,
+    disabledContentColor: Color = containerColor.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
     TextButton(
@@ -52,8 +56,10 @@ fun MaterialTextButton(
         modifier = modifier,
         enabled = enabled,
         colors = ButtonDefaults.textButtonColors(
-            contentColor = LocalTheme.current.primary,
-            disabledContentColor = LocalTheme.current.primaryDisable
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = disabledContainerColor,
+            disabledContentColor = disabledContentColor
         )
     ) {
         Text(

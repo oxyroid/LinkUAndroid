@@ -12,9 +12,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.Icon
@@ -54,8 +52,7 @@ import com.linku.im.screen.chat.composable.ChatTextField
 import com.linku.im.screen.chat.composable.ChatTimestamp
 import com.linku.im.screen.chat.composable.ChatTopBar
 import com.linku.im.screen.chat.vo.MessageVO
-import com.linku.im.ui.components.MaterialButton
-import com.linku.im.ui.components.MaterialIconButton
+import com.linku.im.ui.components.*
 import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -74,6 +71,7 @@ fun ChatScreen(
     val navController = LocalNavController.current
     val hostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
+    val messages by viewModel.messageFlow.collectAsState(initial = emptyList())
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         viewModel.onEvent(ChatEvent.OnFile(uri))
     }
@@ -120,11 +118,10 @@ fun ChatScreen(
     ChatScaffold(
         node = node,
         topBar = {
-            val label = remember(vm.readable.label, state.title) {
-                vm.readable.label ?: state.title
-            }
             ChatTopBar(
-                label = label,
+                title = state.title,
+                subTitle = vm.readable.label ?: state.subTitle,
+                introduce = "",
                 node = node,
                 onClick = { mode ->
                     when (mode) {
@@ -149,13 +146,13 @@ fun ChatScreen(
             ListContent(
                 loading = !vm.readable.isSyncingReady,
                 listState = listState,
-                messages = state.messages,
+                messages = messages,
                 focusMessageId = state.focusMessageId,
                 onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
                 onResend = { viewModel.onEvent(ChatEvent.ResendMessage(it)) },
                 onCancel = { viewModel.onEvent(ChatEvent.CancelMessage(it)) },
-                onPreview = { url ->
-                    viewModel.onEvent(ChatEvent.OnPreview(url))
+                onPreview = { mid ->
+                    node = LinkedNode(ChatScreenMode.MessageDetail(mid), node)
                 },
                 onProfile = {
                     navController.navigate(
@@ -210,24 +207,52 @@ fun ChatScreen(
             )
         },
         originPreview = {
-            OriginPreview(preview = state.preview,
-                onDismiss = { viewModel.onEvent(ChatEvent.OnPreview(null)) })
+            OriginPreview(
+                preview = state.preview,
+                onDismiss = { node = node.next ?: node }
+            )
         },
         onListHeightChanged = { boxOffset.value = it },
-        channelDetailContent = { innerPadding ->
+        channelDetailContent = {
+            LaunchedEffect(node) {
+                if (node.value == ChatScreenMode.ChannelDetail) {
+                    viewModel.onEvent(ChatEvent.FetchChannelDetail)
+                }
+            }
             Column(
-                verticalArrangement = Arrangement.spacedBy(
-                    LocalSpacing.current.extraSmall,
-                    Alignment.Bottom
-                ),
+                verticalArrangement = Arrangement.Bottom,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = LocalSpacing.current.medium)
             ) {
-                MaterialButton(
+                if (state.channelDetailLoading) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    val members by viewModel.memberFlow.collectAsState(initial = emptyList())
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        items(members) {
+                            MemberItem(
+                                member = it,
+                                avatar = ""
+                            )
+                        }
+                    }
+                }
+
+
+                MaterialTextButton(
                     textRes = R.string.channel_add_to_desktop,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = LocalSpacing.current.medium)
                 ) {
 
                 }
@@ -235,19 +260,26 @@ fun ChatScreen(
                     textRes = R.string.channel_exit,
                     containerColor = LocalTheme.current.error,
                     contentColor = LocalTheme.current.onError,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = LocalSpacing.current.medium)
                 ) {
 
                 }
             }
+        },
+        messageDetailContent = { mid ->
+
         }
     )
 
-    BackHandler(state.preview != null) { viewModel.onEvent(ChatEvent.OnPreview(null)) }
-
-    BackHandler(state.focusMessageId != null) { viewModel.onEvent(ChatEvent.OnFocus(null)) }
-
-    BackHandler(node.hasNext) { node = node.next ?: node }
+    BackHandler(state.preview != null || state.focusMessageId != null || node.hasNext) {
+        when {
+            state.preview != null -> node = node.next ?: node
+            state.focusMessageId != null -> viewModel.onEvent(ChatEvent.OnFocus(null))
+            node.hasNext -> node = node.next ?: node
+        }
+    }
 
     LaunchedEffect(state.scroll) {
         state.scroll.handle {
@@ -263,75 +295,57 @@ private fun ChatScaffold(
     topBar: @Composable () -> Unit,
     listContent: @Composable BoxScope.() -> Unit,
     bottomSheetContent: @Composable BoxScope.() -> Unit,
-    channelDetailContent: @Composable (PaddingValues) -> Unit,
+    channelDetailContent: @Composable () -> Unit,
+    messageDetailContent: @Composable (Int) -> Unit,
     originPreview: @Composable BoxScope.() -> Unit,
     onListHeightChanged: (IntSize) -> Unit
 ) {
     Scaffold(
         topBar = topBar,
         backgroundColor = LocalTheme.current.background,
-        contentColor = LocalTheme.current.onBackground,
-        modifier = Modifier.navigationBarsPadding()
+        contentColor = LocalTheme.current.onBackground
     ) { innerPadding ->
-        Crossfade(node.value) { mode ->
+        Crossfade(
+            targetState = node.value,
+            modifier = Modifier.navigationBarsPadding()
+        ) { mode ->
             when (mode) {
                 ChatScreenMode.Messages -> {
                     val chatBackgroundColor = LocalTheme.current.chatBackground
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .padding(innerPadding)
-                            .imePadding()
                             .drawWithContent {
                                 drawRect(chatBackgroundColor)
                                 drawContent()
                             }
+                            .padding(innerPadding)
+                            .imePadding()
                             .onSizeChanged(onListHeightChanged),
-                        contentAlignment = Alignment.BottomCenter) {
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
                         listContent()
                         bottomSheetContent()
                         originPreview()
                     }
                 }
-                ChatScreenMode.ChannelDetail -> Box(Modifier.fillMaxSize()) {
-                    channelDetailContent(innerPadding)
+                ChatScreenMode.ChannelDetail -> Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    channelDetailContent()
+                }
+                is ChatScreenMode.MessageDetail -> Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    messageDetailContent(mode.mid)
                 }
                 is ChatScreenMode.MemberDetail -> TODO()
-                is ChatScreenMode.MessageDetail -> TODO()
             }
         }
-//        AnimatedContent(
-//            targetState = node,
-//            transitionSpec = {
-//                fadeIn() + slideInHorizontally { it } with fadeOut() + slideOutHorizontally { it }
-//            }
-//        ) {
-//            when (it.value) {
-//                ChatScreenMode.Messages -> {
-//                    val chatBackgroundColor = LocalTheme.current.chatBackground
-//                    Box(
-//                        Modifier
-//                            .fillMaxSize()
-//                            .padding(innerPadding)
-//                            .imePadding()
-//                            .drawWithContent {
-//                                drawRect(chatBackgroundColor)
-//                                drawContent()
-//                            }
-//                            .onSizeChanged(onListHeightChanged),
-//                        contentAlignment = Alignment.BottomCenter) {
-//                        listContent()
-//                        bottomSheetContent()
-//                        originPreview()
-//                    }
-//                }
-//                ChatScreenMode.ChannelDetail -> Box(Modifier.fillMaxSize()) {
-//                    channelDetailContent(innerPadding)
-//                }
-//                is ChatScreenMode.MemberDetail -> TODO()
-//                is ChatScreenMode.MessageDetail -> TODO()
-//            }
-//        }
     }
 }
 
@@ -345,7 +359,7 @@ private fun ListContent(
     onReply: (Int) -> Unit,
     onResend: (Int) -> Unit,
     onCancel: (Int) -> Unit,
-    onPreview: (String) -> Unit,
+    onPreview: (Int) -> Unit,
     onProfile: (Int) -> Unit,
     onScroll: (Int) -> Unit,
     onFocus: (Int) -> Unit,

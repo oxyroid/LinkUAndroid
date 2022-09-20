@@ -58,4 +58,7 @@ dependencies {
     // retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
 
+    // mmkv
+    implementation 'com.tencent:mmkv:1.2.14'
+
 }

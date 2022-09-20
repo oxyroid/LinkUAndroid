@@ -3,6 +3,7 @@ package com.linku.data.repository
 import com.linku.domain.Resource
 import com.linku.domain.emitResource
 import com.linku.domain.entity.Conversation
+import com.linku.domain.entity.Member
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.ConversationRepository
 import com.linku.domain.resourceFlow
@@ -70,6 +71,16 @@ class ConversationRepositoryImpl @Inject constructor(
         runCatching {
             conversationService.queryConversations(name, description).toResult()
                 .onSuccess { conversations -> emitResource(conversations.map { it.toConversation() }) }
+                .onFailure { emitResource(it.message) }
+        }.onFailure {
+            emitResource(it.message)
+        }
+    }
+
+    override fun fetchMembers(cid: Int): Flow<Resource<List<Member>>> = resourceFlow {
+        runCatching {
+            conversationService.getMembersByCid(cid).toResult()
+                .onSuccess { emitResource(it) }
                 .onFailure { emitResource(it.message) }
         }.onFailure {
             emitResource(it.message)

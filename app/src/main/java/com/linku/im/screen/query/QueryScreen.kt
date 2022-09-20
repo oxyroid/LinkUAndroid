@@ -21,8 +21,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.core.os.bundleOf
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.im.R
-import com.linku.im.screen.query.composable.QueryConversationItem
-import com.linku.im.screen.query.composable.QueryUserItem
+import com.linku.im.ui.components.ConversationItem
+import com.linku.im.ui.components.UserItem
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.TextField
 import com.linku.im.ui.theme.LocalNavController
@@ -117,7 +117,7 @@ fun QueryScreen(
                             }
                         }
                     items(state.conversations) { conversation ->
-                        QueryConversationItem(conversation = conversation) {
+                        ConversationItem(conversation = conversation) {
                             navController.navigate(
                                 R.id.action_queryFragment_to_chatFragment,
                                 bundleOf(
@@ -148,7 +148,7 @@ fun QueryScreen(
                             }
                         }
                     items(state.users) { user ->
-                        QueryUserItem(user = user) {
+                        UserItem(user = user) {
                             navController.navigate(
                                 R.id.action_queryFragment_to_introduceFragment,
                                 bundleOf(
@@ -175,7 +175,12 @@ fun QueryScreen(
                                 text = stringResource(R.string.query_filter_description),
                                 style = MaterialTheme.typography.titleSmall
                             )
-                        }
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            labelColor = LocalTheme.current.onBackground,
+                            iconColor = LocalTheme.current.onBackground,
+                            containerColor = LocalTheme.current.background
+                        )
                     )
                     FilterChip(
                         selected = state.isEmail,
@@ -185,7 +190,12 @@ fun QueryScreen(
                                 text = stringResource(R.string.query_filter_email),
                                 style = MaterialTheme.typography.titleSmall
                             )
-                        }
+                        },
+                        colors = FilterChipDefaults.filterChipColors(
+                            labelColor = LocalTheme.current.onBackground,
+                            iconColor = LocalTheme.current.onBackground,
+                            containerColor = LocalTheme.current.background
+                        )
                     )
                 }
             }

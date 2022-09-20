@@ -19,8 +19,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 33
-        versionCode 89
-        versionName "0.13.0"
+        versionCode 90
+        versionName "0.13.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -126,19 +126,23 @@ dependencies {
     implementation "com.google.accompanist:accompanist-pager:$accompanist_version"
     implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version"
 
-    // Json
+    // json
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0'
 
-    // Acra
+    // acra
     implementation "ch.acra:acra-http:$acraVersion"
     implementation "ch.acra:acra-notification:$acraVersion"
 
-    // Appyx
+    // appyx
     implementation "com.bumble.appyx:core:$appyx_version"
 
     // uCrop
     implementation 'com.github.yalantis:ucrop:2.2.6'
 
+    // twitter compose rules
     ktlintRuleset "com.twitter.compose.rules:ktlint:0.0.9"
+
+    // mmkv
+    implementation 'com.tencent:mmkv:1.2.14'
 
 }

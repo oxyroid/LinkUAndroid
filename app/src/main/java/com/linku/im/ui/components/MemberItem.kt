@@ -1,15 +1,14 @@
-package com.linku.im.screen.query.composable
+package com.linku.im.ui.components
 
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,22 +16,24 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
-import com.linku.domain.entity.Conversation
+import com.linku.domain.entity.Member
+import com.linku.im.R
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
-import com.linku.im.ui.components.TextImage
+import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
-fun QueryConversationItem(
+fun MemberItem(
     modifier: Modifier = Modifier,
-    conversation: Conversation? = null,
+    member: Member? = null,
+    avatar: String?,
     onClick: () -> Unit = {}
 ) {
     val shimmerColor = LocalTheme.current.onSurface * 0.8f
@@ -51,57 +52,66 @@ fun QueryConversationItem(
             .fillMaxWidth()
             .height(64.dp)
             .intervalClickable(
-                enabled = (conversation != null),
+                enabled = member != null,
                 onClick = onClick
-            )
-            .padding(
-                horizontal = 12.dp
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         CircleHeadPicture(
-            model = conversation?.avatar,
-            name = conversation?.name,
-            placeholder = { TextImage(text = conversation?.name ?: "") }
+            model = avatar,
+            placeholder = {
+                TextImage(
+                    text = member?.name ?: "",
+                )
+            },
+            modifier = Modifier.padding(
+                horizontal = LocalSpacing.current.medium,
+                vertical = LocalSpacing.current.extraSmall
+            )
         )
-        Spacer(modifier = Modifier.width(12.dp))
         Column(
             modifier = Modifier
                 .padding(
-                    end = 12.dp,
-                    top = 8.dp,
-                    bottom = 8.dp
+                    end = LocalSpacing.current.medium,
+                    top = LocalSpacing.current.small,
                 )
+                .fillMaxHeight()
                 .weight(1f),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = conversation?.name ?: "",
+                text = member?.name ?: "",
                 style = MaterialTheme.typography.titleMedium,
                 color = LocalTheme.current.onSurface,
                 maxLines = 1,
                 modifier = Modifier
                     .fillMaxWidth()
                     .placeholder(
-                        visible = conversation == null,
+                        visible = member == null,
                         color = shimmerColor,
                         shape = RoundedCornerShape(4.dp),
                         highlight = PlaceholderHighlight.shimmer(
                             highlightColor = onShimmerColor,
-                            animationSpec = shimmerAnimationSpec,
+                            animationSpec = shimmerAnimationSpec
                         )
                     ),
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.weight(1f))
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
-                    text = conversation?.description ?: "",
+                    text = when {
+                        member?.root == true -> stringResource(R.string.channel_member_root)
+                        else -> ""
+                    },
+                    color = when {
+                        member?.root == true -> LocalTheme.current.primary
+                        else -> Color.Unspecified
+                    },
                     maxLines = 1,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .placeholder(
-                            visible = (conversation == null),
+                            visible = (member == null),
                             color = shimmerColor,
                             shape = RoundedCornerShape(4.dp),
                             highlight = PlaceholderHighlight.shimmer(
@@ -113,38 +123,10 @@ fun QueryConversationItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
+            Divider(
+                thickness = 1.dp,
+                color = LocalTheme.current.divider
+            )
         }
-        Spacer(modifier = Modifier.width(8.dp))
     }
 }
-
-@Composable
-private fun CircleHeadPicture(
-    model: Any?,
-    name: String?,
-    modifier: Modifier = Modifier,
-    placeholder: @Composable (String?) -> Unit = {}
-) {
-    Card(
-        shape = CircleShape,
-        modifier = modifier
-            .padding(vertical = 8.dp)
-            .fillMaxHeight()
-            .aspectRatio(1f)
-    ) {
-        SubcomposeAsyncImage(
-            model = model,
-            contentDescription = name,
-            modifier = Modifier
-                .fillMaxSize(),
-            error = {
-                placeholder(name)
-            },
-            loading = {
-                placeholder(name)
-            }
-        )
-    }
-}
-

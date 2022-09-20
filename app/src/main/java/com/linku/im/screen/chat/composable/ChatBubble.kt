@@ -61,7 +61,7 @@ fun ChatBubble(
     config: BubbleConfig,
     hasFocus: Boolean,
     modifier: Modifier = Modifier,
-    onPreview: (String) -> Unit,
+    onPreview: (Int) -> Unit,
     onProfile: (Int) -> Unit,
     onScroll: (Int) -> Unit,
     onReply: (Int) -> Unit,
@@ -87,7 +87,7 @@ fun ChatBubble(
             .fillMaxWidth()
             .padding(horizontal = lowerHorizontalOutPadding)
     ) {
-        val (state, image, card) = createRefs()
+        val (_, image, card) = createRefs()
 
         val hapticFeedback = LocalHapticFeedback.current
 
@@ -136,7 +136,7 @@ fun ChatBubble(
                             }
                         )
                 ) {
-                    val nameVisibility = remember(config) { 
+                    val nameVisibility = remember(config) {
                         config is BubbleConfig.Group && config.nameVisibility
                     }
                     val (label, reply, content) = createRefs()
@@ -172,13 +172,16 @@ fun ChatBubble(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = LocalIndication.current,
                                 onClick = {
-                                    if (replyRemembered?.index != -1) onScroll(
-                                        replyRemembered?.index ?: -1
+                                    if (replyRemembered != null && replyRemembered.index != -1) onScroll(
+                                        replyRemembered.index
                                     )
                                 },
                                 onLongClick = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     onFocus(message.id)
+                                },
+                                onDoubleClick = {
+                                    onPreview(message.id)
                                 }
                             )
                             .padding(
@@ -227,10 +230,9 @@ fun ChatBubble(
                                             bottom = VERTICAL_IN_PADDING,
                                         ),
                                     textAlign = TextAlign.Start,
-                                    style = MaterialTheme.typography.bodyMedium
-                                        .copy(
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 )
                             }
                             is ImageMessage -> {
@@ -243,7 +245,7 @@ fun ChatBubble(
                                     modifier = Modifier.combinedClickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = LocalIndication.current,
-                                        onClick = { onPreview(message.url) },
+                                        onClick = { onPreview(message.id) },
                                         onLongClick = {
                                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                             onFocus(message.id)
@@ -262,7 +264,7 @@ fun ChatBubble(
                                         modifier = Modifier.combinedClickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = LocalIndication.current,
-                                            onClick = { onPreview(message.url) },
+                                            onClick = { onPreview(message.id) },
                                             onLongClick = {
                                                 hapticFeedback.performHapticFeedback(
                                                     HapticFeedbackType.LongPress
@@ -324,7 +326,7 @@ fun ChatBubble(
                     val clipboardManager = LocalClipboardManager.current
                     when (message) {
                         is TextMessage -> {
-                            DropdownMenuItem (
+                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.dropdown_copy)) },
                                 leadingIcon = {
                                     Icon(
@@ -344,7 +346,7 @@ fun ChatBubble(
                             )
                         }
                         is GraphicsMessage -> {
-                            DropdownMenuItem (
+                            DropdownMenuItem(
                                 text = { Text(stringResource(R.string.dropdown_copy)) },
                                 leadingIcon = {
                                     Icon(
@@ -564,7 +566,7 @@ fun ChatBubbleConstraintPreview1() {
             name = "Peter",
             isEndOfGroup = true,
             reply = ReplyConfig(
-                targetMid = 1,
+                repliedMid = 1,
                 index = 1,
                 display = "Replied Message"
             )
@@ -600,7 +602,7 @@ fun ChatBubbleConstraintPreview2() {
             name = "Peter",
             isEndOfGroup = true,
             reply = ReplyConfig(
-                targetMid = 1,
+                repliedMid = 1,
                 index = 1,
                 display = "Replied Message"
             )
@@ -636,7 +638,7 @@ fun ChatBubbleConstraintPreview1Dark() {
             name = "Peter",
             isEndOfGroup = true,
             reply = ReplyConfig(
-                targetMid = 1,
+                repliedMid = 1,
                 index = 1,
                 display = "Replied Message"
             )
@@ -672,7 +674,7 @@ fun ChatBubbleConstraintPreview2Dark() {
             name = "Peter",
             isEndOfGroup = true,
             reply = ReplyConfig(
-                targetMid = 1,
+                repliedMid = 1,
                 index = 1,
                 display = "Replied Message"
             )

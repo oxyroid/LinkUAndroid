@@ -6,17 +6,18 @@ import com.linku.domain.Event
 import com.linku.domain.bean.Emoji
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
-import com.linku.im.screen.chat.vo.MessageVO
 
 data class ChatState(
     val title: String = "",
+    val subTitle: String = "",
+    val introduce: String = "",
     val cid: Int = -1,
+    val channelDetailLoading: Boolean = false,
     val type: Conversation.Type = Conversation.Type.PM,
     val textFieldValue: TextFieldValue = TextFieldValue(),
     val emojis: List<Emoji> = emptyList(),
     val expended: Boolean = false,
     val uri: Uri? = null,
-    val messages: List<MessageVO> = emptyList(),
     val firstVisibleIndex: Int = 0,
     val offset: Int = 0,
     val repliedMessage: Message? = null,

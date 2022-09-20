@@ -1,15 +1,13 @@
-package com.linku.im.screen.query.composable
+package com.linku.im.ui.components
 
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,18 +17,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.domain.entity.User
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
-import com.linku.im.ui.components.TextImage
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
-fun QueryUserItem(
+fun UserItem(
     modifier: Modifier = Modifier,
     user: User? = null,
     onClick: () -> Unit = {}
@@ -61,7 +57,6 @@ fun QueryUserItem(
     ) {
         CircleHeadPicture(
             model = user?.avatar,
-            name = user?.name,
             placeholder = { TextImage(text = user?.name ?: "") }
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -116,31 +111,6 @@ fun QueryUserItem(
 
         }
         Spacer(modifier = Modifier.width(8.dp))
-    }
-}
-
-@Composable
-private fun CircleHeadPicture(
-    model: Any?,
-    name: String?,
-    modifier: Modifier = Modifier,
-    placeholder: @Composable (String?) -> Unit = {}
-) {
-    Card(
-        shape = CircleShape,
-        modifier = modifier
-            .padding(vertical = 8.dp)
-            .fillMaxHeight()
-            .aspectRatio(1f)
-    ) {
-        SubcomposeAsyncImage(
-            model = model,
-            contentDescription = name,
-            modifier = Modifier
-                .fillMaxSize(),
-            error = { placeholder(name) },
-            loading = { placeholder(name) }
-        )
     }
 }
 

@@ -23,8 +23,8 @@ data class GetSystemServiceUseCase @Inject constructor(
 data class GetStringUseCase @Inject constructor(
     @ApplicationContext val context: Context
 ) {
-    operator fun invoke(resId: Int): String {
-        return context.getString(resId)
+    operator fun invoke(resId: Int, vararg formatArgs: Any): String {
+        return context.getString(resId, *formatArgs)
     }
 }
 

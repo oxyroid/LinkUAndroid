@@ -9,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +16,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -28,19 +30,24 @@ import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun ChatTopBar(
-    label: String,
+    title: String,
+    subTitle: String,
+    introduce: String,
     node: LinkedNode<ChatScreenMode>,
     onClick: (ChatScreenMode) -> Unit,
     onNavClick: (ChatScreenMode) -> Unit
 ) {
     val duration = 400
     val containerColor by animateColorAsState(
-        if (node.value == ChatScreenMode.ChannelDetail) LocalTheme.current.primary
-        else Color.Transparent
+        if (node.value == ChatScreenMode.ChannelDetail) LocalTheme.current.subSurface
+        else LocalTheme.current.surface
     )
     val contentColor by animateColorAsState(
-        if (node.value == ChatScreenMode.ChannelDetail) LocalTheme.current.onPrimary
-        else LocalContentColor.current
+        when (node.value) {
+            ChatScreenMode.ChannelDetail -> LocalTheme.current.onSubSurface
+            ChatScreenMode.Messages -> LocalTheme.current.onSurface
+            else -> Color.Transparent
+        }
     )
     Column(
         modifier = Modifier
@@ -51,20 +58,30 @@ fun ChatTopBar(
             .clickable { onClick(node.value) }
     ) {
         Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
+        val height by animateDpAsState(
+            when (node.value) {
+                ChatScreenMode.ChannelDetail -> Dp.Unspecified
+                is ChatScreenMode.MemberDetail -> 0.dp
+                is ChatScreenMode.MessageDetail -> 0.dp
+                ChatScreenMode.Messages -> Dp.Unspecified
+            }
+        )
         ConstraintLayout(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = LocalSpacing.current.small)
         ) {
-            val (icon, text, subText) = createRefs()
+            val (iconRef, titleRef, introduceRef, subTitleRef) = createRefs()
             MaterialIconButton(
                 icon = Icons.Default.ArrowBack,
                 onClick = { onNavClick(node.value) },
                 tint = contentColor,
-                modifier = Modifier.constrainAs(icon) {
-                    top.linkTo(parent.top)
-                    start.linkTo(parent.start)
-                }
+                modifier = Modifier
+                    .constrainAs(iconRef) {
+                        top.linkTo(parent.top)
+                        start.linkTo(parent.start)
+                    }
+                    .height(height)
             )
             val textHorizontallyBias by animateFloatAsState(
                 when (node.value) {
@@ -82,28 +99,69 @@ fun ChatTopBar(
                 },
                 animationSpec = tween(duration, easing = LinearEasing)
             )
-            val fontSize by animateFloatAsState(
-                if (node.value == ChatScreenMode.Messages) 16f
-                else 24f,
+            val textFontSize by animateFloatAsState(
+                when (node.value) {
+                    ChatScreenMode.Messages -> 16f
+                    ChatScreenMode.ChannelDetail -> 24f
+                    else -> 0f
+                },
+                animationSpec = tween(duration, easing = LinearEasing)
+            )
+            val subtextFontSize by animateFloatAsState(
+                when (node.value) {
+                    ChatScreenMode.Messages -> 10f
+                    ChatScreenMode.ChannelDetail -> 14f
+                    else -> 0f
+                },
                 animationSpec = tween(duration, easing = LinearEasing)
             )
             Text(
-                text = label,
+                text = title,
                 style = MaterialTheme.typography.titleMedium,
                 color = contentColor,
-                fontSize = fontSize.sp,
+                fontSize = textFontSize.sp,
+                maxLines = 1,
                 modifier = Modifier
                     .padding(
                         horizontal = LocalSpacing.current.medium,
                         vertical = LocalSpacing.current.extraSmall
                     )
-                    .constrainAs(text) {
+                    .constrainAs(titleRef) {
                         centerHorizontallyTo(parent, textHorizontallyBias)
                         centerVerticallyTo(parent, textVerticallyBias)
                     }
             )
 
-            val subTextHeight by animateDpAsState(
+            val subTitleAlpha by animateFloatAsState(
+                when (node.value) {
+                    ChatScreenMode.Messages -> 1f
+                    else -> 0f
+                }
+            )
+            Text(
+                text = subTitle,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    textDecoration = TextDecoration.None
+                ),
+                color = contentColor,
+                maxLines = 1,
+                fontSize = subtextFontSize.sp,
+                modifier = Modifier
+                    .graphicsLayer {
+                        alpha = subTitleAlpha
+                        translationY = 12f
+                    }
+                    .padding(
+                        horizontal = LocalSpacing.current.medium,
+                        vertical = LocalSpacing.current.extraSmall
+                    )
+                    .constrainAs(subTitleRef) {
+                        centerHorizontallyTo(parent)
+                        bottom.linkTo(parent.bottom)
+                    }
+            )
+
+            val introduceHeight by animateDpAsState(
                 when (node.value) {
                     ChatScreenMode.ChannelDetail -> 120.dp
                     else -> 0.dp
@@ -111,15 +169,16 @@ fun ChatTopBar(
                 animationSpec = tween(duration, easing = LinearEasing)
             )
             Text(
-                text = "",
+                text = introduce,
+                maxLines = 3,
                 modifier = Modifier
-                    .constrainAs(subText) {
-                        top.linkTo(icon.bottom)
+                    .constrainAs(introduceRef) {
+                        top.linkTo(iconRef.bottom)
                         bottom.linkTo(parent.bottom)
                         centerHorizontallyTo(parent)
                     }
                     .fillMaxWidth()
-                    .height(subTextHeight)
+                    .height(introduceHeight)
             )
         }
     }

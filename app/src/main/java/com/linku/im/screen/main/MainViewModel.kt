@@ -12,6 +12,8 @@ import com.linku.domain.entity.TextMessage
 import com.linku.im.R
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
+import com.linku.im.screen.FastVOCache
+import com.linku.im.screen.main.vo.toMainUI
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
@@ -59,10 +61,14 @@ class MainViewModel @Inject constructor(
                 writable = readable.copy(
                     conversations = conversations
                         .filter { it.type == Conversation.Type.GROUP }
-                        .map { it.toMainUI() },
+                        .mapNotNull {
+                             FastVOCache.getOrPutConversation(it) { it.toMainUI() }
+                        },
                     contracts = conversations
                         .filter { it.type == Conversation.Type.PM }
-                        .map { it.toMainUI() }
+                        .mapNotNull {
+                            FastVOCache.getOrPutConversation(it) { it.toMainUI() }
+                        }
                 )
                 getAllConversationsJob?.cancel()
                 getAllConversationsJob = viewModelScope.launch {

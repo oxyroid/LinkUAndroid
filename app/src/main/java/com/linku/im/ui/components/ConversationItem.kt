@@ -1,4 +1,4 @@
-package com.linku.im.screen.main.composable
+package com.linku.im.ui.components
 
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Lock
 import androidx.compose.material3.*
@@ -15,26 +17,116 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
+import com.linku.domain.entity.Conversation
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
 import com.linku.im.extension.times
-import com.linku.im.screen.main.MainState
-import com.linku.im.ui.components.TextImage
+import com.linku.im.screen.main.vo.ConversationVO
+import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun ConversationItem(
     modifier: Modifier = Modifier,
-    conversation: MainState.ConversationMainUI? = null,
+    conversation: Conversation? = null,
+    onClick: () -> Unit = {}
+) {
+    val shimmerColor = LocalTheme.current.onSurface * 0.3f
+    val onShimmerColor = Color.White
+    val shimmerAnimationSpec: InfiniteRepeatableSpec<Float> by lazy {
+        infiniteRepeatable(
+            animation = tween(
+                durationMillis = 2000,
+                delayMillis = 400
+            ),
+            repeatMode = RepeatMode.Restart
+        )
+    }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .intervalClickable(
+                enabled = conversation != null,
+                onClick = onClick
+            )
+            .padding(
+                horizontal = LocalSpacing.current.medium,
+                vertical = LocalSpacing.current.extraSmall
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircleHeadPicture(
+            model = conversation?.avatar,
+            placeholder = { TextImage(text = conversation?.name ?: "") }
+        )
+        Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
+        Column(
+            modifier = Modifier
+                .padding(
+                    end = LocalSpacing.current.medium,
+                    top = LocalSpacing.current.small,
+                    bottom = LocalSpacing.current.small
+                )
+                .weight(1f),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = conversation?.name ?: "",
+                style = MaterialTheme.typography.titleMedium,
+                color = LocalTheme.current.onSurface,
+                maxLines = 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .placeholder(
+                        visible = conversation == null,
+                        color = shimmerColor,
+                        shape = RoundedCornerShape(4.dp),
+                        highlight = PlaceholderHighlight.shimmer(
+                            highlightColor = onShimmerColor,
+                            animationSpec = shimmerAnimationSpec,
+                        )
+                    ),
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                Text(
+                    text = conversation?.description ?: "",
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .placeholder(
+                            visible = (conversation == null),
+                            color = shimmerColor,
+                            shape = RoundedCornerShape(4.dp),
+                            highlight = PlaceholderHighlight.shimmer(
+                                highlightColor = onShimmerColor,
+                                animationSpec = shimmerAnimationSpec
+                            ),
+                        )
+                        .fillMaxWidth(),
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+    }
+}
+
+
+@Composable
+fun PinnedConversationItem(
+    modifier: Modifier = Modifier,
+    conversation: ConversationVO? = null,
     unreadCount: Int = 0,
     pinned: Boolean = false,
     onClick: () -> Unit = {}
@@ -64,22 +156,22 @@ fun ConversationItem(
                 onClick = onClick
             )
             .padding(
-                horizontal = 12.dp
+                horizontal = LocalSpacing.current.medium,
+                vertical = LocalSpacing.current.extraSmall
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         CircleHeadPicture(
             model = conversation?.image,
-            name = conversation?.name,
-            placeholder = { TextImage(text = conversation?.name ?: "") }
+            placeholder = { TextImage(conversation?.name ?: "") }
         )
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
         Column(
             modifier = Modifier
                 .padding(
-                    end = 12.dp,
-                    top = 8.dp,
-                    bottom = 8.dp
+                    end = LocalSpacing.current.medium,
+                    top = LocalSpacing.current.small,
+                    bottom = LocalSpacing.current.small
                 )
                 .weight(1f),
             verticalArrangement = Arrangement.Center
@@ -124,7 +216,7 @@ fun ConversationItem(
             }
 
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(LocalSpacing.current.small))
         when {
             (unreadCount != 0) -> {
                 Surface(
@@ -134,7 +226,7 @@ fun ConversationItem(
                     Text(
                         text = unreadCount.toString(),
                         color = LocalTheme.current.onPrimary,
-                        modifier = Modifier.padding(horizontal = 8.dp),
+                        modifier = Modifier.padding(horizontal = LocalSpacing.current.small),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -143,42 +235,16 @@ fun ConversationItem(
                 Surface(
                     shape = CircleShape,
                     color = LocalTheme.current.primary,
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier.size(LocalSpacing.current.large)
                 ) {
                     Icon(
                         imageVector = Icons.Sharp.Lock,
                         contentDescription = "",
                         tint = LocalTheme.current.onPrimary,
-                        modifier = Modifier.padding(4.dp)
+                        modifier = Modifier.padding(LocalSpacing.current.extraSmall)
                     )
                 }
             }
         }
     }
 }
-
-@Composable
-private fun CircleHeadPicture(
-    model: Any?,
-    name: String?,
-    modifier: Modifier = Modifier,
-    placeholder: @Composable (String?) -> Unit = {}
-) {
-    SubcomposeAsyncImage(
-        model = model,
-        contentDescription = name,
-        modifier = modifier
-            .padding(vertical = 8.dp)
-            .fillMaxHeight()
-            .aspectRatio(1f)
-            .clip(CircleShape),
-        error = {
-            placeholder(name)
-        },
-        loading = {
-            placeholder(name)
-        }
-    )
-
-}
-

@@ -15,9 +15,11 @@ import com.linku.domain.service.ConversationService
 import com.linku.domain.service.FileService
 import com.linku.domain.service.MessageService
 import com.linku.fs_android.writeFs
+import com.tencent.mmkv.MMKV
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType
@@ -33,6 +35,7 @@ class MessageRepositoryImpl @Inject constructor(
     private val conversationDao: ConversationDao,
     @ApplicationContext private val context: Context,
     private val fileService: FileService,
+    private val mmkv: MMKV,
     private val json: Json,
     private val authenticator: Authenticator
 ) : MessageRepository {
@@ -141,7 +144,6 @@ class MessageRepositoryImpl @Inject constructor(
         return messageDao.getLatestMessageByCid(cid).filterNotNull().map { it.toReadable() }
     }
 
-    private val memory = mutableMapOf<Int, Message?>()
     override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? = when (strategy) {
         Strategy.CacheElseNetwork -> run {
             messageDao.getById(mid)
@@ -152,12 +154,17 @@ class MessageRepositoryImpl @Inject constructor(
                     ?.also { messageDao.insert(it) }
         }
         Strategy.Memory -> {
-            memory.getOrPut(mid) {
-                messageService.getMessageById(mid)
+            val key = "message_$mid"
+            mmkv.decodeString(key)?.let {
+                json.decodeFromString<MessageDTO>(it).toMessage()
+            } ?: run {
+                val message = messageService.getMessageById(mid)
                     .toResult()
                     .getOrNull()
-                    ?.toMessage()
-                    ?.also { messageDao.insert(it) }
+                    ?.also { messageDao.insert(it.toMessage()) }
+                val s = json.encodeToString(message)
+                mmkv.encode(key, s)
+                message?.toMessage()
             }
         }
         Strategy.NetworkThenCache -> {

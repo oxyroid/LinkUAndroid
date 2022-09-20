@@ -11,6 +11,7 @@ import com.linku.domain.repository.*
 import com.linku.domain.service.*
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.network.NetworkConnectivityObserver
+import com.tencent.mmkv.MMKV
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,6 +26,10 @@ object AppModule {
     @Provides
     @Singleton
     fun provideJson(): Json = json
+
+    @Provides
+    @Singleton
+    fun provideMMKV(): MMKV = MMKV.defaultMMKV()
 
     @Provides
     @Singleton

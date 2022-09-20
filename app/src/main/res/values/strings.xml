@@ -82,4 +82,10 @@
     <string name="query_result_user">用户</string>
     <string name="channel_exit">退出频道</string>
     <string name="channel_add_to_desktop">添加到桌面</string>
+    <string name="channel_member_root">所有者</string>
+    <string name="member_count">%s名成员</string>
+    <string name="channel_type_banned">被封禁的会话</string>
+    <string name="channel_type_group">群组</string>
+    <string name="channel_type_pm">私聊</string>
+    <string name="channel_type_unknown">未知</string>
 </resources>
