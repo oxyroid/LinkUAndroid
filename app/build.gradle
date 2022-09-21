@@ -4,10 +4,6 @@ plugins {
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
     id 'kotlinx-serialization'
-    id "org.jlleitschuh.gradle.ktlint"
-}
-ktlint {
-    debug = true
 }
 android {
     namespace 'com.linku.im'
@@ -138,9 +134,6 @@ dependencies {
 
     // uCrop
     implementation 'com.github.yalantis:ucrop:2.2.6'
-
-    // twitter compose rules
-    ktlintRuleset "com.twitter.compose.rules:ktlint:0.0.9"
 
     // mmkv
     implementation 'com.tencent:mmkv:1.2.14'
