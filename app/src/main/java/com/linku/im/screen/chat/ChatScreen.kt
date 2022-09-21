@@ -326,12 +326,6 @@ fun ChatScreen(
                             offsetX += pan.x
                             offsetY += pan.y
                         }
-                        awaitPointerEventScope {
-                            angle = 0f
-                            zoom = 1f
-                            offsetX = 0f
-                            offsetY = 0f
-                        }
                     }
             ) {
                 val model = ImageRequest.Builder(LocalContext.current)
