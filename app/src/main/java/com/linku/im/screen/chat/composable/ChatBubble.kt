@@ -1,6 +1,5 @@
 package com.linku.im.screen.chat.composable
 
-import android.os.Build
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -15,10 +14,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -43,7 +44,6 @@ import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
-import com.linku.im.BuildConfig
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
@@ -63,7 +63,7 @@ fun ChatBubble(
     config: BubbleConfig,
     hasFocus: Boolean,
     modifier: Modifier = Modifier,
-    onPreview: (Int) -> Unit,
+    onImagePreview: (String, Rect) -> Unit,
     onProfile: (Int) -> Unit,
     onScroll: (Int) -> Unit,
     onReply: (Int) -> Unit,
@@ -114,6 +114,7 @@ fun ChatBubble(
                 },
             horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End
         ) {
+            var rect: Rect by remember { mutableStateOf(Rect.Zero) }
             ElevatedCard(
                 shape = RoundedCornerShape(
                     bottomStart = if (isAnother && isEndOfGroup) 0.dp else 12.dp,
@@ -181,9 +182,6 @@ fun ChatBubble(
                                 onLongClick = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                     onFocus(message.id)
-                                },
-                                onDoubleClick = {
-                                    onPreview(message.id)
                                 }
                             )
                             .padding(
@@ -244,15 +242,23 @@ fun ChatBubble(
                                     message = message,
                                     contentDescription = "Image Message",
                                     isPending = config.sendState == Message.STATE_PENDING,
-                                    modifier = Modifier.combinedClickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = LocalIndication.current,
-                                        onClick = { onPreview(message.id) },
-                                        onLongClick = {
-                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            onFocus(message.id)
+                                    modifier = Modifier
+                                        .onGloballyPositioned {
+                                            rect = it.boundsInWindow()
                                         }
-                                    ),
+                                        .combinedClickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = LocalIndication.current,
+                                            onClick = {
+                                                onImagePreview(message.url, rect)
+                                            },
+                                            onLongClick = {
+                                                hapticFeedback.performHapticFeedback(
+                                                    HapticFeedbackType.LongPress
+                                                )
+                                                onFocus(message.id)
+                                            }
+                                        ),
                                 )
                             }
                             is GraphicsMessage -> {
@@ -263,17 +269,23 @@ fun ChatBubble(
                                         message = message,
                                         contentDescription = "Graphics Message",
                                         isPending = config.sendState == Message.STATE_PENDING,
-                                        modifier = Modifier.combinedClickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = LocalIndication.current,
-                                            onClick = { onPreview(message.id) },
-                                            onLongClick = {
-                                                hapticFeedback.performHapticFeedback(
-                                                    HapticFeedbackType.LongPress
-                                                )
-                                                onFocus(message.id)
+                                        modifier = Modifier
+                                            .onGloballyPositioned {
+                                                rect = it.boundsInWindow()
                                             }
-                                        ),
+                                            .combinedClickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = LocalIndication.current,
+                                                onClick = {
+                                                    onImagePreview(message.url, rect)
+                                                },
+                                                onLongClick = {
+                                                    hapticFeedback.performHapticFeedback(
+                                                        HapticFeedbackType.LongPress
+                                                    )
+                                                    onFocus(message.id)
+                                                }
+                                            ),
                                     )
                                     Text(
                                         text = message.text,
@@ -533,16 +545,16 @@ private fun ThumbView(
             model = model,
             imageLoader = loader
         )
+
         Image(
             painter = painter,
             contentDescription = contentDescription,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(4 / 3f)
-                .apply {
-                    if (isPending) {
-                        blur(8.dp)
-                    }
+                .graphicsLayer {
+                    if (isPending)
+                        renderEffect = BlurEffect(8f, 8f)
                 },
             contentScale = ContentScale.Crop,
         )
@@ -574,7 +586,7 @@ fun ChatBubbleConstraintPreview1() {
             )
         ),
         hasFocus = false,
-        onPreview = { },
+        onImagePreview = { _, _ -> },
         onProfile = {},
         onScroll = {},
         onFocus = {},
@@ -610,7 +622,7 @@ fun ChatBubbleConstraintPreview2() {
             )
         ),
         hasFocus = false,
-        onPreview = {},
+        onImagePreview = { _, _ -> },
         onProfile = {},
         onScroll = {},
         onResend = {},
@@ -646,7 +658,7 @@ fun ChatBubbleConstraintPreview1Dark() {
             )
         ),
         hasFocus = false,
-        onPreview = {},
+        onImagePreview = { _, _ -> },
         onProfile = {},
         onScroll = {},
         onReply = {},
@@ -682,7 +694,7 @@ fun ChatBubbleConstraintPreview2Dark() {
             )
         ),
         hasFocus = false,
-        onPreview = {},
+        onImagePreview = { _, _ -> },
         onReply = {},
         onProfile = {},
         onResend = {},

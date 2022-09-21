@@ -8,9 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,15 +28,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.*
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.*
 import androidx.core.os.bundleOf
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.ImageLoader
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
@@ -47,10 +52,7 @@ import com.linku.domain.struct.LinkedNode
 import com.linku.domain.struct.hasNext
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
-import com.linku.im.screen.chat.composable.ChatBubble
-import com.linku.im.screen.chat.composable.ChatTextField
-import com.linku.im.screen.chat.composable.ChatTimestamp
-import com.linku.im.screen.chat.composable.ChatTopBar
+import com.linku.im.screen.chat.composable.*
 import com.linku.im.screen.chat.vo.MessageVO
 import com.linku.im.ui.components.*
 import com.linku.im.ui.theme.LocalNavController
@@ -129,7 +131,7 @@ fun ChatScreen(
                             LinkedNode(ChatScreenMode.ChannelDetail, node)
                         ChatScreenMode.ChannelDetail -> {}
                         is ChatScreenMode.MemberDetail -> {}
-                        is ChatScreenMode.MessageDetail -> {}
+                        is ChatScreenMode.ImageDetail -> {}
                     }
                 },
                 onNavClick = { mode ->
@@ -151,8 +153,8 @@ fun ChatScreen(
                 onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
                 onResend = { viewModel.onEvent(ChatEvent.ResendMessage(it)) },
                 onCancel = { viewModel.onEvent(ChatEvent.CancelMessage(it)) },
-                onPreview = { mid ->
-                    node = LinkedNode(ChatScreenMode.MessageDetail(mid), node)
+                onImagePreview = { mid, rect ->
+                    node = LinkedNode(ChatScreenMode.ImageDetail(mid, rect), node)
                 },
                 onProfile = {
                     navController.navigate(
@@ -268,8 +270,95 @@ fun ChatScreen(
                 }
             }
         },
-        messageDetailContent = { mid ->
+        imageDetailContent = { s, rect ->
+            var isShowed by remember { mutableStateOf(false) }
 
+            val config = LocalConfiguration.current
+            LaunchedEffect(Unit) {
+                println("sss=ScreenW=${config.screenWidthDp}")
+                println("sss=ScreenH=${config.screenHeightDp}")
+            }
+            val animatedRadius by animateDpAsState(
+                if (isShowed) 0.dp
+                else 8.dp
+            )
+            val density = LocalDensity.current
+            val animatedOffset by animateIntOffsetAsState(
+                if (isShowed) IntOffset.Zero
+                else rect.topLeft.round()
+            )
+            val animatedWidthDp by animateDpAsState(
+                if (isShowed) config.screenWidthDp.dp
+                else (rect.width / density.density).dp
+            )
+            val animatedHeightDp by animateDpAsState(
+                if (isShowed) config.screenHeightDp.dp
+                else (rect.height / density.density).dp
+            )
+
+            var angle by remember { mutableStateOf(0f) }
+            var zoom by remember { mutableStateOf(1f) }
+            var offsetX by remember { mutableStateOf(0f) }
+            var offsetY by remember { mutableStateOf(0f) }
+
+            Surface(
+                modifier = Modifier
+                    .offset {
+                        animatedOffset + Offset(
+                            offsetX,
+                            offsetY
+                        ).round()
+                    }
+                    .graphicsLayer(
+                        scaleX = zoom,
+                        scaleY = zoom,
+                        rotationZ = angle
+                    )
+                    .size(
+                        width = animatedWidthDp,
+                        height = animatedHeightDp
+                    )
+                    .clip(RoundedCornerShape(animatedRadius))
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, gestureZoom, gestureRotate ->
+                            angle += gestureRotate
+                            zoom *= gestureZoom
+                            offsetX += pan.x
+                            offsetY += pan.y
+                        }
+                        awaitPointerEventScope {
+                            angle = 0f
+                            zoom = 1f
+                            offsetX = 0f
+                            offsetY = 0f
+                        }
+                    }
+            ) {
+                val model = ImageRequest.Builder(LocalContext.current)
+                    .data(s)
+                    .build()
+                val loader = ImageLoader.Builder(LocalContext.current)
+                    .components {
+                        add(ImageDecoderDecoder.Factory())
+                    }
+                    .build()
+                val painter = rememberAsyncImagePainter(
+                    model = model,
+                    imageLoader = loader
+                )
+                Image(
+                    painter = painter,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            LaunchedEffect(s, rect) {
+                if (!isShowed) {
+                    delay(200L)
+                    isShowed = true
+                }
+            }
         }
     )
 
@@ -296,7 +385,7 @@ private fun ChatScaffold(
     listContent: @Composable BoxScope.() -> Unit,
     bottomSheetContent: @Composable BoxScope.() -> Unit,
     channelDetailContent: @Composable () -> Unit,
-    messageDetailContent: @Composable (Int) -> Unit,
+    imageDetailContent: @Composable (String, Rect) -> Unit,
     originPreview: @Composable BoxScope.() -> Unit,
     onListHeightChanged: (IntSize) -> Unit
 ) {
@@ -307,7 +396,9 @@ private fun ChatScaffold(
     ) { innerPadding ->
         Crossfade(
             targetState = node.value,
-            modifier = Modifier.navigationBarsPadding()
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding()
         ) { mode ->
             when (mode) {
                 ChatScreenMode.Messages -> {
@@ -336,12 +427,29 @@ private fun ChatScaffold(
                 ) {
                     channelDetailContent()
                 }
-                is ChatScreenMode.MessageDetail -> Box(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) {
-                    messageDetailContent(mode.mid)
+                is ChatScreenMode.ImageDetail -> {
+                    var isShowed by remember {
+                        mutableStateOf(false)
+                    }
+                    val mDetailBackground by animateColorAsState(
+                        if (isShowed) Color.Black else Color.Unspecified
+                    )
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .drawWithContent {
+                                drawRect(mDetailBackground)
+                                drawContent()
+                            }
+                    ) {
+                        imageDetailContent(mode.s, mode.rect)
+                    }
+                    LaunchedEffect(Unit) {
+                        if (!isShowed) {
+                            delay(120L)
+                            isShowed = true
+                        }
+                    }
                 }
                 is ChatScreenMode.MemberDetail -> TODO()
             }
@@ -359,7 +467,7 @@ private fun ListContent(
     onReply: (Int) -> Unit,
     onResend: (Int) -> Unit,
     onCancel: (Int) -> Unit,
-    onPreview: (Int) -> Unit,
+    onImagePreview: (String, Rect) -> Unit,
     onProfile: (Int) -> Unit,
     onScroll: (Int) -> Unit,
     onFocus: (Int) -> Unit,
@@ -399,7 +507,7 @@ private fun ListContent(
                         message = current.message,
                         config = config,
                         hasFocus = focusMessageId == current.message.id,
-                        onPreview = onPreview,
+                        onImagePreview = onImagePreview,
                         onProfile = onProfile,
                         onScroll = onScroll,
                         onFocus = onFocus,

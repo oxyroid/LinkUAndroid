@@ -22,12 +22,11 @@ class WriteFileSchemeImpl30(
     private val resolver: Resolver,
     private val cryptoManager: CryptoManager
 ) : WriteFileScheme {
-    override fun put(uri: Uri?): File? {
+    override fun put(uri: Uri?): File? = run {
         uri ?: return null
-        val s = uri.toString()
-        return try {
-            when {
-                s.startsWith(SCHEME_CONTENT) -> {
+        try {
+            when (uri.scheme) {
+                SCHEME_CONTENT -> {
                     val fileName = resolver.getDisplay(uri) ?: return null
                     val file = File(context.externalCacheDir, fileName)
                     if (file.exists()) file.delete()
@@ -37,7 +36,7 @@ class WriteFileSchemeImpl30(
                     }
                     file
                 }
-                s.startsWith(SCHEME_FILE) -> {
+                SCHEME_FILE -> {
                     val file = uri.toFile()
                     File(context.externalCacheDir, file.name)
                 }

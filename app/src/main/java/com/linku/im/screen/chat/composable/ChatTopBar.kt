@@ -62,7 +62,7 @@ fun ChatTopBar(
             when (node.value) {
                 ChatScreenMode.ChannelDetail -> Dp.Unspecified
                 is ChatScreenMode.MemberDetail -> 0.dp
-                is ChatScreenMode.MessageDetail -> 0.dp
+                is ChatScreenMode.ImageDetail -> 0.dp
                 ChatScreenMode.Messages -> Dp.Unspecified
             }
         )
@@ -107,13 +107,12 @@ fun ChatTopBar(
                 },
                 animationSpec = tween(duration, easing = LinearEasing)
             )
-            val subtextFontSize by animateFloatAsState(
+
+            val titleAlpha by animateFloatAsState(
                 when (node.value) {
-                    ChatScreenMode.Messages -> 10f
-                    ChatScreenMode.ChannelDetail -> 14f
+                    ChatScreenMode.Messages, ChatScreenMode.ChannelDetail -> 1f
                     else -> 0f
-                },
-                animationSpec = tween(duration, easing = LinearEasing)
+                }
             )
             Text(
                 text = title,
@@ -122,6 +121,9 @@ fun ChatTopBar(
                 fontSize = textFontSize.sp,
                 maxLines = 1,
                 modifier = Modifier
+                    .graphicsLayer {
+                        alpha = titleAlpha
+                    }
                     .padding(
                         horizontal = LocalSpacing.current.medium,
                         vertical = LocalSpacing.current.extraSmall
@@ -132,6 +134,14 @@ fun ChatTopBar(
                     }
             )
 
+            val subtextFontSize by animateFloatAsState(
+                when (node.value) {
+                    ChatScreenMode.Messages -> 10f
+                    ChatScreenMode.ChannelDetail -> 14f
+                    else -> 0f
+                },
+                animationSpec = tween(duration, easing = LinearEasing)
+            )
             val subTitleAlpha by animateFloatAsState(
                 when (node.value) {
                     ChatScreenMode.Messages -> 1f
