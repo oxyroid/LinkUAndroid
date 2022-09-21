@@ -1,5 +1,6 @@
 package com.linku.im.screen.chat.composable
 
+import android.os.Build
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -42,6 +43,7 @@ import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
+import com.linku.im.BuildConfig
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
 import com.linku.im.extension.intervalClickable
