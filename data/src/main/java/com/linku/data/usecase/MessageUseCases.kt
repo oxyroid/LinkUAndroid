@@ -5,12 +5,14 @@ import com.linku.domain.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.Message
 import com.linku.domain.repository.MessageRepository
+import com.linku.domain.service.MessagePagingLocalSource
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 data class MessageUseCases @Inject constructor(
     val observeAllMessages: ObserveAllMessagesUseCase,
     val observeMessages: ObserveMessagesUseCase,
+    val observePagedMessages: ObservePagedMessagesUseCase,
     val observeLatestMessage: ObserveLatestMessagesUseCase,
     val textMessage: TextMessageUseCase,
     val imageMessage: ImageMessageUseCase,
@@ -112,5 +114,13 @@ data class ObserveMessagesUseCase @Inject constructor(
 ) {
     operator fun invoke(cid: Int): Flow<List<Message>> {
         return repository.incoming(cid)
+    }
+}
+
+data class ObservePagedMessagesUseCase @Inject constructor(
+    private val repository: MessageRepository
+) {
+    operator fun invoke(cid: Int, pageSize: Int): MessagePagingLocalSource {
+        return repository.paging(cid, pageSize)
     }
 }

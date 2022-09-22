@@ -61,4 +61,8 @@ dependencies {
     // mmkv
     implementation 'com.tencent:mmkv:1.2.14'
 
+    // paging
+    implementation "androidx.paging:paging-runtime:$paging_version"
+    implementation "androidx.paging:paging-compose:1.0.0-alpha16"
+
 }

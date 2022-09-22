@@ -47,7 +47,7 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
-import com.linku.domain.entity.Message
+import com.linku.domain.entity.*
 import com.linku.domain.struct.LinkedNode
 import com.linku.domain.struct.hasNext
 import com.linku.im.R
@@ -73,7 +73,8 @@ fun ChatScreen(
     val navController = LocalNavController.current
     val hostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
-    val messages by viewModel.messageFlow.collectAsState(initial = emptyList())
+    val messages by viewModel.messageFlow.collectAsState(emptyList())
+//    val messagesPaged = viewModel.pagingFlow.collectAsLazyPagingItems()
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         viewModel.onEvent(ChatEvent.OnFile(uri))
     }
@@ -494,13 +495,11 @@ private fun ListContent(
                         .height(spacing)
                 )
             }
-            messages.forEach { current ->
-                val config = current.config
+            messages.forEach {
                 item {
                     ChatBubble(
-                        message = current.message,
-                        config = config,
-                        hasFocus = focusMessageId == current.message.id,
+                        message = it.message,
+                        focusId = focusMessageId,
                         onImagePreview = onImagePreview,
                         onProfile = onProfile,
                         onScroll = onScroll,
@@ -509,16 +508,18 @@ private fun ListContent(
                         onReply = onReply,
                         onResend = onResend,
                         onCancel = onCancel,
-                        modifier = Modifier.padding(
-                            top = 6.dp,
-                            bottom = if (config.isEndOfGroup) 6.dp else 0.dp
-                        )
+                        config = it.config,
+                        modifier = Modifier
+                            .padding(
+                                top = 6.dp,
+                                bottom = if (it.config.isEndOfGroup) 6.dp else 0.dp
+                            )
                     )
                 }
-                config.isShowTime.ifTrue {
+                it.config.isShowTime.ifTrue {
                     stickyHeader {
-                        val message = remember(current) {
-                            current.message
+                        val message = remember(it) {
+                            it.message
                         }
                         Spacer(Modifier.height(LocalSpacing.current.extraSmall))
                         ChatTimestamp(timestamp = message.timestamp)

@@ -13,6 +13,7 @@ import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ConversationService
 import com.linku.domain.service.FileService
+import com.linku.domain.service.MessagePagingLocalSource
 import com.linku.domain.service.MessageService
 import com.linku.fs_android.writeFs
 import com.tencent.mmkv.MMKV
@@ -26,7 +27,6 @@ import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import javax.inject.Inject
-import kotlin.Result
 
 class MessageRepositoryImpl @Inject constructor(
     private val messageService: MessageService,
@@ -138,6 +138,12 @@ class MessageRepositoryImpl @Inject constructor(
                     else -> null
                 }
             }
+        }
+
+    private val pagingMap = mutableMapOf<Int, MessagePagingLocalSource>()
+    override fun paging(cid: Int, pageSize: Int): MessagePagingLocalSource =
+        pagingMap.getOrPut(cid) {
+            MessagePagingLocalSource(messageDao, cid)
         }
 
     override fun observeLatestMessages(cid: Int): Flow<Message> {

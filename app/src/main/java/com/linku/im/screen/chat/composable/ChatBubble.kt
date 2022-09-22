@@ -61,7 +61,7 @@ private val HORIZONTAL_OUT_PADDING = 18.dp
 fun ChatBubble(
     message: Message,
     config: BubbleConfig,
-    hasFocus: Boolean,
+    focusId: Int?,
     modifier: Modifier = Modifier,
     onImagePreview: (String, Rect) -> Unit,
     onProfile: (Int) -> Unit,
@@ -73,6 +73,7 @@ fun ChatBubble(
     onDismissFocus: () -> Unit,
     theme: CustomTheme = LocalTheme.current
 ) {
+    val hasFocus = remember(focusId, message.id) { focusId == message.id }
     val isAnother = remember(config) { config.isAnother }
     val isEndOfGroup = remember(config) { config.isEndOfGroup }
     val backgroundColor: Color = remember(theme, isAnother) {
@@ -559,149 +560,4 @@ private fun ThumbView(
             contentScale = ContentScale.Crop,
         )
     }
-}
-
-
-@Composable
-@Preview(
-    name = "Other unknown message",
-    group = "Light",
-    showBackground = true,
-    backgroundColor = 0xff7eb2a8
-)
-fun ChatBubbleConstraintPreview1() {
-    ChatBubble(
-        message = Message.PREVIEW,
-        config = BubbleConfig.Group(
-            other = true,
-            isShowTime = true,
-            avatarVisibility = true,
-            nameVisibility = true,
-            name = "Peter",
-            isEndOfGroup = true,
-            reply = ReplyConfig(
-                repliedMid = 1,
-                index = 1,
-                display = "Replied Message"
-            )
-        ),
-        hasFocus = false,
-        onImagePreview = { _, _ -> },
-        onProfile = {},
-        onScroll = {},
-        onFocus = {},
-        onReply = {},
-        onCancel = {},
-        onResend = {},
-        onDismissFocus = {},
-        theme = defaultLight
-    )
-}
-
-@Composable
-@Preview(
-    name = "Own unknown message",
-    group = "Light",
-    showBackground = true,
-    backgroundColor = 0xff7eb2a8
-)
-fun ChatBubbleConstraintPreview2() {
-    ChatBubble(
-        message = Message.PREVIEW,
-        config = BubbleConfig.Group(
-            other = false,
-            isShowTime = true,
-            avatarVisibility = false,
-            nameVisibility = true,
-            name = "Peter",
-            isEndOfGroup = true,
-            reply = ReplyConfig(
-                repliedMid = 1,
-                index = 1,
-                display = "Replied Message"
-            )
-        ),
-        hasFocus = false,
-        onImagePreview = { _, _ -> },
-        onProfile = {},
-        onScroll = {},
-        onResend = {},
-        onReply = {},
-        onFocus = {},
-        onCancel = {},
-        onDismissFocus = {},
-        theme = defaultLight
-    )
-}
-
-@Composable
-@Preview(
-    name = "Other unknown message",
-    group = "Dark",
-    showBackground = true,
-    backgroundColor = 0xff141622
-)
-fun ChatBubbleConstraintPreview1Dark() {
-    ChatBubble(
-        message = Message.PREVIEW,
-        config = BubbleConfig.Group(
-            other = true,
-            isShowTime = true,
-            avatarVisibility = true,
-            nameVisibility = true,
-            name = "Peter",
-            isEndOfGroup = true,
-            reply = ReplyConfig(
-                repliedMid = 1,
-                index = 1,
-                display = "Replied Message"
-            )
-        ),
-        hasFocus = false,
-        onImagePreview = { _, _ -> },
-        onProfile = {},
-        onScroll = {},
-        onReply = {},
-        onFocus = {},
-        onResend = {},
-        onCancel = {},
-        onDismissFocus = {},
-        theme = defaultDark
-    )
-}
-
-@Composable
-@Preview(
-    name = "Own unknown message",
-    group = "Dark",
-    showBackground = true,
-    backgroundColor = 0xff141622
-)
-fun ChatBubbleConstraintPreview2Dark() {
-    ChatBubble(
-        message = Message.PREVIEW,
-        config = BubbleConfig.Group(
-            other = false,
-            isShowTime = true,
-            avatarVisibility = false,
-            nameVisibility = true,
-            name = "Peter",
-            isEndOfGroup = true,
-            reply = ReplyConfig(
-                repliedMid = 1,
-                index = 1,
-                display = "Replied Message"
-            )
-        ),
-        hasFocus = false,
-        onImagePreview = { _, _ -> },
-        onReply = {},
-        onProfile = {},
-        onResend = {},
-        onScroll = {},
-        onFocus = {},
-        onCancel = {},
-        onDismissFocus = {},
-        theme = defaultDark
-    )
 }

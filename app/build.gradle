@@ -82,7 +82,7 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
 
-    // Constraint Layout
+    // constraint Layout
     implementation "androidx.constraintlayout:constraintlayout-compose:$constraint_version"
 
     // hilt
@@ -112,6 +112,10 @@ dependencies {
 
     // retrofit
     implementation "com.squareup.retrofit2:retrofit:$retrofit_version"
+
+    // paging
+    implementation "androidx.paging:paging-runtime:$paging_version"
+    implementation "androidx.paging:paging-compose:1.0.0-alpha16"
 
     // accompanist
     implementation "com.google.accompanist:accompanist-navigation-animation:$accompanist_version"

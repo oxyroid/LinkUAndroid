@@ -30,8 +30,11 @@ interface MessageDao {
     @Query("UPDATE MESSAGE SET sendState = 2 WHERE uuid = :uuid")
     suspend fun failedStagingMessage(uuid: String)
 
-    @Query("SELECT * FROM Message")
+    @Query("SELECT * FROM Message ORDER BY timestamp DESC")
     suspend fun getAll(): List<Message>
+
+    @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC")
+    fun getAllByCid(cid: Int): List<Message>
 
     @Query("SELECT * FROM Message WHERE id = :id")
     suspend fun getById(id: Int): Message?

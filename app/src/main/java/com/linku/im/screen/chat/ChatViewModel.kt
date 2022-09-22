@@ -3,6 +3,7 @@ package com.linku.im.screen.chat
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
+import androidx.paging.*
 import com.linku.data.usecase.*
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
@@ -17,16 +18,16 @@ import com.linku.im.extension.isToday
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.chat.composable.BubbleConfig
 import com.linku.im.screen.chat.composable.ReplyConfig
+import com.linku.im.screen.chat.vo.ChatVO
 import com.linku.im.screen.chat.vo.MessageVO
+import com.linku.im.screen.chat.vo.calculateAvatarSeparator
+import com.linku.im.screen.chat.vo.calculateTimeSeparator
 import com.thxbrop.suggester.all
 import com.thxbrop.suggester.any
 import com.thxbrop.suggester.suggestAny
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -40,11 +41,14 @@ class ChatViewModel @Inject constructor(
     private val authenticator: Authenticator,
     private val applicationUseCases: ApplicationUseCases
 ) : BaseViewModel<ChatState, ChatEvent>(ChatState()) {
-    private var _messageFlow = MutableStateFlow(emptyList<MessageVO>())
+    private val _messageFlow = MutableStateFlow(emptyList<MessageVO>())
     val messageFlow: SharedFlow<List<MessageVO>> = _messageFlow
 
-    private var _memberFlow = MutableStateFlow(emptyList<Member>())
+    private val _memberFlow = MutableStateFlow(emptyList<Member>())
     val memberFlow: SharedFlow<List<Member>> = _memberFlow
+
+    private var _pagingFlow: Flow<PagingData<ChatVO>> = flow { }
+    val pagingFlow: Flow<PagingData<ChatVO>> get() = _pagingFlow
 
     override fun onEvent(event: ChatEvent) {
         when (event) {
@@ -84,6 +88,49 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    private fun initial(event: ChatEvent.Initialize) {
+//        _pagingFlow = messageUseCases.observePagedMessages(event.cid, 10).let {
+//            Pager(PagingConfig(10)) { it }
+//                .flow
+//                .map { pagingData ->
+//                    pagingData
+//                        .map { ChatVO.Data(it, it.uid != authenticator.currentUID) }
+//                        .insertSeparators { before, after -> before calculateTimeSeparator after }
+//                        .insertSeparators { before, after ->
+//                            with(userUseCases) {
+//                                before calculateAvatarSeparator after
+//                            }
+//                        }
+//
+//                }
+//                .cachedIn(viewModelScope)
+//        }
+        writable = readable.copy(
+            cid = event.cid
+        )
+        conversationUseCases.observeConversation(event.cid)
+            .onEach { conversation ->
+                writable = readable.copy(
+                    title = conversation.name,
+                    subTitle = when (conversation.type) {
+                        Conversation.Type.BANNED -> R.string.channel_type_banned
+                        Conversation.Type.GROUP -> R.string.channel_type_group
+                        Conversation.Type.PM -> R.string.channel_type_pm
+                        Conversation.Type.UNKNOWN -> R.string.channel_type_unknown
+                    }.let(applicationUseCases.getString::invoke),
+                    introduce = conversation.description,
+                    cid = conversation.id,
+                    type = conversation.type
+                )
+            }
+            .launchIn(viewModelScope)
+
+        conversationUseCases.fetchConversation(event.cid).launchIn(viewModelScope)
+
+        writable = readable.copy(
+            emojis = emojiUseCases.getAll()
+        )
+    }
 
     private var syncingMessagesJob: Job? = null
     private fun syncing() {
@@ -251,39 +298,13 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun sendMessage() {
+        val isUriEmpty = readable.uri == null
+        val isTextEmpty = readable.textFieldValue.text.isBlank()
         when {
-            readable.uri == null -> sendTextMessage()
-            readable.textFieldValue.text.isBlank() -> sendImageMessage()
-            else -> sendGraphicsMessage()
+            isUriEmpty && !isTextEmpty -> sendTextMessage()
+            !isUriEmpty && isTextEmpty -> sendImageMessage()
+            !isUriEmpty && !isTextEmpty -> sendGraphicsMessage()
         }
-    }
-
-    private fun initial(event: ChatEvent.Initialize) {
-        writable = readable.copy(
-            cid = event.cid
-        )
-        conversationUseCases.observeConversation(event.cid)
-            .onEach { conversation ->
-                writable = readable.copy(
-                    title = conversation.name,
-                    subTitle = when (conversation.type) {
-                        Conversation.Type.BANNED -> R.string.channel_type_banned
-                        Conversation.Type.GROUP -> R.string.channel_type_group
-                        Conversation.Type.PM -> R.string.channel_type_pm
-                        Conversation.Type.UNKNOWN -> R.string.channel_type_unknown
-                    }.let { applicationUseCases.getString(it) },
-                    introduce = conversation.description,
-                    cid = conversation.id,
-                    type = conversation.type
-                )
-            }
-            .launchIn(viewModelScope)
-
-        conversationUseCases.fetchConversation(event.cid).launchIn(viewModelScope)
-
-        writable = readable.copy(
-            emojis = emojiUseCases.getAll()
-        )
     }
 
     private fun sendGraphicsMessage() {
