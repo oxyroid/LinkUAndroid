@@ -10,7 +10,7 @@ buildscript {
         nav_version = "2.5.2"
         retrofit_version = "2.9.0"
         accompanist_version = "0.26.3-beta"
-        acraVersion = "5.9.6"
+        acra_version = "5.9.6"
         appyx_version = "1.0-alpha08"
         paging_version = "3.1.1"
     }
