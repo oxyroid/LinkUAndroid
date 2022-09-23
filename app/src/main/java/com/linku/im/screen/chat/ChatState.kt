@@ -16,7 +16,7 @@ data class ChatState(
     val type: Conversation.Type = Conversation.Type.PM,
     val textFieldValue: TextFieldValue = TextFieldValue(),
     val emojis: List<Emoji> = emptyList(),
-    val expended: Boolean = false,
+    val emojiSpanExpanded: Boolean = false,
     val uri: Uri? = null,
     val firstVisibleIndex: Int = 0,
     val offset: Int = 0,

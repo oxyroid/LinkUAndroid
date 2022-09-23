@@ -11,7 +11,7 @@ sealed class ChatEvent {
     data class OnEmoji(val emoji: String) : ChatEvent()
     data class OnScroll(val index: Int, val offset: Int) : ChatEvent()
     data class OnFile(val uri: Uri?) : ChatEvent()
-    data class OnExpanded(val value: Boolean) : ChatEvent()
+    data class OnEmojiSpanExpanded(val value: Boolean) : ChatEvent()
     data class OnReply(val mid: Int?) : ChatEvent()
     object ReadAll : ChatEvent()
     object FetchChannelDetail : ChatEvent()

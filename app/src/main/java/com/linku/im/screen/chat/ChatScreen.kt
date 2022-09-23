@@ -198,12 +198,12 @@ fun ChatScreen(
                         text = state.textFieldValue,
                         uri = state.uri,
                         emojis = state.emojis,
-                        expended = state.expended,
+                        expended = state.emojiSpanExpanded,
                         onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
                         onFile = { permissionState.launchPermissionRequest() },
                         onText = { viewModel.onEvent(ChatEvent.OnTextChange(it)) },
                         onEmoji = { viewModel.onEvent(ChatEvent.OnEmoji(it)) },
-                        onExpanded = { viewModel.onEvent(ChatEvent.OnExpanded(!state.expended)) }
+                        onExpanded = { viewModel.onEvent(ChatEvent.OnEmojiSpanExpanded(!state.emojiSpanExpanded)) }
                     )
                 }
             )
