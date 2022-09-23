@@ -50,7 +50,7 @@ import com.linku.im.BuildConfig
 import com.linku.im.R
 import com.linku.im.extension.ifFalse
 import com.linku.im.extension.ifTrue
-import com.linku.im.extension.intervalClickable
+import com.linku.im.extension.compose.layout.intervalClickable
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.screen.introduce.util.SquireCropImage

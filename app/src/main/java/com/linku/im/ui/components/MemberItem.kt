@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,18 +23,17 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
-import com.linku.domain.entity.Member
 import com.linku.im.R
-import com.linku.im.extension.intervalClickable
-import com.linku.im.extension.times
+import com.linku.im.extension.compose.core.times
+import com.linku.im.extension.compose.layout.intervalClickable
+import com.linku.im.screen.chat.vo.MemberVO
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun MemberItem(
     modifier: Modifier = Modifier,
-    member: Member? = null,
-    avatar: String?,
+    member: MemberVO? = null,
     onClick: () -> Unit = {}
 ) {
     val shimmerColor = LocalTheme.current.onSurface * 0.8f
@@ -57,12 +57,13 @@ fun MemberItem(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val display = remember(member) {
+            member?.memberName?.ifEmpty { member.username }.orEmpty()
+        }
         CircleHeadPicture(
-            model = avatar,
+            model = member?.avatar,
             placeholder = {
-                TextImage(
-                    text = member?.name ?: "",
-                )
+                TextImage(display)
             },
             modifier = Modifier.padding(
                 horizontal = LocalSpacing.current.medium,
@@ -80,7 +81,7 @@ fun MemberItem(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = member?.name ?: "",
+                text = member?.username.orEmpty(),
                 style = MaterialTheme.typography.titleMedium,
                 color = LocalTheme.current.onSurface,
                 maxLines = 1,
@@ -99,12 +100,15 @@ fun MemberItem(
             )
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
-                    text = when {
-                        member?.root == true -> stringResource(R.string.channel_member_root)
-                        else -> ""
+                    text = when  {
+                        member == null -> ""
+                        member.admin -> stringResource(R.string.channel_member_root)
+                        else -> member.memberName
                     },
                     color = when {
-                        member?.root == true -> LocalTheme.current.primary
+                        member == null -> Color.Unspecified
+                        member.admin -> LocalTheme.current.primary
+                        member.memberName.isNotEmpty() -> LocalTheme.current.primary
                         else -> Color.Unspecified
                     },
                     maxLines = 1,

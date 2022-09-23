@@ -32,8 +32,8 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.extension.intervalClickable
-import com.linku.im.extension.times
+import com.linku.im.extension.compose.layout.intervalClickable
+import com.linku.im.extension.compose.core.times
 import com.linku.im.screen.Screen
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.PinnedConversationItem
