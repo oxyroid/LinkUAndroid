@@ -34,12 +34,10 @@ class WriteFileSchemeImpl30(
                     resolver.openInputStream(uri).use { input ->
                         Files.copy(input, file.toPath())
                     }
+                    file.createNewFile()
                     file
                 }
-                SCHEME_FILE -> {
-                    val file = uri.toFile()
-                    File(context.externalCacheDir, file.name)
-                }
+                SCHEME_FILE -> uri.toFile()
                 else -> null
             }
         } catch (e: Exception) {
