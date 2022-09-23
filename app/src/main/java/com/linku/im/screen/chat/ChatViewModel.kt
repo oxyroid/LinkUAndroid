@@ -4,6 +4,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.*
+import com.linku.im.screen.chat.ChatEvent.*
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
@@ -50,65 +51,25 @@ class ChatViewModel @Inject constructor(
     private val _memberFlow = MutableStateFlow(emptyList<MemberVO>())
     val memberFlow: SharedFlow<List<MemberVO>> = _memberFlow
 
-    override fun onEvent(event: ChatEvent) {
-        when (event) {
-            is ChatEvent.Initialize -> initial(event)
-            is ChatEvent.OnTextChange -> onTextChange(event)
-            is ChatEvent.OnScroll -> onScroll(event)
-            is ChatEvent.OnFile -> onFile(event)
-            is ChatEvent.OnEmoji -> onEmoji(event)
-            is ChatEvent.OnExpanded -> onExpanded(event)
-            is ChatEvent.OnReply -> onReply(event)
-            is ChatEvent.OnFocus -> onFocus(event)
-            is ChatEvent.ResendMessage -> TODO()
-            is ChatEvent.CancelMessage -> TODO()
-            ChatEvent.ReadAll -> TODO()
-            ChatEvent.SendMessage -> sendMessage()
-            ChatEvent.Syncing -> syncing()
-            ChatEvent.FetchChannelDetail -> fetchChannelDetail()
-        }
+    override fun onEvent(event: ChatEvent) = when (event) {
+        is Initialize -> initial(event)
+        Syncing -> syncing()
+        FetchChannelDetail -> fetchChannelDetail()
+        is OnTextChange -> onTextChange(event)
+        is OnEmoji -> onEmoji(event)
+        is OnFile -> onFile(event)
+        is OnScroll -> onScroll(event)
+        is OnReply -> onReply(event)
+        is OnFocus -> onFocus(event)
+        is OnEmojiSpanExpanded -> onEmojiSpanExpanded(event)
+        SendMessage -> sendMessage()
+        is ResendMessage -> TODO()
+        is CancelMessage -> TODO()
+        ReadAll -> TODO()
     }
 
-    private fun fetchChannelDetail() {
-        conversationUseCases.fetchMembers(readable.cid)
-            .onEach { resource ->
-                writable = when (resource) {
-                    Resource.Loading -> readable.copy(
-                        channelDetailLoading = true
-                    )
-                    is Resource.Success -> {
-                        resource.data
-                            .map {
-                                val user = userUseCases.findUser(it.uid, Strategy.Memory)
-                                MemberVO(
-                                    cid = it.cid,
-                                    uid = it.uid,
-                                    username = user?.name.orEmpty(),
-                                    avatar = user?.avatar.orEmpty(),
-                                    admin = it.root,
-                                    memberName = it.name.orEmpty()
-                                )
-                            }
-                            .also {
-                                _memberFlow.emit(it)
-                            }
-
-                        readable.copy(
-                            channelDetailLoading = false
-                        )
-                    }
-                    is Resource.Failure -> readable.copy(
-                        channelDetailLoading = false
-                    )
-                }
-            }
-            .launchIn(viewModelScope)
-    }
-
-    private fun initial(event: ChatEvent.Initialize) {
-        writable = readable.copy(
-            cid = event.cid
-        )
+    private fun initial(event: Initialize) {
+        writable = readable.copy(cid = event.cid)
         conversationUseCases.observeConversation(event.cid)
             .onEach { conversation ->
                 writable = readable.copy(
@@ -132,7 +93,7 @@ class ChatViewModel @Inject constructor(
             emojis = emojiUseCases.getAll()
         )
     }
-
+    
     private var syncingMessagesJob: Job? = null
     private fun syncing() {
         messageUseCases.observeMessages(readable.cid)
@@ -242,13 +203,75 @@ class ChatViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun onFocus(event: ChatEvent.OnFocus) {
+    private fun fetchChannelDetail() {
+        conversationUseCases.fetchMembers(readable.cid)
+            .onEach { resource ->
+                writable = when (resource) {
+                    Resource.Loading -> readable.copy(
+                        channelDetailLoading = true
+                    )
+                    is Resource.Success -> {
+                        resource.data
+                            .map {
+                                val user = userUseCases.findUser(it.uid, Strategy.Memory)
+                                MemberVO(
+                                    cid = it.cid,
+                                    uid = it.uid,
+                                    username = user?.name.orEmpty(),
+                                    avatar = user?.avatar.orEmpty(),
+                                    admin = it.root,
+                                    memberName = it.name.orEmpty()
+                                )
+                            }
+                            .also {
+                                _memberFlow.emit(it)
+                            }
+
+                        readable.copy(
+                            channelDetailLoading = false
+                        )
+                    }
+                    is Resource.Failure -> readable.copy(
+                        channelDetailLoading = false
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun onTextChange(event: OnTextChange) {
+        writable = readable.copy(textFieldValue = event.text)
+    }
+
+    private fun onEmoji(event: OnEmoji) {
+        val textFieldValue = readable.textFieldValue
+        val leftText = textFieldValue.text.subSequence(0, textFieldValue.selection.start)
+        val rightText = textFieldValue.text.subSequence(
+            textFieldValue.selection.end,
+            textFieldValue.text.length
+        )
         writable = readable.copy(
-            focusMessageId = event.mid
+            textFieldValue = TextFieldValue(
+                text = "${leftText}${event.emoji}${rightText}",
+                selection = TextRange(textFieldValue.selection.start + event.emoji.length)
+            )
+        )
+    }
+    
+    private fun onFile(event: OnFile) {
+        writable = readable.copy(
+            uri = event.uri
         )
     }
 
-    private fun onReply(event: ChatEvent.OnReply) {
+    private fun onScroll(event: OnScroll) {
+        writable = readable.copy(
+            firstVisibleIndex = event.index,
+            offset = event.offset
+        )
+    }
+    
+    private fun onReply(event: OnReply) {
         viewModelScope.launch {
             writable = readable.copy(
                 repliedMessage = event.mid?.let {
@@ -263,38 +286,16 @@ class ChatViewModel @Inject constructor(
             )
         }
     }
-
-    private fun onExpanded(event: ChatEvent.OnExpanded) {
+    
+    private fun onFocus(event: OnFocus) {
         writable = readable.copy(
-            expended = event.value
+            focusMessageId = event.mid
         )
     }
-
-    private fun onEmoji(event: ChatEvent.OnEmoji) {
-        val textFieldValue = readable.textFieldValue
-        val leftText = textFieldValue.text.subSequence(0, textFieldValue.selection.start)
-        val rightText = textFieldValue.text.subSequence(
-            textFieldValue.selection.end,
-            textFieldValue.text.length
-        )
+    
+    private fun onEmojiSpanExpanded(event: OnEmojiSpanExpanded) {
         writable = readable.copy(
-            textFieldValue = TextFieldValue(
-                text = "${leftText}${event.emoji}${rightText}",
-                selection = TextRange(textFieldValue.selection.start + event.emoji.length)
-            )
-        )
-    }
-
-    private fun onFile(event: ChatEvent.OnFile) {
-        writable = readable.copy(
-            uri = event.uri
-        )
-    }
-
-    private fun onScroll(event: ChatEvent.OnScroll) {
-        writable = readable.copy(
-            firstVisibleIndex = event.index,
-            offset = event.offset
+            emojiSpanExpanded = event.value
         )
     }
 
@@ -306,44 +307,6 @@ class ChatViewModel @Inject constructor(
             !isUriEmpty && isTextEmpty -> sendImageMessage()
             !isUriEmpty && !isTextEmpty -> sendGraphicsMessage()
         }
-    }
-
-    private fun sendGraphicsMessage() {
-        val cid = readable.cid
-        val textFieldValue = readable.textFieldValue
-        val uri = readable.uri ?: return
-        val reply = readable.repliedMessage?.id
-        if (textFieldValue.text.isBlank()) return
-        messageUseCases
-            .graphicsMessage(
-                cid = cid,
-                text = textFieldValue.text,
-                uri = uri,
-                reply = reply
-            )
-            .onEach { resource ->
-                when (resource) {
-                    Resource.Loading -> {
-                        writable = readable.copy(
-                            uri = null,
-                            textFieldValue = TextFieldValue(),
-                            repliedMessage = null,
-                            scroll = eventOf(0)
-                        )
-                    }
-                    is Resource.Success -> {
-                        notificationService.onEmit()
-                    }
-                    is Resource.Failure -> {
-                        onMessage(resource.message)
-                    }
-                }
-            }
-            .launchIn(viewModelScope)
-    }
-
-    private fun onTextChange(event: ChatEvent.OnTextChange) {
-        writable = readable.copy(textFieldValue = event.text)
     }
 
     private fun sendTextMessage() {
@@ -384,6 +347,40 @@ class ChatViewModel @Inject constructor(
                     Resource.Loading -> {
                         writable = readable.copy(
                             uri = null,
+                            repliedMessage = null,
+                            scroll = eventOf(0)
+                        )
+                    }
+                    is Resource.Success -> {
+                        notificationService.onEmit()
+                    }
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun sendGraphicsMessage() {
+        val cid = readable.cid
+        val textFieldValue = readable.textFieldValue
+        val uri = readable.uri ?: return
+        val reply = readable.repliedMessage?.id
+        if (textFieldValue.text.isBlank()) return
+        messageUseCases
+            .graphicsMessage(
+                cid = cid,
+                text = textFieldValue.text,
+                uri = uri,
+                reply = reply
+            )
+            .onEach { resource ->
+                when (resource) {
+                    Resource.Loading -> {
+                        writable = readable.copy(
+                            uri = null,
+                            textFieldValue = TextFieldValue(),
                             repliedMessage = null,
                             scroll = eventOf(0)
                         )
