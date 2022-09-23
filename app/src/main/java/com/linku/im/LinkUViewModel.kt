@@ -140,16 +140,12 @@ class LinkUViewModel @Inject constructor(
                         sessionUseCases.subscribe()
                             .onEach { subscribeResource ->
                                 when (subscribeResource) {
-                                    Resource.Loading -> {
-                                        writable = readable.copy(
-                                            isSyncingReady = false
-                                        )
-                                    }
+                                    Resource.Loading -> {}
                                     is Resource.Success -> {
                                         messageUseCases.fetchUnreadMessages()
                                         deliverState(Label.Default)
                                         writable = readable.copy(
-                                            isSyncingReady = true
+                                            hasSynced = true
                                         )
                                     }
                                     is Resource.Failure -> {
@@ -160,7 +156,7 @@ class LinkUViewModel @Inject constructor(
                                         }
                                         onEvent(LinkUEvent.InitSession)
                                         writable = readable.copy(
-                                            isSyncingReady = true
+                                            hasSynced = true
                                         )
                                     }
                                 }
