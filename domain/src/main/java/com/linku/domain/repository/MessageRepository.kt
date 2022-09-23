@@ -4,14 +4,12 @@ import android.net.Uri
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.Message
-import com.linku.domain.service.MessagePagingLocalSource
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
     suspend fun getMessageById(mid: Int, strategy: Strategy): Message?
     fun incoming(): Flow<List<Message>>
     fun incoming(cid: Int): Flow<List<Message>>
-    fun paging(cid: Int, pageSize: Int): MessagePagingLocalSource
     fun observeLatestMessages(cid: Int): Flow<Message>
 
     suspend fun sendTextMessage(

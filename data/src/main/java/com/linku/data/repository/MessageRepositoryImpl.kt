@@ -13,7 +13,6 @@ import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ConversationService
 import com.linku.domain.service.FileService
-import com.linku.domain.service.MessagePagingLocalSource
 import com.linku.domain.service.MessageService
 import com.linku.fs_android.writeFs
 import com.tencent.mmkv.MMKV
@@ -39,86 +38,25 @@ class MessageRepositoryImpl @Inject constructor(
     private val json: Json,
     private val authenticator: Authenticator
 ) : MessageRepository {
-    override fun incoming(): Flow<List<Message>> =
-        // Cached Message is original type which is unreadable.
-        messageDao.incoming()
-            .map { list ->
-                list.mapNotNull { message ->
-                    // So we will convert each one to readable type.
-                    when (val readable = message.toReadable()) {
-                        // If it is the message which contains image.
-                        is ImageMessage -> {
-                            val url = readable.url
-                            // If its image content is map to cached file.
-                            if (url.startsWith("file:///")) {
-                                val uri = Uri.parse(url)
-                                val file = uri.toFile()
-                                // If it is not exists
-                                if (!file.exists()) {
-                                    // Fetch latest one from server then update local one.
-                                    getMessageById(readable.id, Strategy.NetworkThenCache)
-                                        .also {
-                                            // If the server one is not exists, we delete it from local.
-                                            if (it == null) {
-                                                messageDao.delete(readable.id)
-                                            }
-                                        }
-                                } else readable
-                                // If its image content is map to ContentProvider
-                                // The else-if branch is made for old version
-                            } else readable
-                        }
-                        // Same with Image Message.
-                        is GraphicsMessage -> {
-                            val url = readable.url
-                            if (url.startsWith("file:///")) {
-                                val uri = Uri.parse(url)
-                                val file = uri.toFile()
-                                if (!file.exists()) {
-                                    getMessageById(readable.id, Strategy.NetworkThenCache)
-                                        .also {
-                                            if (it == null) {
-                                                messageDao.delete(readable.id)
-                                            }
-                                        }
-                                } else readable
-                            } else readable
-                        }
-                        else -> readable
-                    }
-                }
-            }
-
-    override fun incoming(cid: Int): Flow<List<Message>> = messageDao
-        .incoming(cid)
+    override fun incoming(): Flow<List<Message>> = messageDao.incoming()
         .map { list ->
             list.mapNotNull { message ->
-                // So we will convert each one to readable type.
                 when (val readable = message.toReadable()) {
-                    is TextMessage -> readable
-                    // If it is the message which contains image.
                     is ImageMessage -> {
                         val url = readable.url
-                        // If its image content is map to cached file.
                         if (url.startsWith("file:///")) {
                             val uri = Uri.parse(url)
                             val file = uri.toFile()
-                            // If it is not exists
                             if (!file.exists()) {
-                                // Fetch latest one from server then update local one.
                                 getMessageById(readable.id, Strategy.NetworkThenCache)
                                     .also {
-                                        // If the server one is not exists, we delete it from local.
                                         if (it == null) {
                                             messageDao.delete(readable.id)
                                         }
                                     }
                             } else readable
-                            // If its image content is map to ContentProvider
-                            // The else-if branch is made for old version
                         } else readable
                     }
-                    // Same with Image Message.
                     is GraphicsMessage -> {
                         val url = readable.url
                         if (url.startsWith("file:///")) {
@@ -134,58 +72,95 @@ class MessageRepositoryImpl @Inject constructor(
                             } else readable
                         } else readable
                     }
-                    // Filter not supported message.
-                    else -> null
+                    else -> readable
                 }
             }
         }
 
-    private val pagingMap = mutableMapOf<Int, MessagePagingLocalSource>()
-    override fun paging(cid: Int, pageSize: Int): MessagePagingLocalSource =
-        pagingMap.getOrPut(cid) {
-            MessagePagingLocalSource(messageDao, cid)
+    override fun incoming(cid: Int): Flow<List<Message>> = messageDao
+        .incoming(cid)
+        .map { list ->
+            list.mapNotNull { message ->
+                when (val readable = message.toReadable()) {
+                    is TextMessage -> readable
+                    is ImageMessage -> {
+                        val url = readable.url
+                        if (url.startsWith("file:///")) {
+                            val uri = Uri.parse(url)
+                            val file = uri.toFile()
+                            if (!file.exists()) {
+                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                    .also {
+                                        if (it == null) {
+                                            messageDao.delete(readable.id)
+                                        }
+                                    }
+                            } else readable
+                        } else readable
+                    }
+                    is GraphicsMessage -> {
+                        val url = readable.url
+                        if (url.startsWith("file:///")) {
+                            val uri = Uri.parse(url)
+                            val file = uri.toFile()
+                            if (!file.exists()) {
+                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                    .also {
+                                        if (it == null) {
+                                            messageDao.delete(readable.id)
+                                        }
+                                    }
+                            } else readable
+                        } else readable
+                    }
+                    else -> null
+                }
+            }
         }
 
     override fun observeLatestMessages(cid: Int): Flow<Message> {
         return messageDao.getLatestMessageByCid(cid).filterNotNull().map { it.toReadable() }
     }
 
-    override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? = when (strategy) {
-        Strategy.CacheElseNetwork -> run {
-            messageDao.getById(mid)
-                ?: messageService.getMessageById(mid)
-                    .toResult()
-                    .getOrNull()
-                    ?.toMessage()
-                    ?.also { messageDao.insert(it) }
-        }
-        Strategy.Memory -> {
-            val key = "message_$mid"
-            mmkv.decodeString(key)?.let {
-                json.decodeFromString<MessageDTO>(it).toMessage()
-            } ?: run {
-                val message = messageService.getMessageById(mid)
-                    .toResult()
-                    .getOrNull()
-                    ?.also { messageDao.insert(it.toMessage()) }
-                val s = json.encodeToString(message)
-                mmkv.encode(key, s)
-                message?.toMessage()
-            }
-        }
-        Strategy.NetworkThenCache -> {
-            messageService.getMessageById(mid)
-                .toResult()
-                .getOrNull()
-                ?.toMessage()
-                ?.also { messageDao.insert(it) }
-        }
-        Strategy.OnlyCache -> messageDao.getById(mid)
-        Strategy.OnlyNetwork -> messageService.getMessageById(mid)
+    override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? {
+        suspend fun fromBackend(): Message? = messageService.getMessageById(mid)
             .toResult()
             .getOrNull()
             ?.toMessage()
-    }?.toReadable()
+            ?.also { messageDao.insert(it) }
+
+        suspend fun fromIO(): Message? = messageDao.getById(mid)
+
+        suspend fun Message.toIO() = messageDao.insert(this)
+
+        return when (strategy) {
+            Strategy.OnlyCache -> fromIO()
+            Strategy.OnlyNetwork -> fromBackend()
+            Strategy.Memory -> {
+                fun fromMemory(): Message? = mmkv.decodeString("message_$mid")?.let {
+                    json.decodeFromString<MessageDTO>(it).toMessage()
+                }
+
+                fun Message.toMemory() {
+                    mmkv.encode("message_$mid", json.encodeToString(this))
+                }
+                fromMemory()
+                    ?: fromIO()?.also {
+                        it.toMemory()
+                    }
+                    ?: fromBackend()?.also {
+                        it.toIO()
+                        it.toMemory()
+                    }
+            }
+
+            Strategy.NetworkThenCache -> fromBackend()?.also {
+                it.toIO()
+            }
+            Strategy.CacheElseNetwork -> fromIO() ?: fromBackend()?.also { it.toIO() }
+        }
+            ?.toReadable()
+    }
 
     override suspend fun sendTextMessage(
         cid: Int,
