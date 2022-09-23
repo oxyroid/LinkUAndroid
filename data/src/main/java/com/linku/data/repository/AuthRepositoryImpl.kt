@@ -107,6 +107,7 @@ class AuthRepositoryImpl @Inject constructor(
         authService.verifyEmail().toResult()
 
     private fun uploadImage(uri: Uri?): Flow<Resource<CachedFile>> = flow {
+        emit(Resource.Loading)
         if (uri == null) {
             emit(Resource.Failure("Cannot get image"))
             return@flow
@@ -117,7 +118,8 @@ class AuthRepositoryImpl @Inject constructor(
             emit(Resource.Failure("Cannot get image"))
             return@flow
         }
-        val filename = file.name
+        // FIXME
+        val filename = file.name + ".png"
         val part = MultipartBody.Part
             .createFormData(
                 "file",
@@ -126,13 +128,8 @@ class AuthRepositoryImpl @Inject constructor(
             )
         fileService.upload(part)
             .toResult()
-            .onSuccess {
-                val cachedFile = CachedFile(file.toUri(), it)
-                emit(Resource.Success(cachedFile))
-            }
-            .onFailure {
-                emitResource(it.message)
-            }
+            .onSuccess { emit(Resource.Success(CachedFile(file.toUri(), it))) }
+            .onFailure { emitResource(it.message) }
     }
 
     override fun uploadAvatar(uri: Uri): Flow<Resource<Unit>> = uploadImage(uri).map { it.toUnit() }
