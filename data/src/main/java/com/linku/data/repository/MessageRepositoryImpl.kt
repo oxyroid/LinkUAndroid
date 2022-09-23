@@ -187,7 +187,6 @@ class MessageRepositoryImpl @Inject constructor(
             ?.toMessage()
     }?.toReadable()
 
-
     override suspend fun sendTextMessage(
         cid: Int,
         text: String,
@@ -314,7 +313,6 @@ class MessageRepositoryImpl @Inject constructor(
         reply: Int?
     ): Flow<Resource<Unit>> =
         channelFlow {
-
             // 1. Make real HTTP-Connection to upload file.
             val userId = authenticator.currentUID
             checkNotNull(userId) { "Please sign in first." }
@@ -387,6 +385,7 @@ class MessageRepositoryImpl @Inject constructor(
         }
 
     private fun uploadImage(uri: Uri?): Flow<Resource<CachedFile>> = flow {
+        emit(Resource.Loading)
         if (uri == null) {
             emit(Resource.Failure("upload: uri is null."))
             return@flow

@@ -69,7 +69,9 @@ class ConversationRepositoryImpl @Inject constructor(
         description: String?
     ): Flow<Resource<List<Conversation>>> = resourceFlow {
         runCatching {
-            conversationService.queryConversations(name, description).toResult()
+            conversationService
+                .queryConversations(name, description)
+                .toResult()
                 .onSuccess { conversations -> emitResource(conversations.map { it.toConversation() }) }
                 .onFailure { emitResource(it.message) }
         }.onFailure {
@@ -79,7 +81,9 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun fetchMembers(cid: Int): Flow<Resource<List<Member>>> = resourceFlow {
         runCatching {
-            conversationService.getMembersByCid(cid).toResult()
+            conversationService
+                .getMembersByCid(cid)
+                .toResult()
                 .onSuccess { emitResource(it) }
                 .onFailure { emitResource(it.message) }
         }.onFailure {

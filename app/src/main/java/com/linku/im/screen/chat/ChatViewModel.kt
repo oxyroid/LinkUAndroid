@@ -3,12 +3,14 @@ package com.linku.im.screen.chat
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
-import androidx.paging.*
 import com.linku.data.usecase.*
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
-import com.linku.domain.entity.*
+import com.linku.domain.entity.Conversation
+import com.linku.domain.entity.GraphicsMessage
+import com.linku.domain.entity.ImageMessage
+import com.linku.domain.entity.TextMessage
 import com.linku.domain.eventOf
 import com.linku.domain.service.NotificationService
 import com.linku.im.Constants
@@ -18,16 +20,17 @@ import com.linku.im.extension.isToday
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.chat.composable.BubbleConfig
 import com.linku.im.screen.chat.composable.ReplyConfig
-import com.linku.im.screen.chat.vo.ChatVO
+import com.linku.im.screen.chat.vo.MemberVO
 import com.linku.im.screen.chat.vo.MessageVO
-import com.linku.im.screen.chat.vo.calculateAvatarSeparator
-import com.linku.im.screen.chat.vo.calculateTimeSeparator
 import com.thxbrop.suggester.all
 import com.thxbrop.suggester.any
 import com.thxbrop.suggester.suggestAny
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -44,11 +47,8 @@ class ChatViewModel @Inject constructor(
     private val _messageFlow = MutableStateFlow(emptyList<MessageVO>())
     val messageFlow: SharedFlow<List<MessageVO>> = _messageFlow
 
-    private val _memberFlow = MutableStateFlow(emptyList<Member>())
-    val memberFlow: SharedFlow<List<Member>> = _memberFlow
-
-    private var _pagingFlow: Flow<PagingData<ChatVO>> = flow { }
-    val pagingFlow: Flow<PagingData<ChatVO>> get() = _pagingFlow
+    private val _memberFlow = MutableStateFlow(emptyList<MemberVO>())
+    val memberFlow: SharedFlow<List<MemberVO>> = _memberFlow
 
     override fun onEvent(event: ChatEvent) {
         when (event) {
@@ -65,46 +65,47 @@ class ChatViewModel @Inject constructor(
             ChatEvent.ReadAll -> TODO()
             ChatEvent.SendMessage -> sendMessage()
             ChatEvent.Syncing -> syncing()
-            ChatEvent.FetchChannelDetail -> {
-                conversationUseCases.fetchMembers(readable.cid)
-                    .onEach { resource ->
-                        writable = when (resource) {
-                            Resource.Loading -> readable.copy(
-                                channelDetailLoading = true
-                            )
-                            is Resource.Success -> {
-                                _memberFlow.emit(resource.data)
-                                readable.copy(
-                                    channelDetailLoading = false
-                                )
-                            }
-                            is Resource.Failure -> readable.copy(
-                                channelDetailLoading = false
-                            )
-                        }
-                    }
-                    .launchIn(viewModelScope)
-            }
+            ChatEvent.FetchChannelDetail -> fetchChannelDetail()
         }
     }
 
+    private fun fetchChannelDetail() {
+        conversationUseCases.fetchMembers(readable.cid)
+            .onEach { resource ->
+                writable = when (resource) {
+                    Resource.Loading -> readable.copy(
+                        channelDetailLoading = true
+                    )
+                    is Resource.Success -> {
+                        resource.data
+                            .map {
+                                val user = userUseCases.findUser(it.uid, Strategy.Memory)
+                                MemberVO(
+                                    cid = it.cid,
+                                    uid = it.uid,
+                                    username = user?.name.orEmpty(),
+                                    avatar = user?.avatar.orEmpty(),
+                                    admin = it.root,
+                                    memberName = it.name.orEmpty()
+                                )
+                            }
+                            .also {
+                                _memberFlow.emit(it)
+                            }
+
+                        readable.copy(
+                            channelDetailLoading = false
+                        )
+                    }
+                    is Resource.Failure -> readable.copy(
+                        channelDetailLoading = false
+                    )
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
     private fun initial(event: ChatEvent.Initialize) {
-//        _pagingFlow = messageUseCases.observePagedMessages(event.cid, 10).let {
-//            Pager(PagingConfig(10)) { it }
-//                .flow
-//                .map { pagingData ->
-//                    pagingData
-//                        .map { ChatVO.Data(it, it.uid != authenticator.currentUID) }
-//                        .insertSeparators { before, after -> before calculateTimeSeparator after }
-//                        .insertSeparators { before, after ->
-//                            with(userUseCases) {
-//                                before calculateAvatarSeparator after
-//                            }
-//                        }
-//
-//                }
-//                .cachedIn(viewModelScope)
-//        }
         writable = readable.copy(
             cid = event.cid
         )
@@ -396,6 +397,5 @@ class ChatViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
-
     }
 }

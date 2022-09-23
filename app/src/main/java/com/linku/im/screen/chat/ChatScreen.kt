@@ -31,7 +31,6 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.LocalConfiguration
@@ -61,12 +60,12 @@ import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = hiltViewModel(),
-    cid: Int
+    viewModel: ChatViewModel = hiltViewModel(), cid: Int
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
@@ -106,8 +105,8 @@ fun ChatScreen(
         viewModel.onEvent(ChatEvent.OnScroll(firstVisibleItemIndex, offset))
     }
 
-    LaunchedEffect(vm.readable.isSyncingReady) {
-        if (vm.readable.isSyncingReady) {
+    LaunchedEffect(vm.readable.hasSynced) {
+        if (vm.readable.hasSynced) {
             viewModel.onEvent(ChatEvent.Syncing)
         }
     }
@@ -125,6 +124,10 @@ fun ChatScreen(
                 title = state.title,
                 subTitle = vm.readable.label ?: state.subTitle,
                 introduce = "",
+                tonalElevation = when (node.value) {
+                    ChatScreenMode.Messages -> LocalSpacing.current.small
+                    else -> 0.dp
+                },
                 node = node,
                 onClick = { mode ->
                     when (mode) {
@@ -147,28 +150,25 @@ fun ChatScreen(
         },
         listContent = {
             ListContent(
-                loading = !vm.readable.isSyncingReady,
+                loading = !vm.readable.hasSynced,
                 listState = listState,
                 messages = messages,
                 focusMessageId = state.focusMessageId,
                 onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
                 onResend = { viewModel.onEvent(ChatEvent.ResendMessage(it)) },
                 onCancel = { viewModel.onEvent(ChatEvent.CancelMessage(it)) },
-                onImagePreview = { mid, rect ->
-                    node = LinkedNode(ChatScreenMode.ImageDetail(mid, rect), node)
+                onImagePreview = { mid, boundaries ->
+                    node = LinkedNode(ChatScreenMode.ImageDetail(mid, boundaries), node)
                 },
                 onProfile = {
                     navController.navigate(
-                        R.id.action_chatFragment_to_introduceFragment,
-                        bundleOf("uid" to it)
+                        R.id.action_chatFragment_to_introduceFragment, bundleOf("uid" to it)
                     )
                 },
                 onScroll = { position ->
                     scope.launch {
-                        listState.scrollToItem(
-                            index = position,
-                            scrollOffset = boxOffset.value?.let { it.height / -2 } ?: 0
-                        )
+                        listState.scrollToItem(index = position,
+                            scrollOffset = boxOffset.value?.let { it.height / -2 } ?: 0)
                     }
                 },
                 onFocus = { viewModel.onEvent(ChatEvent.OnFocus(it)) },
@@ -177,8 +177,7 @@ fun ChatScreen(
             )
         },
         bottomSheetContent = {
-            BottomSheetContent(
-                modifier = Modifier.fillMaxWidth(),
+            BottomSheetContent(modifier = Modifier.fillMaxWidth(),
                 repliedMessage = state.repliedMessage,
                 hasScrolled = !isAtTop,
                 onDismissReply = { viewModel.onEvent(ChatEvent.OnReply(null)) },
@@ -210,10 +209,7 @@ fun ChatScreen(
             )
         },
         originPreview = {
-            OriginPreview(
-                preview = state.preview,
-                onDismiss = { node = node.next ?: node }
-            )
+            OriginPreview(preview = state.preview, onDismiss = { node = node.next ?: node })
         },
         onListHeightChanged = { boxOffset.value = it },
         channelDetailContent = {
@@ -223,14 +219,11 @@ fun ChatScreen(
                 }
             }
             Column(
-                verticalArrangement = Arrangement.Bottom,
-                modifier = Modifier
-                    .fillMaxSize()
+                verticalArrangement = Arrangement.Bottom, modifier = Modifier.fillMaxSize()
             ) {
                 if (state.channelDetailLoading) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
                     }
@@ -242,10 +235,7 @@ fun ChatScreen(
                             .weight(1f)
                     ) {
                         items(members) {
-                            MemberItem(
-                                member = it,
-                                avatar = ""
-                            )
+                            MemberItem(member = it)
                         }
                     }
                 }
@@ -271,14 +261,11 @@ fun ChatScreen(
                 }
             }
         },
-        imageDetailContent = { s, rect ->
-            var isShowed by remember { mutableStateOf(false) }
-
-            val config = LocalConfiguration.current
-            LaunchedEffect(Unit) {
-                println("sss=ScreenW=${config.screenWidthDp}")
-                println("sss=ScreenH=${config.screenHeightDp}")
+        imageDetailContent = { s, boundaries ->
+            var isShowed by remember {
+                mutableStateOf(false)
             }
+            val config = LocalConfiguration.current
             val animatedRadius by animateDpAsState(
                 if (isShowed) 0.dp
                 else 8.dp
@@ -286,57 +273,50 @@ fun ChatScreen(
             val density = LocalDensity.current
             val animatedOffset by animateIntOffsetAsState(
                 if (isShowed) IntOffset.Zero
-                else rect.topLeft.round()
+                else boundaries.topLeft.round()
             )
             val animatedWidthDp by animateDpAsState(
                 if (isShowed) config.screenWidthDp.dp
-                else (rect.width / density.density).dp
+                else (boundaries.width / density.density).dp
             )
             val animatedHeightDp by animateDpAsState(
                 if (isShowed) config.screenHeightDp.dp
-                else (rect.height / density.density).dp
+                else (boundaries.height / density.density).dp
             )
 
-            var angle by remember { mutableStateOf(0f) }
-            var zoom by remember { mutableStateOf(1f) }
-            var offsetX by remember { mutableStateOf(0f) }
             var offsetY by remember { mutableStateOf(0f) }
 
+            val topBarOffsetY by animateFloatAsState(
+                if (!isShowed) 192f else 0f
+            )
             Surface(
                 modifier = Modifier
                     .offset {
-                        animatedOffset + Offset(
-                            offsetX,
-                            offsetY
-                        ).round()
+                        animatedOffset + Offset(0f, offsetY - topBarOffsetY).round()
                     }
-                    .graphicsLayer(
-                        scaleX = zoom,
-                        scaleY = zoom,
-                        rotationZ = angle
-                    )
                     .size(
                         width = animatedWidthDp,
                         height = animatedHeightDp
                     )
                     .clip(RoundedCornerShape(animatedRadius))
                     .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, gestureZoom, gestureRotate ->
-                            angle += gestureRotate
-                            zoom *= gestureZoom
-                            offsetX += pan.x
-                            offsetY += pan.y
-                        }
+                        detectVerticalDragGestures(
+                            onDragEnd = {
+                                if (offsetY.absoluteValue >= 0.3) {
+                                    node = node.next ?: node
+                                }
+                                if (offsetY != 0f) offsetY = 0f
+                            },
+                            onVerticalDrag = { _, dragAmount ->
+                                offsetY += dragAmount
+                            }
+                        )
                     }
             ) {
-                val model = ImageRequest.Builder(LocalContext.current)
-                    .data(s)
-                    .build()
-                val loader = ImageLoader.Builder(LocalContext.current)
-                    .components {
-                        add(ImageDecoderDecoder.Factory())
-                    }
-                    .build()
+                val model = ImageRequest.Builder(LocalContext.current).data(s).build()
+                val loader = ImageLoader.Builder(LocalContext.current).components {
+                    add(ImageDecoderDecoder.Factory())
+                }.build()
                 val painter = rememberAsyncImagePainter(
                     model = model,
                     imageLoader = loader
@@ -348,10 +328,12 @@ fun ChatScreen(
                     contentScale = ContentScale.Crop
                 )
             }
-            LaunchedEffect(s, rect) {
-                if (!isShowed) {
+            LaunchedEffect(node, s, boundaries) {
+                if (node.value is ChatScreenMode.ImageDetail && !isShowed) {
                     delay(200L)
                     isShowed = true
+                } else if (node.value !is ChatScreenMode.ImageDetail && isShowed) {
+                    isShowed = false
                 }
             }
         }
@@ -395,49 +377,39 @@ private fun ChatScaffold(
                 .fillMaxSize()
                 .navigationBarsPadding()
         ) { mode ->
-            when (mode) {
-                ChatScreenMode.Messages -> {
-                    val chatBackgroundColor = LocalTheme.current.chatBackground
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .drawWithContent {
-                                drawRect(chatBackgroundColor)
-                                drawContent()
-                            }
-                            .padding(innerPadding)
-                            .imePadding()
-                            .onSizeChanged(onListHeightChanged),
-                        contentAlignment = Alignment.BottomCenter
-                    ) {
-                        listContent()
-                        bottomSheetContent()
-                        originPreview()
+            val chatBackgroundColor = LocalTheme.current.chatBackground
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .drawWithContent {
+                        drawRect(chatBackgroundColor)
+                        drawContent()
                     }
-                }
-                ChatScreenMode.ChannelDetail -> Box(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                ) {
-                    channelDetailContent()
-                }
-                is ChatScreenMode.ImageDetail -> {
-                    var isShowed by remember {
-                        mutableStateOf(false)
-                    }
-                    val mDetailBackground by animateColorAsState(
-                        if (isShowed) Color.Black else Color.Unspecified
+                    .padding(innerPadding)
+                    .imePadding()
+                    .onSizeChanged(onListHeightChanged),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                listContent()
+                bottomSheetContent()
+                originPreview()
+                if (mode is ChatScreenMode.ImageDetail) {
+                    var isShowed by remember { mutableStateOf(false) }
+                    val mDetailBackgroundAlpha by animateFloatAsState(
+                        if (isShowed) 0.6f else 0f
                     )
                     Box(
                         Modifier
                             .fillMaxSize()
                             .drawWithContent {
-                                drawRect(mDetailBackground)
+                                drawRect(
+                                    color = Color.Black,
+                                    alpha = mDetailBackgroundAlpha
+                                )
                                 drawContent()
                             }
                     ) {
-                        imageDetailContent(mode.s, mode.rect)
+                        imageDetailContent(mode.url, mode.boundaries)
                     }
                     LaunchedEffect(Unit) {
                         if (!isShowed) {
@@ -445,6 +417,21 @@ private fun ChatScaffold(
                             isShowed = true
                         }
                     }
+                }
+            }
+            when (mode) {
+                ChatScreenMode.Messages -> {}
+
+                ChatScreenMode.ChannelDetail -> Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(LocalTheme.current.background)
+                        .padding(innerPadding)
+                ) {
+                    channelDetailContent()
+                }
+                is ChatScreenMode.ImageDetail -> {
+
                 }
                 is ChatScreenMode.MemberDetail -> TODO()
             }
@@ -509,11 +496,9 @@ private fun ListContent(
                         onResend = onResend,
                         onCancel = onCancel,
                         config = it.config,
-                        modifier = Modifier
-                            .padding(
-                                top = 6.dp,
-                                bottom = if (it.config.isEndOfGroup) 6.dp else 0.dp
-                            )
+                        modifier = Modifier.padding(
+                            top = 6.dp, bottom = if (it.config.isEndOfGroup) 6.dp else 0.dp
+                        )
                     )
                 }
                 it.config.isShowTime.ifTrue {
@@ -571,15 +556,12 @@ private fun BottomSheetContent(
                     containerColor = LocalTheme.current.primary,
                     contentColor = LocalTheme.current.onPrimary,
                     elevation = FloatingActionButtonDefaults.loweredElevation(),
-                    modifier = Modifier
-                        .clip(FloatingActionButtonDefaults.smallShape)
+                    modifier = Modifier.clip(FloatingActionButtonDefaults.smallShape)
                 )
             }
 
             AnimatedVisibility(
-                visible = repliedMessage != null,
-                enter = scaleIn(),
-                exit = scaleOut()
+                visible = repliedMessage != null, enter = scaleIn(), exit = scaleOut()
             ) {
                 SmallFloatingActionButton(
                     onClick = onDismissReply,
@@ -593,8 +575,7 @@ private fun BottomSheetContent(
                     containerColor = LocalTheme.current.primary,
                     contentColor = LocalTheme.current.onPrimary,
                     elevation = FloatingActionButtonDefaults.loweredElevation(),
-                    modifier = Modifier
-                        .clip(FloatingActionButtonDefaults.smallShape)
+                    modifier = Modifier.clip(FloatingActionButtonDefaults.smallShape)
                 )
             }
         }
@@ -608,8 +589,7 @@ private fun BottomSheetContent(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun PreviewDialog(
-    uri: Uri?,
-    onDismiss: () -> Unit
+    uri: Uri?, onDismiss: () -> Unit
 ) {
     AnimatedContent(
         targetState = uri,
@@ -653,9 +633,7 @@ private fun PreviewDialog(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BoxScope.OriginPreview(
-    preview: String?,
-    delay: Long = 120L,
-    onDismiss: () -> Unit
+    preview: String?, delay: Long = 120L, onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
 
@@ -682,8 +660,7 @@ private fun BoxScope.OriginPreview(
 //        if (!it) 0.dp else screenHeightDp.dp
 //    }.also { Log.e("Measure", "OriginPreview: height=${it.value}") }
 
-    val background by transition.animateColor(
-        label = "color",
+    val background by transition.animateColor(label = "color",
         transitionSpec = { tween(duration) }) {
         if (!it) Color.Transparent else LocalTheme.current.background
     }

@@ -31,7 +31,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,9 +44,9 @@ import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
 import com.linku.im.R
+import com.linku.im.extension.compose.core.times
+import com.linku.im.extension.compose.layout.intervalClickable
 import com.linku.im.extension.ifTrue
-import com.linku.im.extension.intervalClickable
-import com.linku.im.extension.times
 import com.linku.im.ui.components.TextImage
 import com.linku.im.ui.theme.*
 import java.util.*
@@ -115,7 +114,7 @@ fun ChatBubble(
                 },
             horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End
         ) {
-            var rect: Rect by remember { mutableStateOf(Rect.Zero) }
+            var boundaries: Rect by remember { mutableStateOf(Rect.Zero) }
             ElevatedCard(
                 shape = RoundedCornerShape(
                     bottomStart = if (isAnother && isEndOfGroup) 0.dp else 12.dp,
@@ -163,7 +162,7 @@ fun ChatBubble(
 
                     )
 
-                    val replyRemembered = remember { config.reply }
+                    val replyRemembered = config.reply
                     Row(
                         modifier = Modifier
                             .constrainAs(reply) {
@@ -245,13 +244,13 @@ fun ChatBubble(
                                     isPending = config.sendState == Message.STATE_PENDING,
                                     modifier = Modifier
                                         .onGloballyPositioned {
-                                            rect = it.boundsInWindow()
+                                            boundaries = it.boundsInWindow()
                                         }
                                         .combinedClickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = LocalIndication.current,
                                             onClick = {
-                                                onImagePreview(message.url, rect)
+                                                onImagePreview(message.url, boundaries)
                                             },
                                             onLongClick = {
                                                 hapticFeedback.performHapticFeedback(
@@ -272,13 +271,13 @@ fun ChatBubble(
                                         isPending = config.sendState == Message.STATE_PENDING,
                                         modifier = Modifier
                                             .onGloballyPositioned {
-                                                rect = it.boundsInWindow()
+                                                boundaries = it.boundsInWindow()
                                             }
                                             .combinedClickable(
                                                 interactionSource = remember { MutableInteractionSource() },
                                                 indication = LocalIndication.current,
                                                 onClick = {
-                                                    onImagePreview(message.url, rect)
+                                                    onImagePreview(message.url, boundaries)
                                                 },
                                                 onLongClick = {
                                                     hapticFeedback.performHapticFeedback(

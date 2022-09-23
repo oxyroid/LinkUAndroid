@@ -88,7 +88,8 @@ class IntroduceViewModel @Inject constructor(
                     avatar = uri?.toString() ?: "",
                 )
                 uri?.also {
-                    authUseCases.uploadAvatar(it)
+                    authUseCases
+                        .uploadAvatar(it)
                         .onEach { resource ->
                             writable = when (resource) {
                                 Resource.Loading -> readable.copy(

@@ -5,7 +5,6 @@ import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
 import com.linku.im.extension.containsKey
 import com.linku.im.extension.lruCacheOf
-import com.linku.im.screen.chat.vo.ChatVO
 import com.linku.im.screen.chat.vo.MessageVO
 import com.linku.im.screen.main.vo.ConversationVO
 import com.thxbrop.suggester.any
