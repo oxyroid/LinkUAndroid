@@ -4,7 +4,8 @@ import android.app.Application
 import android.content.Context
 import com.tencent.mmkv.MMKV
 import dagger.hilt.android.HiltAndroidApp
-import org.acra.config.notification
+import org.acra.config.mailSender
+import org.acra.config.toast
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 
@@ -16,10 +17,15 @@ class MyApplication : Application() {
         initAcra {
             buildConfigClass = BuildConfig::class.java
             reportFormat = StringFormat.JSON
-            notification {
-                title = getString(R.string.crash_title)
+            toast {
                 text = getString(R.string.crash_text)
-                channelName = getString(R.string.crash_channel)
+            }
+            mailSender {
+                mailTo = "1365427005@qq.com"
+                reportAsFile = true
+                reportFileName = "crash_${System.currentTimeMillis()}.txt"
+                subject = "LinkU Android Crash"
+                body = ""
             }
         }
     }
