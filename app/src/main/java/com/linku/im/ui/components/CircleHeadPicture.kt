@@ -45,9 +45,6 @@ fun CircleHeadPicture(
             ) {
                 placeholder()
             }
-        },
-        success = {
-            it.result.drawable
         }
     )
 
