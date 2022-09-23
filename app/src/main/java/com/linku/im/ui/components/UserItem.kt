@@ -21,8 +21,8 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.domain.entity.User
-import com.linku.im.extension.intervalClickable
-import com.linku.im.extension.times
+import com.linku.im.extension.compose.layout.intervalClickable
+import com.linku.im.extension.compose.core.times
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
