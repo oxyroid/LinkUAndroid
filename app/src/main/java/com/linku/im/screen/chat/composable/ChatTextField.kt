@@ -43,10 +43,10 @@ import com.linku.im.ui.theme.LocalTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatTextField(
-    text: TextFieldValue,
-    uri: Uri?,
+    text: () -> TextFieldValue,
+    uri: () -> Uri?,
     emojis: List<Emoji>,
-    expended: Boolean,
+    emojiSpanExpanded:() -> Boolean,
     onSend: () -> Unit,
     onFile: () -> Unit,
     onText: (TextFieldValue) -> Unit,
@@ -82,17 +82,17 @@ fun ChatTextField(
                     ) {
                         MaterialIconButton(
                             icon = Icons.Sharp.EmojiEmotions,
-                            onClick = { onExpanded(!expended) }
+                            onClick = { onExpanded(!emojiSpanExpanded()) }
                         )
                         OutlinedTextField(
-                            value = text,
+                            value = text(),
                             onValueChange = onText,
                             modifier = Modifier
                                 .weight(1f)
                                 .animateContentSize(),
                             placeholder = {
                                 Text(
-                                    text = when (uri) {
+                                    text = when (uri()) {
                                         null -> stringResource(R.string.screen_chat_input)
                                         else -> stringResource(R.string.screen_chat_input_image)
                                     },
@@ -128,7 +128,7 @@ fun ChatTextField(
             Spacer(modifier = Modifier.width(LocalSpacing.current.extraSmall))
             FilledIconButton(
                 onClick = {
-                    if (text.text.isNotBlank() || uri != null) onSend()
+                    if (text().text.isNotBlank() || uri() != null) onSend()
                 },
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = LocalTheme.current.primary,
@@ -138,7 +138,7 @@ fun ChatTextField(
                     .clip(IconButtonDefaults.filledShape)
             ) {
                 Icon(
-                    imageVector = (text.text.isNotBlank() || uri != null)
+                    imageVector = (text().text.isNotBlank() || uri() != null)
                         .ifTrue { Icons.Sharp.Send }
                         ?: Icons.Sharp.KeyboardVoice,
                     contentDescription = "send"
@@ -152,11 +152,11 @@ fun ChatTextField(
         LazyHorizontalGrid(
             modifier = Modifier
                 .fillMaxWidth()
-                .height((expended.ifTrue { 144.dp }
+                .height((emojiSpanExpanded().ifTrue { 144.dp }
                     ?: LocalSpacing.current.large) + LocalSpacing.current.large)
                 .background(LocalTheme.current.surface)
                 .padding(vertical = LocalSpacing.current.small),
-            rows = GridCells.Fixed(expended.ifTrue { 4 } ?: 1),
+            rows = GridCells.Fixed(emojiSpanExpanded().ifTrue { 4 } ?: 1),
             verticalArrangement = Arrangement.Center,
             horizontalArrangement = Arrangement.Start
         ) {

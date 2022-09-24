@@ -1,22 +1,21 @@
 package com.linku.im.ui.theme
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalView
 import androidx.navigation.findNavController
 import com.linku.im.vm
-
 
 @Composable
 fun AppTheme(
     useDarkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colors = if (useDarkTheme) defaultDark else defaultLight
+    val colors = remember(useDarkTheme) {
+        if (useDarkTheme) defaultDark else defaultLight
+    }
 
     val containerColor by animateColorAsState(
         if (vm.readable.isDarkMode) colors.surface

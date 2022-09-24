@@ -9,8 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.linku.im.extension.friendlyFormatted
 import com.linku.im.ui.theme.LocalSpacing
@@ -18,12 +16,12 @@ import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun ChatTimestamp(
-    timestamp: Long,
+    timestampProvider: () -> Long,
     modifier: Modifier = Modifier
 ) {
-    val friendlyFormatted = remember(timestamp) { timestamp.friendlyFormatted }
+    val time = timestampProvider()
     Text(
-        text = friendlyFormatted,
+        text = remember(time) { time.friendlyFormatted },
         modifier = modifier
             .clip(RoundedCornerShape(30))
             .background(LocalTheme.current.background)

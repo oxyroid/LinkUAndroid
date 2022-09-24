@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import com.linku.domain.struct.LinkedNode
+import com.linku.domain.struct.node.LinkedNode
 import com.linku.im.screen.chat.ChatScreenMode
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.theme.LocalSpacing

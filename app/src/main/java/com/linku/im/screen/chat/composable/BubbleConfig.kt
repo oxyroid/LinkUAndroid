@@ -1,7 +1,7 @@
 package com.linku.im.screen.chat.composable
 
+import androidx.compose.runtime.Stable
 import com.linku.domain.entity.Message
-
 
 sealed class BubbleConfig(
     open val isAnother: Boolean,
@@ -10,6 +10,7 @@ sealed class BubbleConfig(
     open val isEndOfGroup: Boolean,
     open val reply: ReplyConfig?
 ) {
+    @Stable
     data class PM(
         override val sendState: Int = Message.STATE_SEND,
         private val another: Boolean = false,
@@ -18,6 +19,7 @@ sealed class BubbleConfig(
         override val reply: ReplyConfig? = null
     ) : BubbleConfig(another, isShowTime, sendState, isEndOfGroup, reply)
 
+    @Stable
     data class Group(
         override val sendState: Int = Message.STATE_SEND,
         private val other: Boolean = false,
@@ -31,6 +33,7 @@ sealed class BubbleConfig(
     ) : BubbleConfig(other, isShowTime, sendState, isEndOfGroup, reply)
 }
 
+@Stable
 data class ReplyConfig(
     val repliedMid: Int,
     val index: Int,

@@ -192,7 +192,9 @@ class ChatViewModel @Inject constructor(
                             else -> null
                         }
 //                        }
-                    }.also { _messageFlow.emit(it) }
+                    }.also {
+                        _messageFlow.emit(it)
+                    }
                     writable = readable.copy(
                         scroll = if (readable.firstVisibleIndex == 0 && readable.offset == 0)
                             eventOf(0) else readable.scroll

@@ -1,5 +1,6 @@
 package com.linku.domain.entity
 
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
@@ -12,6 +13,7 @@ import kotlinx.serialization.encodeToString
 
 @Entity
 @TypeConverters(MessageTypeConverter::class)
+@Stable
 open class Message(
     @PrimaryKey open val id: Int,
     open val cid: Int,
@@ -21,7 +23,7 @@ open class Message(
     open val timestamp: Long,
     open val uuid: String,
     open val sendState: Int
-): Replyable {
+) : Replyable {
     sealed class Type(private val text: String) {
         object Text : Type("text")
         object Image : Type("image")
@@ -48,16 +50,6 @@ open class Message(
     }
 
     companion object {
-        val PREVIEW = TextMessage(
-            id = 1,
-            cid = 1,
-            uid = 1,
-            text = "Preview Message",
-            timestamp = System.currentTimeMillis(),
-            uuid = "",
-            reply = 1,
-            sendState = Message.STATE_SEND
-        )
         const val STATE_PENDING = 0
         const val STATE_SEND = 1
         const val STATE_FAILED = 2
@@ -88,6 +80,8 @@ open class Message(
                     uid = uid,
                     url = imageContent.url,
                     reply = imageContent.reply,
+                    width = imageContent.width,
+                    height = imageContent.height,
                     timestamp = timestamp,
                     uuid = uuid,
                     sendState = sendState
@@ -102,6 +96,8 @@ open class Message(
                     text = graphicsContent.text,
                     url = graphicsContent.url,
                     reply = graphicsContent.reply,
+                    width = graphicsContent.width,
+                    height = graphicsContent.height,
                     timestamp = timestamp,
                     uuid = uuid,
                     sendState = sendState
@@ -142,6 +138,8 @@ data class ImageMessage(
     override val uid: Int,
     val url: String,
     val reply: Int?,
+    val width: Int = -1,
+    val height: Int = -1,
     override val timestamp: Long,
     override val uuid: String,
     override val sendState: Int
@@ -149,7 +147,7 @@ data class ImageMessage(
     id = id,
     cid = cid,
     uid = uid,
-    content = ImageContent(url, reply).let(json::encodeToString),
+    content = ImageContent(url, reply, width, height).let(json::encodeToString),
     type = Type.Image,
     timestamp = timestamp,
     uuid = uuid,
@@ -163,6 +161,8 @@ data class GraphicsMessage(
     val text: String,
     val url: String,
     val reply: Int?,
+    val width: Int = -1,
+    val height: Int = -1,
     override val timestamp: Long,
     override val uuid: String,
     override val sendState: Int
@@ -170,7 +170,7 @@ data class GraphicsMessage(
     id = id,
     cid = cid,
     uid = uid,
-    content = GraphicsContent(text, url, reply).let(json::encodeToString),
+    content = GraphicsContent(text, url, reply, width, height).let(json::encodeToString),
     type = Type.Image,
     timestamp = timestamp,
     uuid = uuid,
@@ -267,7 +267,11 @@ data class ImageContent(
     @SerialName("url")
     val url: String,
     @SerialName("reply")
-    val reply: Int?
+    val reply: Int?,
+    @SerialName("width")
+    val width: Int = -1,
+    @SerialName("height")
+    val height: Int = -1
 ) {
     companion object {
         fun decode(s: String): ImageContent = runCatching {
@@ -286,7 +290,11 @@ data class GraphicsContent(
     @SerialName("url")
     val url: String,
     @SerialName("reply")
-    val reply: Int?
+    val reply: Int?,
+    @SerialName("width")
+    val width: Int = -1,
+    @SerialName("height")
+    val height: Int = -1
 ) {
     companion object {
         fun decode(s: String): GraphicsContent = runCatching {

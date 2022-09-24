@@ -36,13 +36,11 @@ fun <T : Any> NativeLazyList(
 ) {
     val callback = remember(isItemsTheSame, isContentsTheSame) {
         object : DiffUtil.ItemCallback<T>() {
-            override fun areItemsTheSame(oldItem: T, newItem: T): Boolean {
-                return isItemsTheSame(oldItem, newItem)
-            }
+            override fun areItemsTheSame(oldItem: T, newItem: T): Boolean =
+                isItemsTheSame(oldItem, newItem)
 
-            override fun areContentsTheSame(oldItem: T, newItem: T): Boolean {
-                return isContentsTheSame(oldItem, newItem)
-            }
+            override fun areContentsTheSame(oldItem: T, newItem: T): Boolean =
+                isContentsTheSame(oldItem, newItem)
         }
     }
     val adapter = remember {

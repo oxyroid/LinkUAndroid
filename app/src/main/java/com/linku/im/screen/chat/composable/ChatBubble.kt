@@ -22,10 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.*
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.times
 import androidx.constraintlayout.compose.*
 import coil.ImageLoader
 import coil.compose.*
@@ -59,8 +57,8 @@ private val HORIZONTAL_OUT_PADDING = 18.dp
 @Composable
 fun ChatBubble(
     message: Message,
-    config: BubbleConfig,
-    focusId: Int?,
+    configProvider: () -> BubbleConfig,
+    focusIdProvider: () -> Int?,
     modifier: Modifier = Modifier,
     onImagePreview: (String, Rect) -> Unit,
     onProfile: (Int) -> Unit,
@@ -72,9 +70,10 @@ fun ChatBubble(
     onDismissFocus: () -> Unit,
     theme: CustomTheme = LocalTheme.current
 ) {
-    val hasFocus = remember(focusId, message.id) { focusId == message.id }
-    val isAnother = remember(config) { config.isAnother }
-    val isEndOfGroup = remember(config) { config.isEndOfGroup }
+    val hasFocus = remember(focusIdProvider) { focusIdProvider() == message.id }
+    val config = configProvider()
+    val isAnother = config.isAnother
+    val isEndOfGroup = config.isEndOfGroup
     val backgroundColor: Color = remember(theme, isAnother) {
         if (isAnother) theme.bubbleStart
         else theme.bubbleEnd
@@ -139,9 +138,7 @@ fun ChatBubble(
                             }
                         )
                 ) {
-                    val nameVisibility = remember(config) {
-                        config is BubbleConfig.Group && config.nameVisibility
-                    }
+                    val nameVisibility = config is BubbleConfig.Group && config.nameVisibility
                     val (label, reply, content) = createRefs()
                     Text(
                         text = if (config is BubbleConfig.Group) config.name else "",
@@ -241,7 +238,9 @@ fun ChatBubble(
                                     contentColor = contentColor,
                                     message = message,
                                     contentDescription = "Image Message",
-                                    isPending = config.sendState == Message.STATE_PENDING,
+                                    isPending = remember(config.sendState) {
+                                        config.sendState == Message.STATE_PENDING
+                                    },
                                     modifier = Modifier
                                         .onGloballyPositioned {
                                             boundaries = it.boundsInWindow()
@@ -469,7 +468,7 @@ private fun ConstraintLayoutScope.HeadPicView(
     ) {
         when (config) {
             is BubbleConfig.Group -> {
-                val isAnother = remember(config) { config.isAnother }
+                val isAnother = config.isAnother
                 if (config.avatarVisibility) {
                     SubcomposeAsyncImage(
                         model = config.avatar,
@@ -521,14 +520,53 @@ private fun ThumbView(
     isPending: Boolean = false,
     contentDescription: String? = null,
 ) {
-    val realUrl = when (message) {
-        is ImageMessage -> message.url
-        is GraphicsMessage -> message.url
-        else -> ""
+    val realUrl = remember(message) {
+        when (message) {
+            is ImageMessage -> message.url
+            is GraphicsMessage -> message.url
+            else -> ""
+        }
+    }
+    val aspectRatio = remember(message) {
+        val default = 4 / 3f
+        when (message) {
+            is ImageMessage -> {
+                val width = message.width.toFloat()
+                val height = message.height.toFloat()
+                when {
+                    width > 0 && height > 0f -> width / height
+                    else -> null
+                }
+            }
+            is GraphicsMessage -> {
+                val width = message.width
+                val height = message.height.toFloat()
+                when {
+                    width < 0 && height < 0f -> width / height
+                    else -> null
+                }
+            }
+            else -> null
+        } ?: default
+    }
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val (w, h) = when {
+        aspectRatio >= 1f -> {
+            0.75 * screenWidthDp to 0.75 * screenWidthDp / aspectRatio
+        }
+        else -> {
+            0.45 * screenWidthDp to 0.45 * screenWidthDp / aspectRatio
+        }
     }
     Surface(
         shape = RoundedCornerShape(5),
-        modifier = modifier.padding(4.dp),
+        modifier = modifier
+            .padding(4.dp)
+            .size(
+                width = w,
+                height = h
+            ),
         color = backgroundColor,
         contentColor = contentColor
     ) {
@@ -545,18 +583,13 @@ private fun ThumbView(
             model = model,
             imageLoader = loader
         )
-
+        val blurEffect = remember { BlurEffect(16f, 16f) }
         Image(
             painter = painter,
             contentDescription = contentDescription,
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(4 / 3f)
-                .graphicsLayer {
-                    if (isPending)
-                        renderEffect = BlurEffect(8f, 8f)
-                },
-            contentScale = ContentScale.Crop,
+                .graphicsLayer { if (isPending) renderEffect = blurEffect },
+            contentScale = ContentScale.Fit
         )
     }
 }

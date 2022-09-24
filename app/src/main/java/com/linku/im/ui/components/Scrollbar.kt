@@ -1,5 +1,5 @@
+@file:Suppress("unused")
 package com.linku.im.ui.components
-
 
 import android.view.ViewConfiguration
 import androidx.compose.animation.core.Animatable
@@ -7,7 +7,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier

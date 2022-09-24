@@ -1,5 +1,6 @@
 package com.linku.domain.entity
 
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
@@ -9,6 +10,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Entity
+@Stable
 @TypeConverters(IntListConverter::class, ConversationTypeConverter::class)
 data class Conversation(
     @PrimaryKey
@@ -42,6 +44,7 @@ data class Conversation(
 }
 
 @Serializable
+@Stable
 data class ConversationDTO(
     @SerialName("id")
     val id: Int,

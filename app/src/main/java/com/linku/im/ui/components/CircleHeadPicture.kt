@@ -11,17 +11,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import coil.compose.SubcomposeAsyncImage
+import com.linku.im.extension.compose.lambda.Content
+import com.linku.im.extension.compose.lambda.toBoxContent
 import com.linku.im.ui.theme.LocalSpacing
 
 @Composable
 fun CircleHeadPicture(
     model: Any?,
     modifier: Modifier = Modifier,
-    placeholder: @Composable () -> Unit = {}
+    placeholder: Content = {}
 ) {
     SubcomposeAsyncImage(
         model = model,
         contentDescription = null,
+        loading = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+                content = placeholder.toBoxContent()
+            )
+        },
+        error = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+                content = placeholder.toBoxContent()
+            )
+        },
         modifier = modifier
             .aspectRatio(1f)
             .clip(CircleShape)
@@ -29,23 +45,6 @@ fun CircleHeadPicture(
                 width = LocalSpacing.current.extraSmall,
                 shape = CircleShape,
                 color = Color.Unspecified
-            ),
-        error = {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                placeholder()
-            }
-        },
-        loading = {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                placeholder()
-            }
-        }
+            )
     )
-
 }

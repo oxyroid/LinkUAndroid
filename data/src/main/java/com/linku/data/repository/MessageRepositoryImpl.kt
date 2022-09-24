@@ -4,10 +4,12 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toFile
 import androidx.core.net.toUri
+import com.linku.data.util.ImageUtil
 import com.linku.domain.*
 import com.linku.domain.bean.CachedFile
 import com.linku.domain.bean.StagingMessage
 import com.linku.domain.entity.*
+import com.linku.domain.extension.use
 import com.linku.domain.repository.MessageRepository
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
@@ -123,41 +125,41 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? {
-        suspend fun fromBackend(): Message? = messageService.getMessageById(mid)
+        suspend fun fromBackend(): MessageDTO? = messageService.getMessageById(mid)
             .toResult()
             .getOrNull()
-            ?.toMessage()
-            ?.also { messageDao.insert(it) }
 
         suspend fun fromIO(): Message? = messageDao.getById(mid)
 
-        suspend fun Message.toIO() = messageDao.insert(this)
+        suspend fun MessageDTO.toIO() = messageDao.insert(this.toMessage())
 
         return when (strategy) {
             Strategy.OnlyCache -> fromIO()
-            Strategy.OnlyNetwork -> fromBackend()
-            Strategy.Memory -> {
-                fun fromMemory(): Message? = mmkv.decodeString("message_$mid")?.let {
-                    json.decodeFromString<MessageDTO>(it).toMessage()
+            Strategy.OnlyNetwork -> fromBackend()?.toMessage()
+            Strategy.Memory -> run {
+                fun fromMemory(): MessageDTO? = mmkv.decodeString("message_$mid")?.let {
+                    json.decodeFromString<MessageDTO>(it)
                 }
 
-                fun Message.toMemory() {
+                fun MessageDTO.toMemory() {
                     mmkv.encode("message_$mid", json.encodeToString(this))
                 }
-                fromMemory()
-                    ?: fromIO()?.also {
-                        it.toMemory()
-                    }
+                fromMemory()?.toMessage()
+                    ?: fromIO()
                     ?: fromBackend()?.also {
                         it.toIO()
                         it.toMemory()
-                    }
+                    }?.toMessage()
             }
 
-            Strategy.NetworkThenCache -> fromBackend()?.also {
+            Strategy.NetworkThenCache -> fromBackend()?.let {
                 it.toIO()
+                it.toMessage()
             }
-            Strategy.CacheElseNetwork -> fromIO() ?: fromBackend()?.also { it.toIO() }
+            Strategy.CacheElseNetwork -> fromIO() ?: fromBackend()?.let {
+                it.toIO()
+                it.toMessage()
+            }
         }
             ?.toReadable()
     }
@@ -235,11 +237,29 @@ class MessageRepositoryImpl @Inject constructor(
                     // 4. Make real HTTP-Connection to send message.
                     val cachedFile = resource.data
                     launch {
+                        val (width, height) = ImageUtil.getBitmapFromUri(
+                            context.contentResolver,
+                            cachedFile.localUri
+                        )?.use {
+                            it.width to it.height
+                        } ?: (-1 to -1)
+
                         val remoteContent = json.encodeToString(
-                            ImageContent(cachedFile.remoteUrl, reply)
+                            ImageContent(
+                                url = cachedFile.remoteUrl,
+                                reply = reply,
+                                width = width,
+                                height = height
+                            )
                         )
+
                         val localContent = json.encodeToString(
-                            ImageContent(cachedFile.localUri.toString(), reply)
+                            ImageContent(
+                                url = cachedFile.localUri.toString(),
+                                reply = reply,
+                                width = width,
+                                height = height
+                            )
                         )
                         messageService.sendMessage(
                             cid = cid,
@@ -310,16 +330,31 @@ class MessageRepositoryImpl @Inject constructor(
                         // 4. Make real HTTP-Connection to send message.
                         val cachedFile = resource.data
                         launch {
+                            val (width, height) = ImageUtil.getBitmapFromUri(
+                                context.contentResolver,
+                                cachedFile.localUri
+                            )?.use {
+                                it.width to it.height
+                            } ?: (-1 to -1)
+
                             val remoteContent = json.encodeToString(
                                 GraphicsContent(
-                                    text,
-                                    cachedFile.remoteUrl,
-                                    reply
+                                    text = text,
+                                    url = cachedFile.remoteUrl,
+                                    reply = reply,
+                                    width = width,
+                                    height = height
                                 )
                             )
 
                             val localContent = json.encodeToString(
-                                GraphicsContent(text, cachedFile.localUri.toString(), reply)
+                                GraphicsContent(
+                                    text = text,
+                                    url = cachedFile.localUri.toString(),
+                                    reply = reply,
+                                    width = width,
+                                    height = height
+                                )
                             )
                             messageService.sendMessage(
                                 cid = cid,
@@ -411,6 +446,13 @@ class MessageRepositoryImpl @Inject constructor(
                 )
             }
             is StagingMessage.Image -> {
+                val (width, height) = ImageUtil.getBitmapFromUri(
+                    context.contentResolver,
+                    staging.uri
+                )?.use {
+                    it.width to it.height
+                } ?: (-1 to -1)
+
                 Message(
                     id = id,
                     cid = staging.cid,
@@ -418,7 +460,9 @@ class MessageRepositoryImpl @Inject constructor(
                     content = json.encodeToString(
                         ImageContent(
                             url = staging.uri.toString(),
-                            reply = staging.reply
+                            reply = staging.reply,
+                            width = width,
+                            height = height
                         )
                     ),
                     type = Message.Type.Image,
@@ -427,22 +471,33 @@ class MessageRepositoryImpl @Inject constructor(
                     sendState = Message.STATE_PENDING
                 )
             }
-            is StagingMessage.Graphics -> Message(
-                id = id,
-                cid = staging.cid,
-                uid = staging.uid,
-                content = json.encodeToString(
-                    GraphicsContent(
-                        text = staging.text,
-                        url = staging.uri.toString(),
-                        reply = staging.reply
-                    )
-                ),
-                type = Message.Type.Graphics,
-                timestamp = System.currentTimeMillis(),
-                uuid = staging.uuid,
-                sendState = Message.STATE_PENDING
-            )
+            is StagingMessage.Graphics -> {
+                val (width, height) = ImageUtil.getBitmapFromUri(
+                    context.contentResolver,
+                    staging.uri
+                )?.use {
+                    it.width to it.height
+                } ?: (-1 to -1)
+
+                Message(
+                    id = id,
+                    cid = staging.cid,
+                    uid = staging.uid,
+                    content = json.encodeToString(
+                        GraphicsContent(
+                            text = staging.text,
+                            url = staging.uri.toString(),
+                            reply = staging.reply,
+                            width = width,
+                            height = height
+                        )
+                    ),
+                    type = Message.Type.Graphics,
+                    timestamp = System.currentTimeMillis(),
+                    uuid = staging.uuid,
+                    sendState = Message.STATE_PENDING
+                )
+            }
         }
         messageDao.insert(message)
     }

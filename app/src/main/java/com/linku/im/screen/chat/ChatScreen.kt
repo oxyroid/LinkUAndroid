@@ -2,6 +2,7 @@ package com.linku.im.screen.chat
 
 import android.Manifest
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,8 +48,10 @@ import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.domain.entity.*
-import com.linku.domain.struct.LinkedNode
-import com.linku.domain.struct.hasNext
+import com.linku.domain.struct.node.LinkedNode
+import com.linku.domain.struct.node.forward
+import com.linku.domain.struct.node.hasCache
+import com.linku.domain.struct.node.remain
 import com.linku.im.R
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.chat.composable.*
@@ -72,8 +75,6 @@ fun ChatScreen(
     val navController = LocalNavController.current
     val hostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
-    val messages by viewModel.messageFlow.collectAsState(emptyList())
-//    val messagesPaged = viewModel.pagingFlow.collectAsLazyPagingItems()
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         viewModel.onEvent(ChatEvent.OnFile(uri))
     }
@@ -99,6 +100,7 @@ fun ChatScreen(
         }
     }
 
+    val messages by viewModel.messageFlow.collectAsState(emptyList())
     val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
     val offset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
     LaunchedEffect(firstVisibleItemIndex, offset) {
@@ -110,8 +112,6 @@ fun ChatScreen(
             viewModel.onEvent(ChatEvent.Syncing)
         }
     }
-
-    val boxOffset = remember { mutableStateOf<IntSize?>(null) }
 
     var node: LinkedNode<ChatScreenMode> by remember {
         mutableStateOf(LinkedNode(ChatScreenMode.Messages))
@@ -131,8 +131,7 @@ fun ChatScreen(
                 node = node,
                 onClick = { mode ->
                     when (mode) {
-                        ChatScreenMode.Messages -> node =
-                            LinkedNode(ChatScreenMode.ChannelDetail, node)
+                        ChatScreenMode.Messages -> node = node.forward(ChatScreenMode.ChannelDetail)
                         ChatScreenMode.ChannelDetail -> {}
                         is ChatScreenMode.MemberDetail -> {}
                         is ChatScreenMode.ImageDetail -> {}
@@ -141,24 +140,22 @@ fun ChatScreen(
                 onNavClick = { mode ->
                     when (mode) {
                         ChatScreenMode.Messages -> navController.popBackStack()
-                        else -> {
-                            node = node.next ?: node
-                        }
+                        else -> node = node.remain()
                     }
                 }
             )
         },
         listContent = {
             ListContent(
-                loading = !vm.readable.hasSynced,
+                loading = { !vm.readable.hasSynced },
                 listState = listState,
-                messages = messages,
-                focusMessageId = state.focusMessageId,
+                messages = { messages },
+                focusMessageId = { state.focusMessageId },
                 onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
                 onResend = { viewModel.onEvent(ChatEvent.ResendMessage(it)) },
                 onCancel = { viewModel.onEvent(ChatEvent.CancelMessage(it)) },
                 onImagePreview = { mid, boundaries ->
-                    node = LinkedNode(ChatScreenMode.ImageDetail(mid, boundaries), node)
+                    node = node.forward(ChatScreenMode.ImageDetail(mid, boundaries))
                 },
                 onProfile = {
                     navController.navigate(
@@ -167,8 +164,7 @@ fun ChatScreen(
                 },
                 onScroll = { position ->
                     scope.launch {
-                        listState.scrollToItem(index = position,
-                            scrollOffset = boxOffset.value?.let { it.height / -2 } ?: 0)
+                        listState.scrollToItem(position)
                     }
                 },
                 onFocus = { viewModel.onEvent(ChatEvent.OnFocus(it)) },
@@ -177,7 +173,8 @@ fun ChatScreen(
             )
         },
         bottomSheetContent = {
-            BottomSheetContent(modifier = Modifier.fillMaxWidth(),
+            BottomSheetContent(
+                modifier = Modifier.fillMaxWidth(),
                 repliedMessage = state.repliedMessage,
                 hasScrolled = !isAtTop,
                 onDismissReply = { viewModel.onEvent(ChatEvent.OnReply(null)) },
@@ -195,10 +192,10 @@ fun ChatScreen(
                 content = {
                     // Bottom Sheet
                     ChatTextField(
-                        text = state.textFieldValue,
-                        uri = state.uri,
+                        text = { state.textFieldValue },
+                        uri = { state.uri },
                         emojis = state.emojis,
-                        expended = state.emojiSpanExpanded,
+                        emojiSpanExpanded = { state.emojiSpanExpanded },
                         onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
                         onFile = { permissionState.launchPermissionRequest() },
                         onText = { viewModel.onEvent(ChatEvent.OnTextChange(it)) },
@@ -209,9 +206,11 @@ fun ChatScreen(
             )
         },
         originPreview = {
-            OriginPreview(preview = state.preview, onDismiss = { node = node.next ?: node })
+            OriginPreview(
+                preview = state.preview,
+                onDismiss = { node = node.remain() }
+            )
         },
-        onListHeightChanged = { boxOffset.value = it },
         channelDetailContent = {
             LaunchedEffect(node) {
                 if (node.value == ChatScreenMode.ChannelDetail) {
@@ -228,7 +227,7 @@ fun ChatScreen(
                         CircularProgressIndicator()
                     }
                 } else {
-                    val members by viewModel.memberFlow.collectAsState(initial = emptyList())
+                    val members by viewModel.memberFlow.collectAsState(emptyList())
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -239,7 +238,6 @@ fun ChatScreen(
                         }
                     }
                 }
-
 
                 MaterialTextButton(
                     textRes = R.string.channel_add_to_desktop,
@@ -303,7 +301,7 @@ fun ChatScreen(
                         detectVerticalDragGestures(
                             onDragEnd = {
                                 if (offsetY.absoluteValue >= 0.3) {
-                                    node = node.next ?: node
+                                    node = node.remain()
                                 }
                                 if (offsetY != 0f) offsetY = 0f
                             },
@@ -325,7 +323,7 @@ fun ChatScreen(
                     painter = painter,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Fit
                 )
             }
             LaunchedEffect(node, s, boundaries) {
@@ -339,11 +337,11 @@ fun ChatScreen(
         }
     )
 
-    BackHandler(state.preview != null || state.focusMessageId != null || node.hasNext) {
+    BackHandler(state.preview != null || state.focusMessageId != null || node.hasCache) {
         when {
-            state.preview != null -> node = node.next ?: node
+            state.preview != null -> node = node.remain()
             state.focusMessageId != null -> viewModel.onEvent(ChatEvent.OnFocus(null))
-            node.hasNext -> node = node.next ?: node
+            node.hasCache -> node = node.remain()
         }
     }
 
@@ -363,8 +361,7 @@ private fun ChatScaffold(
     bottomSheetContent: @Composable BoxScope.() -> Unit,
     channelDetailContent: @Composable () -> Unit,
     imageDetailContent: @Composable (String, Rect) -> Unit,
-    originPreview: @Composable BoxScope.() -> Unit,
-    onListHeightChanged: (IntSize) -> Unit
+    originPreview: @Composable BoxScope.() -> Unit
 ) {
     Scaffold(
         topBar = topBar,
@@ -386,8 +383,7 @@ private fun ChatScaffold(
                         drawContent()
                     }
                     .padding(innerPadding)
-                    .imePadding()
-                    .onSizeChanged(onListHeightChanged),
+                    .imePadding(),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 listContent()
@@ -439,13 +435,12 @@ private fun ChatScaffold(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ListContent(
-    loading: Boolean,
+    loading: () -> Boolean,
     listState: LazyListState,
-    messages: List<MessageVO>,
-    focusMessageId: Int?,
+    messages: () -> List<MessageVO>,
+    focusMessageId: () -> Int?,
     onReply: (Int) -> Unit,
     onResend: (Int) -> Unit,
     onCancel: (Int) -> Unit,
@@ -457,7 +452,7 @@ private fun ListContent(
     modifier: Modifier = Modifier,
     spacing: Dp = 150.dp
 ) {
-    if (loading) {
+    if (loading()) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier
@@ -482,34 +477,37 @@ private fun ListContent(
                         .height(spacing)
                 )
             }
-            messages.forEach {
-                item {
-                    ChatBubble(
-                        message = it.message,
-                        focusId = focusMessageId,
-                        onImagePreview = onImagePreview,
-                        onProfile = onProfile,
-                        onScroll = onScroll,
-                        onFocus = onFocus,
-                        onDismissFocus = onFocusDismiss,
-                        onReply = onReply,
-                        onResend = onResend,
-                        onCancel = onCancel,
-                        config = it.config,
-                        modifier = Modifier.padding(
-                            top = 6.dp, bottom = if (it.config.isEndOfGroup) 6.dp else 0.dp
-                        )
+            items(messages()) {
+                val paddingValues = remember(it.config) {
+                    PaddingValues(
+                        top = 6.dp,
+                        bottom = if (it.config.isEndOfGroup) 6.dp else 0.dp
                     )
                 }
+                ChatBubble(
+                    message = it.message,
+                    focusIdProvider = focusMessageId,
+                    configProvider = { it.config },
+                    onImagePreview = onImagePreview,
+                    onProfile = onProfile,
+                    onScroll = onScroll,
+                    onFocus = onFocus,
+                    onDismissFocus = onFocusDismiss,
+                    onReply = onReply,
+                    onResend = onResend,
+                    onCancel = onCancel,
+                    modifier = Modifier.padding(paddingValues)
+                )
                 it.config.isShowTime.ifTrue {
-                    stickyHeader {
-                        val message = remember(it) {
-                            it.message
-                        }
-                        Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                        ChatTimestamp(timestamp = message.timestamp)
-                        Spacer(Modifier.height(LocalSpacing.current.extraSmall))
-                    }
+                    val timestamp = remember { it.message.timestamp }
+                    Log.e("TimeStampCard", "TIME")
+                    ChatTimestamp(
+                        timestampProvider = { timestamp },
+                        modifier = Modifier
+                            .padding(
+                                vertical = LocalSpacing.current.extraSmall
+                            )
+                    )
                 }
             }
         }
@@ -589,7 +587,8 @@ private fun BottomSheetContent(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun PreviewDialog(
-    uri: Uri?, onDismiss: () -> Unit
+    uri: Uri?,
+    onDismiss: () -> Unit
 ) {
     AnimatedContent(
         targetState = uri,
@@ -607,7 +606,8 @@ private fun PreviewDialog(
     ) {
         if (it == null) return@AnimatedContent
         Surface(
-            shape = RoundedCornerShape(5), border = BorderStroke(1.dp, LocalTheme.current.divider)
+            shape = RoundedCornerShape(5),
+            border = BorderStroke(1.dp, LocalTheme.current.divider)
         ) {
             Box {
                 AsyncImage(
@@ -633,7 +633,9 @@ private fun PreviewDialog(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BoxScope.OriginPreview(
-    preview: String?, delay: Long = 120L, onDismiss: () -> Unit
+    preview: String?,
+    delay: Long = 120L,
+    onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
 

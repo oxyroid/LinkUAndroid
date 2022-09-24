@@ -1,5 +1,6 @@
 package com.linku.domain.extension
 
+import android.graphics.Bitmap
 import com.linku.domain.BuildConfig
 
 val <T> T.TAG: String
@@ -25,3 +26,5 @@ inline fun <R> release(block: () -> R): R? {
         null
     }
 }
+
+fun <R> Bitmap.use(user: (Bitmap) -> R): R = user(this).also { recycle() }

@@ -46,12 +46,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.accompanist.insets.LocalWindowInsets
 import com.linku.im.ui.theme.LocalTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun TextField(
     modifier: Modifier = Modifier,
@@ -74,11 +73,12 @@ fun TextField(
     val interactionSource = remember { MutableInteractionSource() }
     val interactionSourceState = interactionSource.collectIsFocusedAsState()
     val scope = rememberCoroutineScope()
-    val ime = LocalWindowInsets.current.ime
+
+    val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
-    LaunchedEffect(ime.isVisible, interactionSourceState.value) {
-        if (ime.isVisible && interactionSourceState.value) {
+    LaunchedEffect(imeVisible, interactionSourceState.value) {
+        if (imeVisible && interactionSourceState.value) {
             scope.launch {
                 delay(300)
                 bringIntoViewRequester.bringIntoView()
@@ -147,7 +147,7 @@ fun TextField(
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun PasswordTextField(
     modifier: Modifier = Modifier,
@@ -166,11 +166,11 @@ fun PasswordTextField(
     val interactionSource = remember { MutableInteractionSource() }
     val interactionSourceState = interactionSource.collectIsFocusedAsState()
     val scope = rememberCoroutineScope()
-    val ime = LocalWindowInsets.current.ime
+    val imeVisible = WindowInsets.isImeVisible
 
     // Bring the composable into view (visible to user).
-    LaunchedEffect(ime.isVisible, interactionSourceState.value) {
-        if (ime.isVisible && interactionSourceState.value) {
+    LaunchedEffect(imeVisible, interactionSourceState.value) {
+        if (imeVisible && interactionSourceState.value) {
             scope.launch {
                 delay(300)
                 bringIntoViewRequester.bringIntoView()

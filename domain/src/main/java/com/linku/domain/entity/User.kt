@@ -1,11 +1,13 @@
 package com.linku.domain.entity
 
+import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Entity
+@Stable
 data class User(
     @PrimaryKey
     val id: Int,
@@ -17,6 +19,7 @@ data class User(
 )
 
 @Serializable
+@Stable
 data class UserDTO(
     @SerialName("id")
     val id: Int,
