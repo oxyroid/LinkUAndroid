@@ -125,55 +125,50 @@ fun ChatScreen(
         imageDetailContent: @Composable (String, Rect) -> Unit,
     ) {
         val mode = remember(linkedNode) { linkedNode.value }
-        Box(
-            modifier = Modifier
-                .background(LocalTheme.current.background)
-                .systemBarsPadding()
-        ) {
-            Scaffold(
-                topBar = topBar,
-                backgroundColor = Color.Transparent,
-                contentColor = LocalTheme.current.onBackground
-            ) { innerPadding ->
-                Crossfade(
-                    targetState = mode,
-                    modifier = Modifier
-                        .fillMaxSize()
-                ) { mode ->
-                    Wrapper {
-                        val chatBackgroundColor = LocalTheme.current.chatBackground
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .drawWithContent {
-                                    drawRect(chatBackgroundColor)
-                                    drawContent()
-                                }
-                                .padding(innerPadding)
-                                .imePadding(),
-                            contentAlignment = Alignment.BottomCenter
-                        ) {
+        Scaffold(
+            topBar = topBar,
+            backgroundColor = LocalTheme.current.surface,
+            contentColor = LocalTheme.current.onSurface
+        ) { innerPadding ->
+                Wrapper {
+                    val chatBackgroundColor = LocalTheme.current.chatBackground
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .drawWithContent {
+                                drawRect(chatBackgroundColor)
+                                drawContent()
+                            }
+                            .padding(innerPadding)
+                            .navigationBarsPadding()
+                            .imePadding(),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        Wrapper {
                             listContent()
-                            Log.i("Recomposition", "ListContent")
+                        }
+                        Log.i("Recomposition", "ListContent")
+                        Wrapper {
                             bottomSheetContent()
                         }
                     }
-                    if (mode is ChatScreenMode.ChannelDetail) {
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .background(LocalTheme.current.background)
-                                .padding(innerPadding)
-                        ) {
-                            channelDetailContent()
-                        }
+                }
+                if (mode is ChatScreenMode.ChannelDetail) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(LocalTheme.current.background)
+                            .navigationBarsPadding()
+                            .padding(innerPadding)
+                    ) {
+                        channelDetailContent()
                     }
                 }
-            }
 
-            if (mode is ChatScreenMode.ImageDetail) {
-                imageDetailContent(mode.url, mode.boundaries)
-            }
+        }
+
+        if (mode is ChatScreenMode.ImageDetail) {
+            imageDetailContent(mode.url, mode.boundaries)
         }
     }
 
@@ -346,6 +341,8 @@ fun ChatScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(Color.Black * mDetailBackgroundAlpha)
+                    .statusBarsPadding()
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
                             onDragEnd = {
@@ -368,7 +365,6 @@ fun ChatScreen(
                             }
                         )
                     }
-                    .background(Color.Black * mDetailBackgroundAlpha)
             ) {
                 val context = LocalContext.current
                 val request = remember(model) {
@@ -454,6 +450,20 @@ private fun ListContent(
             )
         }
     } else {
+        val paddingValues = remember(messages) {
+            messages.map {
+                PaddingValues(
+                    top = 6.dp,
+                    bottom = if (it.config.isEndOfGroup) 6.dp else 0.dp
+                )
+            }
+        }
+        val isShowTimes = remember(messages) {
+            messages.map { it.config.isShowTime }
+        }
+        val timestamps = remember(messages) {
+            messages.map { it.message.timestamp }
+        }
         LazyColumn(
             state = listState,
             modifier = modifier.fillMaxSize(),
@@ -467,13 +477,7 @@ private fun ListContent(
                         .height(spacing)
                 )
             }
-            items(messages) {
-                val paddingValues = remember(it.config) {
-                    PaddingValues(
-                        top = 6.dp,
-                        bottom = if (it.config.isEndOfGroup) 6.dp else 0.dp
-                    )
-                }
+            itemsIndexed(messages) { index, it ->
                 ChatBubble(
                     message = it.message,
                     focusIdProvider = focusMessageIdProvider,
@@ -486,13 +490,12 @@ private fun ListContent(
                     onReply = onReply,
                     onResend = onResend,
                     onCancel = onCancel,
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier.padding(paddingValues[index])
                 )
-                it.config.isShowTime.ifTrue {
-                    val timestamp = remember { it.message.timestamp }
+                isShowTimes[index].ifTrue {
                     Log.i("Recomposition", "timestamp")
                     ChatTimestamp(
-                        timestampProvider = { timestamp },
+                        timestampProvider = { timestamps[index] },
                         modifier = Modifier
                             .padding(
                                 vertical = LocalSpacing.current.extraSmall

@@ -215,6 +215,8 @@ data class MessageDTO(
                 uid = uid,
                 url = imageContent.url,
                 reply = imageContent.reply,
+                width = imageContent.width,
+                height = imageContent.height,
                 timestamp = timestamp,
                 uuid = uuid,
                 sendState = sendState
@@ -229,6 +231,8 @@ data class MessageDTO(
                 text = graphicsContent.text,
                 url = graphicsContent.url,
                 reply = graphicsContent.reply,
+                width = graphicsContent.width,
+                height = graphicsContent.height,
                 timestamp = timestamp,
                 uuid = uuid,
                 sendState = sendState
