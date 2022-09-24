@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
-import com.linku.domain.struct.node.LinkedNode
 import com.linku.im.screen.chat.ChatScreenMode
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.theme.LocalSpacing
@@ -31,24 +30,25 @@ import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun ChatTopBar(
+    modeProvider: () -> ChatScreenMode,
     title: String,
     subTitle: String,
     introduce: String,
     tonalElevation: Dp = 0.dp,
     shadowElevation: Dp = 0.dp,
-    node: LinkedNode<ChatScreenMode>,
     onClick: (ChatScreenMode) -> Unit,
     onNavClick: (ChatScreenMode) -> Unit
 ) {
     val duration = 400
     val containerColor by animateColorAsState(
-        if (node.value == ChatScreenMode.ChannelDetail) LocalTheme.current.subSurface
+        if (modeProvider() == ChatScreenMode.ChannelDetail) LocalTheme.current.subSurface
         else LocalTheme.current.surface
     )
     val contentColor by animateColorAsState(
-        when (node.value) {
+        when (modeProvider()) {
             ChatScreenMode.ChannelDetail -> LocalTheme.current.onSubSurface
             ChatScreenMode.Messages -> LocalTheme.current.onSurface
+            is ChatScreenMode.ImageDetail -> LocalTheme.current.onSurface
             else -> Color.Transparent
         }
     )
@@ -63,15 +63,14 @@ fun ChatTopBar(
                     drawRect(containerColor)
                     drawContent()
                 }
-                .clickable { onClick(node.value) }
+                .clickable { onClick(modeProvider()) }
         ) {
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             val height by animateDpAsState(
-                when (node.value) {
-                    ChatScreenMode.ChannelDetail -> Dp.Unspecified
+                when (modeProvider()) {
                     is ChatScreenMode.MemberDetail -> 0.dp
-                    is ChatScreenMode.ImageDetail -> 0.dp
-                    ChatScreenMode.Messages -> Dp.Unspecified
+                    ChatScreenMode.ChannelDetail -> Dp.Unspecified
+                    else -> Dp.Unspecified
                 }
             )
             ConstraintLayout(
@@ -82,7 +81,7 @@ fun ChatTopBar(
                 val (iconRef, titleRef, introduceRef, subTitleRef) = createRefs()
                 MaterialIconButton(
                     icon = Icons.Default.ArrowBack,
-                    onClick = { onNavClick(node.value) },
+                    onClick = { onNavClick(modeProvider()) },
                     tint = contentColor,
                     modifier = Modifier
                         .constrainAs(iconRef) {
@@ -92,34 +91,30 @@ fun ChatTopBar(
                         .height(height)
                 )
                 val textHorizontallyBias by animateFloatAsState(
-                    when (node.value) {
-                        ChatScreenMode.Messages -> 0.5f
+                    when (modeProvider()) {
                         ChatScreenMode.ChannelDetail -> 0f
-                        else -> 0.3f
+                        else -> 0.5f
                     },
                     animationSpec = tween(duration, easing = LinearEasing)
                 )
                 val textVerticallyBias by animateFloatAsState(
-                    when (node.value) {
-                        ChatScreenMode.Messages -> 0.5f
+                    when (modeProvider()) {
                         ChatScreenMode.ChannelDetail -> 1f
-                        else -> 0.7f
+                        else -> 0.5f
                     },
                     animationSpec = tween(duration, easing = LinearEasing)
                 )
                 val textFontSize by animateFloatAsState(
-                    when (node.value) {
-                        ChatScreenMode.Messages -> 16f
+                    when (modeProvider()) {
                         ChatScreenMode.ChannelDetail -> 24f
-                        else -> 0f
+                        else -> 16f
                     },
                     animationSpec = tween(duration, easing = LinearEasing)
                 )
 
                 val titleAlpha by animateFloatAsState(
-                    when (node.value) {
-                        ChatScreenMode.Messages, ChatScreenMode.ChannelDetail -> 1f
-                        else -> 0f
+                    when (modeProvider()) {
+                        else -> 1f
                     }
                 )
                 Text(
@@ -143,16 +138,16 @@ fun ChatTopBar(
                 )
 
                 val subtextFontSize by animateFloatAsState(
-                    when (node.value) {
-                        ChatScreenMode.Messages -> 10f
+                    when (modeProvider()) {
                         ChatScreenMode.ChannelDetail -> 14f
-                        else -> 0f
+                        else -> 10f
                     },
                     animationSpec = tween(duration, easing = LinearEasing)
                 )
                 val subTitleAlpha by animateFloatAsState(
-                    when (node.value) {
+                    when (modeProvider()) {
                         ChatScreenMode.Messages -> 1f
+                        is ChatScreenMode.ImageDetail -> 1f
                         else -> 0f
                     }
                 )
@@ -180,7 +175,7 @@ fun ChatTopBar(
                 )
 
                 val introduceHeight by animateDpAsState(
-                    when (node.value) {
+                    when (modeProvider()) {
                         ChatScreenMode.ChannelDetail -> 120.dp
                         else -> 0.dp
                     },

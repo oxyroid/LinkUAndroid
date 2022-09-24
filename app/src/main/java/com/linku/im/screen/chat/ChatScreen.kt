@@ -48,11 +48,9 @@ import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.domain.entity.*
-import com.linku.domain.struct.node.LinkedNode
-import com.linku.domain.struct.node.forward
-import com.linku.domain.struct.node.hasCache
-import com.linku.domain.struct.node.remain
+import com.linku.domain.struct.node.*
 import com.linku.im.R
+import com.linku.im.extension.compose.core.times
 import com.linku.im.extension.ifTrue
 import com.linku.im.screen.chat.composable.*
 import com.linku.im.screen.chat.vo.MessageVO
@@ -61,14 +59,15 @@ import com.linku.im.ui.theme.LocalNavController
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
+import com.thxbrop.suggester.any
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = hiltViewModel(), cid: Int
+    viewModel: ChatViewModel = hiltViewModel(),
+    cid: Int
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
@@ -113,25 +112,86 @@ fun ChatScreen(
         }
     }
 
-    var node: LinkedNode<ChatScreenMode> by remember {
+    var linkedNode: LinkedNode<ChatScreenMode> by remember {
         mutableStateOf(LinkedNode(ChatScreenMode.Messages))
     }
 
+    @Composable
+    fun ChatScaffold(
+        topBar: @Composable () -> Unit,
+        listContent: @Composable BoxScope.() -> Unit,
+        bottomSheetContent: @Composable BoxScope.() -> Unit,
+        channelDetailContent: @Composable () -> Unit,
+        imageDetailContent: @Composable (String, Rect) -> Unit,
+    ) {
+        val mode = remember(linkedNode) { linkedNode.value }
+        Box(
+            modifier = Modifier
+                .background(LocalTheme.current.background)
+                .systemBarsPadding()
+        ) {
+            Scaffold(
+                topBar = topBar,
+                backgroundColor = Color.Transparent,
+                contentColor = LocalTheme.current.onBackground
+            ) { innerPadding ->
+                Crossfade(
+                    targetState = mode,
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) { mode ->
+                    Wrapper {
+                        val chatBackgroundColor = LocalTheme.current.chatBackground
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .drawWithContent {
+                                    drawRect(chatBackgroundColor)
+                                    drawContent()
+                                }
+                                .padding(innerPadding)
+                                .imePadding(),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                            listContent()
+                            Log.i("Recomposition", "ListContent")
+                            bottomSheetContent()
+                        }
+                    }
+                    if (mode is ChatScreenMode.ChannelDetail) {
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .background(LocalTheme.current.background)
+                                .padding(innerPadding)
+                        ) {
+                            channelDetailContent()
+                        }
+                    }
+                }
+            }
+
+            if (mode is ChatScreenMode.ImageDetail) {
+                imageDetailContent(mode.url, mode.boundaries)
+            }
+        }
+    }
+
     ChatScaffold(
-        node = node,
         topBar = {
             ChatTopBar(
+                modeProvider = { linkedNode.value },
                 title = state.title,
                 subTitle = vm.readable.label ?: state.subTitle,
                 introduce = "",
-                tonalElevation = when (node.value) {
+                tonalElevation = when (linkedNode.value) {
                     ChatScreenMode.Messages -> LocalSpacing.current.small
                     else -> 0.dp
                 },
-                node = node,
                 onClick = { mode ->
                     when (mode) {
-                        ChatScreenMode.Messages -> node = node.forward(ChatScreenMode.ChannelDetail)
+                        ChatScreenMode.Messages -> linkedNode =
+                            linkedNode.forward(ChatScreenMode.ChannelDetail)
                         ChatScreenMode.ChannelDetail -> {}
                         is ChatScreenMode.MemberDetail -> {}
                         is ChatScreenMode.ImageDetail -> {}
@@ -140,22 +200,22 @@ fun ChatScreen(
                 onNavClick = { mode ->
                     when (mode) {
                         ChatScreenMode.Messages -> navController.popBackStack()
-                        else -> node = node.remain()
+                        else -> linkedNode = linkedNode.remain()
                     }
                 }
             )
         },
         listContent = {
             ListContent(
-                loading = { !vm.readable.hasSynced },
                 listState = listState,
-                messages = { messages },
-                focusMessageId = { state.focusMessageId },
+                loading = { !vm.readable.hasSynced },
+                messages = messages,
+                focusMessageIdProvider = { state.focusMessageId },
                 onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
                 onResend = { viewModel.onEvent(ChatEvent.ResendMessage(it)) },
                 onCancel = { viewModel.onEvent(ChatEvent.CancelMessage(it)) },
                 onImagePreview = { mid, boundaries ->
-                    node = node.forward(ChatScreenMode.ImageDetail(mid, boundaries))
+                    linkedNode = linkedNode.forward(ChatScreenMode.ImageDetail(mid, boundaries))
                 },
                 onProfile = {
                     navController.navigate(
@@ -205,15 +265,9 @@ fun ChatScreen(
                 }
             )
         },
-        originPreview = {
-            OriginPreview(
-                preview = state.preview,
-                onDismiss = { node = node.remain() }
-            )
-        },
         channelDetailContent = {
-            LaunchedEffect(node) {
-                if (node.value == ChatScreenMode.ChannelDetail) {
+            LaunchedEffect(linkedNode) {
+                if (linkedNode.value == ChatScreenMode.ChannelDetail) {
                     viewModel.onEvent(ChatEvent.FetchChannelDetail)
                 }
             }
@@ -259,49 +313,53 @@ fun ChatScreen(
                 }
             }
         },
-        imageDetailContent = { s, boundaries ->
-            var isShowed by remember {
-                mutableStateOf(false)
+        imageDetailContent = { model, boundaries ->
+            val paddingValues = WindowInsets.systemBars.asPaddingValues()
+            val configuration = LocalConfiguration.current
+            var isShowed by remember { mutableStateOf(false) }
+            val animatedRadius by animateDpAsState(if (isShowed) 0.dp else 8.dp)
+            val density = LocalDensity.current.density
+            val topPadding = remember {
+                paddingValues.calculateTopPadding().value * density
             }
-            val config = LocalConfiguration.current
-            val animatedRadius by animateDpAsState(
-                if (isShowed) 0.dp
-                else 8.dp
-            )
-            val density = LocalDensity.current
+
             val animatedOffset by animateIntOffsetAsState(
                 if (isShowed) IntOffset.Zero
                 else boundaries.topLeft.round()
             )
             val animatedWidthDp by animateDpAsState(
-                if (isShowed) config.screenWidthDp.dp
-                else (boundaries.width / density.density).dp
+                if (isShowed) configuration.screenWidthDp.dp
+                else (boundaries.width / density).dp
             )
             val animatedHeightDp by animateDpAsState(
-                if (isShowed) config.screenHeightDp.dp
-                else (boundaries.height / density.density).dp
+                if (isShowed) configuration.screenHeightDp.dp
+                else (boundaries.height / density).dp
             )
-
             var offsetY by remember { mutableStateOf(0f) }
 
-            val topBarOffsetY by animateFloatAsState(
-                if (!isShowed) 192f else 0f
+            val mDetailBackgroundAlpha by animateFloatAsState(
+                if (isShowed) 0.6f else 0f
             )
-            Surface(
+            val animatedTopPadding by animateFloatAsState(
+                if(isShowed) 0f else topPadding
+            )
+            Box(
                 modifier = Modifier
-                    .offset {
-                        animatedOffset + Offset(0f, offsetY - topBarOffsetY).round()
-                    }
-                    .size(
-                        width = animatedWidthDp,
-                        height = animatedHeightDp
-                    )
-                    .clip(RoundedCornerShape(animatedRadius))
+                    .fillMaxSize()
                     .pointerInput(Unit) {
                         detectVerticalDragGestures(
                             onDragEnd = {
-                                if (offsetY.absoluteValue >= 0.3) {
-                                    node = node.remain()
+                                linkedNode = linkedNode.remainIf {
+                                    any {
+                                        suggest { offsetY <= -configuration.screenHeightDp / 2f }
+                                        suggest {
+                                            (offsetY >= configuration.screenHeightDp / 2f).also {
+                                                if (it) {
+                                                    Log.e("Toast", "ChatScreen: offset down")
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                                 if (offsetY != 0f) offsetY = 0f
                             },
@@ -310,38 +368,52 @@ fun ChatScreen(
                             }
                         )
                     }
+                    .background(Color.Black * mDetailBackgroundAlpha)
             ) {
-                val model = ImageRequest.Builder(LocalContext.current).data(s).build()
-                val loader = ImageLoader.Builder(LocalContext.current).components {
-                    add(ImageDecoderDecoder.Factory())
-                }.build()
+                val context = LocalContext.current
+                val request = remember(model) {
+                    ImageRequest.Builder(context).data(model).build()
+                }
+                val loader = remember(model) {
+                    ImageLoader.Builder(context).components {
+                        add(ImageDecoderDecoder.Factory())
+                    }.build()
+                }
                 val painter = rememberAsyncImagePainter(
-                    model = model,
+                    model = request,
                     imageLoader = loader
                 )
                 Image(
                     painter = painter,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .offset {
+                            animatedOffset + Offset(0f, offsetY - animatedTopPadding).round()
+                        }
+                        .size(
+                            width = animatedWidthDp,
+                            height = animatedHeightDp
+                        )
+                        .clip(RoundedCornerShape(animatedRadius)),
                     contentScale = ContentScale.Fit
                 )
             }
-            LaunchedEffect(node, s, boundaries) {
-                if (node.value is ChatScreenMode.ImageDetail && !isShowed) {
+            LaunchedEffect(linkedNode, model, boundaries) {
+                if (linkedNode.value is ChatScreenMode.ImageDetail && !isShowed) {
                     delay(200L)
                     isShowed = true
-                } else if (node.value !is ChatScreenMode.ImageDetail && isShowed) {
+                } else if (linkedNode.value !is ChatScreenMode.ImageDetail && isShowed) {
                     isShowed = false
                 }
             }
         }
     )
 
-    BackHandler(state.preview != null || state.focusMessageId != null || node.hasCache) {
+    BackHandler(state.preview != null || state.focusMessageId != null || linkedNode.hasCache) {
         when {
-            state.preview != null -> node = node.remain()
+            state.preview != null -> linkedNode = linkedNode.remain()
             state.focusMessageId != null -> viewModel.onEvent(ChatEvent.OnFocus(null))
-            node.hasCache -> node = node.remain()
+            linkedNode.hasCache -> linkedNode = linkedNode.remain()
         }
     }
 
@@ -354,93 +426,11 @@ fun ChatScreen(
 
 
 @Composable
-private fun ChatScaffold(
-    node: LinkedNode<ChatScreenMode>,
-    topBar: @Composable () -> Unit,
-    listContent: @Composable BoxScope.() -> Unit,
-    bottomSheetContent: @Composable BoxScope.() -> Unit,
-    channelDetailContent: @Composable () -> Unit,
-    imageDetailContent: @Composable (String, Rect) -> Unit,
-    originPreview: @Composable BoxScope.() -> Unit
-) {
-    Scaffold(
-        topBar = topBar,
-        backgroundColor = LocalTheme.current.background,
-        contentColor = LocalTheme.current.onBackground
-    ) { innerPadding ->
-        Crossfade(
-            targetState = node.value,
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding()
-        ) { mode ->
-            val chatBackgroundColor = LocalTheme.current.chatBackground
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .drawWithContent {
-                        drawRect(chatBackgroundColor)
-                        drawContent()
-                    }
-                    .padding(innerPadding)
-                    .imePadding(),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                listContent()
-                bottomSheetContent()
-                originPreview()
-                if (mode is ChatScreenMode.ImageDetail) {
-                    var isShowed by remember { mutableStateOf(false) }
-                    val mDetailBackgroundAlpha by animateFloatAsState(
-                        if (isShowed) 0.6f else 0f
-                    )
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .drawWithContent {
-                                drawRect(
-                                    color = Color.Black,
-                                    alpha = mDetailBackgroundAlpha
-                                )
-                                drawContent()
-                            }
-                    ) {
-                        imageDetailContent(mode.url, mode.boundaries)
-                    }
-                    LaunchedEffect(Unit) {
-                        if (!isShowed) {
-                            delay(120L)
-                            isShowed = true
-                        }
-                    }
-                }
-            }
-            when (mode) {
-                ChatScreenMode.Messages -> {}
-
-                ChatScreenMode.ChannelDetail -> Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(LocalTheme.current.background)
-                        .padding(innerPadding)
-                ) {
-                    channelDetailContent()
-                }
-                is ChatScreenMode.ImageDetail -> {
-
-                }
-                is ChatScreenMode.MemberDetail -> TODO()
-            }
-        }
-    }
-}
-
-@Composable
 private fun ListContent(
-    loading: () -> Boolean,
     listState: LazyListState,
-    messages: () -> List<MessageVO>,
-    focusMessageId: () -> Int?,
+    messages: List<MessageVO>,
+    loading: () -> Boolean,
+    focusMessageIdProvider: () -> Int?,
     onReply: (Int) -> Unit,
     onResend: (Int) -> Unit,
     onCancel: (Int) -> Unit,
@@ -477,7 +467,7 @@ private fun ListContent(
                         .height(spacing)
                 )
             }
-            items(messages()) {
+            items(messages) {
                 val paddingValues = remember(it.config) {
                     PaddingValues(
                         top = 6.dp,
@@ -486,7 +476,7 @@ private fun ListContent(
                 }
                 ChatBubble(
                     message = it.message,
-                    focusIdProvider = focusMessageId,
+                    focusIdProvider = focusMessageIdProvider,
                     configProvider = { it.config },
                     onImagePreview = onImagePreview,
                     onProfile = onProfile,
@@ -500,7 +490,7 @@ private fun ListContent(
                 )
                 it.config.isShowTime.ifTrue {
                     val timestamp = remember { it.message.timestamp }
-                    Log.e("TimeStampCard", "TIME")
+                    Log.i("Recomposition", "timestamp")
                     ChatTimestamp(
                         timestampProvider = { timestamp },
                         modifier = Modifier
@@ -626,82 +616,6 @@ private fun PreviewDialog(
                     contentDescription = null
                 )
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun BoxScope.OriginPreview(
-    preview: String?,
-    delay: Long = 120L,
-    onDismiss: () -> Unit
-) {
-    val context = LocalContext.current
-
-//    val configuration = LocalConfiguration.current
-//    val screenDensity = configuration.densityDpi / 160f
-//    val screenWidthDp: Int = (configuration.screenWidthDp.toFloat() * screenDensity).roundToInt()
-//    val screenHeightDp: Int = (configuration.screenHeightDp.toFloat() * screenDensity).roundToInt()
-
-    var state by remember { mutableStateOf(false) }
-    val duration = remember { 400 }
-    val transition = updateTransition(state, label = "transition")
-
-//    val width by transition.animateDp(
-//        label = "width-dp",
-//        transitionSpec = { tween(duration) }
-//    ) {
-//        screenWidthDp.dp
-//    }.also { Log.e("Measure", "OriginPreview: width=${it.value}") }
-//
-//    val height by transition.animateDp(
-//        label = "height-dp",
-//        transitionSpec = { tween(duration) }
-//    ) {
-//        if (!it) 0.dp else screenHeightDp.dp
-//    }.also { Log.e("Measure", "OriginPreview: height=${it.value}") }
-
-    val background by transition.animateColor(label = "color",
-        transitionSpec = { tween(duration) }) {
-        if (!it) Color.Transparent else LocalTheme.current.background
-    }
-    val model = remember(preview) {
-        ImageRequest.Builder(context).data(preview).build()
-    }
-//    val loader = remember {
-//        ImageLoader.Builder(context)
-//            .components { add(ImageDecoderDecoder.Factory()) }
-//            .build()
-//    }
-//    val painter = rememberAsyncImagePainter(
-//        model = model,
-//        imageLoader = loader
-//    )
-    AnimatedVisibility(visible = state,
-        modifier = Modifier
-            .fillMaxSize()
-            .align(Alignment.Center)
-            .drawWithContent {
-                drawRect(background)
-                drawContent()
-            }
-            .combinedClickable(onDoubleClick = {
-                onDismiss()
-                state = false
-            }, onClick = {})
-    ) {
-        AsyncImage(
-            model = model,
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
-    LaunchedEffect(preview) {
-        if (!preview.isNullOrEmpty()) {
-            delay(delay)
-            state = true
         }
     }
 }

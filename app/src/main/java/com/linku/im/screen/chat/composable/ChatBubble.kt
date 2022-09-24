@@ -527,46 +527,51 @@ private fun ThumbView(
             else -> ""
         }
     }
-    val aspectRatio = remember(message) {
-        val default = 4 / 3f
+    val withRatio: Boolean = remember(message) {
         when (message) {
             is ImageMessage -> {
                 val width = message.width.toFloat()
                 val height = message.height.toFloat()
-                when {
-                    width > 0 && height > 0f -> width / height
-                    else -> null
-                }
+                width > 0 && height > 0f
             }
             is GraphicsMessage -> {
-                val width = message.width
+                val width = message.width.toFloat()
                 val height = message.height.toFloat()
-                when {
-                    width < 0 && height < 0f -> width / height
-                    else -> null
-                }
+                width > 0 && height > 0f
             }
-            else -> null
-        } ?: default
+            else -> false
+        }
+    }
+    val aspectRatio = remember(message) {
+        val defaultRatio = 4 / 3f
+        if (withRatio) when (message) {
+            is ImageMessage -> {
+                val width = message.width.toFloat()
+                val height = message.height.toFloat()
+                width / height
+            }
+            is GraphicsMessage -> {
+                val width = message.width.toFloat()
+                val height = message.height.toFloat()
+                width / height
+            }
+            else -> defaultRatio
+        } else defaultRatio
     }
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
-    val (w, h) = when {
-        aspectRatio >= 1f -> {
-            0.75 * screenWidthDp to 0.75 * screenWidthDp / aspectRatio
-        }
-        else -> {
-            0.45 * screenWidthDp to 0.45 * screenWidthDp / aspectRatio
+
+    val (w, h) = remember(aspectRatio) {
+        when {
+            aspectRatio >= 1f -> 0.75 * screenWidthDp to 0.75 * screenWidthDp / aspectRatio
+            else -> 0.45 * screenWidthDp to 0.45 * screenWidthDp / aspectRatio
         }
     }
     Surface(
         shape = RoundedCornerShape(5),
         modifier = modifier
-            .padding(4.dp)
-            .size(
-                width = w,
-                height = h
-            ),
+            .padding(LocalSpacing.current.extraSmall)
+            .size(w, h),
         color = backgroundColor,
         contentColor = contentColor
     ) {
@@ -587,9 +592,8 @@ private fun ThumbView(
         Image(
             painter = painter,
             contentDescription = contentDescription,
-            modifier = Modifier
-                .graphicsLayer { if (isPending) renderEffect = blurEffect },
-            contentScale = ContentScale.Fit
+            modifier = Modifier.graphicsLayer { if (isPending) renderEffect = blurEffect },
+            contentScale = if (withRatio) ContentScale.Fit else ContentScale.Crop
         )
     }
 }

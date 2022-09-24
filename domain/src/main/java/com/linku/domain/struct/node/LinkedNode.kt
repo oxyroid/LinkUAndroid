@@ -1,7 +1,7 @@
 package com.linku.domain.struct.node
 
 import androidx.compose.runtime.Immutable
-import java.util.Stack
+import java.util.*
 
 /**
  * Immutable LinkedList Node.
@@ -34,3 +34,10 @@ fun <E : Any> LinkedNode<E>.forward(value: E): LinkedNode<E> = LinkedNode(value,
  * @return cache node or current node if the cache node is not existed.
  */
 fun <E : Any> LinkedNode<E>.remain(): LinkedNode<E> = cache ?: this
+
+fun <E : Any> LinkedNode<E>.remainIf(block: E.() -> Boolean): LinkedNode<E> = block(value).let {
+    if (it) {
+        remain()
+        cache ?: this
+    } else this
+}
