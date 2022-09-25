@@ -3,7 +3,7 @@ package com.linku.im.screen.chat.vo
 import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Strategy
 import com.linku.im.Constants
-import com.linku.im.extension.ifTrue
+import com.linku.im.ktx.ifTrue
 
 sealed class ChatVO {
     data class Message(

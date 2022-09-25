@@ -42,9 +42,9 @@ import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
 import com.linku.im.R
-import com.linku.im.extension.compose.core.times
-import com.linku.im.extension.compose.layout.intervalClickable
-import com.linku.im.extension.ifTrue
+import com.linku.im.ktx.compose.ui.graphics.times
+import com.linku.im.ktx.compose.ui.intervalClickable
+import com.linku.im.ktx.ifTrue
 import com.linku.im.ui.components.TextImage
 import com.linku.im.ui.theme.*
 import java.util.*
@@ -114,6 +114,7 @@ fun ChatBubble(
             horizontalArrangement = if (isAnother) Arrangement.Start else Arrangement.End
         ) {
             var boundaries: Rect by remember { mutableStateOf(Rect.Zero) }
+            var aspectRatio: Float by remember { mutableStateOf(4 / 3f) }
             ElevatedCard(
                 shape = RoundedCornerShape(
                     bottomStart = if (isAnother && isEndOfGroup) 0.dp else 12.dp,
@@ -242,9 +243,6 @@ fun ChatBubble(
                                         config.sendState == Message.STATE_PENDING
                                     },
                                     modifier = Modifier
-                                        .onGloballyPositioned {
-                                            boundaries = it.boundsInWindow()
-                                        }
                                         .combinedClickable(
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = LocalIndication.current,
@@ -258,6 +256,10 @@ fun ChatBubble(
                                                 onFocus(message.id)
                                             }
                                         ),
+                                    onGloballyPositioned = { _boundaries, _aspectRatio ->
+                                        boundaries = _boundaries
+                                        aspectRatio = _aspectRatio
+                                    }
                                 )
                             }
                             is GraphicsMessage -> {
@@ -269,9 +271,6 @@ fun ChatBubble(
                                         contentDescription = "Graphics Message",
                                         isPending = config.sendState == Message.STATE_PENDING,
                                         modifier = Modifier
-                                            .onGloballyPositioned {
-                                                boundaries = it.boundsInWindow()
-                                            }
                                             .combinedClickable(
                                                 interactionSource = remember { MutableInteractionSource() },
                                                 indication = LocalIndication.current,
@@ -285,6 +284,10 @@ fun ChatBubble(
                                                     onFocus(message.id)
                                                 }
                                             ),
+                                        onGloballyPositioned = { _boundaries, _aspectRatio ->
+                                            boundaries = _boundaries
+                                            aspectRatio = _aspectRatio
+                                        }
                                     )
                                     Text(
                                         text = message.text,
@@ -321,7 +324,6 @@ fun ChatBubble(
                         }
                     }
                 }
-                LocalView.current
                 DropdownMenu(
                     expanded = hasFocus,
                     onDismissRequest = {
@@ -519,6 +521,7 @@ private fun ThumbView(
     modifier: Modifier = Modifier,
     isPending: Boolean = false,
     contentDescription: String? = null,
+    onGloballyPositioned: (Rect, Float) -> Unit
 ) {
     val realUrl = remember(message) {
         when (message) {
@@ -592,7 +595,11 @@ private fun ThumbView(
         Image(
             painter = painter,
             contentDescription = contentDescription,
-            modifier = Modifier.graphicsLayer { if (isPending) renderEffect = blurEffect },
+            modifier = Modifier
+                .graphicsLayer { if (isPending) renderEffect = blurEffect }
+                .onGloballyPositioned {
+                    onGloballyPositioned(it.boundsInWindow(), aspectRatio)
+                },
             contentScale = if (withRatio) ContentScale.Fit else ContentScale.Crop
         )
     }

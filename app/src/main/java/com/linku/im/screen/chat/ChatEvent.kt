@@ -15,7 +15,13 @@ sealed class ChatEvent {
     data class OnReply(val mid: Int?) : ChatEvent()
     object ReadAll : ChatEvent()
     object FetchChannelDetail : ChatEvent()
+    object PushShortcut : ChatEvent()
+
     data class OnFocus(val mid: Int?) : ChatEvent()
     data class ResendMessage(val mid: Int) : ChatEvent()
     data class CancelMessage(val mid: Int) : ChatEvent()
+
+    data class Forward(val mode: ChatScreenMode): ChatEvent()
+    object Remain: ChatEvent()
+    data class RemainIf(val block: () -> Boolean): ChatEvent()
 }

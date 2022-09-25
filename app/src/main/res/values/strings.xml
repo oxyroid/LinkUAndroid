@@ -88,4 +88,6 @@
     <string name="channel_type_group">群组</string>
     <string name="channel_type_pm">私聊</string>
     <string name="channel_type_unknown">未知</string>
+    <string name="shortcutPushed">已添加到桌面</string>
+    <string name="shortcutPushing">添加中…</string>
 </resources>

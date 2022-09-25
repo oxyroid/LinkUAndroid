@@ -19,9 +19,10 @@ data class ChatState(
     val emojiSpanExpanded: Boolean = false,
     val uri: Uri? = null,
     val firstVisibleIndex: Int = 0,
-    val offset: Int = 0,
+    val firstVisibleItemScrollOffset: Int = 0,
     val repliedMessage: Message? = null,
-    val preview: String? = null,
     val scroll: Event<Int> = Event.Handled(),
-    val focusMessageId: Int? = null
+    val focusMessageId: Int? = null,
+    val shortcutPushing: Boolean = false,
+    val shortcutPushed: Boolean = false
 )

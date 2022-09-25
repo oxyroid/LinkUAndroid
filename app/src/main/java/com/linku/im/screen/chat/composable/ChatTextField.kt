@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.linku.domain.bean.Emoji
 import com.linku.im.R
-import com.linku.im.extension.ifTrue
-import com.linku.im.extension.compose.layout.intervalClickable
+import com.linku.im.ktx.ifTrue
+import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme

@@ -12,10 +12,7 @@ import com.linku.domain.repository.AuthRepository
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao
-import com.linku.domain.service.AuthService
-import com.linku.domain.service.ConversationService
-import com.linku.domain.service.FileService
-import com.linku.domain.service.MessageService
+import com.linku.domain.service.*
 import com.linku.domain.toResult
 import com.linku.fs_android.writeFs
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,6 +26,7 @@ import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val authService: AuthService,
+    private val profileService: ProfileService,
     private val messageService: MessageService,
     private val conversationService: ConversationService,
     private val fileService: FileService,
@@ -132,5 +130,21 @@ class AuthRepositoryImpl @Inject constructor(
             .onFailure { emitResource(it.message) }
     }
 
-    override fun uploadAvatar(uri: Uri): Flow<Resource<Unit>> = uploadImage(uri).map { it.toUnit() }
+    override fun uploadAvatar(uri: Uri): Flow<Resource<Unit>> = channelFlow {
+        uploadImage(uri)
+            .onEach { resource ->
+                when (resource) {
+                    is Resource.Success -> {
+                        launch {
+                            profileService.editAvatar(resource.data.remoteUrl)
+                                .toResult()
+                                .onSuccess { trySend(resource.toUnit()) }
+                                .onFailure { trySend(Resource.Failure(it.message)) }
+                        }
+                    }
+                    else -> trySend(resource.toUnit())
+                }
+            }
+            .launchIn(this)
+    }
 }

@@ -11,8 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import coil.compose.SubcomposeAsyncImage
-import com.linku.im.extension.compose.lambda.Content
-import com.linku.im.extension.compose.lambda.toBoxContent
+import com.linku.im.ktx.compose.layout.Content
+import com.linku.im.ktx.compose.layout.toBoxContent
 import com.linku.im.ui.theme.LocalSpacing
 
 @Composable

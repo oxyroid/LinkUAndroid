@@ -17,7 +17,7 @@ data class FindUserUseCase @Inject constructor(
         id: Int,
         strategy: Strategy = Strategy.NetworkThenCache
     ): User? = try {
-        repository.getById(id, strategy)
+        repository.findById(id, strategy)
     } catch (e: Exception) {
         null
     }

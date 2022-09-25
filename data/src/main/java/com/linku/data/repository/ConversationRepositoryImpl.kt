@@ -1,23 +1,64 @@
 package com.linku.data.repository
 
-import com.linku.domain.Resource
-import com.linku.domain.emitResource
-import com.linku.domain.entity.Conversation
-import com.linku.domain.entity.Member
-import com.linku.domain.entity.toConversation
+import com.linku.domain.*
+import com.linku.domain.entity.*
 import com.linku.domain.repository.ConversationRepository
-import com.linku.domain.resourceFlow
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.service.ConversationService
-import com.linku.domain.toResult
+import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 class ConversationRepositoryImpl @Inject constructor(
     private val conversationDao: ConversationDao,
-    private val conversationService: ConversationService
+    private val conversationService: ConversationService,
+    private val json: Json,
+    private val mmkv: MMKV
 ) : ConversationRepository {
+    override suspend fun findConversation(cid: Int, strategy: Strategy): Conversation? {
+        suspend fun fromBackend(): ConversationDTO? = conversationService.getConversationById(cid)
+            .toResult()
+            .getOrNull()
+
+        suspend fun fromIO(): Conversation? = conversationDao.getById(cid)
+
+        suspend fun ConversationDTO.toIO() = conversationDao.insert(this.toConversation())
+
+        return when (strategy) {
+            Strategy.OnlyCache -> fromIO()
+            Strategy.OnlyNetwork -> fromBackend()?.toConversation()
+            Strategy.Memory -> run {
+                fun fromMemory(): ConversationDTO? = mmkv.decodeString("conversation_$cid")?.let {
+                    json.decodeFromString<ConversationDTO>(it)
+                }
+
+                fun ConversationDTO.toMemory() {
+                    mmkv.encode("conversation_$cid", json.encodeToString(this))
+                }
+                fromMemory()
+                    ?.toConversation()
+                    ?: fromIO()
+                    ?: fromBackend()?.also {
+                        it.toIO()
+                        it.toMemory()
+                    }?.toConversation()
+            }
+
+            Strategy.NetworkThenCache -> fromBackend()?.let {
+                it.toIO()
+                it.toConversation()
+            }
+            Strategy.CacheElseNetwork -> fromIO() ?: fromBackend()?.let {
+                it.toIO()
+                it.toConversation()
+            }
+        }
+    }
+
     override fun observeConversation(cid: Int): Flow<Conversation> = runCatching {
         conversationDao.observeConversation(cid)
     }

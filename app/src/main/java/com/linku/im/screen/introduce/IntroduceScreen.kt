@@ -38,25 +38,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.os.bundleOf
-import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
+import com.bumble.appyx.navmodel.backstack.operation.pop
+import com.bumble.appyx.navmodel.backstack.operation.push
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.domain.Event
 import com.linku.im.BuildConfig
 import com.linku.im.R
-import com.linku.im.extension.ifFalse
-import com.linku.im.extension.ifTrue
-import com.linku.im.extension.compose.layout.intervalClickable
+import com.linku.im.appyx.NavTarget
+import com.linku.im.ktx.compose.ui.intervalClickable
+import com.linku.im.ktx.ifFalse
+import com.linku.im.ktx.ifTrue
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.screen.introduce.util.SquireCropImage
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
@@ -71,10 +72,10 @@ import java.util.*
 @Composable
 fun IntroduceScreen(
     uid: Int,
-    viewModel: IntroduceViewModel = hiltViewModel()
+    viewModel: IntroduceViewModel
 ) {
     val state = viewModel.readable
-    val navController = LocalNavController.current
+    val navController = LocalBackStack.current
     val context = LocalContext.current
 
     val uCropLauncher = rememberLauncherForActivityResult(SquireCropImage()) { uri ->
@@ -101,7 +102,7 @@ fun IntroduceScreen(
 
     LaunchedEffect(state.logout) {
         if (state.logout)
-            navController.popBackStack()
+            navController.pop()
     }
 
     LaunchedEffect(state.runLauncher) {
@@ -110,12 +111,7 @@ fun IntroduceScreen(
 
     LaunchedEffect(state.editEvent) {
         state.editEvent.handle {
-            navController.navigate(
-                R.id.action_introduceFragment_to_editFragment,
-                bundleOf(
-                    "type" to it.code
-                )
-            )
+            navController.push(NavTarget.Edit(it))
         }
     }
 
@@ -144,7 +140,7 @@ fun IntroduceScreen(
             IntroduceTopBar(
                 onDropdownMenuRequest = { dropdownMenuExpended = true },
                 onDismissDropdownMenuRequest = { dropdownMenuExpended = false },
-                onNavClick = navController::navigateUp,
+                onNavClick = { navController.pop() },
                 ownDropdown = {
                     DropdownMenuItem(
                         onClick = {

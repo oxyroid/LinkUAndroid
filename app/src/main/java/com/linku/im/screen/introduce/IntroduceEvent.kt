@@ -1,7 +1,9 @@
 package com.linku.im.screen.introduce
 
 import android.net.Uri
+import android.os.Parcelable
 import com.linku.im.screen.introduce.composable.Property
+import kotlinx.parcelize.Parcelize
 
 sealed class IntroduceEvent {
     data class FetchIntroduce(val uid: Int) : IntroduceEvent()
@@ -20,9 +22,12 @@ sealed class IntroduceEvent {
     ) : IntroduceEvent()
 
     data class Edit(val type: Type) : IntroduceEvent() {
-        sealed class Type(val code: Int) {
+        sealed class Type(val code: Int): Parcelable {
+            @Parcelize
             object Name : Type(0)
+            @Parcelize
             object NickName : Type(1)
+            @Parcelize
             object Description : Type(2)
 
             override fun toString(): String = code.toString()

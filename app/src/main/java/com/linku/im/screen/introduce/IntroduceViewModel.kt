@@ -17,7 +17,7 @@ import com.linku.domain.Resource
 import com.linku.domain.entity.User
 import com.linku.domain.eventOf
 import com.linku.im.R
-import com.linku.im.extension.ifFalse
+import com.linku.im.ktx.ifFalse
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
 import dagger.hilt.android.lifecycle.HiltViewModel

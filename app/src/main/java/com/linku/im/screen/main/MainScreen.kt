@@ -25,20 +25,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.core.os.bundleOf
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.bumble.appyx.navmodel.backstack.operation.push
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.extension.compose.layout.intervalClickable
-import com.linku.im.extension.compose.core.times
-import com.linku.im.screen.Screen
+import com.linku.im.appyx.NavTarget
+import com.linku.im.ktx.compose.ui.graphics.times
+import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.PinnedConversationItem
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
@@ -51,7 +50,7 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun MainScreen(
-    viewModel: MainViewModel = hiltViewModel()
+    viewModel: MainViewModel
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
@@ -59,16 +58,16 @@ fun MainScreen(
     val pagerState = rememberPagerState()
     val hostState = remember { SnackbarHostState() }
 
-    val navController = LocalNavController.current
+    val navController = LocalBackStack.current
     val selections = buildList {
         Selection.Route(
             resId = R.string.notification,
-            route = Screen.IntroduceScreen.withArgs(-1),
+            target = NavTarget.Introduce(-1),
             icon = Icons.Sharp.Notifications
         ).also(::add)
         Selection.Route(
             resId = R.string.settings,
-            route = Screen.IntroduceScreen.withArgs(-1),
+            target = NavTarget.Introduce(-1),
             icon = Icons.Sharp.Settings
         ).also(::add)
         Selection.Switch(resId = R.string.toggle_theme,
@@ -100,9 +99,7 @@ fun MainScreen(
                 actions = {
                     MaterialIconButton(
                         icon = Icons.Sharp.Search,
-                        onClick = {
-                            navController.navigate(R.id.action_mainFragment_to_queryFragment)
-                        },
+                        onClick = { navController.push(NavTarget.Query) },
                         contentDescription = "search"
                     )
                 },
@@ -117,7 +114,7 @@ fun MainScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 FloatingActionButton(
-                    onClick = { navController.navigate(R.id.action_mainFragment_to_createFragment) },
+                    onClick = { navController.push(NavTarget.Create) },
                     modifier = Modifier
                         .padding(LocalSpacing.current.medium)
                         .align(Alignment.End),
@@ -236,16 +233,15 @@ fun MainScreen(
                                     .intervalClickable {
                                         when (selection) {
                                             is Selection.Route -> {
-                                                when (Screen.valueOf(selection.route)) {
-                                                    Screen.IntroduceScreen -> {
-                                                        navController.navigate(
-                                                            if (vm.authenticator.currentUID == null)
-                                                                R.id.action_mainFragment_to_signFragment
-                                                            else R.id.action_mainFragment_to_introduceFragment
+                                                when (selection.target) {
+                                                    is NavTarget.Introduce -> {
+                                                        navController.push(
+                                                            vm.authenticator.currentUID?.let {
+                                                                NavTarget.Introduce(it)
+                                                            } ?: NavTarget.Sign
                                                         )
                                                     }
-                                                    Screen.MainScreen -> {}
-                                                    else -> navController.navigate(selection.route)
+                                                    else -> navController.push(selection.target)
                                                 }
                                             }
                                             is Selection.Switch -> selection.onClick()
@@ -277,12 +273,7 @@ fun MainScreen(
                                 unreadCount = index / 2,
                                 modifier = Modifier.animateItemPlacement()
                             ) {
-                                navController.navigate(
-                                    R.id.action_mainFragment_to_chatFragment,
-                                    bundleOf(
-                                        "cid" to conversation.id
-                                    )
-                                )
+                                navController.push(NavTarget.Chat(conversation.id))
                             }
                             if (index != conversations.lastIndex) Divider()
                         }
@@ -299,7 +290,7 @@ private sealed class Selection(
 ) {
     data class Route(
         override val resId: Int,
-        val route: String,
+        val target: NavTarget,
         override val icon: ImageVector
     ) : Selection(resId, icon)
 

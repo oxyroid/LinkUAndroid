@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Resource
-import com.linku.im.extension.ifFalse
-import com.linku.im.extension.ifTrue
+import com.linku.im.ktx.ifFalse
+import com.linku.im.ktx.ifTrue
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn

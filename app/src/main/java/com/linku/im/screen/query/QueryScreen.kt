@@ -18,14 +18,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.core.os.bundleOf
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.bumble.appyx.navmodel.backstack.operation.pop
+import com.bumble.appyx.navmodel.backstack.operation.push
 import com.linku.im.R
+import com.linku.im.appyx.NavTarget
 import com.linku.im.ui.components.ConversationItem
-import com.linku.im.ui.components.UserItem
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.TextField
-import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.components.UserItem
+import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
@@ -36,11 +37,11 @@ import com.linku.im.vm
 )
 @Composable
 fun QueryScreen(
-    viewModel: QueryViewModel = hiltViewModel()
+    viewModel: QueryViewModel
 ) {
     val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
-    val navController = LocalNavController.current
+    val navController = LocalBackStack.current
 
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
@@ -68,7 +69,7 @@ fun QueryScreen(
                 ) {
                     MaterialIconButton(
                         icon = Icons.Sharp.ArrowBack,
-                        onClick = { navController.navigateUp() },
+                        onClick = { navController.pop() },
                         modifier = Modifier.padding(LocalSpacing.current.extraSmall),
                         contentDescription = "back"
                     )
@@ -118,12 +119,7 @@ fun QueryScreen(
                         }
                     items(state.conversations) { conversation ->
                         ConversationItem(conversation = conversation) {
-                            navController.navigate(
-                                R.id.action_queryFragment_to_chatFragment,
-                                bundleOf(
-                                    "cid" to conversation.id
-                                )
-                            )
+                            navController.push(NavTarget.Chat(conversation.id))
                         }
                     }
                     if (state.users.isNotEmpty())
@@ -149,12 +145,7 @@ fun QueryScreen(
                         }
                     items(state.users) { user ->
                         UserItem(user = user) {
-                            navController.navigate(
-                                R.id.action_queryFragment_to_introduceFragment,
-                                bundleOf(
-                                    "uid" to user.id
-                                )
-                            )
+                            navController.push(NavTarget.Introduce(user.id))
                         }
                     }
                 }

@@ -16,29 +16,29 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.google.accompanist.insets.ui.Scaffold
 import com.linku.im.R
 import com.linku.im.ui.components.MaterialButton
 import com.linku.im.ui.components.MaterialTextButton
 import com.linku.im.ui.components.PasswordTextField
 import com.linku.im.ui.components.TextField
-import com.linku.im.ui.theme.LocalNavController
+import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 
 @Composable
 fun SignScreen(
-    viewModel: SignViewModel = hiltViewModel()
+    viewModel: SignViewModel
 ) {
     val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
-    val navController = LocalNavController.current
+    val navController = LocalBackStack.current
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
 
     val focusManager = LocalFocusManager.current
@@ -55,7 +55,7 @@ fun SignScreen(
 
     LaunchedEffect(state.loginEvent) {
         state.loginEvent.handle {
-            navController.popBackStack()
+            navController.pop()
         }
     }
 

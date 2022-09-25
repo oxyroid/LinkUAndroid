@@ -24,8 +24,8 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.im.R
-import com.linku.im.extension.compose.core.times
-import com.linku.im.extension.compose.layout.intervalClickable
+import com.linku.im.ktx.compose.ui.graphics.times
+import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.screen.chat.vo.MemberVO
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme

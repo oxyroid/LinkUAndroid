@@ -13,7 +13,7 @@ class UserRepositoryImpl @Inject constructor(
     private val userService: UserService
 ) : UserRepository {
     private val memory = mutableMapOf<Int, User?>()
-    override suspend fun getById(id: Int, strategy: Strategy): User? = when (strategy) {
+    override suspend fun findById(id: Int, strategy: Strategy): User? = when (strategy) {
         Strategy.OnlyCache -> userDao.getById(id)
         Strategy.OnlyNetwork -> userService.getById(id)
             .toResult()

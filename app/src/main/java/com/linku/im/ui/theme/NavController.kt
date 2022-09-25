@@ -1,9 +1,9 @@
 package com.linku.im.ui.theme
 
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
+import com.bumble.appyx.navmodel.backstack.BackStack
+import com.linku.im.appyx.NavTarget
 
-val LocalNavController = staticCompositionLocalOf<NavController> {
+val LocalBackStack = staticCompositionLocalOf<BackStack<NavTarget>> {
     error("No navController provided.")
 }

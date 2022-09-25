@@ -3,11 +3,11 @@ package com.linku.im.screen
 
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
-import com.linku.im.extension.containsKey
-import com.linku.im.extension.lruCacheOf
+import com.linku.im.ktx.containsKey
+import com.linku.im.ktx.lruCacheOf
 import com.linku.im.screen.chat.vo.MessageVO
 import com.linku.im.screen.main.vo.ConversationVO
-import com.thxbrop.suggester.any
+import com.linku.im.ktx.dsl.any
 
 object FastVOCache {
     val messages = lruCacheOf<Int, MessageVO>()

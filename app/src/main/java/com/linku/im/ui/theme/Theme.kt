@@ -4,8 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalView
-import androidx.navigation.findNavController
 import com.linku.im.vm
 
 @Composable
@@ -45,9 +43,9 @@ fun AppTheme(
     }
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),
-        LocalNavController provides LocalView.current.findNavController(),
         LocalAnimatedColor provides animatedColor,
-        LocalTheme provides colors
+        LocalTheme provides colors,
+        LocalDuration provides Duration()
     ) {
         MaterialTheme(
             content = content,

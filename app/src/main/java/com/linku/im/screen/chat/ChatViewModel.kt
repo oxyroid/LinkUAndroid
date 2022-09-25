@@ -1,5 +1,7 @@
 package com.linku.im.screen.chat
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
@@ -14,18 +16,22 @@ import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.TextMessage
 import com.linku.domain.eventOf
 import com.linku.domain.service.NotificationService
+import com.linku.domain.struct.node.LinkedNode
+import com.linku.domain.struct.node.forward
+import com.linku.domain.struct.node.remain
+import com.linku.domain.struct.node.remainIf
 import com.linku.im.Constants
 import com.linku.im.R
-import com.linku.im.extension.isSameDay
-import com.linku.im.extension.isToday
+import com.linku.im.ktx.isSameDay
+import com.linku.im.ktx.isToday
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.chat.composable.BubbleConfig
 import com.linku.im.screen.chat.composable.ReplyConfig
 import com.linku.im.screen.chat.vo.MemberVO
 import com.linku.im.screen.chat.vo.MessageVO
-import com.thxbrop.suggester.all
-import com.thxbrop.suggester.any
-import com.thxbrop.suggester.suggestAny
+import com.linku.im.ktx.dsl.all
+import com.linku.im.ktx.dsl.any
+import com.linku.im.ktx.dsl.suggestAny
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,10 +57,15 @@ class ChatViewModel @Inject constructor(
     private val _memberFlow = MutableStateFlow(emptyList<MemberVO>())
     val memberFlow: SharedFlow<List<MemberVO>> = _memberFlow
 
+
+    private val _linkedNode = mutableStateOf<LinkedNode<ChatScreenMode>>(LinkedNode(ChatScreenMode.Messages))
+    val linkedNode:State<LinkedNode<ChatScreenMode>> get() = _linkedNode
+
     override fun onEvent(event: ChatEvent) = when (event) {
         is Initialize -> initial(event)
         Syncing -> syncing()
         FetchChannelDetail -> fetchChannelDetail()
+        PushShortcut -> pushShortcut()
         is OnTextChange -> onTextChange(event)
         is OnEmoji -> onEmoji(event)
         is OnFile -> onFile(event)
@@ -66,6 +77,9 @@ class ChatViewModel @Inject constructor(
         is ResendMessage -> TODO()
         is CancelMessage -> TODO()
         ReadAll -> TODO()
+        is Forward -> forward(event)
+        Remain -> remain()
+        is RemainIf -> remainIf(event)
     }
 
     private fun initial(event: Initialize) {
@@ -196,7 +210,7 @@ class ChatViewModel @Inject constructor(
                         _messageFlow.emit(it)
                     }
                     writable = readable.copy(
-                        scroll = if (readable.firstVisibleIndex == 0 && readable.offset == 0)
+                        scroll = if (readable.firstVisibleIndex == 0 && readable.firstVisibleItemScrollOffset == 0)
                             eventOf(0) else readable.scroll
                     )
 
@@ -241,6 +255,29 @@ class ChatViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    private fun pushShortcut() {
+        conversationUseCases.pushConversationShort(readable.cid)
+            .onEach { resource ->
+                writable = when (resource) {
+                    Resource.Loading -> readable.copy(
+                        shortcutPushing = true
+                    )
+                    is Resource.Success -> readable.copy(
+                        shortcutPushing = false,
+                        shortcutPushed = true
+                    )
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                        readable.copy(
+                            shortcutPushing = false,
+                            shortcutPushed = false
+                        )
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
     private fun onTextChange(event: OnTextChange) {
         writable = readable.copy(textFieldValue = event.text)
     }
@@ -269,7 +306,7 @@ class ChatViewModel @Inject constructor(
     private fun onScroll(event: OnScroll) {
         writable = readable.copy(
             firstVisibleIndex = event.index,
-            offset = event.offset
+            firstVisibleItemScrollOffset = event.offset
         )
     }
     
@@ -396,5 +433,16 @@ class ChatViewModel @Inject constructor(
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun forward(event: Forward) {
+        _linkedNode.value = linkedNode.value.forward(event.mode)
+    }
+
+    private fun remain() {
+        _linkedNode.value = linkedNode.value.remain()
+    }
+    private fun remainIf(event: RemainIf) {
+        _linkedNode.value = linkedNode.value.remainIf { event.block() }
     }
 }
