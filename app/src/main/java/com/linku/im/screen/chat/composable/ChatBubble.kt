@@ -57,7 +57,7 @@ private val HORIZONTAL_OUT_PADDING = 18.dp
 @Composable
 fun ChatBubble(
     message: Message,
-    configProvider: () -> BubbleConfig,
+    configProvider: () -> Bubble,
     focusIdProvider: () -> Int?,
     modifier: Modifier = Modifier,
     onImagePreview: (String, Rect) -> Unit,
@@ -139,10 +139,10 @@ fun ChatBubble(
                             }
                         )
                 ) {
-                    val nameVisibility = config is BubbleConfig.Group && config.nameVisibility
+                    val nameVisibility = config is Bubble.Group && config.nameVisibility
                     val (label, reply, content) = createRefs()
                     Text(
-                        text = if (config is BubbleConfig.Group) config.name else "",
+                        text = if (config is Bubble.Group) config.name else "",
                         style = MaterialTheme.typography.titleSmall,
                         color = contentColor,
                         modifier = Modifier
@@ -457,7 +457,7 @@ fun ChatBubble(
 private fun ConstraintLayoutScope.HeadPicView(
     reference: ConstrainedLayoutReference,
     message: Message,
-    config: BubbleConfig,
+    config: Bubble,
     onProfile: (Int) -> Unit,
 ) {
     Box(
@@ -469,7 +469,7 @@ private fun ConstraintLayoutScope.HeadPicView(
         contentAlignment = Alignment.Center
     ) {
         when (config) {
-            is BubbleConfig.Group -> {
+            is Bubble.Group -> {
                 val isAnother = config.isAnother
                 if (config.avatarVisibility) {
                     SubcomposeAsyncImage(
@@ -507,7 +507,7 @@ private fun ConstraintLayoutScope.HeadPicView(
                     )
                 }
             }
-            is BubbleConfig.PM -> {}
+            is Bubble.PM -> {}
         }
     }
 }

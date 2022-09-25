@@ -5,11 +5,13 @@ import android.view.View
 import android.view.ViewTreeObserver
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import com.bumble.appyx.core.integration.NodeHost
+import com.bumble.appyx.core.integrationpoint.LocalIntegrationPoint
 import com.bumble.appyx.core.integrationpoint.NodeActivity
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.im.appyx.RootNode
@@ -39,8 +41,12 @@ class MainActivity : NodeActivity(), ViewTreeObserver.OnPreDrawListener {
                         darkIcons = !vm.readable.isDarkMode
                     )
                 }
-                NodeHost(integrationPoint = integrationPoint) {
-                    RootNode(it)
+                CompositionLocalProvider(
+                    LocalIntegrationPoint provides integrationPoint
+                ) {
+                    NodeHost(integrationPoint = integrationPoint) {
+                        RootNode(it)
+                    }
                 }
             }
         }

@@ -66,7 +66,10 @@ class RootNode(
 
     }
 
-    override fun resolve(navTarget: NavTarget, buildContext: BuildContext): Node {
+    override fun resolve(
+        navTarget: NavTarget,
+        buildContext: BuildContext
+    ): Node {
         return when (navTarget) {
             NavTarget.Main -> node(buildContext) {
                 val vm by (LocalContext.current as AppCompatActivity).viewModels<MainViewModel>()

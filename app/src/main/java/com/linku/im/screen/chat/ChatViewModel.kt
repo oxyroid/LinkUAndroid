@@ -6,7 +6,6 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.*
-import com.linku.im.screen.chat.ChatEvent.*
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
@@ -22,16 +21,17 @@ import com.linku.domain.struct.node.remain
 import com.linku.domain.struct.node.remainIf
 import com.linku.im.Constants
 import com.linku.im.R
-import com.linku.im.ktx.isSameDay
-import com.linku.im.ktx.isToday
-import com.linku.im.screen.BaseViewModel
-import com.linku.im.screen.chat.composable.BubbleConfig
-import com.linku.im.screen.chat.composable.ReplyConfig
-import com.linku.im.screen.chat.vo.MemberVO
-import com.linku.im.screen.chat.vo.MessageVO
 import com.linku.im.ktx.dsl.all
 import com.linku.im.ktx.dsl.any
 import com.linku.im.ktx.dsl.suggestAny
+import com.linku.im.ktx.isSameDay
+import com.linku.im.ktx.isToday
+import com.linku.im.screen.BaseViewModel
+import com.linku.im.screen.chat.ChatEvent.*
+import com.linku.im.screen.chat.composable.Bubble
+import com.linku.im.screen.chat.composable.Reply
+import com.linku.im.screen.chat.vo.MemberVO
+import com.linku.im.screen.chat.vo.MessageVO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,8 +58,9 @@ class ChatViewModel @Inject constructor(
     val memberFlow: SharedFlow<List<MemberVO>> = _memberFlow
 
 
-    private val _linkedNode = mutableStateOf<LinkedNode<ChatScreenMode>>(LinkedNode(ChatScreenMode.Messages))
-    val linkedNode:State<LinkedNode<ChatScreenMode>> get() = _linkedNode
+    private val _linkedNode =
+        mutableStateOf<LinkedNode<ChatScreenMode>>(LinkedNode(ChatScreenMode.Messages))
+    val linkedNode: State<LinkedNode<ChatScreenMode>> get() = _linkedNode
 
     override fun onEvent(event: ChatEvent) = when (event) {
         is Initialize -> initial(event)
@@ -107,7 +108,7 @@ class ChatViewModel @Inject constructor(
             emojis = emojiUseCases.getAll()
         )
     }
-    
+
     private var syncingMessagesJob: Job? = null
     private fun syncing() {
         messageUseCases.observeMessages(readable.cid)
@@ -135,7 +136,7 @@ class ChatViewModel @Inject constructor(
                             messageUseCases.getMessage(it, Strategy.Memory)
                         }
                         val replyConfig = repliedMessage?.let { m ->
-                            ReplyConfig(
+                            Reply(
                                 repliedMid = repliedMid,
                                 index = messages.indexOfFirst { it.id == repliedMid },
                                 display = when (m) {
@@ -152,7 +153,7 @@ class ChatViewModel @Inject constructor(
                             Conversation.Type.PM -> {
                                 MessageVO(
                                     message = message,
-                                    config = BubbleConfig.PM(
+                                    config = Bubble.PM(
                                         sendState = message.sendState,
                                         another = isAnother,
                                         isShowTime = isShowTime,
@@ -178,7 +179,7 @@ class ChatViewModel @Inject constructor(
 
                                 MessageVO(
                                     message = message,
-                                    config = BubbleConfig.Group(
+                                    config = Bubble.Group(
                                         sendState = message.sendState,
                                         other = isAnother,
                                         isShowTime = isShowTime,
@@ -296,7 +297,7 @@ class ChatViewModel @Inject constructor(
             )
         )
     }
-    
+
     private fun onFile(event: OnFile) {
         writable = readable.copy(
             uri = event.uri
@@ -309,7 +310,7 @@ class ChatViewModel @Inject constructor(
             firstVisibleItemScrollOffset = event.offset
         )
     }
-    
+
     private fun onReply(event: OnReply) {
         viewModelScope.launch {
             writable = readable.copy(
@@ -325,13 +326,13 @@ class ChatViewModel @Inject constructor(
             )
         }
     }
-    
+
     private fun onFocus(event: OnFocus) {
         writable = readable.copy(
             focusMessageId = event.mid
         )
     }
-    
+
     private fun onEmojiSpanExpanded(event: OnEmojiSpanExpanded) {
         writable = readable.copy(
             emojiSpanExpanded = event.value
@@ -442,6 +443,7 @@ class ChatViewModel @Inject constructor(
     private fun remain() {
         _linkedNode.value = linkedNode.value.remain()
     }
+
     private fun remainIf(event: RemainIf) {
         _linkedNode.value = linkedNode.value.remainIf { event.block() }
     }

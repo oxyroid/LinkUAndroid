@@ -11,4 +11,3 @@ data class MemberVO(
     val admin: Boolean,
     val memberName: String
 )
-
