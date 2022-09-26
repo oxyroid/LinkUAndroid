@@ -92,4 +92,5 @@
     <string name="shortcutPushing">添加中…</string>
     <string name="theme_card_left">您</string>
     <string name="theme_card_right">好</string>
+    <string name="theme_span_remain">重启应用生效</string>
 </resources>
