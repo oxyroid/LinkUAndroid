@@ -12,9 +12,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.im.R
+import com.linku.im.ktx.compose.ui.graphics.animated
 import com.linku.im.screen.setting.SettingEvent
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,30 +30,30 @@ fun ThemeSettingScreen(
     Scaffold(
         topBar = {
             ToolBar(
-                onNavClick = { /*TODO*/ },
                 actions = {},
-                text = stringResource(id = R.string.profile_settings_theme)
+                text = stringResource(id = R.string.profile_settings_theme),
+                backgroundColor = LocalTheme.current.topBar.animated(),
+                contentColor = LocalTheme.current.onTopBar.animated()
             )
         },
         modifier = modifier,
-        containerColor = LocalTheme.current.background,
-        contentColor = LocalTheme.current.onBackground
+        containerColor = LocalTheme.current.background.animated(),
+        contentColor = LocalTheme.current.onBackground.animated()
     ) { innerPadding ->
         Column(
             modifier = Modifier.padding(innerPadding)
         ) {
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
-                modifier = Modifier
-                    .fillMaxWidth()
+                horizontalArrangement = Arrangement.Start,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 items(state.themes) {
                     ThemeSelection(
                         theme = it,
                         currentTid = state.currentTheme,
-                        modifier = Modifier.height(128.dp),
+                        modifier = Modifier.height(96.dp),
                         onClick = {
-                             viewModel.onEvent(SettingEvent.Themes.SelectThemes(it.id))
+                            viewModel.onEvent(SettingEvent.Themes.SelectThemes(it.id))
                         }
                     )
                 }
