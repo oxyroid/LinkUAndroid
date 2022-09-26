@@ -1,5 +1,6 @@
 package com.linku.im.screen.main
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -13,10 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,8 +22,11 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.bumble.appyx.navmodel.backstack.operation.push
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -60,24 +61,40 @@ fun MainScreen(
     val hostState = remember { SnackbarHostState() }
 
     val navController = LocalBackStack.current
-    val selections = buildList {
-        Selection.Route(
-            resId = R.string.notification,
-            target = NavTarget.Introduce(-1),
-            icon = Icons.Sharp.Notifications
-        ).also(::add)
-        Selection.Route(
-            resId = R.string.settings,
-            target = NavTarget.Introduce(-1),
-            icon = Icons.Sharp.Settings
-        ).also(::add)
-        Selection.Switch(resId = R.string.toggle_theme,
-            value = vm.readable.isDarkMode,
-            onIcon = Icons.Sharp.LightMode,
-            offIcon = Icons.Sharp.DarkMode,
-            onClick = {
-                vm.onEvent(LinkUEvent.ToggleDarkMode)
-            }).also(::add)
+    val selections = remember(vm.readable.isDarkMode) {
+        buildList {
+            Selection.Route(
+                resId = R.string.notification,
+                target = NavTarget.Introduce(-1),
+                icon = Icons.Sharp.Notifications
+            ).also(::add)
+            Selection.Route(
+                resId = R.string.settings,
+                target = NavTarget.Introduce(-1),
+                icon = Icons.Sharp.Settings
+            ).also(::add)
+            Selection.Switch(resId = R.string.toggle_theme,
+                value = vm.readable.isDarkMode,
+                onIcon = Icons.Sharp.LightMode,
+                offIcon = Icons.Sharp.DarkMode,
+                onClick = {
+                    vm.onEvent(LinkUEvent.ToggleDarkMode)
+                }).also(::add)
+        }
+    }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_CREATE) {
+                viewModel.onEvent(MainEvent.ObserveConversations)
+            } else if (event == Lifecycle.Event.ON_DESTROY) {
+                viewModel.onEvent(MainEvent.UnsubscribeConversations)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     LaunchedEffect(viewModel.message, vm.message) {
@@ -181,16 +198,16 @@ fun MainScreen(
                             onClick = {
                                 scope.launch { pagerState.animateScrollToPage(index) }
                             },
-                            selectedContentColor = theme.onSurface,
-                            unselectedContentColor = theme.onSurface * 0.6f,
+                            selectedContentColor = theme.onTopBar,
+                            unselectedContentColor = theme.onTopBar * 0.6f,
                             modifier = Modifier
                                 .padding(LocalSpacing.current.small)
                                 .clip(RoundedCornerShape(LocalSpacing.current.extraSmall))
                         )
                     }
                 },
-                containerColor = theme.surface,
-                contentColor = theme.onSurface
+                containerColor = theme.topBar,
+                contentColor = theme.onTopBar
             )
             HorizontalPager(
                 count = pages.size,
@@ -204,10 +221,12 @@ fun MainScreen(
                         items(selections) { selection ->
                             ListItem(
                                 leadingContent = {
-                                    Icon(
-                                        imageVector = selection.icon,
-                                        contentDescription = stringResource(selection.resId)
-                                    )
+                                    Crossfade(selection.icon) { icon ->
+                                        Icon(
+                                            imageVector = icon,
+                                            contentDescription = stringResource(selection.resId)
+                                        )
+                                    }
                                 },
                                 headlineText = {
                                     Text(
@@ -276,7 +295,9 @@ fun MainScreen(
                             ) {
                                 navController.push(NavTarget.ChatTarget.Messages(conversation.id))
                             }
-                            if (index != conversations.lastIndex) Divider()
+                            if (index != conversations.lastIndex) Divider(
+                                color = LocalTheme.current.divider
+                            )
                         }
                     }
                 }

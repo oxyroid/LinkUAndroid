@@ -14,6 +14,7 @@ import com.linku.data.usecase.SharedPreferenceUseCase
 import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
+import com.linku.domain.Strategy
 import com.linku.domain.entity.User
 import com.linku.domain.eventOf
 import com.linku.im.R
@@ -172,7 +173,7 @@ class IntroduceViewModel @Inject constructor(
             dataProperties = makeDataProperties(null)
         )
         viewModelScope.launch {
-            val user = useCases.findUser(currentUid)
+            val user = useCases.findUser(currentUid, strategy = Strategy.NetworkElseCache)
             writable = readable.copy(
                 uid = currentUid,
                 dataProperties = makeDataProperties(user),

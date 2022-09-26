@@ -43,13 +43,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val conversationUseCases: ConversationUseCases,
-    private val messageUseCases: MessageUseCases,
-    private val userUseCases: UserUseCases,
-    private val notificationService: NotificationService,
-    private val emojiUseCases: EmojiUseCases,
+    private val conversations: ConversationUseCases,
+    private val messages: MessageUseCases,
+    private val users: UserUseCases,
+    private val notifications: NotificationService,
+    emojis: EmojiUseCases,
     private val authenticator: Authenticator,
-    private val applicationUseCases: ApplicationUseCases
+    private val applications: ApplicationUseCases
 ) : BaseViewModel<ChatState, ChatEvent>(ChatState()) {
     private val _messageFlow = MutableStateFlow(emptyList<MessageVO>())
     val messageFlow: SharedFlow<List<MessageVO>> = _messageFlow
@@ -57,15 +57,21 @@ class ChatViewModel @Inject constructor(
     private val _memberFlow = MutableStateFlow(emptyList<MemberVO>())
     val memberFlow: SharedFlow<List<MemberVO>> = _memberFlow
 
-
     private val _linkedNode =
         mutableStateOf<LinkedNode<ChatScreenMode>>(LinkedNode(ChatScreenMode.Messages))
     val linkedNode: State<LinkedNode<ChatScreenMode>> get() = _linkedNode
 
+    init {
+        writable = readable.copy(
+            emojis = emojis.getAll()
+        )
+    }
+
     override fun onEvent(event: ChatEvent) = when (event) {
-        is Initialize -> initial(event)
-        Unsubscribe -> unsubscribe()
-        Syncing -> syncing()
+        is ObserveChannel -> observeChannel(event)
+        ObserveMessage -> observeMessages()
+        RemoveAllObservers -> removeAllObservers()
+        is Fetch -> fetch()
         FetchChannelDetail -> fetchChannelDetail()
         PushShortcut -> pushShortcut()
         is OnTextChange -> onTextChange(event)
@@ -84,11 +90,14 @@ class ChatViewModel @Inject constructor(
         is RemainIf -> remainIf(event)
     }
 
-    private var observeConversationJob: Job? = null
-    private fun initial(event: Initialize) {
-        observeConversationJob?.cancel()
+    private var observeChannelJob: Job? = null
+    private fun observeChannel(event: ObserveChannel) {
         writable = readable.copy(cid = event.cid)
-        observeConversationJob = conversationUseCases.observeConversation(event.cid)
+        viewModelScope.launch {
+            _messageFlow.emit(emptyList())
+        }
+        observeChannelJob?.cancel()
+        observeChannelJob = conversations.observeConversation(event.cid)
             .onEach { conversation ->
                 writable = readable.copy(
                     title = conversation.name,
@@ -97,38 +106,21 @@ class ChatViewModel @Inject constructor(
                         Conversation.Type.GROUP -> R.string.channel_type_group
                         Conversation.Type.PM -> R.string.channel_type_pm
                         Conversation.Type.UNKNOWN -> R.string.channel_type_unknown
-                    }.let(applicationUseCases.getString::invoke),
+                    }.let(applications.getString::invoke),
                     introduce = conversation.description,
                     cid = conversation.id,
                     type = conversation.type
                 )
             }
             .launchIn(viewModelScope)
-
-        conversationUseCases.fetchConversation(event.cid).launchIn(viewModelScope)
-
-        writable = readable.copy(
-            emojis = emojiUseCases.getAll()
-        )
     }
 
-    private fun unsubscribe() {
-        observeConversationJob?.cancel()
+    private fun observeMessages() {
         observeMessagesJob?.cancel()
-        syncingMessagesJob?.cancel()
-    }
-
-    private var observeMessagesJob: Job? = null
-    private var syncingMessagesJob: Job? = null
-    private fun syncing() {
-        viewModelScope.launch {
-            _messageFlow.emit(emptyList())
-        }
-        observeMessagesJob?.cancel()
-        observeMessagesJob = messageUseCases.observeMessages(readable.cid)
+        observeMessagesJob = messages.observeMessages(readable.cid)
             .onEach { messages ->
-                syncingMessagesJob?.cancel()
-                syncingMessagesJob = viewModelScope.launch {
+                mapMessagesJob?.cancel()
+                mapMessagesJob = viewModelScope.launch {
                     messages.mapIndexedNotNull { index, message ->
                         val next = if (index == messages.lastIndex) null
                         else messages[index + 1]
@@ -146,19 +138,19 @@ class ChatViewModel @Inject constructor(
                         }
                         val repliedMid = message.reply()
                         val repliedMessage = repliedMid?.let {
-                            messageUseCases.getMessage(it, Strategy.Memory)
+                            this@ChatViewModel.messages.getMessage(it, Strategy.Memory)
                         }
-                        val replyConfig = repliedMessage?.let { m ->
+                        val reply = repliedMessage?.let { m ->
                             Reply(
                                 repliedMid = repliedMid,
                                 index = messages.indexOfFirst { it.id == repliedMid },
                                 display = when (m) {
                                     is TextMessage -> m.text
-                                    is ImageMessage -> applicationUseCases.getString(R.string.image_message)
-                                    is GraphicsMessage -> applicationUseCases.getString(
+                                    is ImageMessage -> applications.getString(R.string.image_message)
+                                    is GraphicsMessage -> applications.getString(
                                         R.string.graphics_message
                                     )
-                                    else -> applicationUseCases.getString(R.string.unknown_message_type)
+                                    else -> applications.getString(R.string.unknown_message_type)
                                 }
                             )
                         }
@@ -171,12 +163,12 @@ class ChatViewModel @Inject constructor(
                                         another = isAnother,
                                         isShowTime = isShowTime,
                                         isEndOfGroup = message.uid != pre?.uid,
-                                        reply = replyConfig
+                                        reply = reply
                                     )
                                 )
                             }
                             Conversation.Type.GROUP -> {
-                                val user = if (isAnother) userUseCases.findUser(
+                                val user = if (isAnother) users.findUser(
                                     message.uid,
                                     Strategy.Memory
                                 ) else null
@@ -213,7 +205,7 @@ class ChatViewModel @Inject constructor(
                                         name = user?.name ?: "",
                                         avatar = user?.avatar ?: "",
                                         isEndOfGroup = message.uid != pre?.uid,
-                                        reply = replyConfig
+                                        reply = reply
                                     )
                                 )
                             }
@@ -233,8 +225,25 @@ class ChatViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    private var fetchJob: Job? = null
+    private fun fetch() {
+        fetchJob?.cancel()
+        fetchJob = conversations.fetchConversation(readable.cid).launchIn(viewModelScope)
+    }
+
+
+    private fun removeAllObservers() {
+        observeChannelJob?.cancel()
+        observeMessagesJob?.cancel()
+        mapMessagesJob?.cancel()
+        fetchJob?.cancel()
+    }
+
+    private var observeMessagesJob: Job? = null
+    private var mapMessagesJob: Job? = null
+
     private fun fetchChannelDetail() {
-        conversationUseCases.fetchMembers(readable.cid)
+        conversations.fetchMembers(readable.cid)
             .onEach { resource ->
                 writable = when (resource) {
                     Resource.Loading -> {
@@ -246,7 +255,7 @@ class ChatViewModel @Inject constructor(
                     is Resource.Success -> {
                         resource.data
                             .map {
-                                val user = userUseCases.findUser(it.uid, Strategy.Memory)
+                                val user = users.findUser(it.uid, Strategy.CacheElseNetwork)
                                 MemberVO(
                                     cid = it.cid,
                                     uid = it.uid,
@@ -256,6 +265,7 @@ class ChatViewModel @Inject constructor(
                                     memberName = it.name.orEmpty()
                                 )
                             }
+                            .sortedByDescending { it.admin }
                             .also {
                                 _memberFlow.emit(it)
                             }
@@ -273,7 +283,7 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun pushShortcut() {
-        conversationUseCases.pushConversationShort(readable.cid)
+        conversations.pushConversationShort(readable.cid)
             .onEach { resource ->
                 writable = when (resource) {
                     Resource.Loading -> readable.copy(
@@ -331,7 +341,7 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             writable = readable.copy(
                 repliedMessage = event.mid?.let {
-                    messageUseCases
+                    messages
                         .getMessage(it, Strategy.OnlyCache)
                         ?.let { message ->
                             if (message == readable.repliedMessage) null
@@ -371,7 +381,7 @@ class ChatViewModel @Inject constructor(
         val reply = readable.repliedMessage?.id
         if (text.text.isBlank()) return
         viewModelScope.launch {
-            messageUseCases.textMessage(cid, text.text, reply)
+            messages.textMessage(cid, text.text, reply)
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {
@@ -382,7 +392,7 @@ class ChatViewModel @Inject constructor(
                             )
                         }
                         is Resource.Success -> {
-                            notificationService.onEmit()
+                            notifications.onEmit()
                         }
                         is Resource.Failure -> {
                             onMessage(resource.message)
@@ -397,7 +407,7 @@ class ChatViewModel @Inject constructor(
         val cid = readable.cid
         val uri = readable.uri ?: return
         val reply = readable.repliedMessage?.id
-        messageUseCases.imageMessage(cid, uri, reply)
+        messages.imageMessage(cid, uri, reply)
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> {
@@ -408,7 +418,7 @@ class ChatViewModel @Inject constructor(
                         )
                     }
                     is Resource.Success -> {
-                        notificationService.onEmit()
+                        notifications.onEmit()
                     }
                     is Resource.Failure -> {
                         onMessage(resource.message)
@@ -424,7 +434,7 @@ class ChatViewModel @Inject constructor(
         val uri = readable.uri ?: return
         val reply = readable.repliedMessage?.id
         if (textFieldValue.text.isBlank()) return
-        messageUseCases
+        messages
             .graphicsMessage(
                 cid = cid,
                 text = textFieldValue.text,
@@ -442,7 +452,7 @@ class ChatViewModel @Inject constructor(
                         )
                     }
                     is Resource.Success -> {
-                        notificationService.onEmit()
+                        notifications.onEmit()
                     }
                     is Resource.Failure -> {
                         onMessage(resource.message)

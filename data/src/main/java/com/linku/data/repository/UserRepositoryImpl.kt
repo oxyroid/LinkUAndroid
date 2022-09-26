@@ -15,35 +15,47 @@ class UserRepositoryImpl @Inject constructor(
     private val memory = mutableMapOf<Int, User?>()
     override suspend fun findById(id: Int, strategy: Strategy): User? = when (strategy) {
         Strategy.OnlyCache -> userDao.getById(id)
-        Strategy.OnlyNetwork -> userService.getById(id)
-            .toResult()
+        Strategy.OnlyNetwork -> try {
+            userService.getById(id).toResult()
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
             .map { it.toUser() }
             .getOrNull()
 
         Strategy.CacheElseNetwork -> {
             val user: User? = userDao.getById(id)
             if (user == null) {
-                userService.getById(id)
-                    .toResult()
+                try {
+                    userService.getById(id).toResult()
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
                     .onSuccess {
                         userDao.insert(it.toUser())
                     }
             }
             user ?: userDao.getById(id)
         }
-        Strategy.NetworkThenCache -> {
-            userService.getById(id)
-                .toResult()
-                .onSuccess {
-                    userDao.insert(it.toUser())
-                }
-            userDao.getById(id)
+        Strategy.NetworkElseCache -> try {
+            userService.getById(id).toResult()
+        } catch (e: Exception) {
+            Result.failure(e)
         }
+            .onSuccess {
+                userDao.insert(it.toUser())
+            }
+            .getOrNull()
+            ?.toUser()
+            ?: userDao.getById(id)
         Strategy.Memory -> memory.getOrPut(id) {
             val user: User? = userDao.getById(id)
             if (user == null) {
-                userService.getById(id)
-                    .toResult()
+                try {
+                    userService.getById(id).toResult()
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
                     .onSuccess {
                         userDao.insert(it.toUser())
                     }

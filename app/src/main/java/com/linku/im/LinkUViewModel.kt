@@ -47,8 +47,8 @@ class LinkUViewModel @Inject constructor(
             .onEach { state ->
                 when (state) {
                     ConnectivityObserver.State.Available -> {
-                        sessionJob?.cancel()
-                        sessionJob = authenticator.observeCurrent
+                        initRemoteSessionJob?.cancel()
+                        initRemoteSessionJob = authenticator.observeCurrent
                             .distinctUntilChanged()
                             .onEach { userId ->
                                 if (userId != null) onEvent(LinkUEvent.InitSession)
@@ -59,7 +59,7 @@ class LinkUViewModel @Inject constructor(
                     ConnectivityObserver.State.Unavailable -> {
                     }
                     ConnectivityObserver.State.Losing -> {
-                        sessionJob?.cancel()
+                        initRemoteSessionJob?.cancel()
                     }
                     ConnectivityObserver.State.Lost -> {
                     }
@@ -71,7 +71,7 @@ class LinkUViewModel @Inject constructor(
 
     override fun onEvent(event: LinkUEvent) {
         when (event) {
-            LinkUEvent.InitSession -> initSession()
+            LinkUEvent.InitSession -> initRemoteSession()
             LinkUEvent.InitConfig -> initConfig()
             LinkUEvent.ToggleDarkMode -> {
                 val saved = !readable.isDarkMode
@@ -86,7 +86,24 @@ class LinkUViewModel @Inject constructor(
                 }
             }
             is LinkUEvent.OnTheme -> {
+                viewModelScope.launch {
+                    writable = if (event.isDarkMode) {
+                        readable.copy(
+                            darkTheme = event.tid.let {
+                                themes.findById(it)?.toComposeTheme() ?: readable.darkTheme
+                            },
+                            isDarkMode = true
+                        )
+                    } else {
+                        readable.copy(
+                            lightTheme = event.tid.let {
+                                themes.findById(it)?.toComposeTheme() ?: readable.lightTheme
+                            },
+                            isDarkMode = false
+                        )
+                    }
 
+                }
             }
         }
     }
@@ -128,41 +145,41 @@ class LinkUViewModel @Inject constructor(
         )
     }
 
-    private var sessionJob: Job? = null
+    private var initRemoteSessionJob: Job? = null
     private var times = 0
-    private fun initSession() {
+    private fun initRemoteSession() {
         sharedPreference.debug {
             times++
             applicationUseCases.toast("Init session, times: $times")
         }
-        sessionJob?.cancel()
-        sessionJob = sessionUseCases
+        initRemoteSessionJob?.cancel()
+        initRemoteSessionJob = sessionUseCases
             .init(authenticator.currentUID)
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> {}
                     is Resource.Success -> {
-                        sessionUseCases.subscribe()
-                            .onEach { subscribeResource ->
-                                when (subscribeResource) {
+                        sessionUseCases.subscribeRemote()
+                            .onEach {
+                                when (it) {
                                     Resource.Loading -> {}
                                     is Resource.Success -> {
                                         messageUseCases.fetchUnreadMessages()
                                         deliverState(Label.Default)
                                         writable = readable.copy(
-                                            hasSynced = true
+                                            readyForObserveMessages = true
                                         )
                                     }
                                     is Resource.Failure -> {
                                         deliverState(Label.SubscribedFailed)
+                                        writable = readable.copy(
+                                            readyForObserveMessages = true
+                                        )
                                         delay(3000)
                                         sharedPreference.debug {
-                                            applicationUseCases.toast(subscribeResource.message)
+                                            applicationUseCases.toast(it.message)
                                         }
                                         onEvent(LinkUEvent.InitSession)
-                                        writable = readable.copy(
-                                            hasSynced = true
-                                        )
                                     }
                                 }
                             }
@@ -251,7 +268,6 @@ class LinkUViewModel @Inject constructor(
                 )
             }
         )
-
     }
 
 }

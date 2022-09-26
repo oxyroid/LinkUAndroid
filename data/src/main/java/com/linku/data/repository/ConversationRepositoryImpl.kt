@@ -1,7 +1,10 @@
 package com.linku.data.repository
 
 import com.linku.domain.*
-import com.linku.domain.entity.*
+import com.linku.domain.entity.Conversation
+import com.linku.domain.entity.ConversationDTO
+import com.linku.domain.entity.Member
+import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.ConversationRepository
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.service.ConversationService
@@ -20,9 +23,13 @@ class ConversationRepositoryImpl @Inject constructor(
     private val mmkv: MMKV
 ) : ConversationRepository {
     override suspend fun findConversation(cid: Int, strategy: Strategy): Conversation? {
-        suspend fun fromBackend(): ConversationDTO? = conversationService.getConversationById(cid)
-            .toResult()
-            .getOrNull()
+        suspend fun fromBackend(): ConversationDTO? = try {
+            conversationService.getConversationById(cid)
+                .toResult()
+                .getOrNull()
+        } catch (e: Exception) {
+            null
+        }
 
         suspend fun fromIO(): Conversation? = conversationDao.getById(cid)
 
@@ -48,10 +55,10 @@ class ConversationRepositoryImpl @Inject constructor(
                     }?.toConversation()
             }
 
-            Strategy.NetworkThenCache -> fromBackend()?.let {
+            Strategy.NetworkElseCache -> fromBackend()?.let {
                 it.toIO()
                 it.toConversation()
-            }
+            } ?: fromIO()
             Strategy.CacheElseNetwork -> fromIO() ?: fromBackend()?.let {
                 it.toIO()
                 it.toConversation()
@@ -65,7 +72,7 @@ class ConversationRepositoryImpl @Inject constructor(
         .getOrNull()
         ?: flow { }
 
-    override fun observeConversations(): Flow<List<Conversation>> = kotlin.runCatching {
+    override fun observeConversations(): Flow<List<Conversation>> = runCatching {
         conversationDao.observeConversations()
     }
         .getOrNull()

@@ -50,7 +50,7 @@ class MessageRepositoryImpl @Inject constructor(
                             val uri = Uri.parse(url)
                             val file = uri.toFile()
                             if (!file.exists()) {
-                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                getMessageById(readable.id, Strategy.NetworkElseCache)
                                     .also {
                                         if (it == null) {
                                             messageDao.delete(readable.id)
@@ -65,7 +65,7 @@ class MessageRepositoryImpl @Inject constructor(
                             val uri = Uri.parse(url)
                             val file = uri.toFile()
                             if (!file.exists()) {
-                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                getMessageById(readable.id, Strategy.NetworkElseCache)
                                     .also {
                                         if (it == null) {
                                             messageDao.delete(readable.id)
@@ -91,7 +91,7 @@ class MessageRepositoryImpl @Inject constructor(
                             val uri = Uri.parse(url)
                             val file = uri.toFile()
                             if (!file.exists()) {
-                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                getMessageById(readable.id, Strategy.NetworkElseCache)
                                     .also {
                                         if (it == null) {
                                             messageDao.delete(readable.id)
@@ -106,7 +106,7 @@ class MessageRepositoryImpl @Inject constructor(
                             val uri = Uri.parse(url)
                             val file = uri.toFile()
                             if (!file.exists()) {
-                                getMessageById(readable.id, Strategy.NetworkThenCache)
+                                getMessageById(readable.id, Strategy.NetworkElseCache)
                                     .also {
                                         if (it == null) {
                                             messageDao.delete(readable.id)
@@ -125,13 +125,21 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? {
-        suspend fun fromBackend(): MessageDTO? = messageService.getMessageById(mid)
-            .toResult()
-            .getOrNull()
+        suspend fun fromBackend(): MessageDTO? = try {
+            messageService.getMessageById(mid)
+                .toResult()
+                .getOrNull()
+        } catch (e: Exception) {
+            null
+        }
 
         suspend fun fromIO(): Message? = messageDao.getById(mid)
 
-        suspend fun MessageDTO.toIO() = messageDao.insert(this.toMessage())
+        suspend fun MessageDTO.toIO() {
+            val old = messageDao.getById(this.id)
+            if (old == null)
+                messageDao.insert(this.toMessage())
+        }
 
         return when (strategy) {
             Strategy.OnlyCache -> fromIO()
@@ -152,10 +160,10 @@ class MessageRepositoryImpl @Inject constructor(
                     }?.toMessage()
             }
 
-            Strategy.NetworkThenCache -> fromBackend()?.let {
+            Strategy.NetworkElseCache -> fromBackend()?.let {
                 it.toIO()
                 it.toMessage()
-            }
+            } ?: fromIO()
             Strategy.CacheElseNetwork -> fromIO() ?: fromBackend()?.let {
                 it.toIO()
                 it.toMessage()
@@ -544,7 +552,11 @@ class MessageRepositoryImpl @Inject constructor(
     private suspend fun Result<List<MessageDTO>>.saveIntoDBIfSuccess() {
         onSuccess { messages ->
             messages.forEach {
-                messageDao.insert(it.toMessage())
+                messageDao.getById(it.id).also { old ->
+                    if (old == null) {
+                        messageDao.insert(it.toMessage())
+                    }
+                }
                 val cid = it.cid
                 if (conversationDao.getById(cid) == null) {
                     conversationService.getConversationById(cid).toResult()

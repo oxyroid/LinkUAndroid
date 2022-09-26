@@ -15,10 +15,11 @@ data class FindUserUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         id: Int,
-        strategy: Strategy = Strategy.NetworkThenCache
+        strategy: Strategy = Strategy.NetworkElseCache
     ): User? = try {
         repository.findById(id, strategy)
     } catch (e: Exception) {
+        e.printStackTrace()
         null
     }
 }

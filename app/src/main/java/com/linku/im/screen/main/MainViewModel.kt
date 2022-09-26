@@ -12,11 +12,9 @@ import com.linku.domain.entity.TextMessage
 import com.linku.im.R
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.screen.FastVOCache
 import com.linku.im.screen.main.vo.toMainUI
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -36,13 +34,12 @@ class MainViewModel @Inject constructor(
             .onEach { state ->
                 when (state) {
                     ConnectivityObserver.State.Available -> {
-                        onEvent(MainEvent.GetConversations)
+                        onEvent(MainEvent.FetchConversations)
                     }
-                    ConnectivityObserver.State.Unavailable -> {}
-                    ConnectivityObserver.State.Losing -> {
-                        getAllConversationsJob?.cancel()
+                    else -> {
+                        if (observeConversationsJob == null)
+                            onEvent(MainEvent.FetchConversations)
                     }
-                    ConnectivityObserver.State.Lost -> {}
                 }
             }
             .launchIn(viewModelScope)
@@ -50,31 +47,31 @@ class MainViewModel @Inject constructor(
 
     override fun onEvent(event: MainEvent) {
         when (event) {
-            MainEvent.GetConversations -> getAllConversations()
+            MainEvent.ObserveConversations -> observeConversations()
+            MainEvent.UnsubscribeConversations -> unsubscribeConversations()
+            MainEvent.FetchConversations -> fetchConversations()
         }
     }
 
-    private var getAllConversationsJob: Job? = null
-    private fun getAllConversations() {
+    private var observeConversationsJob: Job? = null
+    private fun observeConversations() {
         conversationUseCases.observeConversations()
             .onEach { conversations ->
                 writable = readable.copy(
                     conversations = conversations
                         .filter { it.type == Conversation.Type.GROUP }
-                        .mapNotNull {
-                             FastVOCache.getOrPutConversation(it) { it.toMainUI() }
-                        },
+                        .map { it.toMainUI() }
+                        .sortedByDescending { it.updatedAt },
                     contracts = conversations
                         .filter { it.type == Conversation.Type.PM }
-                        .mapNotNull {
-                            FastVOCache.getOrPutConversation(it) { it.toMainUI() }
-                        }
+                        .map { it.toMainUI() }
+                        .sortedByDescending { it.updatedAt }
                 )
-                getAllConversationsJob?.cancel()
-                getAllConversationsJob = viewModelScope.launch {
+                observeConversationsJob?.cancel()
+                observeConversationsJob = viewModelScope.launch {
                     conversations.forEach { conversation ->
                         messageUseCases.observeLatestMessage(conversation.id)
-                            .collectLatest { message ->
+                            .onEach { message ->
                                 val oldConversations = readable.conversations.toMutableList()
                                 val oldContracts = readable.contracts.toMutableList()
                                 val oldConversation = oldConversations.find { it.id == message.cid }
@@ -109,11 +106,18 @@ class MainViewModel @Inject constructor(
                                     contracts = oldContracts
                                 )
                             }
+                            .launchIn(this)
                     }
                 }
             }
             .launchIn(viewModelScope)
-        conversationUseCases.fetchConversations()
+    }
+
+    private var fetchConversationsJob: Job? = null
+    private fun fetchConversations() {
+        if (observeConversationsJob == null) return
+        fetchConversationsJob?.cancel()
+        fetchConversationsJob = conversationUseCases.fetchConversations()
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> writable = readable.copy(
@@ -129,5 +133,9 @@ class MainViewModel @Inject constructor(
                 )
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun unsubscribeConversations() {
+        observeConversationsJob?.cancel()
     }
 }

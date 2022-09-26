@@ -1,5 +1,7 @@
 package com.linku.im.screen.main
 
 sealed class MainEvent {
-    object GetConversations : MainEvent()
+    object ObserveConversations : MainEvent()
+    object UnsubscribeConversations : MainEvent()
+    object FetchConversations : MainEvent()
 }

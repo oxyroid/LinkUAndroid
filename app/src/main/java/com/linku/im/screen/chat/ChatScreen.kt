@@ -95,9 +95,9 @@ fun ChatScreen(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_CREATE) {
-                viewModel.onEvent(ChatEvent.Initialize(cid))
-            } else if (event == Lifecycle.Event.ON_STOP) {
-                viewModel.onEvent(ChatEvent.Unsubscribe)
+                viewModel.onEvent(ChatEvent.ObserveChannel(cid))
+            } else if (event == Lifecycle.Event.ON_DESTROY) {
+                viewModel.onEvent(ChatEvent.RemoveAllObservers)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -122,9 +122,9 @@ fun ChatScreen(
         viewModel.onEvent(ChatEvent.OnScroll(firstVisibleItemIndex, offset))
     }
 
-    LaunchedEffect(vm.readable.hasSynced) {
-        if (vm.readable.hasSynced) {
-            viewModel.onEvent(ChatEvent.Syncing)
+    LaunchedEffect(vm.readable.readyForObserveMessages) {
+        if (vm.readable.readyForObserveMessages) {
+            viewModel.onEvent(ChatEvent.ObserveMessage)
         }
     }
 
@@ -217,7 +217,7 @@ fun ChatScreen(
         listContent = {
             ListContent(
                 listState = listState,
-                loading = { !vm.readable.hasSynced },
+                loading = { !vm.readable.readyForObserveMessages },
                 messages = messages,
                 focusMessageIdProvider = { state.focusMessageId },
                 onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
@@ -304,12 +304,19 @@ fun ChatScreen(
                             .weight(1f)
                     ) {
                         items(members) {
-                            MemberItem(member = it) {
-                                val userId = it.uid
-                                navController.push(
-                                    NavTarget.Introduce(userId)
+                            Column {
+                                MemberItem(member = it) {
+                                    val userId = it.uid
+                                    navController.push(
+                                        NavTarget.Introduce(userId)
+                                    )
+                                }
+                                Divider(
+                                    thickness = 1.dp,
+                                    color = LocalTheme.current.divider
                                 )
                             }
+
                         }
                     }
                 }
@@ -543,7 +550,7 @@ fun ListContent(
                         .height(spacing)
                 )
             }
-            itemsIndexed(messages) { index, it ->
+            itemsIndexed(messages, key = { _, item -> item.message.id }) { index, it ->
                 ChatBubble(
                     message = it.message,
                     focusIdProvider = focusMessageIdProvider,

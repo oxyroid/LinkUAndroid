@@ -4,9 +4,11 @@ import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
 
 sealed class ChatEvent {
-    data class Initialize(val cid: Int) : ChatEvent()
-    object Unsubscribe: ChatEvent()
-    object Syncing : ChatEvent()
+    data class ObserveChannel(val cid: Int) : ChatEvent()
+    object ObserveMessage : ChatEvent()
+    object RemoveAllObservers : ChatEvent()
+    object Fetch : ChatEvent()
+    object FetchChannelDetail : ChatEvent()
     object SendMessage : ChatEvent()
     data class OnTextChange(val text: TextFieldValue) : ChatEvent()
     data class OnEmoji(val emoji: String) : ChatEvent()
@@ -15,14 +17,13 @@ sealed class ChatEvent {
     data class OnEmojiSpanExpanded(val value: Boolean) : ChatEvent()
     data class OnReply(val mid: Int?) : ChatEvent()
     object ReadAll : ChatEvent()
-    object FetchChannelDetail : ChatEvent()
     object PushShortcut : ChatEvent()
 
     data class OnFocus(val mid: Int?) : ChatEvent()
     data class ResendMessage(val mid: Int) : ChatEvent()
     data class CancelMessage(val mid: Int) : ChatEvent()
 
-    data class Forward(val mode: ChatScreenMode): ChatEvent()
-    object Remain: ChatEvent()
-    data class RemainIf(val block: () -> Boolean): ChatEvent()
+    data class Forward(val mode: ChatScreenMode) : ChatEvent()
+    object Remain : ChatEvent()
+    data class RemainIf(val block: () -> Boolean) : ChatEvent()
 }
