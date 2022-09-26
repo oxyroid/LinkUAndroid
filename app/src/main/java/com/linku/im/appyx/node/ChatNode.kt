@@ -32,9 +32,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import coil.ImageLoader
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
@@ -152,9 +156,20 @@ class ChatNode(
                     it.ifTrue { launcher.launch("image/*") }
                 }
 
-            LaunchedEffect(Unit) {
-                viewModel.onEvent(ChatEvent.Initialize(cid))
-                if (cid == -1) navController.pop()
+            val lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current
+
+            DisposableEffect(lifecycleOwner) {
+                val observer = LifecycleEventObserver { _, event ->
+                    if (event == Lifecycle.Event.ON_START) {
+                        viewModel.onEvent(ChatEvent.ObserveChannel(cid))
+                    } else if (event == Lifecycle.Event.ON_STOP) {
+                        viewModel.onEvent(ChatEvent.RemoveAllObservers)
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose {
+                    lifecycleOwner.lifecycle.removeObserver(observer)
+                }
             }
             LaunchedEffect(viewModel.message, vm.message) {
                 viewModel.message.handle {
@@ -172,9 +187,9 @@ class ChatNode(
                 viewModel.onEvent(ChatEvent.OnScroll(firstVisibleItemIndex, offset))
             }
 
-            LaunchedEffect(vm.readable.hasSynced) {
-                if (vm.readable.hasSynced) {
-                    viewModel.onEvent(ChatEvent.Syncing)
+            LaunchedEffect(vm.readable.readyForObserveMessages) {
+                if (vm.readable.readyForObserveMessages) {
+                    viewModel.onEvent(ChatEvent.ObserveMessage)
                 }
             }
             Wrapper {
@@ -195,7 +210,7 @@ class ChatNode(
                         // List Content
                         ListContent(
                             listState = listState,
-                            loading = { !vm.readable.hasSynced },
+                            loading = { !vm.readable.readyForObserveMessages },
                             messages = messages,
                             focusMessageIdProvider = { state.focusMessageId },
                             onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
