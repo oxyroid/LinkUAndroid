@@ -12,5 +12,5 @@ data class LinkUState(
     val darkTheme: ComposeTheme = midNight,
     val isEmojiReady: Boolean = false,
     val isThemeReady: Boolean = false,
-    val hasSynced: Boolean = false,
+    val readyForObserveMessages: Boolean = false,
 )

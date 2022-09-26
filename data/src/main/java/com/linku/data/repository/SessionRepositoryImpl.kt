@@ -24,12 +24,11 @@ class SessionRepositoryImpl @Inject constructor(
     private val conversationService: ConversationService,
     private val notificationService: NotificationService
 ) : SessionRepository {
-    private val sessionState =
-        MutableStateFlow<SessionRepository.State>(Default)
     private var session: WebSocket? = null
+    private val sessionState = MutableStateFlow<SessionRepository.State>(Default)
 
-    override fun initSession(uid: Int?): Flow<Resource<Unit>> =
-        sessionService.initSession(uid)
+    override fun initSession(uid: Int?): Flow<Resource<Unit>> {
+        return sessionService.initSession(uid)
             .onEach { state ->
                 when (state) {
                     SessionService.State.Connecting -> {
@@ -58,9 +57,9 @@ class SessionRepositoryImpl @Inject constructor(
                 }
             }
             .distinctUntilChanged()
+    }
 
-
-    override fun subscribe(): Flow<Resource<Unit>> = channelFlow {
+    override fun subscribeRemote(): Flow<Resource<Unit>> = channelFlow {
         trySend(Resource.Loading)
         if (sessionState.value != Connected) {
             trySend(Resource.Failure("You must subscribe it before the session has been initialized."))
@@ -96,7 +95,6 @@ class SessionRepositoryImpl @Inject constructor(
                 sessionState.tryEmit(Failed(message))
                 trySend(Resource.Failure(message))
             }
-
     }
 
     override fun observerSessionState(): Flow<SessionRepository.State> = sessionState

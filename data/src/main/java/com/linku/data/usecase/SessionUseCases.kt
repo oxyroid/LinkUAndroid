@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 data class SessionUseCases @Inject constructor(
     val init: InitSessionUseCase,
-    val subscribe: SubscribeUseCase,
+    val subscribeRemote: SubscribeUseCase,
     val state: ObserverSessionStateUseCase,
     val close: CloseSessionUseCase
 )
@@ -24,7 +24,7 @@ data class SubscribeUseCase @Inject constructor(
     val repository: SessionRepository
 ) {
     operator fun invoke(): Flow<Resource<Unit>> {
-        return repository.subscribe()
+        return repository.subscribeRemote()
     }
 }
 

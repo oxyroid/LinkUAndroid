@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface SessionRepository {
     fun initSession(uid: Int?): Flow<Resource<Unit>>
-    fun subscribe(): Flow<Resource<Unit>>
+    fun subscribeRemote(): Flow<Resource<Unit>>
     suspend fun closeSession()
     fun observerSessionState(): Flow<State>
 
