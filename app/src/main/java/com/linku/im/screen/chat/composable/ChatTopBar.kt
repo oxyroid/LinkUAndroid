@@ -42,14 +42,14 @@ fun ChatTopBar(
 ) {
     val duration = 400
     val containerColor by animateColorAsState(
-        if (modeProvider() is ChatScreenMode.ChannelDetail) LocalTheme.current.secondarySurface
-        else LocalTheme.current.surface
+        if (modeProvider() is ChatScreenMode.ChannelDetail) LocalTheme.current.secondaryTopBar
+        else LocalTheme.current.topBar
     )
     val contentColor by animateColorAsState(
         when (modeProvider()) {
-            is ChatScreenMode.ChannelDetail -> LocalTheme.current.onSecondarySurface
-            is ChatScreenMode.Messages -> LocalTheme.current.onSurface
-            is ChatScreenMode.ImageDetail -> LocalTheme.current.onSurface
+            is ChatScreenMode.ChannelDetail -> LocalTheme.current.onSecondaryTopBar
+            is ChatScreenMode.Messages -> LocalTheme.current.onTopBar
+            is ChatScreenMode.ImageDetail -> LocalTheme.current.onTopBar
             else -> Color.Transparent
         }
     )
@@ -211,15 +211,14 @@ fun ChatTopBarAppyx(
 ) {
     val duration = 400
     val containerColor by animateColorAsState(
-//        if (targetProvider() is ChatScreenMode.ChannelDetail) LocalTheme.current.subSurface
-        if (targetProvider() is NavTarget.ChatTarget.ChannelDetail) LocalTheme.current.secondarySurface
-        else LocalTheme.current.surface
+        if (targetProvider() is NavTarget.ChatTarget.ChannelDetail) LocalTheme.current.secondaryTopBar
+        else LocalTheme.current.topBar
     )
     val contentColor by animateColorAsState(
         when (targetProvider()) {
-            is NavTarget.ChatTarget.ChannelDetail -> LocalTheme.current.onSecondarySurface
-            is NavTarget.ChatTarget.Messages -> LocalTheme.current.onSurface
-            is NavTarget.ChatTarget.ImageDetail -> LocalTheme.current.onSurface
+            is NavTarget.ChatTarget.ChannelDetail -> LocalTheme.current.onSecondaryTopBar
+            is NavTarget.ChatTarget.Messages -> LocalTheme.current.onTopBar
+            is NavTarget.ChatTarget.ImageDetail -> LocalTheme.current.onTopBar
             else -> Color.Transparent
         }
     )

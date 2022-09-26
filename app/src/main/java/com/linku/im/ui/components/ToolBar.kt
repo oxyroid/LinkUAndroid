@@ -16,19 +16,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.bumble.appyx.navmodel.backstack.BackStack
+import com.bumble.appyx.navmodel.backstack.operation.pop
+import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.ifTrue
+import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalTheme
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun ToolBar(
-    onNavClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    backStack: BackStack<NavTarget> = LocalBackStack.current,
+    onNavClick: () -> Unit = { backStack.pop() },
     actions: @Composable (RowScope.() -> Unit),
     text: String,
-    modifier: Modifier = Modifier,
     navIcon: ImageVector = Icons.Default.ArrowBack,
-    backgroundColor: Color = LocalTheme.current.surface,
-    contentColor: Color = LocalTheme.current.onSurface,
+    backgroundColor: Color = LocalTheme.current.topBar,
+    contentColor: Color = LocalTheme.current.onTopBar
 ) {
     CompositionLocalProvider(
         LocalContentColor provides contentColor

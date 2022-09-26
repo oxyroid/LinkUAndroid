@@ -4,12 +4,10 @@ import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
-import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
@@ -51,7 +50,6 @@ fun MemberItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(LocalTheme.current.surface)
             .height(64.dp)
             .intervalClickable(
                 enabled = member != null,
@@ -80,7 +78,7 @@ fun MemberItem(
                 )
                 .fillMaxHeight()
                 .weight(1f),
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.SpaceEvenly
         ) {
             Text(
                 text = member?.username.orEmpty(),
@@ -102,7 +100,7 @@ fun MemberItem(
             )
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
-                    text = when  {
+                    text = when {
                         member == null -> ""
                         member.admin -> stringResource(R.string.channel_member_root)
                         else -> member.memberName
@@ -114,7 +112,13 @@ fun MemberItem(
                         else -> Color.Unspecified
                     },
                     maxLines = 1,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = when {
+                        member == null -> MaterialTheme.typography.bodyMedium
+                        member.admin -> MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Black
+                        )
+                        else -> MaterialTheme.typography.bodyMedium
+                    },
                     modifier = Modifier
                         .placeholder(
                             visible = (member == null),
@@ -129,10 +133,6 @@ fun MemberItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Divider(
-                thickness = 1.dp,
-                color = LocalTheme.current.divider
-            )
         }
     }
 }
