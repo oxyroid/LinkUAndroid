@@ -59,8 +59,8 @@ class ThemeSettingViewModel @Inject constructor(
                                 loading = true
                             )
                             is Resource.Success -> {
-                                vm.onEvent(LinkUEvent.Disconnect)
-                                resource.data.id
+                                val theme = resource.data
+                                vm.onEvent(LinkUEvent.OnTheme(theme.id, theme.isDark))
                                 readable.copy(
                                     loading = false,
                                     currentTheme = resource.data.id

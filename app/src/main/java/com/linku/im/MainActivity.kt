@@ -18,6 +18,7 @@ import com.linku.im.appyx.node.RootNode
 import com.linku.im.ktx.dsl.all
 import com.linku.im.ktx.ifTrue
 import com.linku.im.ui.theme.AppTheme
+import com.linku.im.ui.theme.LocalTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -30,16 +31,16 @@ class MainActivity : NodeActivity(), ViewTreeObserver.OnPreDrawListener {
         super.onCreate(savedInstanceState)
         vm = _vm
         WindowCompat.setDecorFitsSystemWindows(window, false)
-//        setContentView(R.layout.activity_main)
         setContent {
             AppTheme(
                 useDarkTheme = vm.readable.isDarkMode
             ) {
                 val systemUiController = rememberSystemUiController()
-                LaunchedEffect(vm.readable.isDarkMode) {
+                val theme = LocalTheme.current
+                LaunchedEffect(theme) {
                     systemUiController.setSystemBarsColor(
                         color = Color.Transparent,
-                        darkIcons = !vm.readable.isDarkMode
+                        darkIcons = theme.isDarkText
                     )
                 }
                 CompositionLocalProvider(

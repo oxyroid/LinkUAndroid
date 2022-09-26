@@ -9,7 +9,7 @@ package com.linku.im
 sealed class LinkUEvent {
     object InitConfig : LinkUEvent()
     object ToggleDarkMode : LinkUEvent()
-    data class OnTheme(val tid: Int) : LinkUEvent()
+    data class OnTheme(val tid: Int, val isDarkMode: Boolean) : LinkUEvent()
     object Disconnect : LinkUEvent()
     object InitSession : LinkUEvent()
 }
