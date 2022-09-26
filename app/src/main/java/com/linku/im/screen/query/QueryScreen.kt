@@ -18,10 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
 import com.linku.im.R
-import com.linku.im.appyx.NavTarget
+import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ui.components.ConversationItem
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.TextField
@@ -37,7 +38,7 @@ import com.linku.im.vm
 )
 @Composable
 fun QueryScreen(
-    viewModel: QueryViewModel
+    viewModel: QueryViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
@@ -119,7 +120,7 @@ fun QueryScreen(
                         }
                     items(state.conversations) { conversation ->
                         ConversationItem(conversation = conversation) {
-                            navController.push(NavTarget.Chat(conversation.id))
+                            navController.push(NavTarget.ChatTarget.Messages(conversation.id))
                         }
                     }
                     if (state.users.isNotEmpty())

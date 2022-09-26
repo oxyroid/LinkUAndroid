@@ -25,13 +25,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.bumble.appyx.navmodel.backstack.operation.push
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.appyx.NavTarget
+import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ui.components.MaterialIconButton
@@ -50,7 +51,7 @@ import kotlinx.coroutines.launch
 )
 @Composable
 fun MainScreen(
-    viewModel: MainViewModel
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
@@ -273,7 +274,7 @@ fun MainScreen(
                                 unreadCount = index / 2,
                                 modifier = Modifier.animateItemPlacement()
                             ) {
-                                navController.push(NavTarget.Chat(conversation.id))
+                                navController.push(NavTarget.ChatTarget.Messages(conversation.id))
                             }
                             if (index != conversations.lastIndex) Divider()
                         }

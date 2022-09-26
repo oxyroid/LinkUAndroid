@@ -64,6 +64,7 @@ class ChatViewModel @Inject constructor(
 
     override fun onEvent(event: ChatEvent) = when (event) {
         is Initialize -> initial(event)
+        Unsubscribe -> unsubscribe()
         Syncing -> syncing()
         FetchChannelDetail -> fetchChannelDetail()
         PushShortcut -> pushShortcut()
@@ -83,9 +84,11 @@ class ChatViewModel @Inject constructor(
         is RemainIf -> remainIf(event)
     }
 
+    private var observeConversationJob: Job? = null
     private fun initial(event: Initialize) {
+        observeConversationJob?.cancel()
         writable = readable.copy(cid = event.cid)
-        conversationUseCases.observeConversation(event.cid)
+        observeConversationJob = conversationUseCases.observeConversation(event.cid)
             .onEach { conversation ->
                 writable = readable.copy(
                     title = conversation.name,
@@ -109,14 +112,24 @@ class ChatViewModel @Inject constructor(
         )
     }
 
+    private fun unsubscribe() {
+        observeConversationJob?.cancel()
+        observeMessagesJob?.cancel()
+        syncingMessagesJob?.cancel()
+    }
+
+    private var observeMessagesJob: Job? = null
     private var syncingMessagesJob: Job? = null
     private fun syncing() {
-        messageUseCases.observeMessages(readable.cid)
+        viewModelScope.launch {
+            _messageFlow.emit(emptyList())
+        }
+        observeMessagesJob?.cancel()
+        observeMessagesJob = messageUseCases.observeMessages(readable.cid)
             .onEach { messages ->
                 syncingMessagesJob?.cancel()
                 syncingMessagesJob = viewModelScope.launch {
                     messages.mapIndexedNotNull { index, message ->
-//                        FastVOCache.getOrPutMessage(message) {
                         val next = if (index == messages.lastIndex) null
                         else messages[index + 1]
                         val pre = if (index == 0) null
@@ -206,7 +219,7 @@ class ChatViewModel @Inject constructor(
                             }
                             else -> null
                         }
-//                        }
+
                     }.also {
                         _messageFlow.emit(it)
                     }
@@ -224,9 +237,12 @@ class ChatViewModel @Inject constructor(
         conversationUseCases.fetchMembers(readable.cid)
             .onEach { resource ->
                 writable = when (resource) {
-                    Resource.Loading -> readable.copy(
-                        channelDetailLoading = true
-                    )
+                    Resource.Loading -> {
+                        _memberFlow.emit(emptyList())
+                        readable.copy(
+                            channelDetailLoading = true
+                        )
+                    }
                     is Resource.Success -> {
                         resource.data
                             .map {

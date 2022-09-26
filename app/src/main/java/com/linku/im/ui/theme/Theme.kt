@@ -1,71 +1,7 @@
 package com.linku.im.ui.theme
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
-import com.linku.im.vm
+import androidx.compose.runtime.staticCompositionLocalOf
+import com.linku.domain.bean.ComposeTheme
 
-@Composable
-fun AppTheme(
-    useDarkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
-    val colors = remember(useDarkTheme) {
-        if (useDarkTheme) defaultDark else defaultLight
-    }
 
-    val containerColor by animateColorAsState(
-        if (vm.readable.isDarkMode) colors.surface
-        else colors.primary
-    )
-    val onContainerColor by animateColorAsState(
-        if (vm.readable.isDarkMode) colors.onSurface
-        else colors.onPrimary
-    )
-
-    val backgroundColor by animateColorAsState(colors.background)
-    val onBackgroundColor by animateColorAsState(colors.onBackground)
-    val surfaceColor by animateColorAsState(colors.surface)
-    val onSurfaceColor by animateColorAsState(colors.onSurface)
-
-    val animatedColor by remember {
-        derivedStateOf {
-            AnimatedColor(
-                containerColor = containerColor,
-                onContainerColor = onContainerColor,
-                backgroundColor = backgroundColor,
-                onBackgroundColor = onBackgroundColor,
-                surfaceColor = surfaceColor,
-                onSurfaceColor = onSurfaceColor
-            )
-        }
-    }
-    CompositionLocalProvider(
-        LocalSpacing provides Spacing(),
-        LocalAnimatedColor provides animatedColor,
-        LocalTheme provides colors,
-        LocalDuration provides Duration()
-    ) {
-        MaterialTheme(
-            content = content,
-            typography = MaterialTheme.typography.copy(
-                titleLarge = MaterialTheme.typography.titleLarge.withDefaultFontFamily(),
-                titleMedium = MaterialTheme.typography.titleMedium.withDefaultFontFamily(),
-                titleSmall = MaterialTheme.typography.titleSmall.withDefaultFontFamily(),
-                bodyLarge = MaterialTheme.typography.bodyLarge.withDefaultFontFamily(),
-                bodyMedium = MaterialTheme.typography.bodyMedium.withDefaultFontFamily(),
-                bodySmall = MaterialTheme.typography.bodySmall.withDefaultFontFamily(),
-                displayLarge = MaterialTheme.typography.displayLarge.withDefaultFontFamily(),
-                displayMedium = MaterialTheme.typography.displayMedium.withDefaultFontFamily(),
-                displaySmall = MaterialTheme.typography.displaySmall.withDefaultFontFamily(),
-                headlineLarge = MaterialTheme.typography.headlineLarge.withDefaultFontFamily(),
-                headlineMedium = MaterialTheme.typography.headlineMedium.withDefaultFontFamily(),
-                headlineSmall = MaterialTheme.typography.headlineSmall.withDefaultFontFamily(),
-                labelLarge = MaterialTheme.typography.labelLarge.withDefaultFontFamily(),
-                labelMedium = MaterialTheme.typography.labelMedium.withDefaultFontFamily(),
-                labelSmall = MaterialTheme.typography.labelSmall.withDefaultFontFamily()
-            )
-        )
-    }
-}
+val LocalTheme = staticCompositionLocalOf<ComposeTheme> { error("no theme provided") }

@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
@@ -48,7 +49,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.domain.Event
 import com.linku.im.BuildConfig
 import com.linku.im.R
-import com.linku.im.appyx.NavTarget
+import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ktx.ifFalse
 import com.linku.im.ktx.ifTrue
@@ -72,7 +73,7 @@ import java.util.*
 @Composable
 fun IntroduceScreen(
     uid: Int,
-    viewModel: IntroduceViewModel
+    viewModel: IntroduceViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
     val navController = LocalBackStack.current
@@ -372,10 +373,16 @@ private fun IntroduceScaffold(
                         )
                     }
                     item {
+                        val backStack = LocalBackStack.current
                         ProfileList(
                             label = stringResource(R.string.settings),
                             items = settingsProperties,
-                            onItemClick = {}
+                            onItemClick = { property ->
+                                when (property) {
+                                    is Property.Data -> {}
+                                    is Property.Folder -> backStack.push(property.setting)
+                                }
+                            }
                         )
                     }
                     item {

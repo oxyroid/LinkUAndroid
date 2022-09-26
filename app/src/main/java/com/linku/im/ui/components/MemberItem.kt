@@ -4,6 +4,7 @@ import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
@@ -50,6 +51,7 @@ fun MemberItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .background(LocalTheme.current.surface)
             .height(64.dp)
             .intervalClickable(
                 enabled = member != null,

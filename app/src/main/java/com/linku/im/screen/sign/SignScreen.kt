@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -34,7 +35,7 @@ import com.linku.im.vm
 
 @Composable
 fun SignScreen(
-    viewModel: SignViewModel
+    viewModel: SignViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()

@@ -90,4 +90,6 @@
     <string name="channel_type_unknown">未知</string>
     <string name="shortcutPushed">已添加到桌面</string>
     <string name="shortcutPushing">添加中…</string>
+    <string name="theme_card_left">您</string>
+    <string name="theme_card_right">好</string>
 </resources>

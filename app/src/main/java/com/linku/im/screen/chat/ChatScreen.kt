@@ -38,7 +38,12 @@ import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.*
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
@@ -51,7 +56,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.domain.entity.*
 import com.linku.domain.struct.node.*
 import com.linku.im.R
-import com.linku.im.appyx.NavTarget
+import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.compose.foundation.lazy.isAtTop
 import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.dsl.any
@@ -69,7 +74,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel,
+    viewModel: ChatViewModel = hiltViewModel(),
+    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
     cid: Int
 ) {
     val state = viewModel.readable
@@ -86,11 +92,20 @@ fun ChatScreen(
     val permissionState = rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE) {
         it.ifTrue { launcher.launch("image/*") }
     }
-
-    LaunchedEffect(Unit) {
-        viewModel.onEvent(ChatEvent.Initialize(cid))
-        if (cid == -1) navController.pop()
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_CREATE) {
+                viewModel.onEvent(ChatEvent.Initialize(cid))
+            } else if (event == Lifecycle.Event.ON_STOP) {
+                viewModel.onEvent(ChatEvent.Unsubscribe)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
+
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
             hostState.showSnackbar(it)
@@ -163,7 +178,6 @@ fun ChatScreen(
                     channelDetailContent()
                 }
             }
-
         }
 
         if (mode is ChatScreenMode.ImageDetail) {
@@ -474,7 +488,7 @@ fun ChatScreen(
 
 
 @Composable
-private fun ListContent(
+fun ListContent(
     listState: LazyListState,
     messages: List<MessageVO>,
     loading: () -> Boolean,
@@ -561,7 +575,7 @@ private fun ListContent(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun BottomSheetContent(
+fun BottomSheetContent(
     repliedMessage: Message?,
     hasScrolled: Boolean,
     onDismissReply: () -> Unit,
@@ -631,7 +645,7 @@ private fun BottomSheetContent(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun PreviewDialog(
+fun PreviewDialog(
     uri: Uri?,
     onDismiss: () -> Unit
 ) {

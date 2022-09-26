@@ -34,9 +34,9 @@ object UtilModule {
     @Provides
     @Singleton
     fun provideAuthenticator(
-        settingUseCase: SettingUseCase
+        sharedPreferenceUseCase: SharedPreferenceUseCase
     ): Authenticator = PreferenceAuthenticator(
-        settings = settingUseCase
+        settings = sharedPreferenceUseCase
     )
 
     @Provides

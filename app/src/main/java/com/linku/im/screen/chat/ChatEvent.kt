@@ -5,6 +5,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 
 sealed class ChatEvent {
     data class Initialize(val cid: Int) : ChatEvent()
+    object Unsubscribe: ChatEvent()
     object Syncing : ChatEvent()
     object SendMessage : ChatEvent()
     data class OnTextChange(val text: TextFieldValue) : ChatEvent()

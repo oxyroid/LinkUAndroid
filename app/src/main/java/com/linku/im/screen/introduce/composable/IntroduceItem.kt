@@ -91,9 +91,7 @@ fun IntroduceItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(LocalTheme.current.background)
-                    .intervalClickable {
-
-                    }
+                    .intervalClickable(onClick = onClick)
                     .padding(
                         horizontal = PADDING_X,
                         vertical = FOLDER_PADDING_Y

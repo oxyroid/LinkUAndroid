@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.*
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
+import com.linku.domain.entity.local.toComposeTheme
 import com.linku.domain.repository.SessionRepository
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
@@ -22,9 +23,10 @@ class LinkUViewModel @Inject constructor(
     private val sessionUseCases: SessionUseCases,
     private val emojiUseCases: EmojiUseCases,
     private val applicationUseCases: ApplicationUseCases,
-    private val settings: SettingUseCase,
+    private val sharedPreference: SharedPreferenceUseCase,
     connectivityObserver: ConnectivityObserver,
-    val authenticator: Authenticator
+    val authenticator: Authenticator,
+    private val themes: SettingUseCases.Themes
 ) : BaseViewModel<LinkUState, LinkUEvent>(LinkUState()) {
     init {
         onEvent(LinkUEvent.InitConfig)
@@ -73,7 +75,7 @@ class LinkUViewModel @Inject constructor(
             LinkUEvent.InitConfig -> initConfig()
             LinkUEvent.ToggleDarkMode -> {
                 val saved = !readable.isDarkMode
-                settings.isDarkMode = saved
+                sharedPreference.isDarkMode = saved
                 writable = readable.copy(
                     isDarkMode = saved
                 )
@@ -82,6 +84,9 @@ class LinkUViewModel @Inject constructor(
                 viewModelScope.launch {
                     sessionUseCases.close()
                 }
+            }
+            is LinkUEvent.OnTheme -> {
+
             }
         }
     }
@@ -126,7 +131,7 @@ class LinkUViewModel @Inject constructor(
     private var sessionJob: Job? = null
     private var times = 0
     private fun initSession() {
-        settings.debug {
+        sharedPreference.debug {
             times++
             applicationUseCases.toast("Init session, times: $times")
         }
@@ -151,7 +156,7 @@ class LinkUViewModel @Inject constructor(
                                     is Resource.Failure -> {
                                         deliverState(Label.SubscribedFailed)
                                         delay(3000)
-                                        settings.debug {
+                                        sharedPreference.debug {
                                             applicationUseCases.toast(subscribeResource.message)
                                         }
                                         onEvent(LinkUEvent.InitSession)
@@ -166,7 +171,7 @@ class LinkUViewModel @Inject constructor(
                     is Resource.Failure -> {
                         deliverState(Label.Failed)
                         delay(3000)
-                        settings.debug {
+                        sharedPreference.debug {
                             applicationUseCases.toast(resource.message)
                         }
                         onEvent(LinkUEvent.InitSession)
@@ -176,29 +181,77 @@ class LinkUViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-
     private fun initConfig() {
-        val isDarkMode = settings.isDarkMode
-        emojiUseCases.initialize()
-            .onEach { resource ->
-                when (resource) {
-                    Resource.Loading -> {}
-                    is Resource.Success -> {
-                        writable = readable.copy(
-                            isDarkMode = isDarkMode,
-                            isEmojiReady = true
-                        )
-                    }
-                    is Resource.Failure -> {
-                        writable = readable.copy(
-                            isDarkMode = isDarkMode,
-                            isEmojiReady = true,
-                        )
-                        onMessage(resource.message)
+        fun initEmoji(
+            onSuccess: () -> Unit,
+            onFailure: (String?) -> Unit
+        ) {
+            emojiUseCases.initialize()
+                .onEach { resource ->
+                    when (resource) {
+                        Resource.Loading -> {}
+                        is Resource.Success -> onSuccess()
+                        is Resource.Failure -> onFailure(resource.message)
                     }
                 }
+                .launchIn(viewModelScope)
+        }
+
+        fun initTheme(
+            onSuccess: () -> Unit,
+            onFailure: (String?) -> Unit
+        ) {
+            themes.installDefaultTheme()
+                .onEach { resource ->
+                    when (resource) {
+                        Resource.Loading -> {}
+                        is Resource.Success -> {
+                            writable = readable.copy(
+                                lightTheme = themes.findById(
+                                    sharedPreference.lightTheme
+                                )?.toComposeTheme() ?: readable.lightTheme,
+                                darkTheme = themes.findById(
+                                    sharedPreference.darkTheme
+                                )?.toComposeTheme() ?: readable.darkTheme,
+                            )
+                            onSuccess()
+                        }
+                        is Resource.Failure -> onFailure(resource.message)
+                    }
+                }
+                .launchIn(viewModelScope)
+        }
+
+        val isDarkMode = sharedPreference.isDarkMode
+        initEmoji(
+            onSuccess = {
+                writable = readable.copy(
+                    isDarkMode = isDarkMode,
+                    isEmojiReady = true
+                )
+            },
+            onFailure = {
+                onMessage(it)
+                writable = readable.copy(
+                    isDarkMode = isDarkMode,
+                    isEmojiReady = true
+                )
             }
-            .launchIn(viewModelScope)
+        )
+        initTheme(
+            onSuccess = {
+                writable = readable.copy(
+                    isThemeReady = true
+                )
+            },
+            onFailure = {
+                onMessage(it)
+                writable = readable.copy(
+                    isThemeReady = true
+                )
+            }
+        )
+
     }
 
 }

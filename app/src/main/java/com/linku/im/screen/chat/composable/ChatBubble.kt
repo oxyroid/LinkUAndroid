@@ -37,6 +37,7 @@ import coil.ImageLoader
 import coil.compose.*
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
+import com.linku.domain.bean.ComposeTheme
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
@@ -68,7 +69,7 @@ fun ChatBubble(
     onCancel: (Int) -> Unit,
     onFocus: (Int) -> Unit,
     onDismissFocus: () -> Unit,
-    theme: CustomTheme = LocalTheme.current
+    theme: ComposeTheme = LocalTheme.current
 ) {
     val hasFocus = remember(focusIdProvider) { focusIdProvider() == message.id }
     val config = configProvider()

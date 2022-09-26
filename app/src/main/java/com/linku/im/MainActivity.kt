@@ -14,7 +14,8 @@ import com.bumble.appyx.core.integration.NodeHost
 import com.bumble.appyx.core.integrationpoint.LocalIntegrationPoint
 import com.bumble.appyx.core.integrationpoint.NodeActivity
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.linku.im.appyx.RootNode
+import com.linku.im.appyx.node.RootNode
+import com.linku.im.ktx.dsl.all
 import com.linku.im.ktx.ifTrue
 import com.linku.im.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -54,12 +55,13 @@ class MainActivity : NodeActivity(), ViewTreeObserver.OnPreDrawListener {
         content.viewTreeObserver.addOnPreDrawListener(this)
     }
 
-    override fun onPreDraw(): Boolean {
-        return vm.readable.isEmojiReady.ifTrue {
-            content.viewTreeObserver.removeOnPreDrawListener(this)
-            true
-        } ?: false
-    }
+    override fun onPreDraw(): Boolean = all {
+        suggest { vm.readable.isEmojiReady }
+        suggest { vm.readable.isThemeReady }
+    }.ifTrue {
+        content.viewTreeObserver.removeOnPreDrawListener(this)
+        true
+    } ?: false
 
     override fun onDestroy() {
         super.onDestroy()

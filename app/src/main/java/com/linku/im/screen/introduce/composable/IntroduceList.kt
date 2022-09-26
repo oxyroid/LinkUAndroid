@@ -40,9 +40,7 @@ fun ProfileList(
             items.forEachIndexed { index, settingItem ->
                 IntroduceItem(
                     property = settingItem,
-                    onClick = {
-                        onItemClick(settingItem)
-                    }
+                    onClick = { onItemClick(settingItem) }
                 )
                 if (index != items.lastIndex)
                     Divider(

@@ -1,11 +1,13 @@
 package com.linku.im.screen.introduce.composable
 
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.linku.im.appyx.target.NavTarget
 
 sealed class Property {
     data class Folder(
         val label: String,
-        val icon: ImageVector
+        val icon: ImageVector,
+        val setting: NavTarget.Setting
     ) : Property()
 
     data class Data(

@@ -1,17 +1,18 @@
-package com.linku.im.ui.theme
+package com.linku.domain.bean
 
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-data class CustomTheme(
+data class ComposeTheme(
+    val isDark: Boolean,
+    val name: String,
     val primary: Color,
     val onPrimary: Color,
     val primaryDisable: Color,
     val onPrimaryDisable: Color,
     val surface: Color,
     val onSurface: Color,
-    val subSurface: Color,
-    val onSubSurface: Color,
+    val secondarySurface: Color,
+    val onSecondarySurface: Color,
     val background: Color,
     val onBackground: Color,
     val pressed: Color,
@@ -23,16 +24,19 @@ data class CustomTheme(
     val onBubbleStart: Color,
     val divider: Color,
     val error: Color,
-    val onError: Color
+    val onError: Color,
+    val id: Int = -1
 )
 
-val defaultLight = CustomTheme(
+val seaSalt = ComposeTheme(
+    isDark = false,
+    name = "sea salt",
     primary = Color(0xff837fc9),
     onPrimary = Color(0xffeef7fb),
     surface = Color(0xFFeeeeee),
     onSurface = Color(0xFF191C1B),
-    subSurface = Color(0xff837fc9),
-    onSubSurface = Color(0xffeef7fb),
+    secondarySurface = Color(0xff837fc9),
+    onSecondarySurface = Color(0xffeef7fb),
     chatBackground = Color(0xff7eb2a8),
     bubbleStart = Color(0xffefefef),
     onBubbleStart = Color(0xff000000),
@@ -48,12 +52,14 @@ val defaultLight = CustomTheme(
     error = Color(0xFFBA1A1A),
     onError = Color.White
 )
-val defaultDark = CustomTheme(
+val midNight = ComposeTheme(
+    isDark = true,
+    name = "mid night",
     primary = Color(0xff42b6fe),
     surface = Color(0xff232325),
     onSurface = Color(0xFFffffff),
-    subSurface = Color(0xff232325),
-    onSubSurface = Color(0xFFffffff),
+    secondarySurface = Color(0xff232325),
+    onSecondarySurface = Color(0xFFffffff),
     chatBackground = Color(0xff141622),
     bubbleStart = Color(0xff202123),
     onBubbleStart = Color(0xffffffff),
@@ -71,4 +77,27 @@ val defaultDark = CustomTheme(
     onError = Color(0xff601410)
 )
 
-val LocalTheme = staticCompositionLocalOf<CustomTheme> { error("no theme provided") }
+val frigidity = ComposeTheme(
+    isDark = false,
+    name = "frigidity",
+    primary = Color(0xff81a0f3),
+    surface = Color(0xff6877ad),
+    onSurface = Color(0xFFffffff),
+    secondarySurface = Color(0xff7388c9),
+    onSecondarySurface = Color(0xFFffffff),
+    chatBackground = Color(0xffcdd6df),
+    bubbleStart = Color(0xfffefefe),
+    onBubbleStart = Color(0xff0f0f0f),
+    background = Color(0xffffffff),
+    onBackground = Color(0xff000000),
+    pressed = Color(0xff222222),
+    onPressed = Color(0xff323232),
+    primaryDisable = Color(0xfff6f6f6),
+    onPrimaryDisable = Color(0xff81a0f3),
+    onPrimary = Color(0xfffcfcf5),
+    bubbleEnd = Color(0xfffdf2d4),
+    onBubbleEnd = Color(0xffba8800),
+    divider = Color(0xFFefefef),
+    error = Color(0xFFBA1A1A),
+    onError = Color.White
+)

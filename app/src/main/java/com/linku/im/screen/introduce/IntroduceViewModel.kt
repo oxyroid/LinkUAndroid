@@ -10,13 +10,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
-import com.linku.data.usecase.SettingUseCase
+import com.linku.data.usecase.SharedPreferenceUseCase
 import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.entity.User
 import com.linku.domain.eventOf
 import com.linku.im.R
+import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.ifFalse
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
@@ -32,7 +33,7 @@ class IntroduceViewModel @Inject constructor(
     private val authUseCases: AuthUseCases,
     private val applicationUseCases: ApplicationUseCases,
     private val authenticator: Authenticator,
-    private val settings: SettingUseCase
+    private val settings: SharedPreferenceUseCase
 ) : BaseViewModel<IntroduceState, IntroduceEvent>(IntroduceState()) {
 
     override fun onEvent(event: IntroduceEvent) {
@@ -287,11 +288,12 @@ class IntroduceViewModel @Inject constructor(
         val dataSource = getString(R.string.profile_settings_datasource)
         val theme = getString(R.string.profile_settings_theme)
         val language = getString(R.string.profile_settings_language)
-        Property.Folder(notification, Icons.Sharp.Notifications).addIt()
-        Property.Folder(safe, Icons.Sharp.Lock).addIt()
-        Property.Folder(dataSource, Icons.Sharp.DateRange).addIt()
-        Property.Folder(theme, Icons.Sharp.FormatPaint).addIt()
-        Property.Folder(language, Icons.Sharp.Language).addIt()
+        Property.Folder(notification, Icons.Sharp.Notifications, NavTarget.Setting.Theme).addIt()
+        Property.Folder(safe, Icons.Sharp.Lock, NavTarget.Setting.Theme).addIt()
+        Property.Folder(dataSource, Icons.Sharp.DateRange, NavTarget.Setting.Theme).addIt()
+        Property.Folder(theme, Icons.Sharp.FormatPaint, NavTarget.Setting.Theme).addIt()
+        Property.Folder(language, Icons.Sharp.Language, NavTarget.Setting.Theme).addIt()
     }
+
     context(MutableList<E>) private fun <E> E.addIt() = add(this)
 }
