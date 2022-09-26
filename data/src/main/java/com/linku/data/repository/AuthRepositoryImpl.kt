@@ -56,13 +56,14 @@ class AuthRepositoryImpl @Inject constructor(
                         messageService.getMessageAfter(timestamp)
                             .toResult()
                             .onSuccess { messages ->
-                                messages.forEach { message ->
-                                    messageDao.insert(message.toMessage())
+                                messages.sortedBy { it.cid }.forEach { message ->
+                                    if (messageDao.getById(message.id) == null) {
+                                        messageDao.insert(message.toMessage())
+                                    }
                                     if (conversationDao.getById(message.cid) == null) {
                                         launch {
-                                            conversationService.getConversationById(
-                                                message.cid
-                                            )
+                                            conversationService
+                                                .getConversationById(message.cid)
                                                 .toResult()
                                                 .onSuccess {
                                                     conversationDao.insert(it.toConversation())
