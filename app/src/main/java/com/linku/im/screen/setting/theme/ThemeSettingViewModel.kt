@@ -34,10 +34,12 @@ class ThemeSettingViewModel @Inject constructor(
                             Resource.Loading -> readable.copy(
                                 loading = true
                             )
+
                             is Resource.Success -> readable.copy(
                                 loading = false,
                                 themes = resource.data
                             )
+
                             is Resource.Failure -> {
                                 onMessage(resource.message)
                                 readable.copy(
@@ -48,9 +50,11 @@ class ThemeSettingViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
+
             SettingEvent.Themes.ToggleIsDarkMode -> {
                 themes.toggleIsDarkMode()
             }
+
             is SettingEvent.Themes.SelectThemes -> {
                 themes.selectThemes(event.tid)
                     .onEach { resource ->
@@ -58,6 +62,7 @@ class ThemeSettingViewModel @Inject constructor(
                             Resource.Loading -> readable.copy(
                                 loading = true
                             )
+
                             is Resource.Success -> {
                                 val theme = resource.data
                                 vm.onEvent(LinkUEvent.OnTheme(theme.id, theme.isDark))
@@ -66,6 +71,7 @@ class ThemeSettingViewModel @Inject constructor(
                                     currentTheme = resource.data.id
                                 )
                             }
+
                             is Resource.Failure -> {
                                 onMessage(resource.message)
                                 readable.copy(
@@ -76,6 +82,7 @@ class ThemeSettingViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
+
             is SettingEvent.Themes.Export -> {}
             SettingEvent.Themes.Import -> {}
             is SettingEvent.Themes.ImportFromClipboard -> {}

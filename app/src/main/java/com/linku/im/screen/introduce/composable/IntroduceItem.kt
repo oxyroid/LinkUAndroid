@@ -1,7 +1,13 @@
 package com.linku.im.screen.introduce.composable
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
@@ -16,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
-import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ktx.compose.ui.graphics.times
+import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ui.theme.LocalTheme
 
 private val PADDING_X = 24.dp
@@ -59,6 +65,7 @@ fun IntroduceItem(
                                 )
                         )
                     }
+
                     is AnnotatedString? -> {
                         Text(
                             text = value ?: AnnotatedString(""),
@@ -86,6 +93,7 @@ fun IntroduceItem(
                 }
             }
         }
+
         is Property.Folder -> {
             Row(
                 modifier = Modifier

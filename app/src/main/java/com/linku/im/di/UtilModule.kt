@@ -2,13 +2,11 @@ package com.linku.im.di
 
 import android.content.Context
 import com.linku.data.authenticator.PreferenceAuthenticator
-import com.linku.data.repository.*
 import com.linku.data.service.TwitterEmojiService
-import com.linku.data.usecase.*
+import com.linku.data.usecase.SharedPreferenceUseCase
 import com.linku.domain.Authenticator
 import com.linku.domain.extension.json
-import com.linku.domain.repository.*
-import com.linku.domain.service.*
+import com.linku.domain.service.EmojiService
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.network.NetworkConnectivityObserver
 import com.tencent.mmkv.MMKV

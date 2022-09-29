@@ -22,11 +22,13 @@ sealed class IntroduceEvent {
     ) : IntroduceEvent()
 
     data class Edit(val type: Type) : IntroduceEvent() {
-        sealed class Type(val code: Int): Parcelable {
+        sealed class Type(val code: Int) : Parcelable {
             @Parcelize
             object Name : Type(0)
+
             @Parcelize
             object NickName : Type(1)
+
             @Parcelize
             object Description : Type(2)
 

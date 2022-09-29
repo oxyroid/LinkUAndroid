@@ -36,6 +36,7 @@ class MainViewModel @Inject constructor(
                     ConnectivityObserver.State.Available -> {
                         onEvent(MainEvent.FetchConversations)
                     }
+
                     else -> {
                         if (observeConversationsJob == null)
                             onEvent(MainEvent.FetchConversations)
@@ -123,6 +124,7 @@ class MainViewModel @Inject constructor(
                     Resource.Loading -> writable = readable.copy(
                         loadingConversations = true
                     )
+
                     is Resource.Success -> {}
                     is Resource.Failure -> {}
                 }

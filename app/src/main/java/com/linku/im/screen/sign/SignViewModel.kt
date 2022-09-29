@@ -28,6 +28,7 @@ class SignViewModel @Inject constructor(
             is SignEvent.OnEmail -> writable = readable.copy(
                 email = event.email
             )
+
             is SignEvent.OnPassword -> writable = readable.copy(
                 password = event.password
             )
@@ -50,11 +51,13 @@ class SignViewModel @Inject constructor(
                     AuthRepository.SignInState.Start -> readable.copy(
                         loading = true,
                     )
+
                     AuthRepository.SignInState.Syncing -> {
                         readable.copy(
                             syncing = true
                         )
                     }
+
                     AuthRepository.SignInState.Completed -> {
                         onMessage(applicationUseCases.getString(R.string.log_in_success))
                         readable.copy(
@@ -63,6 +66,7 @@ class SignViewModel @Inject constructor(
                             loginEvent = eventOf(Unit)
                         )
                     }
+
                     is AuthRepository.SignInState.Failed -> {
                         onMessage(resource.message)
                         readable.copy(

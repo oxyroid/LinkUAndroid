@@ -1,8 +1,20 @@
 package com.linku.im.screen.chat.composable
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -10,8 +22,21 @@ import androidx.compose.material.icons.sharp.Cancel
 import androidx.compose.material.icons.sharp.ContentCopy
 import androidx.compose.material.icons.sharp.Refresh
 import androidx.compose.material.icons.sharp.Reply
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,8 +46,13 @@ import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.*
-import androidx.compose.ui.platform.*
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -32,9 +62,14 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
-import androidx.constraintlayout.compose.*
+import androidx.constraintlayout.compose.ConstrainedLayoutReference
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.ConstraintLayoutScope
+import androidx.constraintlayout.compose.Dimension
+import androidx.constraintlayout.compose.Visibility
 import coil.ImageLoader
-import coil.compose.*
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.linku.domain.bean.ComposeTheme
@@ -47,8 +82,8 @@ import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ktx.ifTrue
 import com.linku.im.ui.components.TextImage
-import com.linku.im.ui.theme.*
-import java.util.*
+import com.linku.im.ui.theme.LocalSpacing
+import com.linku.im.ui.theme.LocalTheme
 
 private val HORIZONTAL_IN_PADDING = 12.dp
 private val VERTICAL_IN_PADDING = 8.dp
@@ -234,6 +269,7 @@ fun ChatBubble(
                                     )
                                 )
                             }
+
                             is ImageMessage -> {
                                 ThumbView(
                                     backgroundColor = backgroundColor,
@@ -263,6 +299,7 @@ fun ChatBubble(
                                     }
                                 )
                             }
+
                             is GraphicsMessage -> {
                                 Column {
                                     ThumbView(
@@ -307,6 +344,7 @@ fun ChatBubble(
                                     )
                                 }
                             }
+
                             else -> {
                                 Text(
                                     text = stringResource(id = R.string.unknown_message_type),
@@ -361,6 +399,7 @@ fun ChatBubble(
                                 }
                             )
                         }
+
                         is GraphicsMessage -> {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.dropdown_copy)) },
@@ -381,6 +420,7 @@ fun ChatBubble(
                                 }
                             )
                         }
+
                         else -> {}
                     }
 
@@ -405,6 +445,7 @@ fun ChatBubble(
                                 }
                             )
                         }
+
                         Message.STATE_PENDING -> {
                             DropdownMenuItem(
                                 text = { Text(stringResource(id = R.string.dropdown_cancel)) },
@@ -425,6 +466,7 @@ fun ChatBubble(
                                 }
                             )
                         }
+
                         Message.STATE_FAILED -> {
                             DropdownMenuItem(
                                 text = { Text(stringResource(id = R.string.dropdown_retry)) },
@@ -508,6 +550,7 @@ private fun ConstraintLayoutScope.HeadPicView(
                     )
                 }
             }
+
             is Bubble.PM -> {}
         }
     }
@@ -538,11 +581,13 @@ private fun ThumbView(
                 val height = message.height.toFloat()
                 width > 0 && height > 0f
             }
+
             is GraphicsMessage -> {
                 val width = message.width.toFloat()
                 val height = message.height.toFloat()
                 width > 0 && height > 0f
             }
+
             else -> false
         }
     }
@@ -554,11 +599,13 @@ private fun ThumbView(
                 val height = message.height.toFloat()
                 width / height
             }
+
             is GraphicsMessage -> {
                 val width = message.width.toFloat()
                 val height = message.height.toFloat()
                 width / height
             }
+
             else -> defaultRatio
         } else defaultRatio
     }

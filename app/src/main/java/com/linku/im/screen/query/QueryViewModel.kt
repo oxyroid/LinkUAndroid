@@ -60,10 +60,12 @@ class QueryViewModel @Inject constructor(
                     Resource.Loading -> readable.copy(
                         queryingConversations = true
                     )
+
                     is Resource.Success -> readable.copy(
                         queryingConversations = false,
                         conversations = resource.data
                     )
+
                     is Resource.Failure -> {
                         onMessage(resource.message)
                         readable.copy(

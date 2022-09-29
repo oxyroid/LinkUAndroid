@@ -1,7 +1,12 @@
 package com.linku.im
 
 import androidx.lifecycle.viewModelScope
-import com.linku.data.usecase.*
+import com.linku.data.usecase.ApplicationUseCases
+import com.linku.data.usecase.EmojiUseCases
+import com.linku.data.usecase.MessageUseCases
+import com.linku.data.usecase.SessionUseCases
+import com.linku.data.usecase.SettingUseCases
+import com.linku.data.usecase.SharedPreferenceUseCase
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.entity.local.toComposeTheme
@@ -56,11 +61,14 @@ class LinkUViewModel @Inject constructor(
                             }
                             .launchIn(viewModelScope)
                     }
+
                     ConnectivityObserver.State.Unavailable -> {
                     }
+
                     ConnectivityObserver.State.Losing -> {
                         initRemoteSessionJob?.cancel()
                     }
+
                     ConnectivityObserver.State.Lost -> {
                     }
                 }
@@ -80,11 +88,13 @@ class LinkUViewModel @Inject constructor(
                     isDarkMode = saved
                 )
             }
+
             LinkUEvent.Disconnect -> {
                 viewModelScope.launch {
                     sessionUseCases.close()
                 }
             }
+
             is LinkUEvent.OnTheme -> {
                 viewModelScope.launch {
                     writable = if (event.isDarkMode) {
@@ -126,12 +136,14 @@ class LinkUViewModel @Inject constructor(
                     )
                     null
                 }
+
                 Label.Connecting -> {
                     writable = readable.copy(
                         loading = true
                     )
                     applicationUseCases.getString(R.string.connecting)
                 }
+
                 Label.Failed -> applicationUseCases.getString(R.string.connected_failed)
                 Label.Subscribing -> {
                     writable = readable.copy(
@@ -139,6 +151,7 @@ class LinkUViewModel @Inject constructor(
                     )
                     applicationUseCases.getString(R.string.subscribing)
                 }
+
                 Label.SubscribedFailed -> applicationUseCases.getString(R.string.subscribe_failed)
                 Label.NoAuth -> applicationUseCases.getString(R.string.no_auth)
             }
@@ -170,6 +183,7 @@ class LinkUViewModel @Inject constructor(
                                             readyForObserveMessages = true
                                         )
                                     }
+
                                     is Resource.Failure -> {
                                         deliverState(Label.SubscribedFailed)
                                         writable = readable.copy(
@@ -185,6 +199,7 @@ class LinkUViewModel @Inject constructor(
                             }
                             .launchIn(viewModelScope)
                     }
+
                     is Resource.Failure -> {
                         deliverState(Label.Failed)
                         delay(3000)
@@ -233,6 +248,7 @@ class LinkUViewModel @Inject constructor(
                             )
                             onSuccess()
                         }
+
                         is Resource.Failure -> onFailure(resource.message)
                     }
                 }

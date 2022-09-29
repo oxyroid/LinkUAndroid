@@ -1,13 +1,14 @@
 @file:Suppress("unused")
+
 package com.linku.im.screen
 
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
 import com.linku.im.ktx.containsKey
+import com.linku.im.ktx.dsl.any
 import com.linku.im.ktx.lruCacheOf
 import com.linku.im.screen.chat.vo.MessageVO
 import com.linku.im.screen.main.vo.ConversationVO
-import com.linku.im.ktx.dsl.any
 
 object FastVOCache {
     val messages = lruCacheOf<Int, MessageVO>()
@@ -17,6 +18,7 @@ object FastVOCache {
             suggest { !messages.containsKey(message.id) }
             suggest { messages[message.id]?.message?.timestamp != message.timestamp }
         } -> block()?.let { messages.put(message.id, it) }
+
         else -> messages[message.id]
     }
 
@@ -28,6 +30,7 @@ object FastVOCache {
             suggest { !conversations.containsKey(conversation.id) }
             suggest { conversations[conversation.id]?.updatedAt != conversation.updatedAt }
         } -> block()?.let { conversations.put(conversation.id, it) }
+
         else -> conversations[conversation.id]
     }
 }

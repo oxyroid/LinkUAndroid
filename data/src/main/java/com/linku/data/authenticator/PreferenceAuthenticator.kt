@@ -24,9 +24,6 @@ class PreferenceAuthenticator(
 
     private val _observeCurrent = MutableStateFlow(currentUID)
     override val observeCurrent: Flow<Int?> = _observeCurrent
-        .onEach {
-            print(it)
-        }
 
     override suspend fun update(
         uid: Int?,

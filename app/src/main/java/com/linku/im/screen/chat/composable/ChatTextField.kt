@@ -4,7 +4,15 @@ import android.net.Uri
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
@@ -18,7 +26,15 @@ import androidx.compose.material.icons.sharp.AttachFile
 import androidx.compose.material.icons.sharp.EmojiEmotions
 import androidx.compose.material.icons.sharp.KeyboardVoice
 import androidx.compose.material.icons.sharp.Send
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -34,8 +50,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.linku.domain.bean.Emoji
 import com.linku.im.R
-import com.linku.im.ktx.ifTrue
 import com.linku.im.ktx.compose.ui.intervalClickable
+import com.linku.im.ktx.ifTrue
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -46,7 +62,7 @@ fun ChatTextField(
     text: () -> TextFieldValue,
     uri: () -> Uri?,
     emojis: List<Emoji>,
-    emojiSpanExpanded:() -> Boolean,
+    emojiSpanExpanded: () -> Boolean,
     onSend: () -> Unit,
     onFile: () -> Unit,
     onText: (TextFieldValue) -> Unit,

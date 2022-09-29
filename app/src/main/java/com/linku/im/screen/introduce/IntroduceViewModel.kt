@@ -2,7 +2,15 @@ package com.linku.im.screen.introduce
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.*
+import androidx.compose.material.icons.sharp.DateRange
+import androidx.compose.material.icons.sharp.Edit
+import androidx.compose.material.icons.sharp.Email
+import androidx.compose.material.icons.sharp.FormatPaint
+import androidx.compose.material.icons.sharp.Language
+import androidx.compose.material.icons.sharp.Lock
+import androidx.compose.material.icons.sharp.Notifications
+import androidx.compose.material.icons.sharp.Upload
+import androidx.compose.material.icons.sharp.Visibility
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
@@ -50,6 +58,7 @@ class IntroduceViewModel @Inject constructor(
                     editEvent = eventOf(event.type)
                 )
             }
+
             IntroduceEvent.ToggleLogMode -> {
                 val mode = settings.isLogMode
                 settings.isLogMode = !mode
@@ -57,6 +66,7 @@ class IntroduceViewModel @Inject constructor(
                 else getString(R.string.log_mode_off)
                 onMessage(message)
             }
+
             IntroduceEvent.AvatarClicked -> {
                 onActions(getString(R.string.profile_avatar_label), buildList {
                     Property.Data.Action(
@@ -81,9 +91,11 @@ class IntroduceViewModel @Inject constructor(
                     }
                 })
             }
+
             IntroduceEvent.DismissPreview -> writable = readable.copy(
                 preview = ""
             )
+
             is IntroduceEvent.UpdateAvatar -> {
                 val uri = event.uri
                 writable = readable.copy(
@@ -97,9 +109,11 @@ class IntroduceViewModel @Inject constructor(
                                 Resource.Loading -> readable.copy(
                                     uploading = true
                                 )
+
                                 is Resource.Success -> readable.copy(
                                     uploading = false
                                 )
+
                                 is Resource.Failure -> {
                                     onMessage(resource.message)
                                     readable.copy(

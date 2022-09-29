@@ -2,7 +2,12 @@ package com.linku.im.di
 
 import com.linku.domain.Authenticator
 import com.linku.domain.common.Constants
-import com.linku.domain.service.*
+import com.linku.domain.service.AuthService
+import com.linku.domain.service.ConversationService
+import com.linku.domain.service.FileService
+import com.linku.domain.service.MessageService
+import com.linku.domain.service.ProfileService
+import com.linku.domain.service.UserService
 import com.linku.im.BuildConfig
 import com.linku.im.ktx.serialization.asConverterFactory
 import dagger.Module

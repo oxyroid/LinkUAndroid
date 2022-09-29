@@ -69,10 +69,12 @@ class RootNode(
         NavTarget.Main -> node(buildContext) {
             MainScreen()
         }
+
         is NavTarget.ChatTarget -> node(buildContext) {
             val viewModel: ChatViewModel = hiltViewModel()
             ChatScreen(cid = navTarget.cid, viewModel = viewModel)
         }
+
         is NavTarget.Introduce -> node(buildContext) {
             IntroduceScreen(uid = navTarget.uid)
         }
@@ -80,15 +82,19 @@ class RootNode(
         NavTarget.Create -> node(buildContext) {
             CreateScreen()
         }
+
         is NavTarget.Edit -> node(buildContext) {
             EditScreen(type = navTarget.type)
         }
+
         NavTarget.Query -> node(buildContext) {
             QueryScreen()
         }
+
         NavTarget.Sign -> node(buildContext) {
             SignScreen()
         }
+
         is NavTarget.Setting -> when (navTarget) {
             NavTarget.Setting.Theme -> node(buildContext) {
                 ThemeSettingScreen()

@@ -1,9 +1,17 @@
 package com.linku.im.di
 
-import com.linku.data.repository.*
+import com.linku.data.repository.AuthRepositoryImpl
+import com.linku.data.repository.ConversationRepositoryImpl
+import com.linku.data.repository.MessageRepositoryImpl
+import com.linku.data.repository.SessionRepositoryImpl
+import com.linku.data.repository.UserRepositoryImpl
 import com.linku.data.service.SessionServiceImpl
-import com.linku.domain.repository.*
-import com.linku.domain.service.*
+import com.linku.domain.repository.AuthRepository
+import com.linku.domain.repository.ConversationRepository
+import com.linku.domain.repository.MessageRepository
+import com.linku.domain.repository.SessionRepository
+import com.linku.domain.repository.UserRepository
+import com.linku.domain.service.SessionService
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

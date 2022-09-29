@@ -5,7 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
-import com.linku.data.usecase.*
+import com.linku.data.usecase.ApplicationUseCases
+import com.linku.data.usecase.ConversationUseCases
+import com.linku.data.usecase.EmojiUseCases
+import com.linku.data.usecase.MessageUseCases
+import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
@@ -27,7 +31,26 @@ import com.linku.im.ktx.dsl.suggestAny
 import com.linku.im.ktx.isSameDay
 import com.linku.im.ktx.isToday
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.screen.chat.ChatEvent.*
+import com.linku.im.screen.chat.ChatEvent.CancelMessage
+import com.linku.im.screen.chat.ChatEvent.Fetch
+import com.linku.im.screen.chat.ChatEvent.FetchChannelDetail
+import com.linku.im.screen.chat.ChatEvent.Forward
+import com.linku.im.screen.chat.ChatEvent.ObserveChannel
+import com.linku.im.screen.chat.ChatEvent.ObserveMessage
+import com.linku.im.screen.chat.ChatEvent.OnEmoji
+import com.linku.im.screen.chat.ChatEvent.OnEmojiSpanExpanded
+import com.linku.im.screen.chat.ChatEvent.OnFile
+import com.linku.im.screen.chat.ChatEvent.OnFocus
+import com.linku.im.screen.chat.ChatEvent.OnReply
+import com.linku.im.screen.chat.ChatEvent.OnScroll
+import com.linku.im.screen.chat.ChatEvent.OnTextChange
+import com.linku.im.screen.chat.ChatEvent.PushShortcut
+import com.linku.im.screen.chat.ChatEvent.ReadAll
+import com.linku.im.screen.chat.ChatEvent.Remain
+import com.linku.im.screen.chat.ChatEvent.RemainIf
+import com.linku.im.screen.chat.ChatEvent.RemoveAllObservers
+import com.linku.im.screen.chat.ChatEvent.ResendMessage
+import com.linku.im.screen.chat.ChatEvent.SendMessage
 import com.linku.im.screen.chat.composable.Bubble
 import com.linku.im.screen.chat.composable.Reply
 import com.linku.im.screen.chat.vo.MemberVO
@@ -150,6 +173,7 @@ class ChatViewModel @Inject constructor(
                                     is GraphicsMessage -> applications.getString(
                                         R.string.graphics_message
                                     )
+
                                     else -> applications.getString(R.string.unknown_message_type)
                                 }
                             )
@@ -167,6 +191,7 @@ class ChatViewModel @Inject constructor(
                                     )
                                 )
                             }
+
                             Conversation.Type.GROUP -> {
                                 val user = if (isAnother) users.findUser(
                                     message.uid,
@@ -209,6 +234,7 @@ class ChatViewModel @Inject constructor(
                                     )
                                 )
                             }
+
                             else -> null
                         }
 
@@ -252,6 +278,7 @@ class ChatViewModel @Inject constructor(
                             channelDetailLoading = true
                         )
                     }
+
                     is Resource.Success -> {
                         resource.data
                             .map {
@@ -274,6 +301,7 @@ class ChatViewModel @Inject constructor(
                             channelDetailLoading = false
                         )
                     }
+
                     is Resource.Failure -> readable.copy(
                         channelDetailLoading = false
                     )
@@ -289,10 +317,12 @@ class ChatViewModel @Inject constructor(
                     Resource.Loading -> readable.copy(
                         shortcutPushing = true
                     )
+
                     is Resource.Success -> readable.copy(
                         shortcutPushing = false,
                         shortcutPushed = true
                     )
+
                     is Resource.Failure -> {
                         onMessage(resource.message)
                         readable.copy(
@@ -391,9 +421,11 @@ class ChatViewModel @Inject constructor(
                                 scroll = eventOf(0)
                             )
                         }
+
                         is Resource.Success -> {
                             notifications.onEmit()
                         }
+
                         is Resource.Failure -> {
                             onMessage(resource.message)
                         }
@@ -417,9 +449,11 @@ class ChatViewModel @Inject constructor(
                             scroll = eventOf(0)
                         )
                     }
+
                     is Resource.Success -> {
                         notifications.onEmit()
                     }
+
                     is Resource.Failure -> {
                         onMessage(resource.message)
                     }
@@ -451,9 +485,11 @@ class ChatViewModel @Inject constructor(
                             scroll = eventOf(0)
                         )
                     }
+
                     is Resource.Success -> {
                         notifications.onEmit()
                     }
+
                     is Resource.Failure -> {
                         onMessage(resource.message)
                     }

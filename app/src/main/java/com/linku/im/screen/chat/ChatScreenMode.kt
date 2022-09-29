@@ -9,6 +9,7 @@ sealed class ChatScreenMode {
         val boundaries: Rect,
         val aspectRatio: Float = 4 / 3f
     ) : ChatScreenMode()
+
     data class MemberDetail(val mid: Int) : ChatScreenMode()
     object ChannelDetail : ChatScreenMode()
 }
