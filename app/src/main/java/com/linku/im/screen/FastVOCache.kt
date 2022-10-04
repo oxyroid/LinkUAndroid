@@ -2,12 +2,12 @@
 
 package com.linku.im.screen
 
+import com.linku.domain.bean.MessageVO
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
 import com.linku.im.ktx.containsKey
 import com.linku.im.ktx.dsl.any
 import com.linku.im.ktx.lruCacheOf
-import com.linku.im.screen.chat.vo.MessageVO
 import com.linku.im.screen.main.vo.ConversationVO
 
 object FastVOCache {

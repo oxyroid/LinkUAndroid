@@ -1,10 +1,8 @@
 package com.linku.im.appyx.node
 
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -28,7 +26,6 @@ import com.linku.im.screen.setting.theme.ThemeSettingScreen
 import com.linku.im.screen.sign.SignScreen
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalDuration
-import com.linku.im.ui.theme.LocalTheme
 
 class RootNode(
     buildContext: BuildContext,
@@ -46,10 +43,7 @@ class RootNode(
             LocalBackStack provides backStack
         ) {
             Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .background(LocalTheme.current.background)
-                    .navigationBarsPadding()
+                modifier = modifier.fillMaxSize()
             ) {
                 Children(
                     navModel = backStack,
