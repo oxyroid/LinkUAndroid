@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_user_not_exist">用户不存在</string>
+    <string name="error_session_initialize">初始化会话失败</string>
+    <string name="error_session_subscribe">同步前初始化会话失败</string>
+    <string name="error_save_conversation">无法保存会话（%d）</string>
+</resources>
