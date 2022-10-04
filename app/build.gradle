@@ -16,8 +16,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 33
-        versionCode 99
-        versionName "0.14.3"
+        versionCode 100
+        versionName "0.14.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -76,6 +76,8 @@ dependencies {
     implementation 'androidx.compose.material3:material3:1.0.0-beta03'
     implementation "androidx.compose.material:material-icons-extended:$compose_version"
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'junit:junit:4.13.2'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
