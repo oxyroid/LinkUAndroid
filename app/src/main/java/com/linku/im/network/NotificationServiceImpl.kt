@@ -1,7 +1,11 @@
 package com.linku.im.network
 
+import android.Manifest
 import android.content.Context
 import android.media.SoundPool
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.linku.domain.entity.GraphicsMessage
@@ -19,6 +23,8 @@ class NotificationServiceImpl @Inject constructor(
     private val notificationManager: NotificationManagerCompat,
     @ApplicationContext private val context: Context
 ) : NotificationService {
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun onCollected(message: Message) {
         soundPool.load(context, R.raw.sound_in, 1)
         val content = when (message) {
