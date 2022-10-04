@@ -1,16 +1,6 @@
 package com.linku.im.screen.sign
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -34,10 +24,7 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.google.accompanist.insets.ui.Scaffold
 import com.linku.im.R
-import com.linku.im.ui.components.MaterialButton
-import com.linku.im.ui.components.MaterialTextButton
-import com.linku.im.ui.components.PasswordTextField
-import com.linku.im.ui.components.TextField
+import com.linku.im.ui.components.*
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -49,8 +36,8 @@ fun SignScreen(
 ) {
     val state = viewModel.readable
     val scaffoldState = rememberScaffoldState()
-    val navController = LocalBackStack.current
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
+    val backStack = LocalBackStack.current
+    val lottie by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
 
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -66,12 +53,18 @@ fun SignScreen(
 
     LaunchedEffect(state.loginEvent) {
         state.loginEvent.handle {
-            navController.pop()
+            backStack.pop()
         }
     }
 
     Scaffold(
         scaffoldState = scaffoldState,
+        snackbarHost = {
+            Snacker(
+                state = it,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
         backgroundColor = LocalTheme.current.background,
         contentColor = LocalTheme.current.onBackground
     ) { innerPadding ->
@@ -90,7 +83,7 @@ fun SignScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LottieAnimation(
-                    composition = composition,
+                    composition = lottie,
                     modifier = Modifier
                         .padding(bottom = LocalSpacing.current.medium)
                         .size(160.dp),
