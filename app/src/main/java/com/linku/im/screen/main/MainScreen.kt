@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -272,7 +273,7 @@ fun MainScreen(
                                 modifier = Modifier
                                     .padding(LocalSpacing.current.small)
                                     .clip(RoundedCornerShape(LocalSpacing.current.small))
-                                    .intervalClickable {
+                                    .clickable {
                                         when (selection) {
                                             is Selection.Route -> {
                                                 when (selection.target) {
@@ -283,7 +284,6 @@ fun MainScreen(
                                                             } ?: NavTarget.Sign
                                                         )
                                                     }
-
                                                     else -> backStack.push(selection.target)
                                                 }
                                             }

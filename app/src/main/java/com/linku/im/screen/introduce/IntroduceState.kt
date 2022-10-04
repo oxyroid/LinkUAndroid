@@ -13,7 +13,6 @@ data class IntroduceState(
     val actionsLabel: String = "",
     val actions: List<Property.Data.Action> = emptyList(),
     val verifiedEmailCodeMessage: String = "",
-    val logout: Boolean = false,
     val dataProperties: List<Property> = emptyList(),
     val settingsProperties: List<Property> = emptyList(),
     val editEvent: Event<IntroduceEvent.Edit.Type> = Event.Handled(),

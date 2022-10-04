@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.Conversation
@@ -77,6 +78,11 @@ data class PushConversationShortCutUseCase @Inject constructor(
             val conversation = repository.findConversation(cid, Strategy.Memory)
             val info = builder
                 .setShortLabel(conversation?.name ?: "Conversation#$cid")
+                .setIcon(
+                    IconCompat.createWithContentUri(
+                        conversation?.avatar.orEmpty()
+                    )
+                )
                 .setIsConversation()
                 .setIntent(
                     Intent(

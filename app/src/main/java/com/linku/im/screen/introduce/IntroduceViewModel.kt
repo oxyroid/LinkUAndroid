@@ -23,8 +23,7 @@ import com.linku.im.ktx.ifFalse
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,7 +35,6 @@ class IntroduceViewModel @Inject constructor(
     private val authenticator: Authenticator,
     private val settings: SharedPreferenceUseCase
 ) : BaseViewModel<IntroduceState, IntroduceEvent>(IntroduceState()) {
-
     override fun onEvent(event: IntroduceEvent) {
         when (event) {
             is IntroduceEvent.FetchIntroduce -> fetchProfile(event.uid)
@@ -189,12 +187,13 @@ class IntroduceViewModel @Inject constructor(
         }
     }
 
+    private val _signOutFlow = MutableSharedFlow<Boolean>()
+    val signOutFlow = _signOutFlow.asSharedFlow()
+
     private fun signOut() {
         viewModelScope.launch {
             authUseCases.signOut()
-            writable = readable.copy(
-                logout = true
-            )
+            _signOutFlow.emit(true)
         }
     }
 

@@ -21,6 +21,29 @@ fun MaterialButton(
     disabledContentColor: Color = containerColor.copy(alpha = 0.38f),
     onClick: () -> Unit
 ) {
+    MaterialButton(
+        text = stringResource(textRes),
+        modifier = modifier,
+        enabled = enabled,
+        containerColor = containerColor,
+        contentColor = contentColor,
+        disabledContainerColor = disabledContainerColor,
+        disabledContentColor = disabledContentColor,
+        onClick = onClick
+    )
+}
+
+@Composable
+fun MaterialButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    containerColor: Color = LocalTheme.current.primary,
+    contentColor: Color = LocalTheme.current.onPrimary,
+    disabledContainerColor: Color = containerColor.copy(alpha = 0.12f),
+    disabledContentColor: Color = containerColor.copy(alpha = 0.38f),
+    onClick: () -> Unit
+) {
     Button(
         shape = RoundedCornerShape(8.dp),
         onClick = onClick,
@@ -34,7 +57,7 @@ fun MaterialButton(
         )
     ) {
         Text(
-            text = stringResource(id = textRes)
+            text = text
         )
     }
 }

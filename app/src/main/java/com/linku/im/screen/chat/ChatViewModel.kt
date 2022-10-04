@@ -138,13 +138,6 @@ class ChatViewModel @Inject constructor(
                 mapMessagesJob?.cancel()
                 mapMessagesJob = viewModelScope.launch {
                     messages
-                        .takeWhile { it.id == _messageFlow.value.firstOrNull()?.message?.id }
-                        .ifEmpty { messages }
-                        .let {
-                            if (_messageFlow.value.isEmpty()) {
-                                messages
-                            } else it
-                        }
                         .mapIndexedNotNull { index, message ->
                             val next = if (index == messages.lastIndex) null
                             else messages[index + 1]
@@ -241,11 +234,7 @@ class ChatViewModel @Inject constructor(
 
                         }
                         .also {
-                            val oldList = (messageFlow.replayCache.firstOrNull()
-                                ?: emptyList()).toMutableList()
-                            val list = it.toMutableList()
-                            list.addAll(oldList)
-                            _messageFlow.emit(list)
+                            _messageFlow.emit(it)
                         }
                     writable = readable.copy(
                         scroll = if (readable.firstVisibleIndex == 0 && readable.firstVisibleItemScrollOffset == 0)

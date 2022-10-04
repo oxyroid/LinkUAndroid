@@ -3,7 +3,6 @@ package com.linku.im.screen.sign
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
-import com.linku.data.usecase.MessageUseCases
 import com.linku.domain.eventOf
 import com.linku.domain.repository.AuthRepository
 import com.linku.im.R
@@ -17,10 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SignViewModel @Inject constructor(
     private val authUseCases: AuthUseCases,
-    private val applicationUseCases: ApplicationUseCases,
-    private val messageUseCases: MessageUseCases
+    private val applicationUseCases: ApplicationUseCases
 ) : BaseViewModel<SignState, SignEvent>(SignState()) {
-
     override fun onEvent(event: SignEvent) {
         when (event) {
             SignEvent.SignIn -> signIn()
@@ -49,19 +46,17 @@ class SignViewModel @Inject constructor(
             .onEach { resource ->
                 writable = when (resource) {
                     AuthRepository.SignInState.Start -> readable.copy(
-                        loading = true,
+                        loading = true
                     )
 
-                    AuthRepository.SignInState.Syncing -> {
-                        readable.copy(
-                            syncing = true
-                        )
-                    }
+                    is AuthRepository.SignInState.Syncing -> readable.copy(
+                        syncingPercent = resource.present
+                    )
 
                     AuthRepository.SignInState.Completed -> {
                         onMessage(applicationUseCases.getString(R.string.log_in_success))
                         readable.copy(
-                            syncing = false,
+                            syncingPercent = 100,
                             loading = false,
                             loginEvent = eventOf(Unit)
                         )

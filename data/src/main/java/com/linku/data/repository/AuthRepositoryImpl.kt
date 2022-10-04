@@ -2,6 +2,7 @@ package com.linku.data.repository
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.net.toUri
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
@@ -23,6 +24,7 @@ import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 class AuthRepositoryImpl @Inject constructor(
     private val authService: AuthService,
@@ -44,7 +46,6 @@ class AuthRepositoryImpl @Inject constructor(
             resultOf { authService.signIn(email, password) }
                 .onSuccess { token ->
                     authenticator.update(token.id, token.token)
-                    trySend(AuthRepository.SignInState.Syncing)
                     launch(Dispatchers.IO) {
                         // Get latest message timestamp from local database at first.
                         // If there is no message at all, 3 days ago instead.
@@ -53,24 +54,33 @@ class AuthRepositoryImpl @Inject constructor(
                             ?: (System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 3)
                         resultOf { messageService.getMessageAfter(timestamp) }
                             .onSuccess { messages ->
-                                messages.sortedBy { it.cid }.forEach { message ->
-                                    if (messageDao.getById(message.id) == null) {
+                                messages.forEachIndexed { index, message ->
+                                    launch {
+                                        val present: Int = (index / messages.lastIndex.toFloat() * 100).roundToInt()
+                                        Log.e("TAG", "signIn: $present")
+//                                        if (messageDao.getById(message.id) == null) {
                                         messageDao.insert(message.toMessage())
-                                    }
-                                    if (conversationDao.getById(message.cid) == null) {
-                                        launch {
-                                            resultOf {
-                                                conversationService.getConversationById(message.cid)
-                                            }.onSuccess {
-                                                conversationDao.insert(it.toConversation())
+//                                        }
+                                        if (conversationDao.getById(message.cid) == null) {
+                                            launch {
+                                                resultOf {
+                                                    conversationService.getConversationById(message.cid)
+                                                }.onSuccess {
+                                                    conversationDao.insert(it.toConversation())
+                                                }
                                             }
+                                        }
+                                        trySend(AuthRepository.SignInState.Syncing(present))
+                                        if (index == messages.lastIndex) {
+                                            trySend(AuthRepository.SignInState.Syncing(100))
+                                            trySend(AuthRepository.SignInState.Completed)
                                         }
                                     }
                                 }
-                                trySend(AuthRepository.SignInState.Completed)
                             }
                     }
-                }.onFailure {
+                }
+                .onFailure {
                     trySend(AuthRepository.SignInState.Failed(it.message))
                 }
         }

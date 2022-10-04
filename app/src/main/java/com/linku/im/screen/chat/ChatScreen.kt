@@ -174,7 +174,6 @@ fun ChatScreen(
                             drawContent()
                         }
                         .padding(innerPadding)
-                        .navigationBarsPadding()
                         .imePadding(),
                     contentAlignment = Alignment.BottomCenter
                 ) {
@@ -200,7 +199,11 @@ fun ChatScreen(
         }
 
         if (mode is ChatScreenMode.ImageDetail) {
-            imageDetailContent(mode.url, mode.boundaries, mode.aspectRatio)
+            imageDetailContent(
+                mode.url,
+                mode.boundaries,
+                mode.aspectRatio
+            )
         }
     }
 
@@ -235,6 +238,8 @@ fun ChatScreen(
             )
         },
         listContent = {
+            val configuration = LocalConfiguration.current
+            val height = configuration.screenHeightDp
             ListContent(
                 listState = listState,
                 loading = { !vm.readable.readyForObserveMessages },
@@ -258,7 +263,10 @@ fun ChatScreen(
                 },
                 onScroll = { position ->
                     scope.launch {
-                        listState.scrollToItem(position)
+                        listState.scrollToItem(
+                            index = position,
+                            scrollOffset = -height / 2
+                        )
                     }
                 },
                 onFocus = { viewModel.onEvent(ChatEvent.OnFocus(it)) },
@@ -368,35 +376,41 @@ fun ChatScreen(
         },
         imageDetailContent = { model, boundaries, _ ->
             val context = LocalContext.current
+            val configuration = LocalConfiguration.current
+            val density = LocalDensity.current.density
+            val duration = LocalDuration.current.medium
+
+            val paddingValues = WindowInsets.systemBars.asPaddingValues()
+
             val request = remember(model) {
                 ImageRequest.Builder(context).data(model).build()
             }
-            val loader = remember(model) {
-                ImageLoader.Builder(context).components {
-                    add(ImageDecoderDecoder.Factory())
-                }.build()
+            val loader = remember {
+                ImageLoader.Builder(context)
+                    .components {
+                        add(ImageDecoderDecoder.Factory())
+                    }
+                    .build()
             }
             val painter = rememberAsyncImagePainter(
                 model = request,
                 imageLoader = loader
             )
 
-            val paddingValues = WindowInsets.systemBars.asPaddingValues()
-            val configuration = LocalConfiguration.current
-            val density = LocalDensity.current.density
             val topPadding = remember { paddingValues.calculateTopPadding().value * density }
-
             var isShowed by remember { mutableStateOf(false) }
-
-            val duration = LocalDuration.current.medium
             var offsetY by remember { mutableStateOf(0f) }
-
             val transition = updateTransition(
                 targetState = isShowed,
                 label = "ImageDetail"
             )
             val animatedRadius by transition.animateInt(
-                transitionSpec = { tween(duration) },
+                transitionSpec = {
+                    tween(
+                        durationMillis = duration,
+                        delayMillis = duration
+                    )
+                },
                 label = "radius"
             ) {
                 if (it) 0 else 5

@@ -23,8 +23,8 @@ interface AuthRepository {
 
     sealed class SignInState {
         object Start : SignInState()
-        object Syncing : SignInState()
+        data class Syncing(val present: Int) : SignInState()
         object Completed : SignInState()
-        data class Failed(val message: String?): SignInState()
+        data class Failed(val message: String?) : SignInState()
     }
 }

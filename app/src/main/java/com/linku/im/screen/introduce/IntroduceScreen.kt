@@ -71,6 +71,7 @@ import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
@@ -110,9 +111,12 @@ fun IntroduceScreen(
         viewModel.onEvent(IntroduceEvent.FetchIntroduce(uid))
     }
 
-    LaunchedEffect(state.logout) {
-        if (state.logout)
-            backStack.pop()
+    LaunchedEffect(Unit) {
+        viewModel.signOutFlow.collectLatest {
+            if (it) {
+                backStack.pop()
+            }
+        }
     }
 
     LaunchedEffect(state.runLauncher) {
