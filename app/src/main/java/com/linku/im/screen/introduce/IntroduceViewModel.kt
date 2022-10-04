@@ -2,15 +2,7 @@ package com.linku.im.screen.introduce
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.DateRange
-import androidx.compose.material.icons.sharp.Edit
-import androidx.compose.material.icons.sharp.Email
-import androidx.compose.material.icons.sharp.FormatPaint
-import androidx.compose.material.icons.sharp.Language
-import androidx.compose.material.icons.sharp.Lock
-import androidx.compose.material.icons.sharp.Notifications
-import androidx.compose.material.icons.sharp.Upload
-import androidx.compose.material.icons.sharp.Visibility
+import androidx.compose.material.icons.sharp.*
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration

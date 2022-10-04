@@ -1,16 +1,8 @@
 package com.linku.im.di
 
-import com.linku.data.repository.AuthRepositoryImpl
-import com.linku.data.repository.ConversationRepositoryImpl
-import com.linku.data.repository.MessageRepositoryImpl
-import com.linku.data.repository.SessionRepositoryImpl
-import com.linku.data.repository.UserRepositoryImpl
-import com.linku.data.service.SessionServiceImpl
-import com.linku.domain.repository.AuthRepository
-import com.linku.domain.repository.ConversationRepository
-import com.linku.domain.repository.MessageRepository
-import com.linku.domain.repository.SessionRepository
-import com.linku.domain.repository.UserRepository
+import com.linku.data.repository.*
+import com.linku.data.service.OkHttpSessionService
+import com.linku.domain.repository.*
 import com.linku.domain.service.SessionService
 import dagger.Binds
 import dagger.Module
@@ -20,39 +12,38 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class DataModule {
-
+interface DataModule {
     @Binds
     @Singleton
-    abstract fun bindAuthRepository(
-        authRepositoryImpl: AuthRepositoryImpl
+    fun bindAuthRepository(
+        repository: AuthRepositoryImpl
     ): AuthRepository
 
     @Binds
     @Singleton
-    abstract fun bindUserRepository(
-        userRepositoryImpl: UserRepositoryImpl
+    fun bindUserRepository(
+        repository: UserRepositoryImpl
     ): UserRepository
 
     @Binds
     @Singleton
-    abstract fun bindMessageRepository(
-        messageRepositoryImpl: MessageRepositoryImpl
+    fun bindMessageRepository(
+        repository: MessageRepositoryImpl
     ): MessageRepository
 
     @Binds
     @Singleton
-    abstract fun bindConversationRepository(
-        conversationRepositoryImpl: ConversationRepositoryImpl
+    fun bindConversationRepository(
+        repository: ConversationRepositoryImpl
     ): ConversationRepository
 
     @Binds
     @Singleton
-    abstract fun bindSessionRepository(
-        sessionRepositoryImpl: SessionRepositoryImpl
+    fun bindSessionRepository(
+        repository: SessionRepositoryImpl
     ): SessionRepository
 
     @Binds
     @Singleton
-    abstract fun bindSessionService(sessionServiceImpl: SessionServiceImpl): SessionService
+    fun bindSessionService(service: OkHttpSessionService): SessionService
 }

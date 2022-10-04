@@ -8,16 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,13 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,6 +65,7 @@ import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.screen.introduce.util.SquireCropImage
 import com.linku.im.ui.components.MaterialIconButton
+import com.linku.im.ui.components.Snacker
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
@@ -87,7 +73,7 @@ import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.Date
+import java.util.*
 
 @OptIn(
     ExperimentalMaterialApi::class,
@@ -99,7 +85,7 @@ fun IntroduceScreen(
     viewModel: IntroduceViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
-    val navController = LocalBackStack.current
+    val backStack = LocalBackStack.current
     val context = LocalContext.current
 
     val uCropLauncher = rememberLauncherForActivityResult(SquireCropImage()) { uri ->
@@ -126,7 +112,7 @@ fun IntroduceScreen(
 
     LaunchedEffect(state.logout) {
         if (state.logout)
-            navController.pop()
+            backStack.pop()
     }
 
     LaunchedEffect(state.runLauncher) {
@@ -135,7 +121,7 @@ fun IntroduceScreen(
 
     LaunchedEffect(state.editEvent) {
         state.editEvent.handle {
-            navController.push(NavTarget.Edit(it))
+            backStack.push(NavTarget.Edit(it))
         }
     }
 
@@ -164,7 +150,7 @@ fun IntroduceScreen(
             IntroduceTopBar(
                 onDropdownMenuRequest = { dropdownMenuExpended = true },
                 onDismissDropdownMenuRequest = { dropdownMenuExpended = false },
-                onNavClick = { navController.pop() },
+                onNavClick = { backStack.pop() },
                 ownDropdown = {
                     DropdownMenuItem(
                         onClick = {
@@ -329,6 +315,12 @@ private fun IntroduceScaffold(
 
     BackHandler(sheetState.isVisible) { scope.launch { sheetState.hide() } }
     Scaffold(
+        snackbarHost = {
+            Snacker(
+                state = it,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
         scaffoldState = scaffoldState,
         modifier = Modifier.navigationBarsPadding()
     ) { innerPadding ->

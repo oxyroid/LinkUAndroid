@@ -1,7 +1,6 @@
 package com.linku.im.ktx
 
-import java.util.Calendar
-import java.util.Date
+import java.util.*
 
 val Long.friendlyFormatted
     get() = run {

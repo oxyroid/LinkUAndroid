@@ -4,36 +4,24 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.FabPosition
+import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.Add
-import androidx.compose.material.icons.sharp.DarkMode
-import androidx.compose.material.icons.sharp.LightMode
-import androidx.compose.material.icons.sharp.Menu
-import androidx.compose.material.icons.sharp.Notifications
-import androidx.compose.material.icons.sharp.Search
-import androidx.compose.material.icons.sharp.Settings
+import androidx.compose.material.icons.sharp.*
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
@@ -41,11 +29,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,6 +53,7 @@ import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.PinnedConversationItem
+import com.linku.im.ui.components.Snacker
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
@@ -91,7 +76,7 @@ fun MainScreen(
     val pagerState = rememberPagerState()
     val hostState = remember { SnackbarHostState() }
 
-    val navController = LocalBackStack.current
+    val backStack = LocalBackStack.current
     val selections = remember(vm.readable.isDarkMode) {
         buildList {
             Selection.Route(
@@ -136,6 +121,12 @@ fun MainScreen(
     }
     val theme = LocalTheme.current
     Scaffold(
+        snackbarHost = {
+            Snacker(
+                state = it,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
         topBar = {
             val vmState = vm.readable
             ToolBar(
@@ -148,7 +139,7 @@ fun MainScreen(
                 actions = {
                     MaterialIconButton(
                         icon = Icons.Sharp.Search,
-                        onClick = { navController.push(NavTarget.Query) },
+                        onClick = { backStack.push(NavTarget.Query) },
                         contentDescription = "search"
                     )
                 },
@@ -163,7 +154,7 @@ fun MainScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 FloatingActionButton(
-                    onClick = { navController.push(NavTarget.Create) },
+                    onClick = { backStack.push(NavTarget.Create) },
                     modifier = Modifier
                         .padding(LocalSpacing.current.medium)
                         .align(Alignment.End),
@@ -181,7 +172,7 @@ fun MainScreen(
 
         },
         floatingActionButtonPosition = FabPosition.Center,
-        containerColor = Color.Unspecified
+        backgroundColor = Color.Unspecified
     ) { innerPadding ->
         val pages = listOf(
             stringResource(R.string.tab_notification),
@@ -286,14 +277,14 @@ fun MainScreen(
                                             is Selection.Route -> {
                                                 when (selection.target) {
                                                     is NavTarget.Introduce -> {
-                                                        navController.push(
+                                                        backStack.push(
                                                             vm.authenticator.currentUID?.let {
                                                                 NavTarget.Introduce(it)
                                                             } ?: NavTarget.Sign
                                                         )
                                                     }
 
-                                                    else -> navController.push(selection.target)
+                                                    else -> backStack.push(selection.target)
                                                 }
                                             }
 
@@ -326,7 +317,7 @@ fun MainScreen(
                                 unreadCount = index / 2,
                                 modifier = Modifier.animateItemPlacement()
                             ) {
-                                navController.push(NavTarget.ChatTarget.Messages(conversation.id))
+                                backStack.push(NavTarget.ChatTarget.Messages(conversation.id))
                             }
                             if (index != conversations.lastIndex) Divider(
                                 color = LocalTheme.current.divider

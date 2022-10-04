@@ -1,20 +1,8 @@
 package com.linku.im.screen.chat.composable
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.LocalIndication
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,16 +10,7 @@ import androidx.compose.material.icons.sharp.Cancel
 import androidx.compose.material.icons.sharp.ContentCopy
 import androidx.compose.material.icons.sharp.Refresh
 import androidx.compose.material.icons.sharp.Reply
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,16 +41,13 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
-import androidx.constraintlayout.compose.ConstrainedLayoutReference
-import androidx.constraintlayout.compose.ConstraintLayout
-import androidx.constraintlayout.compose.ConstraintLayoutScope
-import androidx.constraintlayout.compose.Dimension
-import androidx.constraintlayout.compose.Visibility
+import androidx.constraintlayout.compose.*
 import coil.ImageLoader
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
+import com.linku.domain.bean.Bubble
 import com.linku.domain.bean.ComposeTheme
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
@@ -112,11 +88,17 @@ fun ChatBubble(
     val isEndOfGroup = config.isEndOfGroup
     val backgroundColor: Color = remember(theme, isAnother) {
         if (isAnother) theme.bubbleStart
-        else theme.bubbleEnd
+        else {
+            if (config.sendState == Message.STATE_FAILED) theme.error
+            else theme.bubbleEnd
+        }
     }
     val contentColor: Color = remember(theme, isAnother) {
         if (isAnother) theme.onBubbleStart
-        else theme.onBubbleEnd
+        else {
+            if (config.sendState == Message.STATE_FAILED) theme.onError
+            else theme.onBubbleEnd
+        }
     }
     val lowerHorizontalOutPadding = remember { HORIZONTAL_OUT_PADDING }
     ConstraintLayout(

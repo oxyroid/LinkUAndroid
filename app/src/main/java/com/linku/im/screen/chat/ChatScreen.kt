@@ -5,21 +5,8 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateInt
-import androidx.compose.animation.core.animateIntOffset
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.with
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,31 +14,8 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
@@ -59,14 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.ExpandCircleDown
 import androidx.compose.material.icons.sharp.ExpandMore
 import androidx.compose.material.icons.sharp.Reply
-import androidx.compose.material.ripple.LocalRippleTheme
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -107,6 +64,7 @@ import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
+import com.linku.domain.bean.MessageVO
 import com.linku.domain.entity.Message
 import com.linku.domain.struct.node.hasCache
 import com.linku.im.R
@@ -119,12 +77,7 @@ import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.screen.chat.composable.ChatTextField
 import com.linku.im.screen.chat.composable.ChatTimestamp
 import com.linku.im.screen.chat.composable.ChatTopBar
-import com.linku.im.screen.chat.vo.MessageVO
-import com.linku.im.ui.components.MaterialButton
-import com.linku.im.ui.components.MaterialIconButton
-import com.linku.im.ui.components.MaterialTextButton
-import com.linku.im.ui.components.MemberItem
-import com.linku.im.ui.components.Wrapper
+import com.linku.im.ui.components.*
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalDuration
 import com.linku.im.ui.theme.LocalSpacing
@@ -141,7 +94,7 @@ fun ChatScreen(
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
-    val navController = LocalBackStack.current
+    val backStack = LocalBackStack.current
     val hostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = state.firstVisibleIndex,
@@ -201,6 +154,12 @@ fun ChatScreen(
         imageDetailContent: @Composable (String, Rect, Float) -> Unit,
     ) {
         Scaffold(
+            snackbarHost = {
+                Snacker(
+                    state = it,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
             topBar = topBar,
             backgroundColor = LocalTheme.current.surface,
             contentColor = LocalTheme.current.onSurface
@@ -269,7 +228,7 @@ fun ChatScreen(
                 },
                 onNavClick = { mode ->
                     when (mode) {
-                        ChatScreenMode.Messages -> navController.pop()
+                        ChatScreenMode.Messages -> backStack.pop()
                         else -> viewModel.onEvent(ChatEvent.Remain)
                     }
                 }
@@ -295,7 +254,7 @@ fun ChatScreen(
                     )
                 },
                 onProfile = {
-                    navController.push(NavTarget.Introduce(it))
+                    backStack.push(NavTarget.Introduce(it))
                 },
                 onScroll = { position ->
                     scope.launch {
@@ -368,7 +327,7 @@ fun ChatScreen(
                             Column {
                                 MemberItem(member = it) {
                                     val userId = it.uid
-                                    navController.push(
+                                    backStack.push(
                                         NavTarget.Introduce(userId)
                                     )
                                 }
@@ -426,17 +385,6 @@ fun ChatScreen(
             val configuration = LocalConfiguration.current
             val density = LocalDensity.current.density
             val topPadding = remember { paddingValues.calculateTopPadding().value * density }
-
-            LocalRippleTheme.current.rippleAlpha().pressedAlpha
-//            val sourceWidth = boundaries.width
-//            val surfaceWidth = boundaries.width
-//            val sourceHeight = sourceWidth * aspectRatio
-//            val surfaceHeight = boundaries.height
-//
-//            val sourceWidthDp = (boundaries.width / ).dp
-//            val surfaceWidthDp = boundaries.width.dp
-//            val sourceHeightDp = sourceWidth.dp * aspectRatio
-//            val surfaceHeightDp = boundaries.height.dp
 
             var isShowed by remember { mutableStateOf(false) }
 

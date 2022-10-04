@@ -6,29 +6,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateInt
-import androidx.compose.animation.core.animateIntOffset
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -38,16 +20,7 @@ import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -88,12 +61,7 @@ import com.linku.im.ktx.compose.foundation.lazy.isAtTop
 import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.dsl.any
 import com.linku.im.ktx.ifTrue
-import com.linku.im.screen.chat.BottomSheetContent
-import com.linku.im.screen.chat.ChatEvent
-import com.linku.im.screen.chat.ChatState
-import com.linku.im.screen.chat.ChatViewModel
-import com.linku.im.screen.chat.ListContent
-import com.linku.im.screen.chat.PreviewDialog
+import com.linku.im.screen.chat.*
 import com.linku.im.screen.chat.composable.ChatTextField
 import com.linku.im.screen.chat.composable.ChatTopBarAppyx
 import com.linku.im.ui.components.MaterialButton
@@ -120,14 +88,14 @@ class ChatNode(
 ) {
     private lateinit var viewModel: ChatViewModel
     private lateinit var state: ChatState
-    private lateinit var navController: BackStack<NavTarget>
+    private lateinit var stack: BackStack<NavTarget>
 
     @Composable
     override fun View(modifier: Modifier) {
         val children by backStack.childrenAsState()
         viewModel = (LocalContext.current as AppCompatActivity).viewModels<ChatViewModel>().value
         state = viewModel.readable
-        navController = LocalBackStack.current
+        stack = LocalBackStack.current
         Scaffold(
             topBar = {
                 ChatTopBarAppyx(
@@ -152,7 +120,7 @@ class ChatNode(
                     },
                     onNavClick = { target ->
                         when (target) {
-                            is NavTarget.ChatTarget.Messages -> navController.pop()
+                            is NavTarget.ChatTarget.Messages -> stack.pop()
                             else -> backStack.pop()
                         }
                     }
@@ -255,7 +223,7 @@ class ChatNode(
                                 )
                             },
                             onProfile = {
-                                navController.push(NavTarget.Introduce(it))
+                                stack.push(NavTarget.Introduce(it))
                             },
                             onScroll = { position ->
                                 scope.launch {
@@ -335,7 +303,7 @@ class ChatNode(
                                 items(members) {
                                     MemberItem(member = it) {
                                         val userId = it.uid
-                                        navController.push(
+                                        stack.push(
                                             NavTarget.Introduce(userId)
                                         )
                                     }
