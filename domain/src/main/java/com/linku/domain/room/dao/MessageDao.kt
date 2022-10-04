@@ -55,5 +55,5 @@ interface MessageDao {
     fun getLatestMessage(): Message?
 
     @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC LIMIT 1")
-    fun getLatestMessageByCid(cid: Int): Flow<Message?>
+    fun observeLatestMessageByCid(cid: Int): Flow<Message>
 }

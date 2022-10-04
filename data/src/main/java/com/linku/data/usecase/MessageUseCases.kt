@@ -3,6 +3,7 @@ package com.linku.data.usecase
 import android.net.Uri
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
+import com.linku.domain.bean.MessageVO
 import com.linku.domain.entity.Message
 import com.linku.domain.repository.MessageRepository
 import kotlinx.coroutines.flow.Flow
@@ -11,6 +12,7 @@ import javax.inject.Inject
 data class MessageUseCases @Inject constructor(
     val observeAllMessages: ObserveAllMessagesUseCase,
     val observeMessages: ObserveMessagesUseCase,
+    val observeMessageVO: ObserveMessageVOUseCase,
     val observeLatestMessage: ObserveLatestMessagesUseCase,
     val textMessage: TextMessageUseCase,
     val imageMessage: ImageMessageUseCase,
@@ -33,8 +35,8 @@ data class CancelMessageUseCase @Inject constructor(
 data class ResendMessageUseCase @Inject constructor(
     val repository: MessageRepository
 ) {
-    suspend operator fun invoke(mid: Int) {
-        repository.resendMessage(mid)
+    suspend operator fun invoke(mid: Int): Flow<Resource<Unit>> {
+        return repository.resendMessage(mid)
     }
 }
 
@@ -44,10 +46,19 @@ data class FetchUnreadMessagesUseCase @Inject constructor(
     suspend operator fun invoke() = repository.fetchUnreadMessages()
 }
 
+data class ObserveMessageVOUseCase @Inject constructor(
+    private val repository: MessageRepository
+) {
+    operator fun invoke(
+        cid: Int,
+        attachPrevious: Boolean = true
+    ): Flow<List<MessageVO>> = repository.observeLatestMessageVOs(cid, attachPrevious)
+}
+
 data class ObserveLatestMessagesUseCase @Inject constructor(
     private val repository: MessageRepository
 ) {
-    operator fun invoke(cid: Int): Flow<Message> = repository.observeLatestMessages(cid)
+    operator fun invoke(cid: Int): Flow<Message> = repository.observeLatestMessage(cid)
 }
 
 data class FetchMessagesAtLeastUseCase @Inject constructor(

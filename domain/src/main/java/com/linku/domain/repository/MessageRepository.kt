@@ -3,6 +3,7 @@ package com.linku.domain.repository
 import android.net.Uri
 import com.linku.domain.Resource
 import com.linku.domain.Strategy
+import com.linku.domain.bean.MessageVO
 import com.linku.domain.entity.Message
 import kotlinx.coroutines.flow.Flow
 
@@ -10,7 +11,12 @@ interface MessageRepository {
     suspend fun getMessageById(mid: Int, strategy: Strategy): Message?
     fun incoming(): Flow<List<Message>>
     fun incoming(cid: Int): Flow<List<Message>>
-    fun observeLatestMessages(cid: Int): Flow<Message>
+    fun observeLatestMessageVOs(
+        cid: Int,
+        attachPrevious: Boolean
+    ): Flow<List<MessageVO>>
+
+    fun observeLatestMessage(cid: Int): Flow<Message>
 
     suspend fun sendTextMessage(
         cid: Int,
@@ -33,7 +39,7 @@ interface MessageRepository {
 
     suspend fun cancelMessage(mid: Int)
 
-    suspend fun resendMessage(mid: Int)
+    suspend fun resendMessage(mid: Int): Flow<Resource<Unit>>
 
     suspend fun fetchUnreadMessages()
 
