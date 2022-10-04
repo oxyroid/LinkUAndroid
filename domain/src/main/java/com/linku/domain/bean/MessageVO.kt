@@ -1,10 +1,8 @@
-package com.linku.im.screen.chat.vo
+package com.linku.domain.bean
 
 import androidx.annotation.Keep
 import androidx.compose.runtime.Stable
 import com.linku.domain.entity.Message
-import com.linku.im.screen.chat.composable.Bubble
-
 
 @Keep
 @Stable

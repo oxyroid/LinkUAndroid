@@ -1,5 +1,8 @@
 package com.linku.data.service
 
+import androidx.annotation.Keep
+import com.linku.data.R
+import com.linku.data.usecase.ApplicationUseCases
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.MessageDTO
 import com.linku.domain.service.SessionService
@@ -8,21 +11,24 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import okhttp3.*
 import okio.ByteString
 import javax.inject.Inject
 
-class SessionServiceImpl @Inject constructor(
+class OkHttpSessionService @Inject constructor(
     private val client: OkHttpClient,
-    private val json: Json
+    private val serializer: Json,
+    private val applications: ApplicationUseCases
 ) : SessionService {
     private val incoming = MutableSharedFlow<Message>()
     override fun initSession(uid: Int?): Flow<SessionService.State> = callbackFlow {
         trySend(SessionService.State.Connecting)
         if (uid == null) {
-            trySend(SessionService.State.Failed("User is not exist."))
+            val msg = applications.getString(R.string.error_user_not_exist)
+            trySend(SessionService.State.Failed(msg))
             return@callbackFlow
         }
         val request = Request.Builder()
@@ -37,13 +43,12 @@ class SessionServiceImpl @Inject constructor(
             override fun onMessage(webSocket: WebSocket, text: String) {
                 super.onMessage(webSocket, text)
                 launch {
-                    try {
-                        json.decodeFromString<SocketPackage<MessageDTO>>(text).data.toMessage()
-                    } catch (e: Exception) {
-                        null
-                    }?.also {
-                        incoming.emit(it)
+                    val message = runCatching {
+                        val socketPackage = serializer.decodeFromString<Package<MessageDTO>>(text)
+                        socketPackage.data.toMessage()
                     }
+                        .getOrNull()
+                    message?.also { incoming.emit(it) }
                 }
             }
 
@@ -74,3 +79,10 @@ class SessionServiceImpl @Inject constructor(
 
     override fun onMessage(): Flow<Message> = incoming
 }
+
+@Keep
+@Serializable
+internal data class Package<T>(
+    val data: T,
+    val type: String
+)
