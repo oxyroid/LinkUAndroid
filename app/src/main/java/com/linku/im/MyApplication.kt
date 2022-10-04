@@ -11,9 +11,13 @@ import org.acra.ktx.initAcra
 
 @HiltAndroidApp
 class MyApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        MMKV.initialize(this)
+    }
+
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
-        MMKV.initialize(this)
         initAcra {
             buildConfigClass = BuildConfig::class.java
             reportFormat = StringFormat.JSON
