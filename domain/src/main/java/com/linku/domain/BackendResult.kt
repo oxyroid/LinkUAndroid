@@ -1,7 +1,6 @@
 package com.linku.domain
 
 import kotlinx.serialization.*
-import kotlin.Result
 
 @Serializable
 data class BackendResult<out T>(
@@ -13,18 +12,20 @@ data class BackendResult<out T>(
     val message: String? = null
 ) {
     @Suppress("UNCHECKED_CAST")
-    val dataOrUnit:T get() = (data ?: Unit) as T
+    val dataOrUnit: T get() = (data ?: Unit) as T
 }
 
 data class BackendException(override val message: String?) : RuntimeException(message)
 
-inline fun <reified T> result(catcher: () -> BackendResult<T>): Result<T> = try {
-    catcher().let {
+inline fun <reified T> resultOf(
+    onError: (Exception) -> Unit = {},
+    block: () -> BackendResult<T>,
+): Result<T> = try {
+    block().let {
         if (it.code == "00000") Result.success(it.dataOrUnit)
         else Result.failure(BackendException(it.message))
     }
 } catch (e: Exception) {
+    onError(e)
     Result.failure(BackendException(e.message))
 }
-
-inline fun <reified T> BackendResult<T>.toResult(): Result<T> = result { this }

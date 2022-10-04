@@ -24,8 +24,9 @@ class ConversationRepositoryImpl @Inject constructor(
 ) : ConversationRepository {
     override suspend fun findConversation(cid: Int, strategy: Strategy): Conversation? {
         suspend fun fromBackend(): ConversationDTO? = try {
-            conversationService.getConversationById(cid)
-                .toResult()
+            resultOf {
+                conversationService.getConversationById(cid)
+            }
                 .getOrNull()
         } catch (e: Exception) {
             null
@@ -80,7 +81,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun fetchConversation(cid: Int): Flow<Resource<Unit>> = resourceFlow {
         runCatching {
-            conversationService.getConversationById(cid).toResult()
+            resultOf { conversationService.getConversationById(cid) }
                 .onSuccess { conversation ->
                     // TODO save different type conversations
                     if (conversationDao.getById(conversation.id) == null) {
@@ -98,7 +99,7 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun fetchConversations(): Flow<Resource<Unit>> = resourceFlow {
         runCatching {
-            conversationService.getConversationsBySelf().toResult()
+            resultOf { conversationService.getConversationsBySelf() }
                 .onSuccess { conversations ->
                     conversations.forEach { conversationDao.insert(it.toConversation()) }
                     emitResource(Unit)
@@ -117,9 +118,10 @@ class ConversationRepositoryImpl @Inject constructor(
         description: String?
     ): Flow<Resource<List<Conversation>>> = resourceFlow {
         runCatching {
-            conversationService
-                .queryConversations(name, description)
-                .toResult()
+            resultOf {
+                conversationService
+                    .queryConversations(name, description)
+            }
                 .onSuccess { conversations -> emitResource(conversations.map { it.toConversation() }) }
                 .onFailure { emitResource(it.message) }
         }.onFailure {
@@ -129,9 +131,10 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun fetchMembers(cid: Int): Flow<Resource<List<Member>>> = resourceFlow {
         runCatching {
-            conversationService
-                .getMembersByCid(cid)
-                .toResult()
+            resultOf {
+                conversationService
+                    .getMembersByCid(cid)
+            }
                 .onSuccess { emitResource(it) }
                 .onFailure { emitResource(it.message) }
         }.onFailure {

@@ -9,11 +9,11 @@ import com.linku.domain.bean.CachedFile
 import com.linku.domain.emitResource
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.AuthRepository
+import com.linku.domain.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao
 import com.linku.domain.service.*
-import com.linku.domain.toResult
 import com.linku.fs_android.writeFs
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -37,13 +37,11 @@ class AuthRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : AuthRepository {
     override fun signIn(
-        email: String,
-        password: String
+        email: String, password: String
     ): Flow<AuthRepository.SignInState> = channelFlow {
         trySend(AuthRepository.SignInState.Start)
         launch {
-            authService.signIn(email, password)
-                .toResult()
+            resultOf { authService.signIn(email, password) }
                 .onSuccess { token ->
                     authenticator.update(token.id, token.token)
                     trySend(AuthRepository.SignInState.Syncing)
@@ -53,8 +51,7 @@ class AuthRepositoryImpl @Inject constructor(
                         // Then fetch messages from server.
                         val timestamp: Long = messageDao.getLatestMessage()?.timestamp
                             ?: (System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 3)
-                        messageService.getMessageAfter(timestamp)
-                            .toResult()
+                        resultOf { messageService.getMessageAfter(timestamp) }
                             .onSuccess { messages ->
                                 messages.sortedBy { it.cid }.forEach { message ->
                                     if (messageDao.getById(message.id) == null) {
@@ -62,20 +59,18 @@ class AuthRepositoryImpl @Inject constructor(
                                     }
                                     if (conversationDao.getById(message.cid) == null) {
                                         launch {
-                                            conversationService
-                                                .getConversationById(message.cid)
-                                                .toResult()
-                                                .onSuccess {
-                                                    conversationDao.insert(it.toConversation())
-                                                }
+                                            resultOf {
+                                                conversationService.getConversationById(message.cid)
+                                            }.onSuccess {
+                                                conversationDao.insert(it.toConversation())
+                                            }
                                         }
                                     }
                                 }
                                 trySend(AuthRepository.SignInState.Completed)
                             }
                     }
-                }
-                .onFailure {
+                }.onFailure {
                     trySend(AuthRepository.SignInState.Failed(it.message))
                 }
         }
@@ -85,11 +80,8 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun signUp(
-        email: String,
-        password: String,
-        name: String,
-        realName: String?
-    ): Result<Unit> = authService.signUp(email, password, name, realName).toResult()
+        email: String, password: String, name: String, realName: String?
+    ): Result<Unit> = resultOf { authService.signUp(email, password, name, realName) }
 
 
     override suspend fun signOut() {
@@ -99,11 +91,10 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun verifyEmailCode(code: String): Result<Unit> =
-        authService.verifyEmailCode(code).toResult()
+        resultOf { authService.verifyEmailCode(code) }
 
 
-    override suspend fun verifyEmail(): Result<Unit> =
-        authService.verifyEmail().toResult()
+    override suspend fun verifyEmail(): Result<Unit> = resultOf { authService.verifyEmail() }
 
     private fun uploadImage(uri: Uri?): Flow<Resource<CachedFile>> = flow {
         emit(Resource.Loading)
@@ -119,33 +110,26 @@ class AuthRepositoryImpl @Inject constructor(
         }
         // FIXME
         val filename = file.name + ".png"
-        val part = MultipartBody.Part
-            .createFormData(
-                "file",
-                filename,
-                RequestBody.create(MediaType.parse("image"), file)
-            )
-        fileService.upload(part)
-            .toResult()
+        val part = MultipartBody.Part.createFormData(
+            "file", filename, RequestBody.create(MediaType.parse("image"), file)
+        )
+        resultOf { fileService.upload(part) }
             .onSuccess { emit(Resource.Success(CachedFile(file.toUri(), it))) }
             .onFailure { emitResource(it.message) }
     }
 
     override fun uploadAvatar(uri: Uri): Flow<Resource<Unit>> = channelFlow {
-        uploadImage(uri)
-            .onEach { resource ->
-                when (resource) {
-                    is Resource.Success -> {
-                        launch {
-                            profileService.editAvatar(resource.data.remoteUrl)
-                                .toResult()
-                                .onSuccess { trySend(resource.toUnit()) }
-                                .onFailure { trySend(Resource.Failure(it.message)) }
-                        }
+        uploadImage(uri).onEach { resource ->
+            when (resource) {
+                is Resource.Success -> {
+                    launch {
+                        resultOf { profileService.editAvatar(resource.data.remoteUrl) }
+                            .onSuccess { trySend(resource.toUnit()) }
+                            .onFailure { trySend(Resource.Failure(it.message)) }
                     }
-                    else -> trySend(resource.toUnit())
                 }
+                else -> trySend(resource.toUnit())
             }
-            .launchIn(this)
+        }.launchIn(this)
     }
 }

@@ -7,6 +7,7 @@ import androidx.core.net.toUri
 import com.linku.data.util.ImageUtil
 import com.linku.domain.*
 import com.linku.domain.bean.CachedFile
+import com.linku.domain.bean.MessageVO
 import com.linku.domain.bean.StagingMessage
 import com.linku.domain.entity.*
 import com.linku.domain.extension.use
@@ -40,95 +41,93 @@ class MessageRepositoryImpl @Inject constructor(
     private val json: Json,
     private val authenticator: Authenticator
 ) : MessageRepository {
-    override fun incoming(): Flow<List<Message>> = messageDao.incoming()
-        .map { list ->
-            list.mapNotNull { message ->
-                when (val readable = message.toReadable()) {
-                    is ImageMessage -> {
-                        val url = readable.url
-                        if (url.startsWith("file:///")) {
-                            val uri = Uri.parse(url)
-                            val file = uri.toFile()
-                            if (!file.exists()) {
-                                getMessageById(readable.id, Strategy.NetworkElseCache)
-                                    .also {
-                                        if (it == null) {
-                                            messageDao.delete(readable.id)
-                                        }
-                                    }
-                            } else readable
-                        } else readable
-                    }
-                    is GraphicsMessage -> {
-                        val url = readable.url
-                        if (url.startsWith("file:///")) {
-                            val uri = Uri.parse(url)
-                            val file = uri.toFile()
-                            if (!file.exists()) {
-                                getMessageById(readable.id, Strategy.NetworkElseCache)
-                                    .also {
-                                        if (it == null) {
-                                            messageDao.delete(readable.id)
-                                        }
-                                    }
-                            } else readable
-                        } else readable
-                    }
-                    else -> readable
-                }
-            }
-        }
 
-    override fun incoming(cid: Int): Flow<List<Message>> = messageDao
-        .incoming(cid)
-        .map { list ->
-            list.mapNotNull { message ->
-                when (val readable = message.toReadable()) {
-                    is TextMessage -> readable
-                    is ImageMessage -> {
-                        val url = readable.url
-                        if (url.startsWith("file:///")) {
-                            val uri = Uri.parse(url)
-                            val file = uri.toFile()
-                            if (!file.exists()) {
-                                getMessageById(readable.id, Strategy.NetworkElseCache)
-                                    .also {
-                                        if (it == null) {
-                                            messageDao.delete(readable.id)
-                                        }
-                                    }
-                            } else readable
-                        } else readable
-                    }
-                    is GraphicsMessage -> {
-                        val url = readable.url
-                        if (url.startsWith("file:///")) {
-                            val uri = Uri.parse(url)
-                            val file = uri.toFile()
-                            if (!file.exists()) {
-                                getMessageById(readable.id, Strategy.NetworkElseCache)
-                                    .also {
-                                        if (it == null) {
-                                            messageDao.delete(readable.id)
-                                        }
-                                    }
-                            } else readable
-                        } else readable
-                    }
-                    else -> null
-                }
-            }
-        }
+    companion object {
+        private const val SCHEMA_FILE = "file:///"
+    }
 
-    override fun observeLatestMessages(cid: Int): Flow<Message> {
-        return messageDao.getLatestMessageByCid(cid).filterNotNull().map { it.toReadable() }
+    override fun incoming(): Flow<List<Message>> {
+        return messageDao
+            .incoming()
+            .map { list ->
+                list.mapNotNull { it.fixUri() }
+            }
+    }
+
+    override fun incoming(cid: Int): Flow<List<Message>> {
+        return messageDao
+            .incoming(cid)
+            .map { list ->
+                list.mapNotNull { it.fixUri() }
+            }
+    }
+
+    private suspend fun Message.fixUri(): Message? {
+        return when (val readable = this.toReadable()) {
+            is ImageMessage -> {
+                val url = readable.url
+                if (url.startsWith(SCHEMA_FILE)) {
+                    val uri = Uri.parse(url)
+                    val file = uri.toFile()
+                    if (!file.exists()) {
+                        getMessageById(readable.id, Strategy.NetworkElseCache).also {
+                            if (it == null) {
+                                messageDao.delete(readable.id)
+                            }
+                        }
+                    } else readable
+                } else readable
+            }
+            is GraphicsMessage -> {
+                val url = readable.url
+                if (url.startsWith(SCHEMA_FILE)) {
+                    val uri = Uri.parse(url)
+                    val file = uri.toFile()
+                    if (!file.exists()) {
+                        getMessageById(readable.id, Strategy.NetworkElseCache).also {
+                            if (it == null) {
+                                messageDao.delete(readable.id)
+                            }
+                        }
+                    } else readable
+                } else readable
+            }
+            else -> readable
+        }
+    }
+
+
+    private val messagesMap = mutableMapOf<Int, Flow<List<MessageVO>>>()
+    override fun observeLatestMessageVOs(
+        cid: Int, attachPrevious: Boolean
+    ): Flow<List<MessageVO>> {
+        val flow = if (!messagesMap.contains(cid))
+            channelFlow<List<MessageVO>> {
+                messageDao.observeLatestMessageByCid(cid)
+                    .onEach { message: Message ->
+                        // TODO:
+                        //  Convert Message to MessageVO then save it into cache,
+                        //  Update pre-first one and replied one (if needed)
+                    }
+                    .launchIn(this)
+            }
+        else flow { }
+        return if (attachPrevious) {
+            messagesMap.replace(cid, flow)
+            flow
+        } else messagesMap.getOrPut(cid) { flow }
+    }
+
+
+    override fun observeLatestMessage(cid: Int): Flow<Message> {
+        return messageDao.observeLatestMessageByCid(cid).map { it.toReadable() }
     }
 
     override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? {
         suspend fun fromBackend(): MessageDTO? = try {
-            messageService.getMessageById(mid)
-                .toResult()
-                .getOrNull()
+            resultOf {
+                messageService.getMessageById(mid)
+            }.getOrNull()
         } catch (e: Exception) {
             null
         }
@@ -137,8 +136,7 @@ class MessageRepositoryImpl @Inject constructor(
 
         suspend fun MessageDTO.toIO() {
             val old = messageDao.getById(this.id)
-            if (old == null)
-                messageDao.insert(this.toMessage())
+            if (old == null) messageDao.insert(this.toMessage())
         }
 
         return when (strategy) {
@@ -152,12 +150,10 @@ class MessageRepositoryImpl @Inject constructor(
                 fun MessageDTO.toMemory() {
                     mmkv.encode("message_$mid", json.encodeToString(this))
                 }
-                fromMemory()?.toMessage()
-                    ?: fromIO()
-                    ?: fromBackend()?.also {
-                        it.toIO()
-                        it.toMemory()
-                    }?.toMessage()
+                fromMemory()?.toMessage() ?: fromIO() ?: fromBackend()?.also {
+                    it.toIO()
+                    it.toMemory()
+                }?.toMessage()
             }
 
             Strategy.NetworkElseCache -> fromBackend()?.let {
@@ -168,8 +164,7 @@ class MessageRepositoryImpl @Inject constructor(
                 it.toIO()
                 it.toMessage()
             }
-        }
-            ?.toReadable()
+        }?.toReadable()
     }
 
     override suspend fun sendTextMessage(
@@ -195,20 +190,24 @@ class MessageRepositoryImpl @Inject constructor(
             trySend(Resource.Loading)
             // 3: Make real HTTP-Connection to send message.
             val content = json.encodeToString(TextContent(text, reply))
-            messageService.sendMessage(
-                cid,
-                content,
-                Message.Type.Text.toString(),
-                staging.uuid
+            resultOf(
+                block = {
+                    messageService.sendMessage(
+                        cid, content, Message.Type.Text.toString(), staging.uuid
+                    )
+                },
+                onError = {
+                    downgradeStagingMessage(staging.uuid)
+                }
             )
-                .toResult()
                 .onSuccess {
                     // 4. If it is succeed, level-up the staging message by server-message.
                     with(it) {
                         levelStagingMessage(uuid, id, cid, timestamp, content)
                     }
                     trySend(Resource.Success(Unit))
-                }.onFailure {
+                }
+                .onFailure {
                     // 5. Else downgrade it.
                     launch {
                         downgradeStagingMessage(staging.uuid)
@@ -269,13 +268,19 @@ class MessageRepositoryImpl @Inject constructor(
                                 height = height
                             )
                         )
-                        messageService.sendMessage(
-                            cid = cid,
-                            content = remoteContent,
-                            type = Message.Type.Image.toString(),
-                            uuid = staging.uuid
+                        resultOf(
+                            block = {
+                                messageService.sendMessage(
+                                    cid = cid,
+                                    content = remoteContent,
+                                    type = Message.Type.Image.toString(),
+                                    uuid = staging.uuid
+                                )
+                            },
+                            onError = {
+                                downgradeStagingMessage(staging.uuid)
+                            }
                         )
-                            .toResult()
                             .onSuccess { serverMessage ->
                                 // 4. If it is succeed, level-up the staging message by server-message.
                                 levelStagingMessage(
@@ -314,93 +319,99 @@ class MessageRepositoryImpl @Inject constructor(
         text: String,
         uri: Uri,
         reply: Int?
-    ): Flow<Resource<Unit>> =
-        channelFlow {
-            // 1. Make real HTTP-Connection to upload file.
-            val userId = authenticator.currentUID
-            checkNotNull(userId) { "Please sign in first." }
-            // 2. Create a staging message.
-            val staging = StagingMessage.Graphics(
-                cid = cid,
-                uid = userId,
-                text = text,
-                uri = uri,
-                reply = reply
-            )
-            uploadImage(uri).onEach { resource ->
-                when (resource) {
-                    Resource.Loading -> {
-                        // 3. Put the message into database.
-                        createStagingMessage(staging)
-                        trySend(Resource.Loading)
-                    }
-                    is Resource.Success -> {
-                        // 4. Make real HTTP-Connection to send message.
-                        val cachedFile = resource.data
-                        launch {
-                            val (width, height) = ImageUtil.getBitmapFromUri(
-                                context.contentResolver,
-                                cachedFile.localUri
-                            )?.use {
-                                it.width to it.height
-                            } ?: (-1 to -1)
+    ): Flow<Resource<Unit>> = channelFlow {
+        // 1. Make real HTTP-Connection to upload file.
+        val userId = authenticator.currentUID
+        checkNotNull(userId) { "Please sign in first." }
+        // 2. Create a staging message.
+        val staging = StagingMessage.Graphics(
+            cid = cid,
+            uid = userId,
+            text = text,
+            uri = uri,
+            reply = reply
+        )
+        uploadImage(uri).onEach { resource ->
+            when (resource) {
+                Resource.Loading -> {
+                    // 3. Put the message into database.
+                    createStagingMessage(staging)
+                    trySend(Resource.Loading)
+                }
+                is Resource.Success -> {
+                    // 4. Make real HTTP-Connection to send message.
+                    val cachedFile = resource.data
+                    launch {
+                        val (width, height) = ImageUtil.getBitmapFromUri(
+                            context.contentResolver,
+                            cachedFile.localUri
+                        )?.use {
+                            it.width to it.height
+                        } ?: (-1 to -1)
 
-                            val remoteContent = json.encodeToString(
-                                GraphicsContent(
-                                    text = text,
-                                    url = cachedFile.remoteUrl,
-                                    reply = reply,
-                                    width = width,
-                                    height = height
-                                )
+                        val remoteContent = json.encodeToString(
+                            GraphicsContent(
+                                text = text,
+                                url = cachedFile.remoteUrl,
+                                reply = reply,
+                                width = width,
+                                height = height
                             )
+                        )
 
-                            val localContent = json.encodeToString(
-                                GraphicsContent(
-                                    text = text,
-                                    url = cachedFile.localUri.toString(),
-                                    reply = reply,
-                                    width = width,
-                                    height = height
+                        val localContent = json.encodeToString(
+                            GraphicsContent(
+                                text = text,
+                                url = cachedFile.localUri.toString(),
+                                reply = reply,
+                                width = width,
+                                height = height
+                            )
+                        )
+                        resultOf(
+                            block = {
+                                messageService.sendMessage(
+                                    cid = cid,
+                                    content = remoteContent,
+                                    type = Message.Type.Graphics.toString(),
+                                    uuid = staging.uuid
                                 )
-                            )
-                            messageService.sendMessage(
-                                cid = cid,
-                                content = remoteContent,
-                                type = Message.Type.Graphics.toString(),
-                                uuid = staging.uuid
-                            )
-                                .toResult()
-                                .onSuccess { serverMessage ->
-                                    // 4. If it is succeed, level-up the staging message by server-message.
-                                    levelStagingMessage(
-                                        uuid = serverMessage.uuid,
-                                        id = serverMessage.id,
-                                        cid = serverMessage.cid,
-                                        timestamp = serverMessage.timestamp,
-                                        content = localContent
-                                    )
-                                    trySend(Resource.Success(Unit))
-                                }.onFailure {
-                                    // 5. Else downgrade it.
-                                    launch {
-                                        downgradeStagingMessage(staging.uuid)
-                                        trySend(Resource.Failure(it.message))
-                                    }
+                            },
+                            onError = {
+                                downgradeStagingMessage(staging.uuid)
+                            }
+                        )
+                            .onSuccess { serverMessage ->
+                                // 4. If it is succeed, level-up the staging message by server-message.
+                                levelStagingMessage(
+                                    uuid = serverMessage.uuid,
+                                    id = serverMessage.id,
+                                    cid = serverMessage.cid,
+                                    timestamp = serverMessage.timestamp,
+                                    content = localContent
+                                )
+                                trySend(Resource.Success(Unit))
+                            }
+                            .onFailure {
+                                // 5. Else downgrade it.
+                                launch {
+                                    downgradeStagingMessage(staging.uuid)
+                                    trySend(Resource.Failure(it.message))
                                 }
-                        }
+                            }
                     }
-                    is Resource.Failure -> {
-                        launch {
-                            downgradeStagingMessage(staging.uuid)
-                            trySend(Resource.Failure(resource.message))
-                        }
+                }
+                is Resource.Failure -> {
+                    launch {
+                        downgradeStagingMessage(staging.uuid)
+                        trySend(Resource.Failure(resource.message))
                     }
                 }
             }
-                .launchIn(this)
-
         }
+            .launchIn(this)
+
+    }
 
     private fun uploadImage(uri: Uri?): Flow<Resource<CachedFile>> = flow {
         emit(Resource.Loading)
@@ -415,14 +426,14 @@ class MessageRepositoryImpl @Inject constructor(
             return@flow
         }
         val filename = file.name
-        val part = MultipartBody.Part
-            .createFormData(
-                "file",
-                filename,
-                RequestBody.create(MediaType.parse("image"), file)
-            )
-        fileService.upload(part)
-            .toResult()
+        val part = MultipartBody.Part.createFormData(
+            "file",
+            filename,
+            RequestBody.create(MediaType.parse("image"), file)
+        )
+        resultOf {
+            fileService.upload(part)
+        }
             .onSuccess {
                 val cachedFile = CachedFile(file.toUri(), it)
                 emitResource(cachedFile)
@@ -481,8 +492,7 @@ class MessageRepositoryImpl @Inject constructor(
             }
             is StagingMessage.Graphics -> {
                 val (width, height) = ImageUtil.getBitmapFromUri(
-                    context.contentResolver,
-                    staging.uri
+                    context.contentResolver, staging.uri
                 )?.use {
                     it.width to it.height
                 } ?: (-1 to -1)
@@ -516,15 +526,15 @@ class MessageRepositoryImpl @Inject constructor(
         messageDao.levelStagingMessage(uuid, id, cid, timestamp, content)
     }
 
-    override suspend fun resendMessage(mid: Int) {
-        val message = getMessageById(mid, Strategy.OnlyCache) ?: return
+    override suspend fun resendMessage(mid: Int): Flow<Resource<Unit>> {
+        val message = getMessageById(mid, Strategy.OnlyCache) ?: return flow { }
         cancelMessage(mid)
-        with(message) {
+        return with(message) {
             when (this) {
                 is TextMessage -> sendTextMessage(cid, text, reply)
                 is ImageMessage -> sendImageMessage(cid, Uri.parse(url), reply)
                 is GraphicsMessage -> sendGraphicsMessage(cid, text, Uri.parse(url), reply)
-                else -> {}
+                else -> flow {}
             }
         }
     }
@@ -537,16 +547,14 @@ class MessageRepositoryImpl @Inject constructor(
         messageDao.failedStagingMessage(uuid)
     }
 
-    override suspend fun fetchUnreadMessages() = messageService
-        .getUnreadMessages()
-        .toResult()
-        .saveIntoDBIfSuccess()
+    override suspend fun fetchUnreadMessages() = resultOf {
+        messageService.getUnreadMessages()
+    }.saveIntoDBIfSuccess()
 
 
-    override suspend fun fetchMessagesAtLeast(after: Long) = messageService
-        .getMessageAfter(after)
-        .toResult()
-        .saveIntoDBIfSuccess()
+    override suspend fun fetchMessagesAtLeast(after: Long) = resultOf {
+        messageService.getMessageAfter(after)
+    }.saveIntoDBIfSuccess()
 
 
     private suspend fun Result<List<MessageDTO>>.saveIntoDBIfSuccess() {
@@ -557,9 +565,8 @@ class MessageRepositoryImpl @Inject constructor(
                         messageDao.insert(it.toMessage())
                     }
                 }
-                val cid = it.cid
-                if (conversationDao.getById(cid) == null) {
-                    conversationService.getConversationById(cid).toResult()
+                if (conversationDao.getById(it.cid) == null) {
+                    resultOf { conversationService.getConversationById(it.cid) }
                         .onSuccess { conversation ->
                             conversationDao.insert(conversation.toConversation())
                         }
