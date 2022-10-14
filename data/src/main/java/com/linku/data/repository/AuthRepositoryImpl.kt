@@ -14,7 +14,10 @@ import com.linku.domain.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao
-import com.linku.domain.service.*
+import com.linku.domain.service.AuthService
+import com.linku.domain.service.ConversationService
+import com.linku.domain.service.MessageService
+import com.linku.domain.service.ProfileService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -110,7 +113,7 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun verifyEmail(): Result<Unit> = resultOf { authService.verifyEmail() }
 
     override fun uploadAvatar(uri: Uri): Flow<Resource<Unit>> = channelFlow {
-        fileRepository.uploadImage(uri)
+        fileRepository.uploadImage(uri, fixedFormat = "png")
             .onEach { resource ->
                 when (resource) {
                     FileResource.Loading -> {

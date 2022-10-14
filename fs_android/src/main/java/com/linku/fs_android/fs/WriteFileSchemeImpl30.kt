@@ -22,12 +22,13 @@ class WriteFileSchemeImpl30(
     private val resolver: Resolver,
     private val cryptoManager: CryptoManager
 ) : WriteFileScheme {
-    override fun put(uri: Uri?): File? = run {
+    override fun put(uri: Uri?, fixedFormat: String?): File? = run {
         uri ?: return null
         try {
             when (uri.scheme) {
                 SCHEME_CONTENT -> {
-                    val fileName = resolver.getDisplay(uri) ?: return null
+                    val display = resolver.getDisplay(uri)
+                    val fileName = if (display != null) "display.$fixedFormat" else return@run null
                     val file = File(context.externalCacheDir, fileName)
                     if (file.exists()) file.delete()
                     val resolver = context.contentResolver

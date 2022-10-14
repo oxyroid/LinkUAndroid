@@ -7,6 +7,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.core.net.toFile
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
@@ -23,7 +24,10 @@ import com.linku.im.ktx.ifFalse
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -100,9 +104,11 @@ class IntroduceViewModel @Inject constructor(
                                     uploading = true
                                 )
 
-                                is Resource.Success -> readable.copy(
-                                    uploading = false
-                                )
+                                is Resource.Success -> {
+                                    readable.copy(
+                                        uploading = false
+                                    )
+                                }
 
                                 is Resource.Failure -> {
                                     onMessage(resource.message)

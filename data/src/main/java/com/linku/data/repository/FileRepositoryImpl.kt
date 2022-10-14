@@ -23,14 +23,18 @@ class FileRepositoryImpl @Inject constructor(
 ) : FileRepository {
     override fun uploadImage(
         uri: Uri?,
-        name: String
+        name: String,
+        fixedFormat: String?
     ): Flow<FileResource> = flow {
         emit(FileResource.Loading)
         if (uri == null) {
             emit(FileResource.NullUriError)
             return@flow
         }
-        val file = context.writeFs.put(uri)
+        val file = context.writeFs.put(
+            uri = uri,
+            fixedFormat = fixedFormat
+        )
         file ?: run {
             emit(FileResource.FileCannotFoundError)
             return@flow

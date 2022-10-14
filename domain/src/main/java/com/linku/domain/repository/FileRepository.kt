@@ -5,9 +5,13 @@ import com.linku.domain.bean.CachedFile
 import kotlinx.coroutines.flow.Flow
 
 interface FileRepository {
+    /**
+     * @param fixedFormat if url fileName's format is null will append this value.
+     */
     fun uploadImage(
         uri: Uri?,
-        name: String = "file"
+        name: String = "file",
+        fixedFormat: String? = null
     ): Flow<FileResource>
 }
 
