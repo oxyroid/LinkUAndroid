@@ -3,21 +3,23 @@ package com.linku.data.repository
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toFile
-import androidx.core.net.toUri
+import com.linku.data.R
 import com.linku.data.util.ImageUtil
-import com.linku.domain.*
-import com.linku.domain.bean.CachedFile
+import com.linku.domain.Authenticator
+import com.linku.domain.Resource
+import com.linku.domain.Strategy
 import com.linku.domain.bean.MessageVO
 import com.linku.domain.bean.StagingMessage
 import com.linku.domain.entity.*
 import com.linku.domain.extension.use
+import com.linku.domain.repository.FileRepository
+import com.linku.domain.repository.FileResource
 import com.linku.domain.repository.MessageRepository
+import com.linku.domain.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ConversationService
-import com.linku.domain.service.FileService
 import com.linku.domain.service.MessageService
-import com.linku.fs_android.writeFs
 import com.tencent.mmkv.MMKV
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
@@ -25,9 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import okhttp3.MediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import javax.inject.Inject
 
 class MessageRepositoryImpl @Inject constructor(
@@ -36,7 +35,7 @@ class MessageRepositoryImpl @Inject constructor(
     private val messageDao: MessageDao,
     private val conversationDao: ConversationDao,
     @ApplicationContext private val context: Context,
-    private val fileService: FileService,
+    private val fileRepository: FileRepository,
     private val mmkv: MMKV,
     private val json: Json,
     private val authenticator: Authenticator
@@ -225,7 +224,7 @@ class MessageRepositoryImpl @Inject constructor(
     ): Flow<Resource<Unit>> = channelFlow {
         // 1. Make real HTTP-Connection to upload file.
         val userId = authenticator.currentUID
-        checkNotNull(userId) { "Please sign in first." }
+        checkNotNull(userId) { context.getString(R.string.error_no_auth) }
         // 2. Create a staging message.
         val staging = StagingMessage.Image(
             cid = cid,
@@ -233,83 +232,96 @@ class MessageRepositoryImpl @Inject constructor(
             uri = uri,
             reply = reply
         )
-        uploadImage(uri).onEach { resource ->
-            when (resource) {
-                Resource.Loading -> {
-                    // 3. Put the message into database.
-                    createStagingMessage(staging)
-                    trySend(Resource.Loading)
-                }
-                is Resource.Success -> {
-                    // 4. Make real HTTP-Connection to send message.
-                    val cachedFile = resource.data
-                    launch {
-                        val (width, height) = ImageUtil.getBitmapFromUri(
-                            context.contentResolver,
-                            cachedFile.localUri
-                        )?.use {
-                            it.width to it.height
-                        } ?: (-1 to -1)
-
-                        val remoteContent = json.encodeToString(
-                            ImageContent(
-                                url = cachedFile.remoteUrl,
-                                reply = reply,
-                                width = width,
-                                height = height
-                            )
-                        )
-
-                        val localContent = json.encodeToString(
-                            ImageContent(
-                                url = cachedFile.localUri.toString(),
-                                reply = reply,
-                                width = width,
-                                height = height
-                            )
-                        )
-                        resultOf(
-                            block = {
-                                messageService.sendMessage(
-                                    cid = cid,
-                                    content = remoteContent,
-                                    type = Message.Type.Image.toString(),
-                                    uuid = staging.uuid
-                                )
-                            },
-                            onError = {
-                                downgradeStagingMessage(staging.uuid)
-                            }
-                        )
-                            .onSuccess { serverMessage ->
-                                // 4. If it is succeed, level-up the staging message by server-message.
-                                levelStagingMessage(
-                                    uuid = serverMessage.uuid,
-                                    id = serverMessage.id,
-                                    cid = cid,
-                                    timestamp = serverMessage.timestamp,
-                                    content = localContent
-                                )
-                                trySend(Resource.Success(Unit))
-                            }
-                            .onFailure {
-                                // 5. Else downgrade it.
-                                launch {
-                                    downgradeStagingMessage(staging.uuid)
-                                    trySend(Resource.Failure(it.message))
-                                }
-                            }
-
+        fileRepository.uploadImage(uri)
+            .onEach { resource ->
+                when (resource) {
+                    FileResource.Loading -> {
+                        // 3. Put the message into database.
+                        createStagingMessage(staging)
+                        trySend(Resource.Loading)
                     }
-                }
-                is Resource.Failure -> {
-                    launch {
-                        downgradeStagingMessage(staging.uuid)
-                        trySend(Resource.Failure(resource.message))
+                    is FileResource.Success -> {
+                        // 4. Make real HTTP-Connection to send message.
+                        val cachedFile = resource.data
+                        launch {
+                            val (width, height) = ImageUtil.getBitmapFromUri(
+                                context.contentResolver,
+                                cachedFile.localUri
+                            )?.use {
+                                it.width to it.height
+                            } ?: (-1 to -1)
+
+                            val remoteContent = json.encodeToString(
+                                ImageContent(
+                                    url = cachedFile.remoteUrl,
+                                    reply = reply,
+                                    width = width,
+                                    height = height
+                                )
+                            )
+
+                            val localContent = json.encodeToString(
+                                ImageContent(
+                                    url = cachedFile.localUri.toString(),
+                                    reply = reply,
+                                    width = width,
+                                    height = height
+                                )
+                            )
+                            resultOf(
+                                block = {
+                                    messageService.sendMessage(
+                                        cid = cid,
+                                        content = remoteContent,
+                                        type = Message.Type.Image.toString(),
+                                        uuid = staging.uuid
+                                    )
+                                },
+                                onError = {
+                                    downgradeStagingMessage(staging.uuid)
+                                }
+                            )
+                                .onSuccess { serverMessage ->
+                                    // 4. If it is succeed, level-up the staging message by server-message.
+                                    levelStagingMessage(
+                                        uuid = serverMessage.uuid,
+                                        id = serverMessage.id,
+                                        cid = cid,
+                                        timestamp = serverMessage.timestamp,
+                                        content = localContent
+                                    )
+                                    trySend(Resource.Success(Unit))
+                                }
+                                .onFailure {
+                                    // 5. Else downgrade it.
+                                    launch {
+                                        downgradeStagingMessage(staging.uuid)
+                                        trySend(Resource.Failure(it.message))
+                                    }
+                                }
+
+                        }
+                    }
+                    is FileResource.OtherError -> {
+                        launch {
+                            downgradeStagingMessage(staging.uuid)
+                            trySend(Resource.Failure(resource.message))
+                        }
+                    }
+                    else -> {
+                        val resId = when (resource) {
+                            FileResource.FileCannotFoundError -> R.string.error_file_cannot_found
+                            FileResource.NullUriError -> R.string.error_null_uri
+                            else -> R.string.error_unknown
+                        }
+                        val msg = context.getString(resId)
+                        launch {
+                            downgradeStagingMessage(staging.uuid)
+                            trySend(Resource.Failure(msg))
+                        }
                     }
                 }
             }
-        }
             .launchIn(this)
 
     }
@@ -331,117 +343,99 @@ class MessageRepositoryImpl @Inject constructor(
             uri = uri,
             reply = reply
         )
-        uploadImage(uri).onEach { resource ->
-            when (resource) {
-                Resource.Loading -> {
-                    // 3. Put the message into database.
-                    createStagingMessage(staging)
-                    trySend(Resource.Loading)
-                }
-                is Resource.Success -> {
-                    // 4. Make real HTTP-Connection to send message.
-                    val cachedFile = resource.data
-                    launch {
-                        val (width, height) = ImageUtil.getBitmapFromUri(
-                            context.contentResolver,
-                            cachedFile.localUri
-                        )?.use {
-                            it.width to it.height
-                        } ?: (-1 to -1)
 
-                        val remoteContent = json.encodeToString(
-                            GraphicsContent(
-                                text = text,
-                                url = cachedFile.remoteUrl,
-                                reply = reply,
-                                width = width,
-                                height = height
-                            )
-                        )
+        fileRepository.uploadImage(uri)
+            .onEach { resource ->
+                when (resource) {
+                    FileResource.Loading -> {
+                        // 3. Put the message into database.
+                        createStagingMessage(staging)
+                        trySend(Resource.Loading)
+                    }
+                    is FileResource.Success -> {
+                        // 4. Make real HTTP-Connection to send message.
+                        val cachedFile = resource.data
+                        launch {
+                            val (width, height) = ImageUtil.getBitmapFromUri(
+                                context.contentResolver,
+                                cachedFile.localUri
+                            )?.use {
+                                it.width to it.height
+                            } ?: (-1 to -1)
 
-                        val localContent = json.encodeToString(
-                            GraphicsContent(
-                                text = text,
-                                url = cachedFile.localUri.toString(),
-                                reply = reply,
-                                width = width,
-                                height = height
+                            val remoteContent = json.encodeToString(
+                                GraphicsContent(
+                                    text = text,
+                                    url = cachedFile.remoteUrl,
+                                    reply = reply,
+                                    width = width,
+                                    height = height
+                                )
                             )
-                        )
-                        resultOf(
-                            block = {
-                                messageService.sendMessage(
-                                    cid = cid,
-                                    content = remoteContent,
-                                    type = Message.Type.Graphics.toString(),
-                                    uuid = staging.uuid
+
+                            val localContent = json.encodeToString(
+                                GraphicsContent(
+                                    text = text,
+                                    url = cachedFile.localUri.toString(),
+                                    reply = reply,
+                                    width = width,
+                                    height = height
                                 )
-                            },
-                            onError = {
-                                downgradeStagingMessage(staging.uuid)
-                            }
-                        )
-                            .onSuccess { serverMessage ->
-                                // 4. If it is succeed, level-up the staging message by server-message.
-                                levelStagingMessage(
-                                    uuid = serverMessage.uuid,
-                                    id = serverMessage.id,
-                                    cid = serverMessage.cid,
-                                    timestamp = serverMessage.timestamp,
-                                    content = localContent
-                                )
-                                trySend(Resource.Success(Unit))
-                            }
-                            .onFailure {
-                                // 5. Else downgrade it.
-                                launch {
+                            )
+                            resultOf(
+                                block = {
+                                    messageService.sendMessage(
+                                        cid = cid,
+                                        content = remoteContent,
+                                        type = Message.Type.Graphics.toString(),
+                                        uuid = staging.uuid
+                                    )
+                                },
+                                onError = {
                                     downgradeStagingMessage(staging.uuid)
-                                    trySend(Resource.Failure(it.message))
                                 }
-                            }
+                            )
+                                .onSuccess { serverMessage ->
+                                    // 4. If it is succeed, level-up the staging message by server-message.
+                                    levelStagingMessage(
+                                        uuid = serverMessage.uuid,
+                                        id = serverMessage.id,
+                                        cid = serverMessage.cid,
+                                        timestamp = serverMessage.timestamp,
+                                        content = localContent
+                                    )
+                                    trySend(Resource.Success(Unit))
+                                }
+                                .onFailure {
+                                    // 5. Else downgrade it.
+                                    launch {
+                                        downgradeStagingMessage(staging.uuid)
+                                        trySend(Resource.Failure(it.message))
+                                    }
+                                }
+                        }
                     }
-                }
-                is Resource.Failure -> {
-                    launch {
-                        downgradeStagingMessage(staging.uuid)
-                        trySend(Resource.Failure(resource.message))
+                    is FileResource.OtherError -> {
+                        launch {
+                            downgradeStagingMessage(staging.uuid)
+                            trySend(Resource.Failure(resource.message))
+                        }
+                    }
+                    else -> {
+                        val resId = when (resource) {
+                            FileResource.FileCannotFoundError -> R.string.error_file_cannot_found
+                            FileResource.NullUriError -> R.string.error_null_uri
+                            else -> R.string.error_unknown
+                        }
+                        val msg = context.getString(resId)
+                        launch {
+                            downgradeStagingMessage(staging.uuid)
+                            trySend(Resource.Failure(msg))
+                        }
                     }
                 }
             }
-        }
             .launchIn(this)
-
-    }
-
-    private fun uploadImage(uri: Uri?): Flow<Resource<CachedFile>> = flow {
-        emit(Resource.Loading)
-        if (uri == null) {
-            emit(Resource.Failure("upload: uri is null."))
-            return@flow
-        }
-
-        val file = context.writeFs.put(uri)
-        file ?: run {
-            emit(Resource.Failure("upload: uri is null."))
-            return@flow
-        }
-        val filename = file.name
-        val part = MultipartBody.Part.createFormData(
-            "file",
-            filename,
-            RequestBody.create(MediaType.parse("image"), file)
-        )
-        resultOf {
-            fileService.upload(part)
-        }
-            .onSuccess {
-                val cachedFile = CachedFile(file.toUri(), it)
-                emitResource(cachedFile)
-            }
-            .onFailure {
-                emitResource(it.message)
-            }
-
     }
 
     private suspend fun createStagingMessage(staging: StagingMessage) {

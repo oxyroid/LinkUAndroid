@@ -66,7 +66,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.domain.bean.MessageVO
 import com.linku.domain.entity.Message
-import com.linku.domain.struct.node.hasCache
+import com.linku.domain.util.hasCache
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.compose.foundation.lazy.isAtTop
@@ -174,7 +174,8 @@ fun ChatScreen(
                             drawContent()
                         }
                         .padding(innerPadding)
-                        .imePadding(),
+                        .imePadding()
+                        .navigationBarsPadding(),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     Wrapper {

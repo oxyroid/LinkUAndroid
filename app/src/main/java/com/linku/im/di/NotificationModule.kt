@@ -19,7 +19,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object BuilderModule {
+object NotificationModule {
     @Provides
     @Singleton
     fun provideSoundPool(): SoundPool {

@@ -1,17 +1,17 @@
-package com.linku.im.di
+package com.linku.data.di
 
+import com.linku.data.BuildConfig
+import com.linku.data.ktx.serialization.asConverterFactory
 import com.linku.domain.Authenticator
 import com.linku.domain.common.Constants
 import com.linku.domain.service.*
-import com.linku.im.BuildConfig
-import com.linku.im.ktx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.create
@@ -29,7 +29,7 @@ object ApiModule {
         json: Json,
         client: OkHttpClient
     ): Retrofit {
-        val contentType = Constants.MEDIA_TYPE_JSON.toMediaType()
+        val contentType = MediaType.get("application/json")
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
             .client(client)
@@ -54,7 +54,7 @@ object ApiModule {
                             builder.header(Constants.HEADER_JWT, token)
                         }
                     }
-                    .method(original.method, original.body)
+                    .method(original.method(), original.body())
                     .build()
                 chain.proceed(request)
             }

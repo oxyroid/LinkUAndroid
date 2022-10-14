@@ -9,14 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
@@ -133,9 +130,9 @@ fun SignScreen(
 
                 MaterialButton(
                     text = run {
-                        val percent = state.syncingPercent
-                        if (percent != null && percent < 100) {
-                            stringResource(R.string.syncing_present, percent)
+                        val syncing = state.syncing
+                        if (syncing) {
+                            stringResource(R.string.syncing)
                         } else {
                             stringResource(R.string.screen_login_btn_login)
                         }

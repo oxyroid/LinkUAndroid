@@ -4,4 +4,8 @@
     <string name="error_session_initialize">初始化会话失败</string>
     <string name="error_session_subscribe">同步前初始化会话失败</string>
     <string name="error_save_conversation">无法保存会话（%d）</string>
+    <string name="error_file_cannot_found">无法获取文件</string>
+    <string name="error_null_uri">文件异常</string>
+    <string name="error_unknown">未知异常</string>
+    <string name="error_no_auth">请先登录</string>
 </resources>

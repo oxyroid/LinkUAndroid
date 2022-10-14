@@ -1,4 +1,4 @@
-package com.linku.im.ktx.serialization
+package com.linku.data.ktx.serialization
 
 import kotlinx.serialization.DeserializationStrategy
 import okhttp3.ResponseBody

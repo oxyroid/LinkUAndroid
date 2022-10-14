@@ -5,7 +5,12 @@ import com.linku.domain.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
-    fun signIn(email: String, password: String): Flow<SignInState>
+    fun signIn(
+        email: String,
+        password: String,
+        behaviour: AfterSignInBehaviour
+    ): Flow<SignInState>
+
     suspend fun signUp(
         email: String,
         password: String,
@@ -23,8 +28,16 @@ interface AuthRepository {
 
     sealed class SignInState {
         object Start : SignInState()
-        data class Syncing(val present: Int) : SignInState()
+        object Syncing : SignInState()
         object Completed : SignInState()
         data class Failed(val message: String?) : SignInState()
+    }
+
+    sealed class AfterSignInBehaviour {
+        data class SyncUnreadMessages(
+            val duration: Long = 1000L * 60 * 60 * 24 * 3
+        ) : AfterSignInBehaviour()
+
+        object DoNothing : AfterSignInBehaviour()
     }
 }

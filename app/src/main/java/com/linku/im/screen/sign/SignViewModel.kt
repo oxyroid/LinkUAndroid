@@ -49,14 +49,14 @@ class SignViewModel @Inject constructor(
                         loading = true
                     )
 
-                    is AuthRepository.SignInState.Syncing -> readable.copy(
-                        syncingPercent = resource.present
+                    AuthRepository.SignInState.Syncing -> readable.copy(
+                        syncing = true
                     )
 
                     AuthRepository.SignInState.Completed -> {
                         onMessage(applicationUseCases.getString(R.string.log_in_success))
                         readable.copy(
-                            syncingPercent = 100,
+                            syncing = false,
                             loading = false,
                             loginEvent = eventOf(Unit)
                         )

@@ -1,4 +1,5 @@
-package com.linku.im.di
+@file:Suppress("unused")
+package com.linku.data.di
 
 import com.linku.data.repository.*
 import com.linku.data.service.OkHttpSessionService
@@ -42,6 +43,12 @@ interface DataModule {
     fun bindSessionRepository(
         repository: SessionRepositoryImpl
     ): SessionRepository
+
+    @Binds
+    @Singleton
+    fun bindFileRepository(
+        repository: FileRepositoryImpl
+    ): FileRepository
 
     @Binds
     @Singleton

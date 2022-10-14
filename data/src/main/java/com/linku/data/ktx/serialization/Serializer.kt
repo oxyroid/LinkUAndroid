@@ -1,9 +1,8 @@
-package com.linku.im.ktx.serialization
+package com.linku.data.ktx.serialization
 
 import kotlinx.serialization.*
 import okhttp3.MediaType
 import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import java.lang.reflect.Type
 
@@ -35,7 +34,7 @@ internal sealed class Serializer {
             value: T
         ): RequestBody = format
             .encodeToString(saver, value)
-            .toRequestBody(contentType)
+            .let { RequestBody.create(contentType, it) }
     }
 
     class FromBytes(override val format: BinaryFormat) : Serializer() {
@@ -53,6 +52,6 @@ internal sealed class Serializer {
             value: T
         ): RequestBody = format
             .encodeToByteArray(saver, value)
-            .toRequestBody(contentType, 0)
+            .let { RequestBody.create(contentType, it, 0, it.size) }
     }
 }

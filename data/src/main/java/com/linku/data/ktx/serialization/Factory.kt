@@ -1,9 +1,9 @@
 @file:JvmName("KotlinSerializationConverterFactory")
 
-package com.linku.im.ktx.serialization
+package com.linku.data.ktx.serialization
 
-import com.linku.im.ktx.serialization.Serializer.FromBytes
-import com.linku.im.ktx.serialization.Serializer.FromString
+import com.linku.data.ktx.serialization.Serializer.FromBytes
+import com.linku.data.ktx.serialization.Serializer.FromString
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.StringFormat

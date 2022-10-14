@@ -2,83 +2,86 @@ package com.linku.data.repository
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
-import androidx.core.net.toUri
+import com.linku.data.R
 import com.linku.domain.Authenticator
 import com.linku.domain.Resource
-import com.linku.domain.bean.CachedFile
-import com.linku.domain.emitResource
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.AuthRepository
+import com.linku.domain.repository.AuthRepository.AfterSignInBehaviour
+import com.linku.domain.repository.FileRepository
+import com.linku.domain.repository.FileResource
 import com.linku.domain.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao
 import com.linku.domain.service.*
-import com.linku.fs_android.writeFs
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import okhttp3.MediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 class AuthRepositoryImpl @Inject constructor(
     private val authService: AuthService,
     private val profileService: ProfileService,
     private val messageService: MessageService,
     private val conversationService: ConversationService,
-    private val fileService: FileService,
     private val conversationDao: ConversationDao,
     private val messageDao: MessageDao,
     private val userDao: UserDao,
     private val authenticator: Authenticator,
+    private val fileRepository: FileRepository,
     @ApplicationContext private val context: Context
 ) : AuthRepository {
     override fun signIn(
-        email: String, password: String
+        email: String,
+        password: String,
+        behaviour: AfterSignInBehaviour
     ): Flow<AuthRepository.SignInState> = channelFlow {
         trySend(AuthRepository.SignInState.Start)
-        launch {
-            resultOf { authService.signIn(email, password) }
-                .onSuccess { token ->
-                    authenticator.update(token.id, token.token)
+        suspend fun makeBehaviour() {
+            when (behaviour) {
+                AfterSignInBehaviour.DoNothing -> {}
+                is AfterSignInBehaviour.SyncUnreadMessages -> {
+                    trySend(AuthRepository.SignInState.Syncing)
                     launch(Dispatchers.IO) {
-                        // Get latest message timestamp from local database at first.
-                        // If there is no message at all, 3 days ago instead.
-                        // Then fetch messages from server.
                         val timestamp: Long = messageDao.getLatestMessage()?.timestamp
-                            ?: (System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 3)
-                        resultOf { messageService.getMessageAfter(timestamp) }
+                            ?: (System.currentTimeMillis() - behaviour.duration)
+                        resultOf {
+                            messageService.getMessageAfter(timestamp)
+                        }
                             .onSuccess { messages ->
-                                messages.forEachIndexed { index, message ->
-                                    launch {
-                                        val present: Int = (index / messages.lastIndex.toFloat() * 100).roundToInt()
-                                        Log.e("TAG", "signIn: $present")
-//                                        if (messageDao.getById(message.id) == null) {
+                                messages.sortedBy { it.cid }.forEach { message ->
+                                    if (messageDao.getById(message.id) == null) {
                                         messageDao.insert(message.toMessage())
-//                                        }
-                                        if (conversationDao.getById(message.cid) == null) {
-                                            launch {
-                                                resultOf {
-                                                    conversationService.getConversationById(message.cid)
-                                                }.onSuccess {
+                                    }
+                                    if (conversationDao.getById(message.cid) == null) {
+                                        launch {
+                                            resultOf {
+                                                conversationService
+                                                    .getConversationById(message.cid)
+                                            }
+                                                .onSuccess {
                                                     conversationDao.insert(it.toConversation())
                                                 }
-                                            }
-                                        }
-                                        trySend(AuthRepository.SignInState.Syncing(present))
-                                        if (index == messages.lastIndex) {
-                                            trySend(AuthRepository.SignInState.Syncing(100))
-                                            trySend(AuthRepository.SignInState.Completed)
                                         }
                                     }
                                 }
                             }
                     }
+
+                }
+            }
+
+        }
+        launch {
+            resultOf {
+                authService.signIn(email, password)
+            }
+                .onSuccess { token ->
+                    authenticator.update(token.id, token.token)
+                    makeBehaviour()
+                    trySend(AuthRepository.SignInState.Completed)
                 }
                 .onFailure {
                     trySend(AuthRepository.SignInState.Failed(it.message))
@@ -106,40 +109,37 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun verifyEmail(): Result<Unit> = resultOf { authService.verifyEmail() }
 
-    private fun uploadImage(uri: Uri?): Flow<Resource<CachedFile>> = flow {
-        emit(Resource.Loading)
-        if (uri == null) {
-            emit(Resource.Failure("Cannot get image"))
-            return@flow
-        }
-
-        val file = context.writeFs.put(uri)
-        file ?: run {
-            emit(Resource.Failure("Cannot get image"))
-            return@flow
-        }
-        // FIXME
-        val filename = file.name + ".png"
-        val part = MultipartBody.Part.createFormData(
-            "file", filename, RequestBody.create(MediaType.parse("image"), file)
-        )
-        resultOf { fileService.upload(part) }
-            .onSuccess { emit(Resource.Success(CachedFile(file.toUri(), it))) }
-            .onFailure { emitResource(it.message) }
-    }
-
     override fun uploadAvatar(uri: Uri): Flow<Resource<Unit>> = channelFlow {
-        uploadImage(uri).onEach { resource ->
-            when (resource) {
-                is Resource.Success -> {
-                    launch {
-                        resultOf { profileService.editAvatar(resource.data.remoteUrl) }
-                            .onSuccess { trySend(resource.toUnit()) }
-                            .onFailure { trySend(Resource.Failure(it.message)) }
+        fileRepository.uploadImage(uri)
+            .onEach { resource ->
+                when (resource) {
+                    FileResource.Loading -> {
+                        trySend(Resource.Loading)
+                    }
+                    FileResource.FileCannotFoundError -> {
+                        val msg = context.getString(R.string.error_file_cannot_found)
+                        trySend(Resource.Failure(msg))
+                    }
+
+                    FileResource.NullUriError -> {
+                        val msg = context.getString(R.string.error_null_uri)
+                        trySend(Resource.Failure(msg))
+                    }
+                    is FileResource.OtherError -> {
+                        val defaultMsg = context.getString(R.string.error_unknown)
+                        trySend(Resource.Failure(resource.message ?: defaultMsg))
+                    }
+                    is FileResource.Success -> {
+                        launch {
+                            resultOf { profileService.editAvatar(resource.data.remoteUrl) }
+                                .onSuccess { trySend(Resource.Success(Unit)) }
+                                .onFailure { trySend(Resource.Failure(it.message)) }
+                        }
                     }
                 }
-                else -> trySend(resource.toUnit())
             }
-        }.launchIn(this)
+            .launchIn(this)
     }
 }
+
+

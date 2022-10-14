@@ -18,10 +18,10 @@ import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.TextMessage
 import com.linku.domain.eventOf
 import com.linku.domain.service.NotificationService
-import com.linku.domain.struct.node.LinkedNode
-import com.linku.domain.struct.node.forward
-import com.linku.domain.struct.node.remain
-import com.linku.domain.struct.node.remainIf
+import com.linku.domain.util.LinkedNode
+import com.linku.domain.util.forward
+import com.linku.domain.util.remain
+import com.linku.domain.util.remainIf
 import com.linku.im.Constants
 import com.linku.im.R
 import com.linku.im.ktx.dsl.all

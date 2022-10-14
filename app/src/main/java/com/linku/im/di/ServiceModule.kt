@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.linku.im.di
 
 import com.linku.domain.service.NotificationService
@@ -10,7 +11,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class SystemServiceModule {
+abstract class ServiceModule {
     @Binds
     @Singleton
     abstract fun bindNotificationService(service: NotificationServiceImpl): NotificationService
