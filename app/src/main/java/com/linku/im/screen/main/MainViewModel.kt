@@ -28,7 +28,6 @@ class MainViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases,
     connectivityObserver: ConnectivityObserver
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
-
     init {
         connectivityObserver.observe()
             .onEach { state ->
@@ -38,8 +37,9 @@ class MainViewModel @Inject constructor(
                     }
 
                     else -> {
-                        if (observeConversationsJob == null)
+                        if (observeConversationsJob == null) {
                             onEvent(MainEvent.FetchConversations)
+                        }
                     }
                 }
             }
@@ -51,6 +51,7 @@ class MainViewModel @Inject constructor(
             MainEvent.ObserveConversations -> observeConversations()
             MainEvent.UnsubscribeConversations -> unsubscribeConversations()
             MainEvent.FetchConversations -> fetchConversations()
+            is MainEvent.Pin -> pin(event)
         }
     }
 
@@ -62,11 +63,11 @@ class MainViewModel @Inject constructor(
                     conversations = conversations
                         .filter { it.type == Conversation.Type.GROUP }
                         .map { it.toMainUI() }
-                        .sortedByDescending { it.updatedAt },
+                        .sorted(),
                     contracts = conversations
                         .filter { it.type == Conversation.Type.PM }
                         .map { it.toMainUI() }
-                        .sortedByDescending { it.updatedAt }
+                        .sorted()
                 )
                 observeConversationsJob?.cancel()
                 observeConversationsJob = viewModelScope.launch {
@@ -139,5 +140,11 @@ class MainViewModel @Inject constructor(
 
     private fun unsubscribeConversations() {
         observeConversationsJob?.cancel()
+    }
+
+    private fun pin(event: MainEvent.Pin) {
+        viewModelScope.launch {
+            conversationUseCases.pin(event.cid)
+        }
     }
 }

@@ -5,13 +5,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.linku.domain.bean.ComposeTheme
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Entity
 @Serializable
 @Stable
-data class Theme(
+data class Theme @OptIn(ExperimentalSerializationApi::class) constructor(
     @SerialName("d")
     val isDark: Boolean,
     @SerialName("dt")
@@ -62,8 +64,8 @@ data class Theme(
     val onError: Int,
     @SerialName("name")
     val name: String,
+    @EncodeDefault(EncodeDefault.Mode.NEVER)
     @PrimaryKey(autoGenerate = true)
-    @SerialName("id")
     val id: Int = 0
 ) {
     companion object {

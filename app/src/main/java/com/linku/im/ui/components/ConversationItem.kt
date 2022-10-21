@@ -1,5 +1,6 @@
 package com.linku.im.ui.components
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
@@ -127,10 +128,11 @@ fun ConversationItem(
 fun PinnedConversationItem(
     modifier: Modifier = Modifier,
     conversation: ConversationVO? = null,
-    unreadCount: Int = 0,
-    pinned: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {}
 ) {
+    val unreadCount: Int = conversation?.unreadCount ?: 0
+    val pinned: Boolean = conversation?.pinned ?: false
     val shimmerColor = LocalTheme.current.divider * 0.3f
     val onShimmerColor = Color.White
     val shimmerAnimationSpec: InfiniteRepeatableSpec<Float> by lazy {
@@ -153,7 +155,8 @@ fun PinnedConversationItem(
             }
             .intervalClickable(
                 enabled = conversation != null,
-                onClick = onClick
+                onClick = onClick,
+                onLongClick = onLongClick
             )
             .padding(
                 horizontal = LocalSpacing.current.medium,
@@ -232,7 +235,9 @@ fun PinnedConversationItem(
                 }
             }
 
-            pinned -> {
+        }
+        Crossfade(pinned) { pinned ->
+            if (pinned) {
                 Surface(
                     shape = CircleShape,
                     color = LocalTheme.current.primary,

@@ -2,6 +2,7 @@ package com.linku.data.usecase
 
 import android.content.Context
 import android.net.Uri
+import com.linku.data.R
 import com.linku.domain.Resource
 import com.linku.domain.bean.frigidity
 import com.linku.domain.bean.midNight
@@ -12,6 +13,9 @@ import com.linku.domain.room.dao.ThemeDao
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 sealed class SettingUseCases {
@@ -28,16 +32,15 @@ sealed class SettingUseCases {
     }
 
     data class Themes @Inject constructor(
-        val installDefaultTheme: InstallDefaultTheme,
-        val loadAllLocalTheme: LoadAllLocalTheme,
-        val toggleIsDarkMode: ToggleIsDarkMode,
-        val selectThemes: SelectThemes,
-        val export: Export,
-        val import: Import,
-        val importFromClipboard: ImportFromClipboard,
-        val findById: FindById
+        val installDefaultTheme: InstallDefaultThemeUseCase,
+        val observeAllLocalTheme: ObserveAllLocalThemeUseCase,
+        val toggleIsDarkMode: ToggleIsDarkModeUseCase,
+        val selectThemes: SelectThemesUseCase,
+        val import: ImportUseCase,
+        val importFromClipboard: ImportFromClipboardUseCase,
+        val findById: FindByIdUseCase
     ) : SettingUseCases() {
-        data class InstallDefaultTheme @Inject constructor(
+        data class InstallDefaultThemeUseCase @Inject constructor(
             private val themeDao: ThemeDao,
             private val sharedPreference: SharedPreferenceUseCase
         ) : SettingUseCases() {
@@ -71,20 +74,13 @@ sealed class SettingUseCases {
             }
         }
 
-        data class LoadAllLocalTheme @Inject constructor(
+        data class ObserveAllLocalThemeUseCase @Inject constructor(
             private val themeDao: ThemeDao
         ) {
-            operator fun invoke(): Flow<Resource<List<Theme>>> = flow {
-                emit(Resource.Loading)
-                runCatching {
-                    themeDao.getAll()
-                }
-                    .onSuccess { emit(Resource.Success(it)) }
-                    .onFailure { emit(Resource.Failure(it.message)) }
-            }
+            operator fun invoke(): Flow<List<Theme>> = themeDao.observeAll()
         }
 
-        data class ToggleIsDarkMode @Inject constructor(
+        data class ToggleIsDarkModeUseCase @Inject constructor(
             private val sharedPreferenceUseCase: SharedPreferenceUseCase
         ) {
             operator fun invoke() {
@@ -92,7 +88,7 @@ sealed class SettingUseCases {
             }
         }
 
-        data class SelectThemes @Inject constructor(
+        data class SelectThemesUseCase @Inject constructor(
             private val sharedPreferenceUseCase: SharedPreferenceUseCase,
             private val themeDao: ThemeDao
         ) {
@@ -116,23 +112,36 @@ sealed class SettingUseCases {
             }
         }
 
-        data class Export @Inject constructor(
-            private val themeDao: ThemeDao
-        ) {
-            operator fun invoke(tid: Int): Flow<Resource<Uri>> = flow {
-                // TODO
-            }
-        }
 
-        data class Import @Inject constructor(
-            private val themeDao: ThemeDao
+        data class ImportUseCase @Inject constructor(
+            private val themeDao: ThemeDao,
+            private val json: Json,
+            private val applications: ApplicationUseCases
         ) {
             operator fun invoke(uri: Uri): Flow<Resource<Theme>> = flow {
-                // TODO
+                emit(Resource.Loading)
+                try {
+                    applications.contentResolver().openInputStream(uri).use {
+                        if (it == null) {
+                            emit(Resource.Failure(applications.getString(R.string.error_import)))
+                            return@flow
+                        }
+                        val s = it.readBytes().decodeToString()
+                        val theme: Theme = json.decodeFromString<Theme>(s).copy(
+                            id = 0
+                        )
+                        themeDao.insert(theme)
+                        emit(Resource.Success(theme))
+                    }
+                } catch (e: SerializationException) {
+                    emit(Resource.Failure(applications.getString(R.string.error_import)))
+                } catch (e: IllegalArgumentException) {
+                    emit(Resource.Failure(applications.getString(R.string.error_import)))
+                }
             }
         }
 
-        data class ImportFromClipboard @Inject constructor(
+        data class ImportFromClipboardUseCase @Inject constructor(
             private val themeDao: ThemeDao,
             @ApplicationContext private val context: Context
         ) {
@@ -141,7 +150,7 @@ sealed class SettingUseCases {
             }
         }
 
-        data class FindById @Inject constructor(
+        data class FindByIdUseCase @Inject constructor(
             private val themeDao: ThemeDao
         ) {
             suspend operator fun invoke(tid: Int): Theme? = themeDao.getById(tid)

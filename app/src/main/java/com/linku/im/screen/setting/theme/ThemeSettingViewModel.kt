@@ -1,24 +1,35 @@
 package com.linku.im.screen.setting.theme
 
 import androidx.lifecycle.viewModelScope
+import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.SettingUseCases
 import com.linku.data.usecase.SharedPreferenceUseCase
 import com.linku.domain.Resource
+import com.linku.domain.entity.local.Theme
 import com.linku.im.LinkUEvent
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.setting.SettingEvent
 import com.linku.im.screen.setting.SettingState
 import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 @HiltViewModel
 class ThemeSettingViewModel @Inject constructor(
     private val themes: SettingUseCases.Themes,
-    private val sharedPreference: SharedPreferenceUseCase
+    private val sharedPreference: SharedPreferenceUseCase,
+    private val applications: ApplicationUseCases,
+    private val json: Json
 ) : BaseViewModel<SettingState.Themes, SettingEvent.Themes>(SettingState.Themes()) {
+    val allTheme: Flow<List<Theme>> = themes.observeAllLocalTheme()
     override fun onEvent(event: SettingEvent.Themes) {
         when (event) {
             SettingEvent.Themes.Init -> {
@@ -28,27 +39,6 @@ class ThemeSettingViewModel @Inject constructor(
                     defaultLightTheme = sharedPreference.lightTheme,
                     defaultDarkTheme = sharedPreference.darkTheme
                 )
-                themes.loadAllLocalTheme()
-                    .onEach { resource ->
-                        writable = when (resource) {
-                            Resource.Loading -> readable.copy(
-                                loading = true
-                            )
-
-                            is Resource.Success -> readable.copy(
-                                loading = false,
-                                themes = resource.data
-                            )
-
-                            is Resource.Failure -> {
-                                onMessage(resource.message)
-                                readable.copy(
-                                    loading = false
-                                )
-                            }
-                        }
-                    }
-                    .launchIn(viewModelScope)
             }
 
             SettingEvent.Themes.ToggleIsDarkMode -> {
@@ -83,8 +73,37 @@ class ThemeSettingViewModel @Inject constructor(
                     .launchIn(viewModelScope)
             }
 
-            is SettingEvent.Themes.Export -> {}
-            SettingEvent.Themes.Import -> {}
+            is SettingEvent.Themes.WriteThemeToUri -> {
+                val tid = event.tid
+                viewModelScope.launch {
+                    val theme = themes.findById(tid)
+                    val text = json.encodeToString(theme)
+                    withContext(Dispatchers.Main) {
+                        applications.contentResolver().openOutputStream(event.uri)?.use {
+                            withContext(Dispatchers.IO) {
+                                it.write(text.toByteArray())
+                            }
+                        }
+                    }
+                }
+            }
+            is SettingEvent.Themes.Import -> {
+                themes.import(event.uri)
+                    .onEach { resource ->
+                        when (resource) {
+                            Resource.Loading -> {
+                                onMessage("Loading")
+                            }
+                            is Resource.Success -> {
+                                onMessage("Success")
+                            }
+                            is Resource.Failure -> {
+                                onMessage("Failed")
+                            }
+                        }
+                    }
+                    .launchIn(viewModelScope)
+            }
             is SettingEvent.Themes.ImportFromClipboard -> {}
         }
     }

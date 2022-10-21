@@ -2,7 +2,8 @@ package com.linku.data.authenticator
 
 import com.linku.data.usecase.SharedPreferenceUseCase
 import com.linku.domain.Authenticator
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class PreferenceAuthenticator(
     private val settings: SharedPreferenceUseCase

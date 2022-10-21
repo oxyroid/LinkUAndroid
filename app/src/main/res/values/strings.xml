@@ -93,4 +93,6 @@
     <string name="theme_card_left">您</string>
     <string name="theme_card_right">好</string>
     <string name="theme_span_remain">重启应用生效</string>
+    <string name="warn_premium_theme">This Theme is only available for <u>Premium Account</u>.</string>
+    <string name="export_success">导出成功</string>
 </resources>

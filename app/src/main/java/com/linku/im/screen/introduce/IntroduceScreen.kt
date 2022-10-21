@@ -1,9 +1,9 @@
 package com.linku.im.screen.introduce
 
-import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -52,8 +52,6 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.domain.Event
 import com.linku.im.BuildConfig
 import com.linku.im.R
@@ -76,10 +74,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
 
-@OptIn(
-    ExperimentalMaterialApi::class,
-    ExperimentalPermissionsApi::class
-)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun IntroduceScreen(
     uid: Int,
@@ -94,18 +89,16 @@ fun IntroduceScreen(
             viewModel.onEvent(IntroduceEvent.UpdateAvatar(it))
         }
     }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let {
-            uCropLauncher.launch(
-                it to Uri.fromFile(
-                    File(context.cacheDir, "temp_image_file_${Date().time}")
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let {
+                uCropLauncher.launch(
+                    it to Uri.fromFile(
+                        File(context.cacheDir, "temp_image_file_${Date().time}")
+                    )
                 )
-            )
+            }
         }
-    }
-    val permissionState = rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE) {
-        it.ifTrue { launcher.launch("image/*") }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.onEvent(IntroduceEvent.FetchIntroduce(uid))
@@ -120,7 +113,7 @@ fun IntroduceScreen(
     }
 
     LaunchedEffect(state.runLauncher) {
-        state.runLauncher.handle { permissionState.launchPermissionRequest() }
+        state.runLauncher.handle { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
     }
 
     LaunchedEffect(state.editEvent) {

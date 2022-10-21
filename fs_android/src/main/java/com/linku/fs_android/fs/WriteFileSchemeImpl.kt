@@ -11,6 +11,7 @@ import com.linku.fs_core.fs.WriteFileScheme
 import com.linku.fs_core.logger.Logger
 import java.io.File
 import java.nio.file.Files
+import java.util.*
 
 class WriteFileSchemeImpl(
     private val context: Context,
@@ -24,7 +25,9 @@ class WriteFileSchemeImpl(
             when (uri.scheme) {
                 SCHEME_CONTENT -> {
                     val display = resolver.getDisplay(uri)
-                    val fileName = if (display != null) "display.$fixedFormat" else return@run null
+                    val fileName =
+                        if (display != null && display.split('.').size > 1) "$display.$fixedFormat"
+                        else UUID.randomUUID().toString() + fixedFormat
                     val file = File(context.externalCacheDir, fileName)
                     if (file.exists()) file.delete()
                     val resolver = context.contentResolver
@@ -34,6 +37,7 @@ class WriteFileSchemeImpl(
                     file.createNewFile()
                     file
                 }
+
                 SCHEME_FILE -> uri.toFile()
                 else -> null
             }

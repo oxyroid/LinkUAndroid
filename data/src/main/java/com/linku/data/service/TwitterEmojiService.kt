@@ -32,7 +32,6 @@ class TwitterEmojiService(
         } catch (ignored: FileNotFoundException) {
 
         } catch (e: Exception) {
-            e.printStackTrace()
             emit(Resource.Failure(e.message ?: ""))
         }
 

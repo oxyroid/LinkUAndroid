@@ -45,8 +45,19 @@ sealed class NavTarget : Parcelable {
     data class Edit(val type: IntroduceEvent.Edit.Type?) : NavTarget()
 
     sealed class Setting : NavTarget() {
+        @Parcelize
+        object Notification : Setting()
+
+        @Parcelize
+        object Safe : Setting()
+
+        @Parcelize
+        object DataSource : Setting()
 
         @Parcelize
         object Theme : Setting()
+
+        @Parcelize
+        object Language : Setting()
     }
 }

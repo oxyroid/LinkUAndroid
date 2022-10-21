@@ -23,8 +23,17 @@ data class ConversationUseCases @Inject constructor(
     val fetchConversations: FetchConversationsUseCase,
     val fetchMembers: FetchMembersUseCase,
     val queryConversations: QueryConversationsUseCase,
-    val pushConversationShort: PushConversationShortCutUseCase
+    val pushConversationShort: PushConversationShortCutUseCase,
+    val pin: PinUseCase
 )
+
+data class PinUseCase @Inject constructor(
+    private val repository: ConversationRepository
+) {
+    suspend operator fun invoke(cid: Int) {
+        repository.pin(cid)
+    }
+}
 
 data class ObserveConversationUseCase @Inject constructor(
     private val repository: ConversationRepository

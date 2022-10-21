@@ -8,4 +8,5 @@
     <string name="error_null_uri">文件异常</string>
     <string name="error_unknown">未知异常</string>
     <string name="error_no_auth">请先登录</string>
+    <string name="error_import">解析失败</string>
 </resources>

@@ -16,8 +16,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 33
-        versionCode 102
-        versionName "0.14.6"
+        versionCode 104
+        versionName "0.14.8"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 

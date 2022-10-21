@@ -7,7 +7,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
-import androidx.core.net.toFile
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
@@ -47,11 +46,7 @@ class IntroduceViewModel @Inject constructor(
             is IntroduceEvent.VerifiedEmailCode -> verifiedEmailCode(event.code)
             IntroduceEvent.CancelVerifiedEmail -> cancelVerifiedEmail()
             is IntroduceEvent.Actions -> onActions(event.label, event.actions)
-            is IntroduceEvent.Edit -> {
-                writable = readable.copy(
-                    editEvent = eventOf(event.type)
-                )
-            }
+            is IntroduceEvent.Edit -> edit(event)
 
             IntroduceEvent.ToggleLogMode -> {
                 val mode = settings.isLogMode
@@ -123,6 +118,12 @@ class IntroduceViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun edit(event: IntroduceEvent.Edit) {
+        writable = readable.copy(
+            editEvent = eventOf(event.type)
+        )
     }
 
     private fun verifiedEmail() {
@@ -300,11 +301,12 @@ class IntroduceViewModel @Inject constructor(
         val dataSource = getString(R.string.profile_settings_datasource)
         val theme = getString(R.string.profile_settings_theme)
         val language = getString(R.string.profile_settings_language)
-        Property.Folder(notification, Icons.Sharp.Notifications, NavTarget.Setting.Theme).addIt()
-        Property.Folder(safe, Icons.Sharp.Lock, NavTarget.Setting.Theme).addIt()
-        Property.Folder(dataSource, Icons.Sharp.DateRange, NavTarget.Setting.Theme).addIt()
+        Property.Folder(notification, Icons.Sharp.Notifications, NavTarget.Setting.Notification)
+            .addIt()
+        Property.Folder(safe, Icons.Sharp.Lock, NavTarget.Setting.Safe).addIt()
+        Property.Folder(dataSource, Icons.Sharp.DateRange, NavTarget.Setting.DataSource).addIt()
         Property.Folder(theme, Icons.Sharp.FormatPaint, NavTarget.Setting.Theme).addIt()
-        Property.Folder(language, Icons.Sharp.Language, NavTarget.Setting.Theme).addIt()
+        Property.Folder(language, Icons.Sharp.Language, NavTarget.Setting.Language).addIt()
     }
 
     context(MutableList<E>) private fun <E> E.addIt() = add(this)

@@ -18,7 +18,6 @@ abstract class BaseViewModel<S, E>(emptyState: S) : ViewModel() {
      * Observe this to update UI
      */
     private var _state = mutableStateOf(
-//        Proxy.newProxyInstance(S::class.javaClass.classLoader)
         emptyState
     )
     protected var writable by _state

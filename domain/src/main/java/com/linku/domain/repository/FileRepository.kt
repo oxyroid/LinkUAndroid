@@ -13,6 +13,11 @@ interface FileRepository {
         name: String = "file",
         fixedFormat: String? = null
     ): Flow<FileResource>
+
+}
+
+sealed class MimeType(val value: String) {
+    object Txt : MimeType("text/plain")
 }
 
 sealed class FileResource {
@@ -23,5 +28,5 @@ sealed class FileResource {
 
     object NullUriError : FileResource()
     object FileCannotFoundError : FileResource()
-    data class OtherError(val message: String?): FileResource()
+    data class OtherError(val message: String?) : FileResource()
 }

@@ -125,14 +125,6 @@ class ChatViewModel @Inject constructor(
 
     private fun observeMessages() {
         observeMessagesJob?.cancel()
-        // TODO
-//        messages.observeMessageVO(
-//            cid = readable.cid,
-//            attachPrevious = true
-//        )
-//            .onEach(_messageFlow::emit)
-//            .launchIn(viewModelScope)
-//
         observeMessagesJob = messages.observeMessages(readable.cid)
             .onEach { messages ->
                 mapMessagesJob?.cancel()

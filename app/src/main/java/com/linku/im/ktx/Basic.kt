@@ -21,3 +21,11 @@ fun Context.toast(text: String, duration: Int = Toast.LENGTH_SHORT) {
 
 inline fun <K, V> MutableMap<K, V>.getOrPutNullable(k: K, block: () -> V?): V? =
     get(k) ?: block()?.also { put(k, it) }
+
+inline fun <E> List<E>.update(newValue: (E) -> E, findFirst: (E) -> Boolean): List<E> {
+    val mutableList = toMutableList()
+    find(findFirst)?.also {
+        mutableList[indexOf(it)] = newValue(it)
+    }
+    return mutableList
+}

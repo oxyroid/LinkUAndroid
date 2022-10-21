@@ -3,7 +3,9 @@ package com.linku.im.screen.setting.theme
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -26,18 +28,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linku.domain.entity.local.Theme
 import com.linku.im.R
+import com.linku.im.ktx.compose.ui.graphics.toColor
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.SugarColors
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ThemeSelection(
     theme: Theme,
     currentTid: Int,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
-    fun Int.toColor() = Color(this)
     val selected = currentTid == theme.id
     val alpha by animateFloatAsState(
         if (selected) 0f else 0.4f
@@ -111,17 +114,20 @@ fun ThemeSelection(
                     scaleY = zoom
                 }
                 .aspectRatio(1f)
-                .padding(LocalSpacing.current.extraSmall),
-            onClick = {
-                if (selected) return@OutlinedCard
-                feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                onClick()
-            }
+                .padding(LocalSpacing.current.extraSmall)
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(LocalSpacing.current.small),
                 modifier = Modifier
+                    .combinedClickable(
+                        onClick = {
+                            if (selected) return@combinedClickable
+                            feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onClick()
+                        },
+                        onLongClick = onLongClick
+                    )
                     .graphicsLayer {
                         if (blurRadius != 0f) renderEffect = BlurEffect(blurRadius, blurRadius)
                     }

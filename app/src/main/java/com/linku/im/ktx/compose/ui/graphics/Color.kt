@@ -19,3 +19,5 @@ fun Color.animated(
     animationSpec = animationSpec,
     finishedListener = finishedListener
 ).value
+
+fun Int.toColor() = Color(this)

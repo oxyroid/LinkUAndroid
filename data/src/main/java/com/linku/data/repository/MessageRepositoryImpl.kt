@@ -323,7 +323,6 @@ class MessageRepositoryImpl @Inject constructor(
                 }
             }
             .launchIn(this)
-
     }
 
     override fun sendGraphicsMessage(

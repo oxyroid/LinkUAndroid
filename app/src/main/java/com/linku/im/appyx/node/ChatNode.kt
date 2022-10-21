@@ -75,6 +75,7 @@ import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
+@Deprecated("")
 class ChatNode(
     private val cid: Int,
     buildContext: BuildContext,

@@ -1,9 +1,9 @@
 package com.linku.im.screen.chat
 
-import android.Manifest
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -62,8 +62,6 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberPermissionState
 import com.linku.domain.bean.MessageVO
 import com.linku.domain.entity.Message
 import com.linku.domain.util.hasCache
@@ -85,7 +83,6 @@ import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
@@ -100,12 +97,10 @@ fun ChatScreen(
         initialFirstVisibleItemIndex = state.firstVisibleIndex,
         initialFirstVisibleItemScrollOffset = state.firstVisibleItemScrollOffset
     )
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        viewModel.onEvent(ChatEvent.OnFile(uri))
-    }
-    val permissionState = rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE) {
-        it.ifTrue { launcher.launch("image/*") }
-    }
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            viewModel.onEvent(ChatEvent.OnFile(uri))
+        }
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_CREATE) {
@@ -293,14 +288,13 @@ fun ChatScreen(
                 },
                 snackHostContent = { SnackbarHost(hostState) },
                 content = {
-                    // Bottom Sheet
                     ChatTextField(
                         text = { state.textFieldValue },
                         uri = { state.uri },
                         emojis = state.emojis,
                         emojiSpanExpanded = { state.emojiSpanExpanded },
                         onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
-                        onFile = { permissionState.launchPermissionRequest() },
+                        onFile = { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                         onText = { viewModel.onEvent(ChatEvent.OnTextChange(it)) },
                         onEmoji = { viewModel.onEvent(ChatEvent.OnEmoji(it)) },
                         onExpanded = { viewModel.onEvent(ChatEvent.OnEmojiSpanExpanded(!state.emojiSpanExpanded)) }

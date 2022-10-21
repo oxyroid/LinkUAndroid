@@ -4,4 +4,5 @@ sealed class MainEvent {
     object ObserveConversations : MainEvent()
     object UnsubscribeConversations : MainEvent()
     object FetchConversations : MainEvent()
+    data class Pin(val cid: Int) : MainEvent()
 }

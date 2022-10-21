@@ -37,4 +37,5 @@ class ReadFileSchemeImpl(
     override fun decrypt(): String = cryptoManager
         .decrypt(File(context.filesDir, "secret.txt").inputStream())
         .decodeToString()
+
 }

@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.linku.im.di
 
 import com.linku.domain.service.NotificationService

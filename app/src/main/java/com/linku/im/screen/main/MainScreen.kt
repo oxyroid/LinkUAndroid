@@ -51,7 +51,6 @@ import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.compose.ui.graphics.times
-import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ui.components.MaterialIconButton
 import com.linku.im.ui.components.PinnedConversationItem
 import com.linku.im.ui.components.Snacker
@@ -121,120 +120,97 @@ fun MainScreen(
         vm.message.handle { hostState.showSnackbar(it) }
     }
     val theme = LocalTheme.current
-    Scaffold(
-        snackbarHost = {
-            Snacker(
-                state = it,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        topBar = {
-            val vmState = vm.readable
-            ToolBar(
-                navIcon = Icons.Sharp.Menu,
-                onNavClick = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(2)
-                    }
-                },
-                actions = {
-                    MaterialIconButton(
-                        icon = Icons.Sharp.Search,
-                        onClick = { backStack.push(NavTarget.Query) },
-                        contentDescription = "search"
-                    )
-                },
-                text = vmState.label ?: context.getString(R.string.app_name)
-            )
-        },
-        floatingActionButton = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateContentSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                FloatingActionButton(
-                    onClick = { backStack.push(NavTarget.Create) },
-                    modifier = Modifier
-                        .padding(LocalSpacing.current.medium)
-                        .align(Alignment.End),
-                    elevation = FloatingActionButtonDefaults.loweredElevation(),
-                    containerColor = theme.primary,
-                    contentColor = theme.onPrimary
-                ) {
-                    Icon(
-                        imageVector = Icons.Sharp.Add,
-                        contentDescription = null
-                    )
-                }
-                SnackbarHost(hostState = hostState)
+    Scaffold(snackbarHost = {
+        Snacker(
+            state = it, modifier = Modifier.fillMaxWidth()
+        )
+    }, topBar = {
+        val vmState = vm.readable
+        ToolBar(navIcon = Icons.Sharp.Menu, onNavClick = {
+            scope.launch {
+                pagerState.animateScrollToPage(2)
             }
+        }, actions = {
+            MaterialIconButton(
+                icon = Icons.Sharp.Search,
+                onClick = { backStack.push(NavTarget.Query) },
+                contentDescription = "search"
+            )
+        }, text = vmState.label ?: context.getString(R.string.app_name)
+        )
+    }, floatingActionButton = {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .animateContentSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            FloatingActionButton(
+                onClick = { backStack.push(NavTarget.Create) },
+                modifier = Modifier
+                    .padding(LocalSpacing.current.medium)
+                    .align(Alignment.End),
+                elevation = FloatingActionButtonDefaults.loweredElevation(),
+                containerColor = theme.primary,
+                contentColor = theme.onPrimary
+            ) {
+                Icon(
+                    imageVector = Icons.Sharp.Add, contentDescription = null
+                )
+            }
+            SnackbarHost(hostState = hostState)
+        }
 
-        },
-        floatingActionButtonPosition = FabPosition.Center,
-        backgroundColor = Color.Unspecified
+    }, floatingActionButtonPosition = FabPosition.Center, backgroundColor = Color.Unspecified
     ) { innerPadding ->
         val pages = listOf(
             stringResource(R.string.tab_notification),
             stringResource(R.string.tab_contact),
             stringResource(R.string.tab_more)
         )
-        Column(
-            modifier = Modifier
-                .drawWithContent {
-                    drawRect(theme.background)
-                    drawContent()
-                }
-                .padding(innerPadding)
-        ) {
-            TabRow(
-                selectedTabIndex = pagerState.currentPage,
-                indicator = { tabPositions ->
-                    TabRowDefaults.Indicator(
-                        modifier = Modifier
-                            .tabIndicatorOffset(
-                                tabPositions[pagerState.currentPage]
-                            )
-                            .padding(horizontal = LocalSpacing.current.large)
-                            .clip(
-                                RoundedCornerShape(
-                                    topStart = LocalSpacing.current.extraSmall,
-                                    topEnd = LocalSpacing.current.extraSmall
-                                )
-                            ),
-                        color = theme.primary,
-                        height = LocalSpacing.current.extraSmall
-                    )
-                },
-                divider = {},
-                tabs = {
-                    pages.forEachIndexed { index, page ->
-                        Tab(
-                            selected = pagerState.currentPage == index,
-                            text = {
-                                Text(
-                                    text = page,
-                                    style = MaterialTheme.typography.titleSmall
-                                )
-                            },
-                            onClick = {
-                                scope.launch { pagerState.animateScrollToPage(index) }
-                            },
-                            selectedContentColor = theme.onTopBar,
-                            unselectedContentColor = theme.onTopBar * 0.6f,
-                            modifier = Modifier
-                                .padding(LocalSpacing.current.small)
-                                .clip(RoundedCornerShape(LocalSpacing.current.extraSmall))
+        Column(modifier = Modifier
+            .drawWithContent {
+                drawRect(theme.background)
+                drawContent()
+            }
+            .padding(innerPadding)) {
+            TabRow(selectedTabIndex = pagerState.currentPage, indicator = { tabPositions ->
+                TabRowDefaults.Indicator(
+                    modifier = Modifier
+                        .tabIndicatorOffset(
+                            tabPositions[pagerState.currentPage]
                         )
-                    }
-                },
-                containerColor = theme.topBar,
-                contentColor = theme.onTopBar
+                        .padding(horizontal = LocalSpacing.current.large)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = LocalSpacing.current.extraSmall,
+                                topEnd = LocalSpacing.current.extraSmall
+                            )
+                        ), color = theme.primary, height = LocalSpacing.current.extraSmall
+                )
+            }, divider = {}, tabs = {
+                pages.forEachIndexed { index, page ->
+                    Tab(
+                        selected = pagerState.currentPage == index,
+                        text = {
+                            Text(
+                                text = page, style = MaterialTheme.typography.titleSmall
+                            )
+                        },
+                        onClick = {
+                            scope.launch { pagerState.animateScrollToPage(index) }
+                        },
+                        selectedContentColor = theme.onTopBar,
+                        unselectedContentColor = theme.onTopBar * 0.6f,
+                        modifier = Modifier
+                            .padding(LocalSpacing.current.small)
+                            .clip(RoundedCornerShape(LocalSpacing.current.extraSmall))
+                    )
+                }
+            }, containerColor = theme.topBar, contentColor = theme.onTopBar
             )
             HorizontalPager(
-                count = pages.size,
-                state = pagerState
+                count = pages.size, state = pagerState
             ) { page ->
                 if (page == 2) {
                     LazyColumn(
@@ -264,8 +240,7 @@ fun MainScreen(
                                                 .size(LocalSpacing.current.small)
                                                 .background(
                                                     color = if (selection.value) Color.Green
-                                                    else theme.error,
-                                                    shape = CircleShape
+                                                    else theme.error, shape = CircleShape
                                                 )
                                         )
                                     }
@@ -278,12 +253,11 @@ fun MainScreen(
                                             is Selection.Route -> {
                                                 when (selection.target) {
                                                     is NavTarget.Introduce -> {
-                                                        backStack.push(
-                                                            vm.authenticator.currentUID?.let {
-                                                                NavTarget.Introduce(it)
-                                                            } ?: NavTarget.Sign
-                                                        )
+                                                        backStack.push(vm.authenticator.currentUID?.let {
+                                                            NavTarget.Introduce(it)
+                                                        } ?: NavTarget.Sign)
                                                     }
+
                                                     else -> backStack.push(selection.target)
                                                 }
                                             }
@@ -311,17 +285,20 @@ fun MainScreen(
                             else -> emptyList()
                         }
                         itemsIndexed(conversations) { index, conversation ->
-                            PinnedConversationItem(
-                                conversation = conversation,
-                                pinned = index < 1,
-                                unreadCount = index / 2,
-                                modifier = Modifier.animateItemPlacement()
-                            ) {
-                                backStack.push(NavTarget.ChatTarget.Messages(conversation.id))
-                            }
-                            if (index != conversations.lastIndex) Divider(
-                                color = LocalTheme.current.divider
+                            PinnedConversationItem(conversation = conversation,
+                                modifier = Modifier.animateItemPlacement(),
+                                onClick = {
+                                    backStack.push(NavTarget.ChatTarget.Messages(conversation.id))
+                                },
+                                onLongClick = {
+                                    viewModel.onEvent(MainEvent.Pin(conversation.id))
+                                }
                             )
+                            if (index != conversations.lastIndex) {
+                                Divider(
+                                    color = LocalTheme.current.divider
+                                )
+                            }
                         }
                     }
                 }
@@ -331,13 +308,10 @@ fun MainScreen(
 }
 
 private sealed class Selection(
-    open val resId: Int,
-    open val icon: ImageVector
+    open val resId: Int, open val icon: ImageVector
 ) {
     data class Route(
-        override val resId: Int,
-        val target: NavTarget,
-        override val icon: ImageVector
+        override val resId: Int, val target: NavTarget, override val icon: ImageVector
     ) : Selection(resId, icon)
 
     data class Switch(

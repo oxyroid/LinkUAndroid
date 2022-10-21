@@ -1,7 +1,6 @@
 package com.linku.domain.extension
 
 import android.content.SharedPreferences
-import android.os.Parcelable
 import androidx.core.content.edit
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty

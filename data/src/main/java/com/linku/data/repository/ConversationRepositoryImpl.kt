@@ -20,7 +20,7 @@ class ConversationRepositoryImpl @Inject constructor(
     private val conversationDao: ConversationDao,
     private val conversationService: ConversationService,
     private val json: Json,
-    private val mmkv: MMKV
+    private val mmkv: MMKV,
 ) : ConversationRepository {
     override suspend fun findConversation(cid: Int, strategy: Strategy): Conversation? {
         suspend fun fromBackend(): ConversationDTO? = try {
@@ -60,6 +60,7 @@ class ConversationRepositoryImpl @Inject constructor(
                 it.toIO()
                 it.toConversation()
             } ?: fromIO()
+
             Strategy.CacheElseNetwork -> fromIO() ?: fromBackend()?.let {
                 it.toIO()
                 it.toConversation()
@@ -119,8 +120,7 @@ class ConversationRepositoryImpl @Inject constructor(
     ): Flow<Resource<List<Conversation>>> = resourceFlow {
         runCatching {
             resultOf {
-                conversationService
-                    .queryConversations(name, description)
+                conversationService.queryConversations(name, description)
             }
                 .onSuccess { conversations -> emitResource(conversations.map { it.toConversation() }) }
                 .onFailure { emitResource(it.message) }
@@ -140,5 +140,9 @@ class ConversationRepositoryImpl @Inject constructor(
         }.onFailure {
             emitResource(it.message)
         }
+    }
+
+    override suspend fun pin(cid: Int) {
+        conversationDao.pin(cid)
     }
 }

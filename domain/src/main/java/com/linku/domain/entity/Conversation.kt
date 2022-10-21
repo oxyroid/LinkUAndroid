@@ -21,7 +21,8 @@ data class Conversation(
     val avatar: String = "",
     val owner: Int,
     val member: List<Int> = emptyList(),
-    val description: String = ""
+    val description: String = "",
+    val pinned: Boolean
 ) {
 
     sealed class Type(val type: Int) {
@@ -72,5 +73,6 @@ fun ConversationDTO.toConversation() = Conversation(
     avatar = avatar,
     owner = owner,
     member = member,
-    description = description
+    description = description,
+    pinned = false
 )

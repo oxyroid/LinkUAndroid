@@ -29,4 +29,7 @@ interface ConversationDao {
 
     @Query("DELETE FROM Conversation")
     suspend fun clear()
+
+    @Query("UPDATE Conversation SET pinned = NOT pinned WHERE id = :cid")
+    suspend fun pin(cid: Int)
 }
