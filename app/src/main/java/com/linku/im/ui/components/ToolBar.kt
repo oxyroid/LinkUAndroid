@@ -22,6 +22,7 @@ import com.bumble.appyx.navmodel.backstack.BackStack
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.ifTrue
+import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalTheme
 
@@ -44,7 +45,7 @@ fun ToolBar(
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             TopAppBar(
                 title = {
-                    val duration = text.isNotEmpty().ifTrue { 800 } ?: 0
+                    val duration = text.isNotEmpty().ifTrue(800) ?: 0
                     Row {
                         val animation = remember {
                             slideInVertically(tween(duration)) { it } +
@@ -62,7 +63,9 @@ fun ToolBar(
                         ) { target ->
                             Text(
                                 text = target,
-                                style = MaterialTheme.typography.titleMedium,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = null
+                                ),
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.fillMaxWidth()
                             )

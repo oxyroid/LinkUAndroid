@@ -2,8 +2,8 @@ package com.linku.data.di
 
 import com.linku.data.BuildConfig
 import com.linku.data.ktx.serialization.asConverterFactory
-import com.linku.domain.Authenticator
-import com.linku.domain.common.Constants
+import com.linku.domain.auth.Authenticator
+import com.linku.domain.Constants
 import com.linku.domain.service.*
 import dagger.Module
 import dagger.Provides
@@ -51,7 +51,7 @@ object ApiModule {
                 val request = original.newBuilder()
                     .also { builder ->
                         authenticator.token?.let { token ->
-                            builder.header(Constants.HEADER_JWT, token)
+                            builder.header(Constants.HEADER_AUTH, token)
                         }
                     }
                     .method(original.method(), original.body())

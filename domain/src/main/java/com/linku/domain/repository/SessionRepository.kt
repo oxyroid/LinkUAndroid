@@ -1,6 +1,6 @@
 package com.linku.domain.repository
 
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface SessionRepository {

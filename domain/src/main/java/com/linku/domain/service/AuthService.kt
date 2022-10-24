@@ -1,7 +1,7 @@
 package com.linku.domain.service
 
-import com.linku.domain.Authenticator
-import com.linku.domain.BackendResult
+import com.linku.domain.bean.Token
+import com.linku.domain.wrapper.BackendResult
 import retrofit2.http.*
 
 interface AuthService {
@@ -19,7 +19,7 @@ interface AuthService {
     suspend fun signIn(
         @Field("email") email: String,
         @Field("password") password: String
-    ): BackendResult<Authenticator.Token>
+    ): BackendResult<Token>
 
     @POST("auth/token")
     suspend fun token(): BackendResult<String>

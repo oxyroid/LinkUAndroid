@@ -56,6 +56,7 @@ fun TextField(
     modifier: Modifier = Modifier,
     textFieldValue: TextFieldValue,
     background: Color = LocalTheme.current.surface,
+    contentColor: Color = LocalTheme.current.onSurface,
     placeholder: String = "",
     keyboardType: KeyboardType = KeyboardType.Text,
     readOnly: Boolean = false,
@@ -93,7 +94,7 @@ fun TextField(
         textStyle = TextStyle(
             fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
             fontSize = fontSize,
-            color = LocalTheme.current.onSurface,
+            color = contentColor,
         ),
         onValueChange = {
             onValueChange(it)
@@ -112,7 +113,7 @@ fun TextField(
             .bringIntoViewRequester(bringIntoViewRequester)
             .fillMaxWidth(),
         readOnly = readOnly,
-        cursorBrush = SolidColor(LocalTheme.current.onSurface.copy(.35f)),
+        cursorBrush = SolidColor(contentColor.copy(.35f)),
         decorationBox = { innerTextField ->
             Box(
                 Modifier
@@ -135,7 +136,7 @@ fun TextField(
                     if (textFieldValue.text.isEmpty()) {
                         Text(
                             text = placeholder,
-                            color = LocalTheme.current.onSurface.copy(.35f),
+                            color = contentColor.copy(.35f),
                             fontSize = fontSize,
                             maxLines = if (singleLine) 1 else Int.MAX_VALUE,
                             overflow = TextOverflow.Ellipsis
@@ -152,6 +153,8 @@ fun TextField(
 fun PasswordTextField(
     modifier: Modifier = Modifier,
     textFieldValue: TextFieldValue,
+    background: Color = LocalTheme.current.surface,
+    contentColor: Color = LocalTheme.current.onSurface,
     placeholder: String = "●●●●●●",
     readOnly: Boolean = false,
     enabled: Boolean = true,
@@ -212,13 +215,13 @@ fun PasswordTextField(
             fontSize = fontSize,
             fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
             fontWeight = FontWeight.Medium,
-            color = LocalTheme.current.onSurface,
+            color = contentColor,
         ),
         decorationBox = { innerTextField ->
             Row(
                 Modifier
                     .clip(MaterialTheme.shapes.medium)
-                    .background(LocalTheme.current.surface)
+                    .background(background)
                     .height(48.dp),
             ) {
 
@@ -229,7 +232,7 @@ fun PasswordTextField(
                             .padding(15.dp),
                         painter = painterResource(id = icon),
                         contentDescription = null,
-                        colorFilter = ColorFilter.tint(LocalTheme.current.onSurface)
+                        colorFilter = ColorFilter.tint(contentColor)
                     )
                 }
 
@@ -254,7 +257,7 @@ fun PasswordTextField(
                                 translationY = animPlaceholder.toPx()
                             },
                         text = placeholder,
-                        color = LocalTheme.current.onSurface.copy(alpha = .35f),
+                        color = contentColor.copy(alpha = .35f),
                         fontSize = animPlaceHolderFontSize.sp,
                         fontFamily = MaterialTheme.typography.bodyLarge.fontFamily,
                         maxLines = 1,
@@ -287,7 +290,7 @@ fun PasswordTextField(
                         Icon(
                             imageVector = Icons.Rounded.VisibilityOff,
                             contentDescription = "Show Password",
-                            tint = LocalTheme.current.onSurface.copy(alpha = .35f)
+                            tint = contentColor.copy(alpha = .35f)
                         )
                     }
 
@@ -299,11 +302,12 @@ fun PasswordTextField(
                         Icon(
                             imageVector = Icons.Rounded.Visibility,
                             contentDescription = "Hide Password",
-                            tint = LocalTheme.current.onSurface.copy(alpha = .35f)
+                            tint = contentColor.copy(alpha = .35f)
                         )
                     }
                 }
             }
-        }
+        },
+        cursorBrush = SolidColor(contentColor.copy(.35f))
     )
 }

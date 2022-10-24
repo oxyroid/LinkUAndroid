@@ -2,7 +2,7 @@ package com.linku.data.service
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.bean.Emoji
 import com.linku.domain.service.EmojiService
 import kotlinx.coroutines.flow.Flow

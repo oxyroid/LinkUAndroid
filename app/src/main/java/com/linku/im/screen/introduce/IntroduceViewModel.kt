@@ -12,11 +12,11 @@ import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
 import com.linku.data.usecase.SharedPreferenceUseCase
 import com.linku.data.usecase.UserUseCases
-import com.linku.domain.Authenticator
-import com.linku.domain.Resource
+import com.linku.domain.auth.Authenticator
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.User
-import com.linku.domain.eventOf
+import com.linku.domain.wrapper.eventOf
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.ifFalse

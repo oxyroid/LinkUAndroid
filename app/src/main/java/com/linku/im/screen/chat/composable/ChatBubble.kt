@@ -57,7 +57,8 @@ import com.linku.im.R
 import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ktx.ifTrue
-import com.linku.im.ui.components.TextImage
+import com.linku.im.ktx.rememberedRun
+import com.linku.im.ui.components.item.TextImage
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 
@@ -82,7 +83,7 @@ fun ChatBubble(
     onDismissFocus: () -> Unit,
     theme: ComposeTheme = LocalTheme.current
 ) {
-    val hasFocus = remember(focusIdProvider) { focusIdProvider() == message.id }
+    val hasFocus = rememberedRun(focusIdProvider) { invoke() == message.id }
     val config = configProvider()
     val isAnother = config.isAnother
     val isEndOfGroup = config.isEndOfGroup
@@ -258,8 +259,8 @@ fun ChatBubble(
                                     contentColor = contentColor,
                                     message = message,
                                     contentDescription = "Image Message",
-                                    isPending = remember(config.sendState) {
-                                        config.sendState == Message.STATE_PENDING
+                                    isPending = rememberedRun(config.sendState) {
+                                        this == Message.STATE_PENDING
                                     },
                                     modifier = Modifier
                                         .combinedClickable(
@@ -549,55 +550,47 @@ private fun ThumbView(
     contentDescription: String? = null,
     onGloballyPositioned: (Rect, Float) -> Unit
 ) {
-    val realUrl = remember(message) {
-        when (message) {
-            is ImageMessage -> message.url
-            is GraphicsMessage -> message.url
+    val realUrl = rememberedRun(message) {
+        when (this) {
+            is ImageMessage -> url
+            is GraphicsMessage -> url
             else -> ""
         }
     }
-    val withRatio: Boolean = remember(message) {
-        when (message) {
+    val withRatio: Boolean = rememberedRun(message) {
+        when (this) {
             is ImageMessage -> {
-                val width = message.width.toFloat()
-                val height = message.height.toFloat()
+                val width = width.toFloat()
+                val height = height.toFloat()
                 width > 0 && height > 0f
             }
 
             is GraphicsMessage -> {
-                val width = message.width.toFloat()
-                val height = message.height.toFloat()
+                val width = width.toFloat()
+                val height = height.toFloat()
                 width > 0 && height > 0f
             }
 
             else -> false
         }
     }
-    val aspectRatio = remember(message) {
+    val aspectRatio = rememberedRun(message) {
         val defaultRatio = 4 / 3f
-        if (withRatio) when (message) {
-            is ImageMessage -> {
-                val width = message.width.toFloat()
-                val height = message.height.toFloat()
-                width / height
+        if (withRatio) {
+            when (this) {
+                is ImageMessage -> width.toFloat() / height.toFloat()
+                is GraphicsMessage -> width.toFloat() / height.toFloat()
+                else -> defaultRatio
             }
-
-            is GraphicsMessage -> {
-                val width = message.width.toFloat()
-                val height = message.height.toFloat()
-                width / height
-            }
-
-            else -> defaultRatio
         } else defaultRatio
     }
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
 
-    val (w, h) = remember(aspectRatio) {
+    val (w, h) = rememberedRun(aspectRatio) {
         when {
-            aspectRatio >= 1f -> 0.75 * screenWidthDp to 0.75 * screenWidthDp / aspectRatio
-            else -> 0.45 * screenWidthDp to 0.45 * screenWidthDp / aspectRatio
+            this >= 1f -> 0.75 * screenWidthDp to 0.75 * screenWidthDp / this
+            else -> 0.45 * screenWidthDp to 0.45 * screenWidthDp / this
         }
     }
     Surface(

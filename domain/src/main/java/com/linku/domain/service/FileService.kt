@@ -1,6 +1,6 @@
 package com.linku.domain.service
 
-import com.linku.domain.BackendResult
+import com.linku.domain.wrapper.BackendResult
 import okhttp3.MultipartBody
 import retrofit2.http.Multipart
 import retrofit2.http.POST

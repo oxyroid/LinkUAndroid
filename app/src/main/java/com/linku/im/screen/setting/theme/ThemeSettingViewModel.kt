@@ -4,9 +4,10 @@ import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.SettingUseCases
 import com.linku.data.usecase.SharedPreferenceUseCase
-import com.linku.domain.Resource
-import com.linku.domain.entity.local.Theme
+import com.linku.domain.entity.Theme
+import com.linku.domain.wrapper.Resource
 import com.linku.im.LinkUEvent
+import com.linku.im.R
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.setting.SettingEvent
 import com.linku.im.screen.setting.SettingState
@@ -40,11 +41,33 @@ class ThemeSettingViewModel @Inject constructor(
                     defaultDarkTheme = sharedPreference.darkTheme
                 )
             }
-
             SettingEvent.Themes.ToggleIsDarkMode -> {
                 themes.toggleIsDarkMode()
             }
-
+            SettingEvent.Themes.PressedCancel -> {
+                writable = readable.copy(
+                    currentPressedTheme = -1
+                )
+            }
+            SettingEvent.Themes.DeletePressedTheme -> {
+                val id = readable.currentPressedTheme
+                if (id == readable.currentTheme) {
+                    onMessage(applications.getString(R.string.theme_error_delete_current))
+                    return
+                }
+                if (id <= 3) {
+                    onMessage(applications.getString(R.string.theme_error_delete_preset))
+                    return
+                }
+                viewModelScope.launch {
+                    themes.deleteById(readable.currentPressedTheme)
+                }
+            }
+            is SettingEvent.Themes.Press -> {
+                writable = readable.copy(
+                    currentPressedTheme = event.tid
+                )
+            }
             is SettingEvent.Themes.SelectThemes -> {
                 themes.selectThemes(event.tid)
                     .onEach { resource ->
@@ -72,7 +95,6 @@ class ThemeSettingViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
-
             is SettingEvent.Themes.WriteThemeToUri -> {
                 val tid = event.tid
                 viewModelScope.launch {
@@ -92,13 +114,13 @@ class ThemeSettingViewModel @Inject constructor(
                     .onEach { resource ->
                         when (resource) {
                             Resource.Loading -> {
-                                onMessage("Loading")
+                                onMessage(applications.getString(R.string.theme_import_loading))
                             }
                             is Resource.Success -> {
-                                onMessage("Success")
+                                onMessage(applications.getString(R.string.theme_import_success))
                             }
                             is Resource.Failure -> {
-                                onMessage("Failed")
+                                onMessage(resource.message)
                             }
                         }
                     }

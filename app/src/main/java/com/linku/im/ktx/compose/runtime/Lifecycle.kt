@@ -2,11 +2,10 @@
 
 package com.linku.im.ktx.compose.runtime
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.withContext
@@ -25,6 +24,18 @@ fun <T> rememberUpdatedStateWithLifecycle(
         when (context) {
             EmptyCoroutineContext -> this@produceState.value = updater()
             else -> withContext(context) { this@produceState.value = updater() }
+        }
+    }
+}
+
+@Composable
+fun ComposableLifecycle(block: (LifecycleOwner, Lifecycle.Event) -> Unit) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver(block)
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 }

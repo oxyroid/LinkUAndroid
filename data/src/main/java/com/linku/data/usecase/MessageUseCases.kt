@@ -1,9 +1,9 @@
 package com.linku.data.usecase
 
 import android.net.Uri
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
-import com.linku.domain.bean.MessageVO
+import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.Message
 import com.linku.domain.repository.MessageRepository
 import kotlinx.coroutines.flow.Flow
@@ -52,7 +52,7 @@ data class ObserveMessageVOUseCase @Inject constructor(
     operator fun invoke(
         cid: Int,
         attachPrevious: Boolean = true
-    ): Flow<List<MessageVO>> = repository.observeLatestMessageVOs(cid, attachPrevious)
+    ): Flow<List<MessageUI>> = repository.observeLatestMessageVOs(cid, attachPrevious)
 }
 
 data class ObserveLatestMessagesUseCase @Inject constructor(

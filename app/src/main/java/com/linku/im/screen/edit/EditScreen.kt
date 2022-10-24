@@ -9,7 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.linku.im.screen.introduce.IntroduceEvent
-import com.linku.im.ui.components.Snacker
+import com.linku.im.ui.components.notify.NotifyHolder
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalTheme
@@ -23,7 +23,7 @@ fun EditScreen(
 
     Scaffold(
         snackbarHost = {
-            Snacker(
+            NotifyHolder(
                 state = it,
                 modifier = Modifier.fillMaxWidth()
             )

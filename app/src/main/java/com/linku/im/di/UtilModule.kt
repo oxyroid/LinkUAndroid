@@ -4,7 +4,7 @@ import android.content.Context
 import com.linku.data.authenticator.PreferenceAuthenticator
 import com.linku.data.service.TwitterEmojiService
 import com.linku.data.usecase.SharedPreferenceUseCase
-import com.linku.domain.Authenticator
+import com.linku.domain.auth.Authenticator
 import com.linku.domain.extension.json
 import com.linku.domain.service.EmojiService
 import com.linku.im.network.ConnectivityObserver

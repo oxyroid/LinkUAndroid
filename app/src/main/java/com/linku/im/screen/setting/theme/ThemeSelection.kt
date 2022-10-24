@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linku.domain.entity.local.Theme
+import com.linku.domain.entity.Theme
 import com.linku.im.R
 import com.linku.im.ktx.compose.ui.graphics.toColor
 import com.linku.im.ui.theme.LocalSpacing
@@ -126,7 +126,10 @@ fun ThemeSelection(
                             feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             onClick()
                         },
-                        onLongClick = onLongClick
+                        onLongClick = {
+                            feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onLongClick()
+                        }
                     )
                     .graphicsLayer {
                         if (blurRadius != 0f) renderEffect = BlurEffect(blurRadius, blurRadius)

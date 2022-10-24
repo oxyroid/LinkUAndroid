@@ -12,18 +12,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material.ListItem
-import androidx.compose.material.ModalBottomSheetLayout
-import androidx.compose.material.ModalBottomSheetState
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.Scaffold
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.MoreVert
 import androidx.compose.material.icons.sharp.Verified
-import androidx.compose.material.rememberModalBottomSheetState
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -52,19 +44,22 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
-import com.linku.domain.Event
+import com.linku.domain.wrapper.Event
 import com.linku.im.BuildConfig
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
+import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.compose.ui.intervalClickable
 import com.linku.im.ktx.ifFalse
 import com.linku.im.ktx.ifTrue
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.screen.introduce.util.SquireCropImage
-import com.linku.im.ui.components.MaterialIconButton
-import com.linku.im.ui.components.Snacker
+import com.linku.im.ui.components.BottomSheetContent
+import com.linku.im.ui.components.Scrim
 import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.button.MaterialIconButton
+import com.linku.im.ui.components.notify.NotifyHolder
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -74,7 +69,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.*
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun IntroduceScreen(
     uid: Int,
@@ -134,9 +128,14 @@ fun IntroduceScreen(
         onCanceled = { viewModel.onEvent(IntroduceEvent.CancelVerifiedEmail) }
     )
 
-    val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
+    val expanded = remember {
+        mutableStateOf(false)
+    }
+
     IntroduceScaffold(
-        sheetState = sheetState,
+        expanded = expanded,
+        label = state.actionsLabel,
+        actions = state.actions,
         avatar = state.avatar,
         message = viewModel.message,
         isOthers = state.isOthers,
@@ -167,18 +166,11 @@ fun IntroduceScreen(
                 isOthers = state.isOthers
             )
         },
-        sheetContent = {
-            IntroduceSheetContent(
-                label = state.actionsLabel,
-                actions = state.actions,
-                onDismissRequest = sheetState::hide
-            )
-        },
         onPreview = { viewModel.onEvent(IntroduceEvent.AvatarClicked) },
         onAction = { viewModel.onEvent(IntroduceEvent.Actions(it.label, it.actions)) },
-        toggleLogMode = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) }
+        toggleLogMode = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) },
     )
-
+    BackHandler(expanded.value) { expanded.value = false }
 }
 
 @Composable
@@ -289,14 +281,15 @@ private fun VerifiedEmailDialog(
 )
 @Composable
 private fun IntroduceScaffold(
+    label: String,
+    actions: List<Property.Data.Action>,
+    expanded: MutableState<Boolean>,
     isOthers: Boolean,
-    sheetState: ModalBottomSheetState,
     avatar: String,
     dataProperties: List<Property>,
     settingsProperties: List<Property>,
     message: Event<String>,
     topBar: @Composable () -> Unit,
-    sheetContent: @Composable ColumnScope.() -> Unit,
     onPreview: () -> Unit,
     onAction: (IntroduceEvent.Actions) -> Unit,
     toggleLogMode: () -> Unit
@@ -310,161 +303,166 @@ private fun IntroduceScaffold(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    BackHandler(sheetState.isVisible) { scope.launch { sheetState.hide() } }
     Scaffold(
         snackbarHost = {
-            Snacker(
+            NotifyHolder(
                 state = it,
                 modifier = Modifier.fillMaxWidth()
             )
         },
         scaffoldState = scaffoldState,
-        modifier = Modifier.navigationBarsPadding()
+        modifier = Modifier.fillMaxSize(),
+        backgroundColor = LocalTheme.current.background,
+        contentColor = LocalTheme.current.onBackground
     ) { innerPadding ->
-        ModalBottomSheetLayout(
-            sheetState = sheetState,
-            sheetContent = sheetContent,
-            sheetBackgroundColor = LocalTheme.current.background,
-            sheetContentColor = LocalTheme.current.onBackground,
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .background(LocalTheme.current.background)
+                .fillMaxSize()
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-            ) {
-                item {
-                    Surface(
-                        color = LocalTheme.current.primary,
-                        contentColor = LocalTheme.current.onPrimary,
-                        onClick = {
-                            onPreview()
-                            scope.launch { sheetState.show() }
-                        }
-                    ) {
-                        val model = ImageRequest.Builder(context)
-                            .data(avatar)
-                            .crossfade(true)
-                            .build()
-                        SubcomposeAsyncImage(
-                            model = model,
-                            contentDescription = "",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(4 / 3f),
-                            contentScale = ContentScale.Crop
-                        )
+            item {
+                Surface(
+                    color = LocalTheme.current.primary,
+                    contentColor = LocalTheme.current.onPrimary,
+                    onClick = {
+                        onPreview()
+                        scope.launch { expanded.value = true }
                     }
+                ) {
+                    val model = ImageRequest.Builder(context)
+                        .data(avatar)
+                        .crossfade(true)
+                        .build()
+                    SubcomposeAsyncImage(
+                        model = model,
+                        contentDescription = "",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(4 / 3f),
+                        contentScale = ContentScale.Crop
+                    )
                 }
+            }
 
+            item {
+                ProfileList(
+                    label = stringResource(R.string.account),
+                    items = dataProperties,
+                    onItemClick = { setting ->
+                        if (isOthers) return@ProfileList
+                        if (setting is Property.Data) {
+                            IntroduceEvent.Actions(
+                                label = setting.key,
+                                actions = setting.actions
+                            ).also(onAction)
+                            scope.launch { expanded.value = true }
+                        }
+                    }
+                )
+            }
+
+            if (settingsProperties.isNotEmpty()) {
                 item {
+                    Spacer(
+                        modifier = Modifier
+                            .height(LocalSpacing.current.medium)
+                            .fillMaxWidth()
+                            .background(LocalTheme.current.divider)
+                    )
+                }
+                item {
+                    val backStack = LocalBackStack.current
                     ProfileList(
-                        label = stringResource(R.string.account),
-                        items = dataProperties,
-                        onItemClick = { setting ->
-                            if (isOthers) return@ProfileList
-                            if (setting is Property.Data) {
-                                IntroduceEvent.Actions(
-                                    label = setting.key,
-                                    actions = setting.actions
-                                ).also(onAction)
-                                scope.launch { sheetState.show() }
+                        label = stringResource(R.string.settings),
+                        items = settingsProperties,
+                        onItemClick = { property ->
+                            when (property) {
+                                is Property.Data -> {}
+                                is Property.Folder -> backStack.push(property.setting)
                             }
                         }
                     )
                 }
-
-                if (settingsProperties.isNotEmpty()) {
-                    item {
-                        Spacer(
-                            modifier = Modifier
-                                .height(LocalSpacing.current.medium)
-                                .fillMaxWidth()
-                                .background(LocalTheme.current.divider)
+                item {
+                    val versionLabel = stringResource(R.string.version_label)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(LocalTheme.current.divider)
+                            .combinedClickable(
+                                onClick = {},
+                                onLongClick = toggleLogMode,
+                                role = Role.Button
+                            ), contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$versionLabel${BuildConfig.VERSION_NAME}",
+                            style = MaterialTheme.typography.bodySmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = LocalSpacing.current.medium),
+                            color = LocalTheme.current.onBackground
                         )
-                    }
-                    item {
-                        val backStack = LocalBackStack.current
-                        ProfileList(
-                            label = stringResource(R.string.settings),
-                            items = settingsProperties,
-                            onItemClick = { property ->
-                                when (property) {
-                                    is Property.Data -> {}
-                                    is Property.Folder -> backStack.push(property.setting)
-                                }
-                            }
-                        )
-                    }
-                    item {
-                        val versionLabel = stringResource(R.string.version_label)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(LocalTheme.current.divider)
-                                .combinedClickable(
-                                    onClick = {},
-                                    onLongClick = toggleLogMode,
-                                    role = Role.Button
-                                ), contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "$versionLabel${BuildConfig.VERSION_NAME}",
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = LocalSpacing.current.medium),
-                                color = LocalTheme.current.onBackground
-                            )
-                        }
                     }
                 }
             }
-            topBar()
         }
-    }
-}
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun IntroduceSheetContent(
-    label: String,
-    actions: List<Property.Data.Action>,
-    onDismissRequest: suspend () -> Unit
-) {
-    val scope = rememberCoroutineScope()
-    LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
-        item {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleSmall.copy(color = LocalTheme.current.primary),
-                modifier = Modifier.padding(LocalSpacing.current.medium)
-            )
-        }
-        items(actions) {
-            ListItem(
-                text = {
-                    Text(
-                        text = it.text,
-                        color = LocalTheme.current.onBackground
-                    )
-                },
-                icon = {
-                    Icon(
-                        imageVector = it.icon,
-                        contentDescription = it.text,
-                        tint = LocalTheme.current.onBackground
-                    )
-                },
-                modifier = Modifier
-                    .background(LocalTheme.current.background)
-                    .intervalClickable {
-                        scope.launch {
-                            it.onClick()
-                            onDismissRequest()
-                        }
+        topBar()
+
+        Scrim(
+            color = Color.Black * 0.35f,
+            onDismiss = { expanded.value = false },
+            visible = expanded.value
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Bottom
+        ) {
+            BottomSheetContent(
+                visible = expanded.value,
+                onDismiss = { expanded.value = false },
+                maxHeight = false
+            ) {
+                LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
+                    item {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                color = LocalTheme.current.primary
+                            ),
+                            modifier = Modifier.padding(LocalSpacing.current.medium)
+                        )
                     }
-            )
+                    items(actions) {
+                        ListItem(
+                            text = {
+                                Text(
+                                    text = it.text,
+                                    color = LocalTheme.current.onBackground
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = it.icon,
+                                    contentDescription = it.text,
+                                    tint = LocalTheme.current.onBackground
+                                )
+                            },
+                            modifier = Modifier
+                                .background(LocalTheme.current.background)
+                                .intervalClickable {
+                                    scope.launch {
+                                        it.onClick()
+                                        expanded.value = false
+                                    }
+                                }
+                        )
+                    }
+                }
+
+            }
         }
     }
 }

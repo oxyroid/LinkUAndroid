@@ -1,7 +1,7 @@
 package com.linku.data.authenticator
 
 import android.content.Context
-import com.linku.domain.Authenticator
+import com.linku.domain.auth.Authenticator
 import com.linku.fs_android.readFs
 import com.linku.fs_android.writeFs
 import kotlinx.coroutines.flow.Flow

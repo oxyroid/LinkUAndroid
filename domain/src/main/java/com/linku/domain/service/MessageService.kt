@@ -1,6 +1,6 @@
 package com.linku.domain.service
 
-import com.linku.domain.BackendResult
+import com.linku.domain.wrapper.BackendResult
 import com.linku.domain.entity.MessageDTO
 import retrofit2.http.*
 

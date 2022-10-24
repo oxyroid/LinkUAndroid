@@ -2,7 +2,7 @@ package com.linku.data.di
 
 import android.content.Context
 import androidx.room.Room
-import com.linku.domain.common.Constants
+import com.linku.domain.Constants
 import com.linku.domain.room.LinkUDatabase
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao

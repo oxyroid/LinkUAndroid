@@ -24,6 +24,10 @@ import com.bumble.appyx.navmodel.backstack.operation.push
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ui.components.*
+import com.linku.im.ui.components.button.MaterialIconButton
+import com.linku.im.ui.components.item.ConversationItem
+import com.linku.im.ui.components.item.UserItem
+import com.linku.im.ui.components.notify.NotifyHolder
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -51,7 +55,7 @@ fun QueryScreen(
     }
     Scaffold(
         snackbarHost = {
-            Snacker(
+            NotifyHolder(
                 state = it,
                 modifier = Modifier.fillMaxWidth()
             )

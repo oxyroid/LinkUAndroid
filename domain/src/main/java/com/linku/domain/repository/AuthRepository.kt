@@ -1,7 +1,7 @@
 package com.linku.domain.repository
 
 import android.net.Uri
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {

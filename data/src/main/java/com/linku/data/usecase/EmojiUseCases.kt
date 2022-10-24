@@ -1,6 +1,6 @@
 package com.linku.data.usecase
 
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.bean.Emoji
 import com.linku.domain.service.EmojiService
 import kotlinx.coroutines.flow.Flow

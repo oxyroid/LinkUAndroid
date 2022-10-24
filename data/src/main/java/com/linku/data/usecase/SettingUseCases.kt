@@ -3,13 +3,13 @@ package com.linku.data.usecase
 import android.content.Context
 import android.net.Uri
 import com.linku.data.R
-import com.linku.domain.Resource
 import com.linku.domain.bean.frigidity
 import com.linku.domain.bean.midNight
 import com.linku.domain.bean.seaSalt
-import com.linku.domain.entity.local.Theme
-import com.linku.domain.entity.local.toTheme
+import com.linku.domain.entity.Theme
+import com.linku.domain.entity.toTheme
 import com.linku.domain.room.dao.ThemeDao
+import com.linku.domain.wrapper.Resource
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -38,7 +38,8 @@ sealed class SettingUseCases {
         val selectThemes: SelectThemesUseCase,
         val import: ImportUseCase,
         val importFromClipboard: ImportFromClipboardUseCase,
-        val findById: FindByIdUseCase
+        val findById: FindByIdUseCase,
+        val deleteById: DeleteByIdUseCase
     ) : SettingUseCases() {
         data class InstallDefaultThemeUseCase @Inject constructor(
             private val themeDao: ThemeDao,
@@ -154,6 +155,12 @@ sealed class SettingUseCases {
             private val themeDao: ThemeDao
         ) {
             suspend operator fun invoke(tid: Int): Theme? = themeDao.getById(tid)
+        }
+
+        data class DeleteByIdUseCase @Inject constructor(
+            private val themeDao: ThemeDao
+        ) {
+            suspend operator fun invoke(tid: Int) = themeDao.deleteById(tid)
         }
     }
 

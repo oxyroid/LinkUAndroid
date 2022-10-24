@@ -22,6 +22,10 @@ sealed class SettingEvent {
         data class WriteThemeToUri(val uri: Uri, val tid: Int) : Themes()
         data class Import(val uri: Uri) : Themes()
         object ImportFromClipboard : Themes()
+        object PressedCancel : Themes()
+        data class Press(val tid: Int) : Themes()
+
+        object DeletePressedTheme: Themes()
     }
 
     sealed class Language : SettingEvent() {

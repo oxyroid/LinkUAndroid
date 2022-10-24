@@ -1,7 +1,7 @@
 package com.linku.data.authenticator
 
 import com.linku.data.usecase.SharedPreferenceUseCase
-import com.linku.domain.Authenticator
+import com.linku.domain.auth.Authenticator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 

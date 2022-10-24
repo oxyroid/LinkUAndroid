@@ -1,6 +1,6 @@
 package com.linku.domain.service
 
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.bean.Emoji
 import kotlinx.coroutines.flow.Flow
 

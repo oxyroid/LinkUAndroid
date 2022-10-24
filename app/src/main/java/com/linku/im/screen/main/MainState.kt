@@ -1,10 +1,11 @@
 package com.linku.im.screen.main
 
-import com.linku.im.screen.main.vo.ConversationVO
+import com.linku.domain.bean.ui.ConversationUI
+
 
 data class MainState(
-    val conversations: List<ConversationVO> = emptyList(),
-    val contracts: List<ConversationVO> = emptyList(),
+    val conversations: List<ConversationUI> = emptyList(),
+    val contracts: List<ConversationUI> = emptyList(),
     val loadingConversations: Boolean = true,
     val loadingMessages: Boolean = true
 )

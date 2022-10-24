@@ -21,3 +21,5 @@ fun Color.animated(
 ).value
 
 fun Int.toColor() = Color(this)
+
+fun Long.toColor() = Color(this)

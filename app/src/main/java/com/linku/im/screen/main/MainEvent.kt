@@ -5,4 +5,7 @@ sealed class MainEvent {
     object UnsubscribeConversations : MainEvent()
     object FetchConversations : MainEvent()
     data class Pin(val cid: Int) : MainEvent()
+
+    data class Forward(val mode: MainMode) : MainEvent()
+    object Remain : MainEvent()
 }

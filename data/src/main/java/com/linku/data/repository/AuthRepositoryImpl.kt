@@ -3,14 +3,14 @@ package com.linku.data.repository
 import android.content.Context
 import android.net.Uri
 import com.linku.data.R
-import com.linku.domain.Authenticator
-import com.linku.domain.Resource
+import com.linku.domain.auth.Authenticator
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.AuthRepository
 import com.linku.domain.repository.AuthRepository.AfterSignInBehaviour
 import com.linku.domain.repository.FileRepository
 import com.linku.domain.repository.FileResource
-import com.linku.domain.resultOf
+import com.linku.domain.wrapper.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao

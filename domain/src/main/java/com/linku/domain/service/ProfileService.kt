@@ -1,6 +1,6 @@
 package com.linku.domain.service
 
-import com.linku.domain.BackendResult
+import com.linku.domain.wrapper.BackendResult
 import retrofit2.http.*
 
 interface ProfileService {

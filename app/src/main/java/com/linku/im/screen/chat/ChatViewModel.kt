@@ -6,29 +6,25 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.*
-import com.linku.domain.Authenticator
-import com.linku.domain.Resource
 import com.linku.domain.Strategy
+import com.linku.domain.auth.Authenticator
 import com.linku.domain.bean.Bubble
-import com.linku.domain.bean.MessageVO
 import com.linku.domain.bean.Reply
-import com.linku.domain.entity.Conversation
-import com.linku.domain.entity.GraphicsMessage
-import com.linku.domain.entity.ImageMessage
-import com.linku.domain.entity.TextMessage
-import com.linku.domain.eventOf
+import com.linku.domain.bean.ui.MessageUI
+import com.linku.domain.entity.*
 import com.linku.domain.service.NotificationService
 import com.linku.domain.util.LinkedNode
 import com.linku.domain.util.forward
 import com.linku.domain.util.remain
 import com.linku.domain.util.remainIf
+import com.linku.domain.wrapper.Resource
+import com.linku.domain.wrapper.eventOf
 import com.linku.im.Constants
 import com.linku.im.R
-import com.linku.im.ktx.dsl.all
-import com.linku.im.ktx.dsl.any
 import com.linku.im.ktx.dsl.suggestAny
-import com.linku.im.ktx.isSameDay
-import com.linku.im.ktx.isToday
+import com.linku.im.ktx.receiver.isSameDay
+import com.linku.im.ktx.receiver.isToday
+import com.linku.im.ktx.receiver.withTimeContentReceiver
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.chat.ChatEvent.*
 import com.linku.im.screen.chat.vo.MemberVO
@@ -47,37 +43,29 @@ class ChatViewModel @Inject constructor(
     private val messages: MessageUseCases,
     private val users: UserUseCases,
     private val notifications: NotificationService,
-    emojis: EmojiUseCases,
+    private val emojis: EmojiUseCases,
     private val authenticator: Authenticator,
     private val applications: ApplicationUseCases
 ) : BaseViewModel<ChatState, ChatEvent>(ChatState()) {
-    private val _messageFlow = MutableStateFlow(emptyList<MessageVO>())
-    val messageFlow: SharedFlow<List<MessageVO>> = _messageFlow
+    private val _messageFlow = MutableStateFlow(emptyList<MessageUI>())
+    val messageFlow: SharedFlow<List<MessageUI>> = _messageFlow
 
     private val _memberFlow = MutableStateFlow(emptyList<MemberVO>())
     val memberFlow: SharedFlow<List<MemberVO>> = _memberFlow
 
     private val _linkedNode =
-        mutableStateOf<LinkedNode<ChatScreenMode>>(LinkedNode(ChatScreenMode.Messages))
-    val linkedNode: State<LinkedNode<ChatScreenMode>> get() = _linkedNode
-
-    init {
-        writable = readable.copy(
-            emojis = emojis.getAll()
-        )
-    }
+        mutableStateOf<LinkedNode<ChatMode>>(LinkedNode(ChatMode.Messages))
+    val linkedNode: State<LinkedNode<ChatMode>> get() = _linkedNode
 
     override fun onEvent(event: ChatEvent) = when (event) {
         is ObserveChannel -> observeChannel(event)
         ObserveMessage -> observeMessages()
-        RemoveAllObservers -> removeAllObservers()
         is Fetch -> fetch()
         FetchChannelDetail -> fetchChannelDetail()
         PushShortcut -> pushShortcut()
         is OnTextChange -> onTextChange(event)
         is OnEmoji -> onEmoji(event)
         is OnFile -> onFile(event)
-        is OnScroll -> onScroll(event)
         is OnReply -> onReply(event)
         is OnFocus -> onFocus(event)
         is OnEmojiSpanExpanded -> onEmojiSpanExpanded(event)
@@ -100,7 +88,10 @@ class ChatViewModel @Inject constructor(
 
     private var observeChannelJob: Job? = null
     private fun observeChannel(event: ObserveChannel) {
-        writable = readable.copy(cid = event.cid)
+        writable = readable.copy(
+            cid = event.cid,
+            emojis = emojis.getAll()
+        )
         viewModelScope.launch {
             _messageFlow.emit(emptyList())
         }
@@ -130,112 +121,100 @@ class ChatViewModel @Inject constructor(
                 mapMessagesJob?.cancel()
                 mapMessagesJob = viewModelScope.launch {
                     messages
-                        .mapIndexedNotNull { index, message ->
-                            val next = if (index == messages.lastIndex) null
-                            else messages[index + 1]
-                            val pre = if (index == 0) null
-                            else messages[index - 1]
-                            val isAnother = authenticator.currentUID != message.uid
-                            val isShowTime = any {
-                                suggest { next == null }
-                                suggest {
-                                    checkNotNull(next)
-                                    if (message.timestamp.isToday) message.timestamp - next.timestamp >=
-                                            Constants.CHAT_LABEL_MIN_DURATION
-                                    else !message.timestamp.isSameDay(next.timestamp)
-                                }
-                            }
-                            val repliedMid = message.reply()
-                            val repliedMessage = repliedMid?.let {
-                                this@ChatViewModel.messages.getMessage(it, Strategy.Memory)
-                            }
-                            val reply = repliedMessage?.let { m ->
-                                Reply(
-                                    repliedMid = repliedMid,
-                                    index = messages.indexOfFirst { it.id == repliedMid },
-                                    display = when (m) {
-                                        is TextMessage -> m.text
-                                        is ImageMessage -> applications.getString(R.string.image_message)
-                                        is GraphicsMessage -> applications.getString(
-                                            R.string.graphics_message
-                                        )
-
-                                        else -> applications.getString(R.string.unknown_message_type)
-                                    }
-                                )
-                            }
-                            when (readable.type) {
-                                Conversation.Type.PM -> {
-                                    MessageVO(
-                                        message = message,
-                                        config = Bubble.PM(
-                                            sendState = message.sendState,
-                                            another = isAnother,
-                                            isShowTime = isShowTime,
-                                            isEndOfGroup = message.uid != pre?.uid,
-                                            reply = reply
-                                        )
-                                    )
-                                }
-
-                                Conversation.Type.GROUP -> {
-                                    val user = if (isAnother) users.findUser(
-                                        message.uid,
-                                        Strategy.Memory
-                                    ) else null
-                                    // [isShowTime] property
-                                    // The premise is that it must not be yourself,
-                                    // If this message is the bottom message
-                                    // or one level lower than it and this message is not sent by one person.
-
-                                    // [isShowAvatar] property
-                                    // The premise is that it must not be yourself,
-                                    // If this message is the top message
-                                    // or one level higher than it and this message is not sent by one person.
-
-                                    MessageVO(
-                                        message = message,
-                                        config = Bubble.Group(
-                                            sendState = message.sendState,
-                                            other = isAnother,
-                                            isShowTime = isShowTime,
-                                            avatarVisibility = all {
-                                                suggest { isAnother }
-                                                suggestAny {
-                                                    it.suggest { index == 0 }
-                                                    it.suggest { messages[index - 1].uid != message.uid }
-                                                }
-                                            },
-                                            nameVisibility = all {
-                                                suggest { isAnother }
-                                                suggestAny {
-                                                    it.suggest { index == messages.lastIndex }
-                                                    it.suggest { messages[index + 1].uid != message.uid }
-                                                }
-                                            },
-                                            name = user?.name ?: "",
-                                            avatar = user?.avatar ?: "",
-                                            isEndOfGroup = message.uid != pre?.uid,
-                                            reply = reply
-                                        )
-                                    )
-                                }
-
-                                else -> null
-                            }
-
-                        }
+                        .mapIndexedNotNull { index, m -> messages.calculate(index, m) }
                         .also {
                             _messageFlow.emit(it)
                         }
                     writable = readable.copy(
-                        scroll = if (readable.firstVisibleIndex == 0 && readable.firstVisibleItemScrollOffset == 0)
-                            eventOf(0) else readable.scroll
+                        scroll = eventOf(0)
                     )
 
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private suspend fun List<Message>.calculate(index: Int, message: Message): MessageUI? {
+        val next = getOrNull(index + 1)
+        val pre = getOrNull(index - 1)
+        val isAnother = authenticator.currentUID != message.uid
+        val isShowTime = com.linku.im.ktx.dsl.any {
+            suggest { next == null }
+            suggest {
+                checkNotNull(next)
+                message.timestamp.withTimeContentReceiver {
+                    if (it.isToday) it - next.timestamp >= Constants.CHAT_LABEL_MIN_DURATION
+                    else !it.isSameDay(next.timestamp)
+                }
+            }
+        }
+        val repliedMid = message.reply()
+        val repliedMessage = repliedMid?.let {
+            messages.getMessage(it, Strategy.Memory)
+        }
+        val reply = repliedMessage?.let { m ->
+            Reply(
+                repliedMid = repliedMid,
+                index = indexOfFirst { it.id == repliedMid },
+                display = when (m) {
+                    is TextMessage -> m.text
+                    is ImageMessage -> applications.getString(R.string.image_message)
+                    is GraphicsMessage -> applications.getString(R.string.graphics_message)
+                    else -> applications.getString(R.string.unknown_message_type)
+                }
+            )
+        }
+        return when (readable.type) {
+            Conversation.Type.PM -> {
+                MessageUI(
+                    message = message,
+                    config = Bubble.PM(
+                        sendState = message.sendState,
+                        another = isAnother,
+                        isShowTime = isShowTime,
+                        isEndOfGroup = message.uid != pre?.uid,
+                        reply = reply
+                    )
+                )
+            }
+
+            Conversation.Type.GROUP -> {
+                val user = if (isAnother) users.findUser(
+                    message.uid,
+                    Strategy.Memory
+                ) else null
+
+                MessageUI(
+                    message = message,
+                    config = Bubble.Group(
+                        sendState = message.sendState,
+                        other = isAnother,
+                        isShowTime = isShowTime,
+                        avatarVisibility = com.linku.im.ktx.dsl.all {
+                            suggest { isAnother }
+                            suggestAny {
+                                it.suggest { index == 0 }
+                                it.suggest { get(index - 1).uid != message.uid }
+                            }
+                        },
+                        nameVisibility = com.linku.im.ktx.dsl.all {
+                            suggest { isAnother }
+                            suggestAny {
+                                it.suggest { index == lastIndex }
+                                it.suggest { get(index + 1).uid != message.uid }
+                            }
+                        },
+                        name = user?.name ?: "",
+                        avatar = user?.avatar ?: "",
+                        isEndOfGroup = message.uid != pre?.uid,
+                        reply = reply
+                    )
+                )
+            }
+
+            else -> null
+        }
+
     }
 
     private var fetchJob: Job? = null
@@ -245,7 +224,8 @@ class ChatViewModel @Inject constructor(
     }
 
 
-    private fun removeAllObservers() {
+    override fun restore() {
+        super.restore()
         observeChannelJob?.cancel()
         observeMessagesJob?.cancel()
         mapMessagesJob?.cancel()
@@ -344,13 +324,6 @@ class ChatViewModel @Inject constructor(
     private fun onFile(event: OnFile) {
         writable = readable.copy(
             uri = event.uri
-        )
-    }
-
-    private fun onScroll(event: OnScroll) {
-        writable = readable.copy(
-            firstVisibleIndex = event.index,
-            firstVisibleItemScrollOffset = event.offset
         )
     }
 

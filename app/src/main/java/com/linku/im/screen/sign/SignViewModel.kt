@@ -1,22 +1,24 @@
 package com.linku.im.screen.sign
 
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
-import com.linku.domain.eventOf
 import com.linku.domain.repository.AuthRepository
+import com.linku.domain.service.system.SensorService
+import com.linku.domain.wrapper.eventOf
 import com.linku.im.R
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class SignViewModel @Inject constructor(
     private val authUseCases: AuthUseCases,
-    private val applicationUseCases: ApplicationUseCases
+    private val applicationUseCases: ApplicationUseCases,
+    private val sensorService: SensorService
 ) : BaseViewModel<SignState, SignEvent>(SignState()) {
     override fun onEvent(event: SignEvent) {
         when (event) {
@@ -30,6 +32,18 @@ class SignViewModel @Inject constructor(
                 password = event.password
             )
         }
+    }
+
+    private val _point3DFlow = MutableSharedFlow<Float>()
+    val point3DFlow: SharedFlow<Float> get() = _point3DFlow
+
+    init {
+        sensorService.observe()
+            .map { it.x }
+            .onEach {
+                _point3DFlow.emit(it)
+            }
+            .launchIn(viewModelScope)
     }
 
     private fun signIn() {

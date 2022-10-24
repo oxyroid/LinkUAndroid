@@ -2,7 +2,9 @@
 
 package com.linku.im.di
 
+import com.linku.data.service.system.SensorServiceImpl
 import com.linku.domain.service.NotificationService
+import com.linku.domain.service.system.SensorService
 import com.linku.im.network.NotificationServiceImpl
 import dagger.Binds
 import dagger.Module
@@ -17,4 +19,7 @@ abstract class ServiceModule {
     @Singleton
     abstract fun bindNotificationService(service: NotificationServiceImpl): NotificationService
 
+    @Binds
+    @Singleton
+    abstract fun bindSensorService(service: SensorServiceImpl): SensorService
 }

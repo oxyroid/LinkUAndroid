@@ -1,18 +1,23 @@
 package com.linku.im.screen.main
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.MessageUseCases
-import com.linku.domain.Resource
+import com.linku.domain.bean.ui.toUI
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.TextMessage
+import com.linku.domain.util.LinkedNode
+import com.linku.domain.util.forward
+import com.linku.domain.util.remain
+import com.linku.domain.wrapper.Resource
 import com.linku.im.R
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.screen.main.vo.toMainUI
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
@@ -46,13 +51,28 @@ class MainViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    private val _linkedNode = mutableStateOf<LinkedNode<MainMode>>(
+        LinkedNode(MainMode.Conversations)
+    )
+    val linkedNode: State<LinkedNode<MainMode>> get() = _linkedNode
+
     override fun onEvent(event: MainEvent) {
         when (event) {
             MainEvent.ObserveConversations -> observeConversations()
             MainEvent.UnsubscribeConversations -> unsubscribeConversations()
             MainEvent.FetchConversations -> fetchConversations()
             is MainEvent.Pin -> pin(event)
+            is MainEvent.Forward -> forward(event)
+            MainEvent.Remain -> remain()
         }
+    }
+
+    private fun remain() {
+        _linkedNode.value = linkedNode.value.remain()
+    }
+
+    private fun forward(event: MainEvent.Forward) {
+        _linkedNode.value = linkedNode.value.forward(event.mode)
     }
 
     private var observeConversationsJob: Job? = null
@@ -62,11 +82,11 @@ class MainViewModel @Inject constructor(
                 writable = readable.copy(
                     conversations = conversations
                         .filter { it.type == Conversation.Type.GROUP }
-                        .map { it.toMainUI() }
+                        .map(Conversation::toUI)
                         .sorted(),
                     contracts = conversations
                         .filter { it.type == Conversation.Type.PM }
-                        .map { it.toMainUI() }
+                        .map(Conversation::toUI)
                         .sorted()
                 )
                 observeConversationsJob?.cancel()

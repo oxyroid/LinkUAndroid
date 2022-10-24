@@ -2,11 +2,11 @@ package com.linku.data.repository
 
 import com.linku.data.R
 import com.linku.data.usecase.ApplicationUseCases
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.SessionRepository
 import com.linku.domain.repository.SessionRepository.State.*
-import com.linku.domain.resultOf
+import com.linku.domain.wrapper.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.AuthService

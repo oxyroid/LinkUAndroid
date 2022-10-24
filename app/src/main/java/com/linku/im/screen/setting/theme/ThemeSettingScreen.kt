@@ -1,14 +1,21 @@
 package com.linku.im.screen.setting.theme
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Scaffold
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -16,12 +23,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.linku.domain.repository.MimeType
 import com.linku.im.R
 import com.linku.im.ktx.compose.ui.graphics.animated
+import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.screen.setting.SettingEvent
-import com.linku.im.ui.components.Snacker
+import com.linku.im.ui.components.BottomSheetContent
+import com.linku.im.ui.components.Scrim
 import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.notify.NotifyHolder
+import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThemeSettingScreen(
     modifier: Modifier = Modifier,
@@ -54,6 +66,11 @@ fun ThemeSettingScreen(
             viewModel.onEvent(SettingEvent.Themes.Import(it))
         }
     }
+
+    fun onDismiss() {
+        viewModel.onEvent(SettingEvent.Themes.PressedCancel)
+    }
+
     LaunchedEffect(viewModel.message) {
         viewModel.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
@@ -62,7 +79,7 @@ fun ThemeSettingScreen(
     Scaffold(
         scaffoldState = scaffoldState,
         snackbarHost = {
-            Snacker(
+            NotifyHolder(
                 state = it,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -93,15 +110,14 @@ fun ThemeSettingScreen(
                         currentTid = state.currentTheme,
                         modifier = Modifier.height(96.dp),
                         onClick = {
-                            val msg = context.getString(R.string.warn_premium_theme)
+                            val msg = context.getString(R.string.theme_warn_premium)
                             scope.launch {
                                 scaffoldState.snackbarHostState.showSnackbar(msg)
                             }
                             viewModel.onEvent(SettingEvent.Themes.SelectThemes(it.id))
                         },
                         onLongClick = {
-                            exportedTid = it.id
-                            exporter.launch("Theme_${System.currentTimeMillis()}.txt")
+                            viewModel.onEvent(SettingEvent.Themes.Press(it.id))
                         }
                     )
                 }
@@ -115,4 +131,61 @@ fun ThemeSettingScreen(
             }
         }
     }
+    Scrim(
+        color = Color.Black * 0.35f,
+        onDismiss = ::onDismiss,
+        visible = state.currentPressedTheme != -1
+    )
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        BottomSheetContent(
+            visible = state.currentPressedTheme != -1,
+            onDismiss = ::onDismiss,
+            maxHeight = false
+        ) {
+            Column {
+                ListItem(
+                    headlineText = {
+                        Text(text = stringResource(R.string.theme_export))
+                    },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(LocalSpacing.current.medium))
+                        .fillMaxWidth()
+                        .clickable {
+                            exportedTid = state.currentPressedTheme
+                            exporter.launch("Theme_${System.currentTimeMillis()}.txt")
+                            onDismiss()
+                        },
+                    colors = ListItemDefaults.colors(
+                        containerColor = LocalTheme.current.background,
+                        headlineColor = LocalTheme.current.onBackground,
+                        leadingIconColor = LocalTheme.current.onBackground,
+                        overlineColor = LocalTheme.current.onBackground
+                    )
+                )
+                ListItem(
+                    headlineText = {
+                        Text(text = stringResource(R.string.theme_delete))
+                    },
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(LocalSpacing.current.medium))
+                        .fillMaxWidth()
+                        .clickable {
+                            viewModel.onEvent(SettingEvent.Themes.DeletePressedTheme)
+                            onDismiss()
+                        },
+                    colors = ListItemDefaults.colors(
+                        containerColor = LocalTheme.current.background,
+                        headlineColor = LocalTheme.current.onBackground,
+                        leadingIconColor = LocalTheme.current.onBackground,
+                        overlineColor = LocalTheme.current.onBackground
+                    )
+                )
+            }
+        }
+    }
+
+    BackHandler(state.currentPressedTheme != -1, ::onDismiss)
 }

@@ -25,10 +25,8 @@ import androidx.compose.material.icons.sharp.ExpandMore
 import androidx.compose.material.icons.sharp.Reply
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,15 +44,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
@@ -62,20 +57,27 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
-import com.linku.domain.bean.MessageVO
+import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.Message
 import com.linku.domain.util.hasCache
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.compose.foundation.lazy.isAtTop
+import com.linku.im.ktx.compose.runtime.ComposableLifecycle
 import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.dsl.any
 import com.linku.im.ktx.ifTrue
+import com.linku.im.ktx.rememberedRun
 import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.screen.chat.composable.ChatTextField
 import com.linku.im.screen.chat.composable.ChatTimestamp
 import com.linku.im.screen.chat.composable.ChatTopBar
 import com.linku.im.ui.components.*
+import com.linku.im.ui.components.button.MaterialButton
+import com.linku.im.ui.components.button.MaterialIconButton
+import com.linku.im.ui.components.button.MaterialTextButton
+import com.linku.im.ui.components.item.MemberItem
+import com.linku.im.ui.components.notify.NotifyHolder
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalDuration
 import com.linku.im.ui.theme.LocalSpacing
@@ -86,32 +88,23 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
-    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
     cid: Int
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
     val backStack = LocalBackStack.current
-    val hostState = remember { SnackbarHostState() }
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = state.firstVisibleIndex,
-        initialFirstVisibleItemScrollOffset = state.firstVisibleItemScrollOffset
-    )
+    val hostState = remember(::SnackbarHostState)
+    val listState = rememberLazyListState()
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             viewModel.onEvent(ChatEvent.OnFile(uri))
         }
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_CREATE) {
-                viewModel.onEvent(ChatEvent.ObserveChannel(cid))
-            } else if (event == Lifecycle.Event.ON_DESTROY) {
-                viewModel.onEvent(ChatEvent.RemoveAllObservers)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
+
+    ComposableLifecycle { _, event ->
+        if (event == Lifecycle.Event.ON_START) {
+            viewModel.onEvent(ChatEvent.ObserveChannel(cid))
+        } else if (event == Lifecycle.Event.ON_STOP) {
+            viewModel.restore()
         }
     }
 
@@ -125,11 +118,6 @@ fun ChatScreen(
     }
 
     val messages by viewModel.messageFlow.collectAsState(emptyList())
-    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
-    val offset by remember { derivedStateOf { listState.firstVisibleItemScrollOffset } }
-    LaunchedEffect(firstVisibleItemIndex, offset) {
-        viewModel.onEvent(ChatEvent.OnScroll(firstVisibleItemIndex, offset))
-    }
 
     LaunchedEffect(vm.readable.readyForObserveMessages) {
         if (vm.readable.readyForObserveMessages) {
@@ -137,7 +125,7 @@ fun ChatScreen(
         }
     }
 
-    val linkedNode = viewModel.linkedNode.value
+    val linkedNode by viewModel.linkedNode
     val mode = linkedNode.value
 
     @Composable
@@ -150,7 +138,7 @@ fun ChatScreen(
     ) {
         Scaffold(
             snackbarHost = {
-                Snacker(
+                NotifyHolder(
                     state = it,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -181,7 +169,11 @@ fun ChatScreen(
                     }
                 }
             }
-            if (mode is ChatScreenMode.ChannelDetail) {
+            AnimatedVisibility(
+                visible = mode is ChatMode.ChannelDetail,
+                enter = slideInHorizontally { it },
+                exit = slideOutHorizontally { it }
+            ) {
                 Box(
                     Modifier
                         .fillMaxSize()
@@ -194,7 +186,7 @@ fun ChatScreen(
             }
         }
 
-        if (mode is ChatScreenMode.ImageDetail) {
+        if (mode is ChatMode.ImageDetail) {
             imageDetailContent(
                 mode.url,
                 mode.boundaries,
@@ -211,23 +203,23 @@ fun ChatScreen(
                 subTitle = vm.readable.label ?: state.subTitle,
                 introduce = "",
                 tonalElevation = when (mode) {
-                    ChatScreenMode.Messages -> LocalSpacing.current.small
+                    ChatMode.Messages -> LocalSpacing.current.small
                     else -> 0.dp
                 },
                 onClick = { mode ->
                     when (mode) {
-                        ChatScreenMode.Messages -> {
-                            viewModel.onEvent(ChatEvent.Forward(ChatScreenMode.ChannelDetail))
+                        ChatMode.Messages -> {
+                            viewModel.onEvent(ChatEvent.Forward(ChatMode.ChannelDetail))
                         }
 
-                        ChatScreenMode.ChannelDetail -> {}
-                        is ChatScreenMode.MemberDetail -> {}
-                        is ChatScreenMode.ImageDetail -> {}
+                        ChatMode.ChannelDetail -> {}
+                        is ChatMode.MemberDetail -> {}
+                        is ChatMode.ImageDetail -> {}
                     }
                 },
                 onNavClick = { mode ->
                     when (mode) {
-                        ChatScreenMode.Messages -> backStack.pop()
+                        ChatMode.Messages -> backStack.pop()
                         else -> viewModel.onEvent(ChatEvent.Remain)
                     }
                 }
@@ -247,7 +239,7 @@ fun ChatScreen(
                 onImagePreview = { mid, boundaries ->
                     viewModel.onEvent(
                         ChatEvent.Forward(
-                            ChatScreenMode.ImageDetail(
+                            ChatMode.ImageDetail(
                                 mid,
                                 boundaries
                             )
@@ -304,7 +296,7 @@ fun ChatScreen(
         },
         channelDetailContent = {
             LaunchedEffect(mode) {
-                if (mode == ChatScreenMode.ChannelDetail) {
+                if (mode == ChatMode.ChannelDetail) {
                     viewModel.onEvent(ChatEvent.FetchChannelDetail)
                 }
             }
@@ -377,8 +369,8 @@ fun ChatScreen(
 
             val paddingValues = WindowInsets.systemBars.asPaddingValues()
 
-            val request = remember(model) {
-                ImageRequest.Builder(context).data(model).build()
+            val request = rememberedRun(model) {
+                ImageRequest.Builder(context).data(this).build()
             }
             val loader = remember {
                 ImageLoader.Builder(context)
@@ -491,7 +483,7 @@ fun ChatScreen(
                 )
             }
             LaunchedEffect(mode, model, boundaries) {
-                isShowed = mode is ChatScreenMode.ImageDetail
+                isShowed = mode is ChatMode.ImageDetail
             }
         }
     )
@@ -515,7 +507,7 @@ fun ChatScreen(
 @Composable
 fun ListContent(
     listState: LazyListState,
-    messages: List<MessageVO>,
+    messages: List<MessageUI>,
     loading: () -> Boolean,
     focusMessageIdProvider: () -> Int?,
     onReply: (Int) -> Unit,
@@ -541,19 +533,19 @@ fun ListContent(
             )
         }
     } else {
-        val paddingValues = remember(messages) {
-            messages.map {
+        val paddingValues = rememberedRun(messages) {
+            map {
                 PaddingValues(
                     top = 6.dp,
                     bottom = if (it.config.isEndOfGroup) 6.dp else 0.dp
                 )
             }
         }
-        val isShowTimes = remember(messages) {
-            messages.map { it.config.isShowTime }
+        val isShowTimes = rememberedRun(messages) {
+            map { it.config.isShowTime }
         }
-        val timestamps = remember(messages) {
-            messages.map { it.message.timestamp }
+        val timestamps = rememberedRun(messages) {
+            map { it.message.timestamp }
         }
         LazyColumn(
             state = listState,
@@ -568,7 +560,10 @@ fun ListContent(
                         .height(spacing)
                 )
             }
-            itemsIndexed(messages, key = { _, item -> item.message.id }) { index, it ->
+            itemsIndexed(
+                items = messages,
+                key = { _, item -> item.message.id }
+            ) { index, it ->
                 ChatBubble(
                     message = it.message,
                     focusIdProvider = focusMessageIdProvider,

@@ -6,7 +6,7 @@ import android.net.Uri
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Member

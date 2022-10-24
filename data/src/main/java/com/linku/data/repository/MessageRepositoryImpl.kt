@@ -5,17 +5,17 @@ import android.net.Uri
 import androidx.core.net.toFile
 import com.linku.data.R
 import com.linku.data.util.ImageUtil
-import com.linku.domain.Authenticator
-import com.linku.domain.Resource
+import com.linku.domain.auth.Authenticator
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
-import com.linku.domain.bean.MessageVO
+import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.bean.StagingMessage
 import com.linku.domain.entity.*
 import com.linku.domain.extension.use
 import com.linku.domain.repository.FileRepository
 import com.linku.domain.repository.FileResource
 import com.linku.domain.repository.MessageRepository
-import com.linku.domain.resultOf
+import com.linku.domain.wrapper.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ConversationService
@@ -96,12 +96,12 @@ class MessageRepositoryImpl @Inject constructor(
     }
 
 
-    private val messagesMap = mutableMapOf<Int, Flow<List<MessageVO>>>()
+    private val messagesMap = mutableMapOf<Int, Flow<List<MessageUI>>>()
     override fun observeLatestMessageVOs(
         cid: Int, attachPrevious: Boolean
-    ): Flow<List<MessageVO>> {
+    ): Flow<List<MessageUI>> {
         val flow = if (!messagesMap.contains(cid))
-            channelFlow<List<MessageVO>> {
+            channelFlow<List<MessageUI>> {
                 messageDao.observeLatestMessageByCid(cid)
                     .onEach { message: Message ->
                         // TODO:

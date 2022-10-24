@@ -2,10 +2,10 @@ package com.linku.im
 
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.*
-import com.linku.domain.Authenticator
-import com.linku.domain.Resource
-import com.linku.domain.entity.local.toComposeTheme
+import com.linku.domain.auth.Authenticator
+import com.linku.domain.entity.toComposeTheme
 import com.linku.domain.repository.SessionRepository
+import com.linku.domain.wrapper.Resource
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -156,9 +156,9 @@ class LinkUViewModel @Inject constructor(
     private var initRemoteSessionJob: Job? = null
     private var times = 0
     private fun initRemoteSession() {
-        sharedPreference.debug {
+        sharedPreference.log {
             times++
-            applicationUseCases.toast("Init session, times: $times")
+            onMessage("Init session, times: $times")
         }
         initRemoteSessionJob?.cancel()
         initRemoteSessionJob = sessionUseCases
@@ -185,8 +185,8 @@ class LinkUViewModel @Inject constructor(
                                             readyForObserveMessages = true
                                         )
                                         delay(3000)
-                                        sharedPreference.debug {
-                                            applicationUseCases.toast(it.message)
+                                        sharedPreference.log {
+                                            onMessage(it.message)
                                         }
                                         onEvent(LinkUEvent.InitSession)
                                     }
@@ -198,8 +198,8 @@ class LinkUViewModel @Inject constructor(
                     is Resource.Failure -> {
                         deliverState(Label.Failed)
                         delay(3000)
-                        sharedPreference.debug {
-                            applicationUseCases.toast(resource.message)
+                        sharedPreference.log {
+                            onMessage(resource.message)
                         }
                         onEvent(LinkUEvent.InitSession)
                     }

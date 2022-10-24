@@ -1,9 +1,9 @@
 package com.linku.domain.repository
 
 import android.net.Uri
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
-import com.linku.domain.bean.MessageVO
+import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.Message
 import kotlinx.coroutines.flow.Flow
 
@@ -14,7 +14,7 @@ interface MessageRepository {
     fun observeLatestMessageVOs(
         cid: Int,
         attachPrevious: Boolean
-    ): Flow<List<MessageVO>>
+    ): Flow<List<MessageUI>>
 
     fun observeLatestMessage(cid: Int): Flow<Message>
 

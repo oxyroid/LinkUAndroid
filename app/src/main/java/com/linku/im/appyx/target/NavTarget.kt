@@ -36,9 +36,6 @@ sealed class NavTarget : Parcelable {
     object Sign : NavTarget()
 
     @Parcelize
-    object Create : NavTarget()
-
-    @Parcelize
     object Query : NavTarget()
 
     @Parcelize

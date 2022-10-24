@@ -1,8 +1,6 @@
 package com.linku.im.appyx.node
 
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
@@ -17,7 +15,6 @@ import com.bumble.appyx.navmodel.backstack.transitionhandler.rememberBackstackSl
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.screen.chat.ChatScreen
 import com.linku.im.screen.chat.ChatViewModel
-import com.linku.im.screen.create.CreateScreen
 import com.linku.im.screen.edit.EditScreen
 import com.linku.im.screen.introduce.IntroduceScreen
 import com.linku.im.screen.main.MainScreen
@@ -42,18 +39,14 @@ class RootNode(
         CompositionLocalProvider(
             LocalBackStack provides backStack
         ) {
-            Box(
-                modifier = modifier.fillMaxSize()
-            ) {
-                Children(
-                    navModel = backStack,
-                    transitionHandler = rememberBackstackSlider(
-                        transitionSpec = { tween(LocalDuration.current.medium) }
-                    )
-                )
-            }
+            Children(
+                navModel = backStack,
+                transitionHandler = rememberBackstackSlider(
+                    transitionSpec = { tween(LocalDuration.current.medium) }
+                ),
+                modifier = modifier
+            )
         }
-
     }
 
     override fun resolve(
@@ -71,10 +64,6 @@ class RootNode(
 
         is NavTarget.Introduce -> node(buildContext) {
             IntroduceScreen(uid = navTarget.uid)
-        }
-
-        NavTarget.Create -> node(buildContext) {
-            CreateScreen()
         }
 
         is NavTarget.Edit -> node(buildContext) {

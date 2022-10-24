@@ -9,15 +9,12 @@ plugins {
 android {
     namespace 'com.linku.im'
     compileSdk 33
-    aaptOptions {
-        noCompress "config"
-    }
     defaultConfig {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 33
-        versionCode 104
-        versionName "0.14.8"
+        versionCode 106
+        versionName "0.15.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -53,6 +50,9 @@ android {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
+    }
+    androidResources {
+        noCompress 'config'
     }
 }
 
@@ -112,10 +112,6 @@ dependencies {
 
     // json
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0'
-
-    // acra
-    implementation "ch.acra:acra-mail:$acra_version"
-    implementation "ch.acra:acra-toast:$acra_version"
 
     // appyx
     implementation "com.bumble.appyx:core:$appyx_version"

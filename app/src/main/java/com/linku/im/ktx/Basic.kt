@@ -2,8 +2,8 @@
 
 package com.linku.im.ktx
 
-import android.content.Context
-import android.widget.Toast
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisallowComposableCalls
 
 inline fun <R> Boolean?.ifTrue(block: () -> R): R? {
     return if (this == true) block()
@@ -15,17 +15,12 @@ inline fun <R> Boolean?.ifFalse(block: () -> R): R? {
     else null
 }
 
-fun Context.toast(text: String, duration: Int = Toast.LENGTH_SHORT) {
-    Toast.makeText(this, text, duration).show()
-}
+fun <R> Boolean?.ifTrue(value: R): R? = ifTrue { value }
+fun <R> Boolean?.ifFalse(value: R): R? = ifFalse { value }
 
-inline fun <K, V> MutableMap<K, V>.getOrPutNullable(k: K, block: () -> V?): V? =
-    get(k) ?: block()?.also { put(k, it) }
-
-inline fun <E> List<E>.update(newValue: (E) -> E, findFirst: (E) -> Boolean): List<E> {
-    val mutableList = toMutableList()
-    find(findFirst)?.also {
-        mutableList[indexOf(it)] = newValue(it)
-    }
-    return mutableList
-}
+@Composable
+inline fun <T, R> rememberedRun(
+    key: T,
+    crossinline calculation: @DisallowComposableCalls T.() -> R
+): R =
+    androidx.compose.runtime.remember(key) { calculation(key) }

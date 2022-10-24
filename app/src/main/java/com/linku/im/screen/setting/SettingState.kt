@@ -9,6 +9,7 @@ sealed class SettingState {
         val currentTheme: Int = -1,
         val defaultLightTheme: Int = -1,
         val defaultDarkTheme: Int = -1,
+        val currentPressedTheme: Int = -1
     ) : SettingState()
 
     class Language() : SettingState()

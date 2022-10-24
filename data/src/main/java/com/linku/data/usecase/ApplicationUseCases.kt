@@ -41,6 +41,12 @@ data class GetStringUseCase @Inject constructor(
 data class ToastUseCase @Inject constructor(
     @ApplicationContext val context: Context
 ) {
+    @Deprecated(
+        "Use BaseViewModel.onMessage instead",
+        ReplaceWith(
+            "onMessage(text)"
+        )
+    )
     operator fun invoke(text: String?, duration: Int = Toast.LENGTH_SHORT) {
         Toast.makeText(context, text, duration).show()
     }

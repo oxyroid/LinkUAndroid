@@ -1,7 +1,7 @@
 package com.linku.domain.room.dao
 
 import androidx.room.*
-import com.linku.domain.entity.local.Theme
+import com.linku.domain.entity.Theme
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -11,6 +11,9 @@ interface ThemeDao {
 
     @Delete
     suspend fun delete(theme: Theme)
+
+    @Query("DELETE FROM Theme WHERE id = :id")
+    suspend fun deleteById(id: Int)
 
     @Query("SELECT * FROM Theme WHERE id = :id")
     suspend fun getById(id: Int): Theme?

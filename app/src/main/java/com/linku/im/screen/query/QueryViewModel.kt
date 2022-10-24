@@ -4,7 +4,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.UserUseCases
-import com.linku.domain.Resource
+import com.linku.domain.wrapper.Resource
 import com.linku.im.ktx.ifFalse
 import com.linku.im.ktx.ifTrue
 import com.linku.im.screen.BaseViewModel
