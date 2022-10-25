@@ -1,6 +1,5 @@
 package com.linku.im.screen.sign
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
@@ -18,7 +17,7 @@ import javax.inject.Inject
 class SignViewModel @Inject constructor(
     private val authUseCases: AuthUseCases,
     private val applicationUseCases: ApplicationUseCases,
-    private val sensorService: SensorService
+    sensorService: SensorService
 ) : BaseViewModel<SignState, SignEvent>(SignState()) {
     override fun onEvent(event: SignEvent) {
         when (event) {
@@ -68,7 +67,6 @@ class SignViewModel @Inject constructor(
                     )
 
                     AuthRepository.SignInState.Completed -> {
-                        onMessage(applicationUseCases.getString(R.string.log_in_success))
                         readable.copy(
                             syncing = false,
                             loading = false,

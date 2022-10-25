@@ -22,7 +22,7 @@ class LinkUViewModel @Inject constructor(
     private val messageUseCases: MessageUseCases,
     private val sessionUseCases: SessionUseCases,
     private val emojiUseCases: EmojiUseCases,
-    private val applicationUseCases: ApplicationUseCases,
+    private val applications: ApplicationUseCases,
     private val sharedPreference: SharedPreferenceUseCase,
     connectivityObserver: ConnectivityObserver,
     val authenticator: Authenticator,
@@ -83,13 +83,11 @@ class LinkUViewModel @Inject constructor(
                     isDarkMode = saved
                 )
             }
-
             LinkUEvent.Disconnect -> {
                 viewModelScope.launch {
                     sessionUseCases.close()
                 }
             }
-
             is LinkUEvent.OnTheme -> {
                 viewModelScope.launch {
                     writable = if (event.isDarkMode) {
@@ -109,6 +107,9 @@ class LinkUViewModel @Inject constructor(
                     }
 
                 }
+            }
+            LinkUEvent.Premium -> {
+                onMessage(applications.getString(R.string.premium_unavailable))
             }
         }
     }
@@ -136,19 +137,19 @@ class LinkUViewModel @Inject constructor(
                     writable = readable.copy(
                         loading = true
                     )
-                    applicationUseCases.getString(R.string.connecting)
+                    applications.getString(R.string.connecting)
                 }
 
-                Label.Failed -> applicationUseCases.getString(R.string.connected_failed)
+                Label.Failed -> applications.getString(R.string.connected_failed)
                 Label.Subscribing -> {
                     writable = readable.copy(
                         loading = true
                     )
-                    applicationUseCases.getString(R.string.subscribing)
+                    applications.getString(R.string.subscribing)
                 }
 
-                Label.SubscribedFailed -> applicationUseCases.getString(R.string.subscribe_failed)
-                Label.NoAuth -> applicationUseCases.getString(R.string.no_auth)
+                Label.SubscribedFailed -> applications.getString(R.string.subscribe_failed)
+                Label.NoAuth -> applications.getString(R.string.no_auth)
             }
         )
     }

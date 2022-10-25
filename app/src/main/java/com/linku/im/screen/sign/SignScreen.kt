@@ -1,5 +1,6 @@
 package com.linku.im.screen.sign
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -32,6 +34,7 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.google.accompanist.insets.ui.Scaffold
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.ktx.compose.runtime.ComposableLifecycle
 import com.linku.im.ui.components.PasswordTextField
@@ -49,7 +52,6 @@ import com.linku.im.vm
 fun SignScreen(
     viewModel: SignViewModel = hiltViewModel()
 ) {
-
     val systemUiController = rememberSystemUiController()
     val theme = LocalTheme.current
     ComposableLifecycle { _, event ->
@@ -122,27 +124,47 @@ fun SignScreen(
                     .padding(PaddingValues(horizontal = LocalSpacing.current.extraLarge)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                var isDragging by remember {
+                    mutableStateOf(false)
+                }
                 val configuration = LocalConfiguration.current
                 val density = LocalDensity.current.density
                 val fullWidth = configuration.screenWidthDp * density
                 var offset by remember {
                     mutableStateOf(fullWidth / 2f)
                 }
+                val zoom by animateFloatAsState(
+                    if (isDragging) 0.8f
+                    else 1f
+                )
                 val animateProgress by animateFloatAsState(
-                    offset / fullWidth,
+                    (offset / fullWidth + xray * 0.25f).coerceIn(0f..1f),
                     spring(
-                        dampingRatio = Spring.DampingRatioHighBouncy,
+                        dampingRatio = when (isDragging) {
+                            true -> Spring.DampingRatioNoBouncy
+                            false -> Spring.DampingRatioHighBouncy
+                        },
                         stiffness = Spring.StiffnessVeryLow
                     )
                 )
+                var premiumVisible by remember { mutableStateOf(false) }
                 val draggableState = rememberDraggableState {
                     offset -= it
+                }
+                LaunchedEffect(animateProgress) {
+                    if (animateProgress >= 0.75f || animateProgress <= 0.25f) {
+                        premiumVisible = true
+                    }
                 }
                 val feedback = LocalHapticFeedback.current
                 LottieAnimation(
                     composition = lottie,
                     progress = { animateProgress },
                     modifier = Modifier
+                        .graphicsLayer {
+                            scaleX = zoom
+                            scaleY = zoom
+                        }
                         .padding(bottom = LocalSpacing.current.medium)
                         .fillMaxWidth()
                         .height(160.dp)
@@ -152,9 +174,11 @@ fun SignScreen(
                             onDragStopped = {
                                 offset = fullWidth / 2f
                                 feedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                isDragging = false
                             },
                             onDragStarted = {
                                 feedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                isDragging = true
                             }
                         )
                 )
@@ -218,13 +242,15 @@ fun SignScreen(
                         viewModel.onEvent(SignEvent.SignIn)
                         focusManager.clearFocus()
                     }
-                    MaterialPremiumButton(
-                        text = "注册并订阅Premium (15% off)",
-                        enabled = !state.loading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        viewModel.onEvent(SignEvent.SignUp)
-                        focusManager.clearFocus()
+                    AnimatedVisibility(premiumVisible) {
+                        MaterialPremiumButton(
+                            text = "注册并订阅Premium (15% off)",
+                            enabled = !state.loading,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            vm.onEvent(LinkUEvent.Premium)
+                            focusManager.clearFocus()
+                        }
                     }
                     MaterialTextButton(
                         textRes = R.string.screen_login_btn_register,

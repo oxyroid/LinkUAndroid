@@ -12,4 +12,5 @@ sealed class LinkUEvent {
     data class OnTheme(val tid: Int, val isDarkMode: Boolean) : LinkUEvent()
     object Disconnect : LinkUEvent()
     object InitSession : LinkUEvent()
+    object Premium : LinkUEvent()
 }

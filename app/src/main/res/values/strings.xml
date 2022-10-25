@@ -101,8 +101,9 @@
 
     <string name="new_channel">创建会话</string>
     <string name="theme_error_delete_current">生效中的主题不可删除</string>
-    <string name="theme_import_loading">导入中...</string>
+    <string name="theme_import_loading">导入中…</string>
     <string name="theme_import_success">导入成功</string>
     <string name="theme_import_error">导入失败</string>
     <string name="premium">Premium Account</string>
+    <string name="premium_unavailable">Premium is unavailable in your area now</string>
 </resources>

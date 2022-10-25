@@ -15,11 +15,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.FabPosition
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material.icons.sharp.*
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -74,7 +74,7 @@ fun MainScreen(
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState()
-    val hostState = remember { SnackbarHostState() }
+    val scaffoldState = rememberScaffoldState()
 
     val backStack = LocalBackStack.current
     val linkedNode by viewModel.linkedNode
@@ -112,12 +112,13 @@ fun MainScreen(
 
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {
-            hostState.showSnackbar(it)
+            scaffoldState.snackbarHostState.showSnackbar(it)
         }
-        vm.message.handle { hostState.showSnackbar(it) }
+        vm.message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
     }
     val theme = LocalTheme.current
     Scaffold(
+        scaffoldState = scaffoldState,
         snackbarHost = {
             NotifyHolder(
                 state = it,
@@ -162,12 +163,6 @@ fun MainScreen(
                     is MainMode.NewChannel -> stringResource(R.string.new_channel)
                 }
             )
-        },
-        floatingActionButton = {},
-        floatingActionButtonPosition = when (mode) {
-            MainMode.Conversations -> FabPosition.End
-            MainMode.NewChannel -> FabPosition.Center
-            MainMode.Notifications -> FabPosition.End
         },
         backgroundColor = Color.Unspecified
     ) { innerPadding ->
@@ -304,7 +299,7 @@ fun MainScreen(
                                         .clickable(
                                             role = Role.Button,
                                             onClick = {
-
+                                                vm.onEvent(LinkUEvent.Premium)
                                             }
                                         )
                                         .padding(LocalSpacing.current.medium)
@@ -359,7 +354,10 @@ fun MainScreen(
                 contentAlignment = Alignment.BottomEnd,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(LocalSpacing.current.medium)
+                    .padding(
+                        horizontal = LocalSpacing.current.medium,
+                        vertical = LocalSpacing.current.large
+                    )
             ) {
                 val configuration = LocalConfiguration.current
                 val density = LocalDensity.current.density
@@ -452,10 +450,13 @@ fun MainScreen(
 
 
 private sealed class Selection(
-    @StringRes open val resId: Int, open val icon: ImageVector
+    @StringRes open val resId: Int,
+    open val icon: ImageVector
 ) {
     data class Route(
-        override val resId: Int, val target: NavTarget, override val icon: ImageVector
+        override val resId: Int,
+        val target: NavTarget,
+        override val icon: ImageVector
     ) : Selection(resId, icon)
 
     data class Switch(
