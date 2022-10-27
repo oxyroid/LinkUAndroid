@@ -1,11 +1,20 @@
 package com.linku.im.ui.components.notify
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.SnackbarData
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHostState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.delay
@@ -24,10 +33,12 @@ fun NotifyHolder(
                     delay(3_000)
                     state.currentSnackbarData?.dismiss()
                 }
+
                 SnackbarDuration.Long -> {
                     delay(5_000)
                     state.currentSnackbarData?.dismiss()
                 }
+
                 SnackbarDuration.Indefinite -> {
 
                 }

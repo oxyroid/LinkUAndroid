@@ -2,9 +2,10 @@ package com.linku.im.screen.setting.theme
 
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
+import com.linku.data.usecase.Configurations
 import com.linku.data.usecase.SettingUseCases
-import com.linku.data.usecase.SharedPreferenceUseCase
 import com.linku.domain.entity.Theme
+import com.linku.domain.extension.json
 import com.linku.domain.wrapper.Resource
 import com.linku.im.LinkUEvent
 import com.linku.im.R
@@ -20,35 +21,36 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 @HiltViewModel
 class ThemeSettingViewModel @Inject constructor(
     private val themes: SettingUseCases.Themes,
-    private val sharedPreference: SharedPreferenceUseCase,
+    private val configurations: Configurations,
     private val applications: ApplicationUseCases,
-    private val json: Json
 ) : BaseViewModel<SettingState.Themes, SettingEvent.Themes>(SettingState.Themes()) {
     val allTheme: Flow<List<Theme>> = themes.observeAllLocalTheme()
     override fun onEvent(event: SettingEvent.Themes) {
         when (event) {
             SettingEvent.Themes.Init -> {
                 writable = readable.copy(
-                    currentTheme = if (sharedPreference.isDarkMode) sharedPreference.darkTheme
-                    else sharedPreference.lightTheme,
-                    defaultLightTheme = sharedPreference.lightTheme,
-                    defaultDarkTheme = sharedPreference.darkTheme
+                    currentTheme = if (configurations.isDarkMode) configurations.darkTheme
+                    else configurations.lightTheme,
+                    defaultLightTheme = configurations.lightTheme,
+                    defaultDarkTheme = configurations.darkTheme
                 )
             }
+
             SettingEvent.Themes.ToggleIsDarkMode -> {
                 themes.toggleIsDarkMode()
             }
+
             SettingEvent.Themes.PressedCancel -> {
                 writable = readable.copy(
                     currentPressedTheme = -1
                 )
             }
+
             SettingEvent.Themes.DeletePressedTheme -> {
                 val id = readable.currentPressedTheme
                 if (id == readable.currentTheme) {
@@ -63,11 +65,13 @@ class ThemeSettingViewModel @Inject constructor(
                     themes.deleteById(readable.currentPressedTheme)
                 }
             }
+
             is SettingEvent.Themes.Press -> {
                 writable = readable.copy(
                     currentPressedTheme = event.tid
                 )
             }
+
             is SettingEvent.Themes.SelectThemes -> {
                 themes.selectThemes(event.tid)
                     .onEach { resource ->
@@ -95,6 +99,7 @@ class ThemeSettingViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
+
             is SettingEvent.Themes.WriteThemeToUri -> {
                 val tid = event.tid
                 viewModelScope.launch {
@@ -109,6 +114,7 @@ class ThemeSettingViewModel @Inject constructor(
                     }
                 }
             }
+
             is SettingEvent.Themes.Import -> {
                 themes.import(event.uri)
                     .onEach { resource ->
@@ -116,9 +122,11 @@ class ThemeSettingViewModel @Inject constructor(
                             Resource.Loading -> {
                                 onMessage(applications.getString(R.string.theme_import_loading))
                             }
+
                             is Resource.Success -> {
                                 onMessage(applications.getString(R.string.theme_import_success))
                             }
+
                             is Resource.Failure -> {
                                 onMessage(resource.message)
                             }
@@ -126,6 +134,7 @@ class ThemeSettingViewModel @Inject constructor(
                     }
                     .launchIn(viewModelScope)
             }
+
             is SettingEvent.Themes.ImportFromClipboard -> {}
         }
     }

@@ -25,7 +25,7 @@ sealed class SettingEvent {
         object PressedCancel : Themes()
         data class Press(val tid: Int) : Themes()
 
-        object DeletePressedTheme: Themes()
+        object DeletePressedTheme : Themes()
     }
 
     sealed class Language : SettingEvent() {

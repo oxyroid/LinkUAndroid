@@ -19,7 +19,7 @@ abstract class BaseViewModel<S, E>(private val emptyState: S) : ViewModel() {
     var message by _message
         private set
 
-    abstract fun onEvent(event: E)
+    internal abstract fun onEvent(event: E)
 
     protected fun onMessage(message: String?) {
         this.message = eventOf(message ?: return)

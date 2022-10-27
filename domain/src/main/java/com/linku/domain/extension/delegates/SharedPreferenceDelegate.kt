@@ -24,19 +24,8 @@ private inline fun <T> SharedPreferences.delegate(
 fun SharedPreferences.int(def: Int = 0, key: String? = null) =
     delegate(key, def, SharedPreferences::getInt, SharedPreferences.Editor::putInt)
 
-fun SharedPreferences.string(def: String, key: String? = null) =
+fun SharedPreferences.string(def: String? = null, key: String? = null) =
     delegate(key, def, SharedPreferences::getString, SharedPreferences.Editor::putString)
-
-fun SharedPreferences.nullableString(def: String? = null, key: String? = null) =
-    delegate(key, def, SharedPreferences::getString, SharedPreferences.Editor::putString)
-
-fun SharedPreferences.nullableInt(def: Int? = null, key: String? = null) =
-    delegate(
-        key,
-        def,
-        { k, v -> getString(k, v?.toString())?.toInt() },
-        { k, v -> putString(k, v.toString()) }
-    )
 
 fun SharedPreferences.long(def: Long = 0, key: String? = null) =
     delegate(key, def, SharedPreferences::getLong, SharedPreferences.Editor::putLong)

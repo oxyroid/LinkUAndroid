@@ -8,6 +8,7 @@ import com.linku.domain.bean.midNight
 import com.linku.domain.bean.seaSalt
 import com.linku.domain.entity.Theme
 import com.linku.domain.entity.toTheme
+import com.linku.domain.extension.json
 import com.linku.domain.room.dao.ThemeDao
 import com.linku.domain.wrapper.Resource
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,7 +16,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 sealed class SettingUseCases {
@@ -43,23 +43,23 @@ sealed class SettingUseCases {
     ) : SettingUseCases() {
         data class InstallDefaultThemeUseCase @Inject constructor(
             private val themeDao: ThemeDao,
-            private val sharedPreference: SharedPreferenceUseCase
+            private val configurations: Configurations
         ) : SettingUseCases() {
             operator fun invoke(): Flow<Resource<Unit>> = flow {
                 emit(Resource.Loading)
                 runCatching {
                     var isAnyDefaultThemeNotInstalled = false
-                    if (sharedPreference.lightTheme == Theme.NOT_EXIST_ID) {
+                    if (configurations.lightTheme == Theme.NOT_EXIST_ID) {
                         isAnyDefaultThemeNotInstalled = true
                         val theme: Theme = seaSalt.toTheme()
                         val id = themeDao.insert(theme)
-                        sharedPreference.lightTheme = id.toInt()
+                        configurations.lightTheme = id.toInt()
                     }
-                    if (sharedPreference.darkTheme == Theme.NOT_EXIST_ID) {
+                    if (configurations.darkTheme == Theme.NOT_EXIST_ID) {
                         isAnyDefaultThemeNotInstalled = true
                         val theme: Theme = midNight.toTheme()
                         val id = themeDao.insert(theme)
-                        sharedPreference.darkTheme = id.toInt()
+                        configurations.darkTheme = id.toInt()
                     }
                     if (isAnyDefaultThemeNotInstalled) {
                         val theme: Theme = frigidity.toTheme()
@@ -82,15 +82,15 @@ sealed class SettingUseCases {
         }
 
         data class ToggleIsDarkModeUseCase @Inject constructor(
-            private val sharedPreferenceUseCase: SharedPreferenceUseCase
+            private val configurations: Configurations
         ) {
             operator fun invoke() {
-                sharedPreferenceUseCase.isDarkMode = !sharedPreferenceUseCase.isDarkMode
+                configurations.isDarkMode = !configurations.isDarkMode
             }
         }
 
         data class SelectThemesUseCase @Inject constructor(
-            private val sharedPreferenceUseCase: SharedPreferenceUseCase,
+            private val configurations: Configurations,
             private val themeDao: ThemeDao
         ) {
             operator fun invoke(tid: Int): Flow<Resource<Theme>> = flow {
@@ -100,11 +100,11 @@ sealed class SettingUseCases {
                     checkNotNull(theme) { "Cannot found Theme!" }
                     val isDark = theme.isDark
                     if (isDark) {
-                        sharedPreferenceUseCase.darkTheme = theme.id
+                        configurations.darkTheme = theme.id
                     } else {
-                        sharedPreferenceUseCase.lightTheme = theme.id
+                        configurations.lightTheme = theme.id
                     }
-                    sharedPreferenceUseCase.isDarkMode = isDark
+                    configurations.isDarkMode = isDark
                     theme
                 }
                     .onSuccess { emit(Resource.Success(it)) }
@@ -116,7 +116,6 @@ sealed class SettingUseCases {
 
         data class ImportUseCase @Inject constructor(
             private val themeDao: ThemeDao,
-            private val json: Json,
             private val applications: ApplicationUseCases
         ) {
             operator fun invoke(uri: Uri): Flow<Resource<Theme>> = flow {

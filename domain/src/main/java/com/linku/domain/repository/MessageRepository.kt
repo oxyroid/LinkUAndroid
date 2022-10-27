@@ -1,10 +1,10 @@
 package com.linku.domain.repository
 
 import android.net.Uri
-import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.Message
+import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {

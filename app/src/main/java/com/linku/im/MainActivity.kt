@@ -15,8 +15,6 @@ import com.bumble.appyx.core.integrationpoint.LocalIntegrationPoint
 import com.bumble.appyx.core.integrationpoint.NodeActivity
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.im.appyx.node.RootNode
-import com.linku.im.ktx.dsl.all
-import com.linku.im.ktx.ifTrue
 import com.linku.im.ui.theme.AppTheme
 import com.linku.im.ui.theme.LocalTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -56,13 +54,13 @@ class MainActivity : NodeActivity(), ViewTreeObserver.OnPreDrawListener {
         content.viewTreeObserver.addOnPreDrawListener(this)
     }
 
-    override fun onPreDraw(): Boolean = all {
-        suggest { vm.readable.isEmojiReady }
-        suggest { vm.readable.isThemeReady }
-    }.ifTrue {
-        content.viewTreeObserver.removeOnPreDrawListener(this)
-        true
-    } ?: false
+    override fun onPreDraw(): Boolean {
+        val splashCompleted = with(vm.readable) { isEmojiReady && isThemeReady }
+        if (splashCompleted) {
+            content.viewTreeObserver.removeOnPreDrawListener(this)
+        }
+        return splashCompleted
+    }
 
     override fun onDestroy() {
         super.onDestroy()

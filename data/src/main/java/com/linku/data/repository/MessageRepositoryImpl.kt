@@ -5,28 +5,41 @@ import android.net.Uri
 import androidx.core.net.toFile
 import com.linku.data.R
 import com.linku.data.util.ImageUtil
-import com.linku.domain.auth.Authenticator
-import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
-import com.linku.domain.bean.ui.MessageUI
+import com.linku.domain.auth.Authenticator
 import com.linku.domain.bean.StagingMessage
-import com.linku.domain.entity.*
+import com.linku.domain.bean.ui.MessageUI
+import com.linku.domain.entity.GraphicsContent
+import com.linku.domain.entity.GraphicsMessage
+import com.linku.domain.entity.ImageContent
+import com.linku.domain.entity.ImageMessage
+import com.linku.domain.entity.Message
+import com.linku.domain.entity.MessageDTO
+import com.linku.domain.entity.TextContent
+import com.linku.domain.entity.TextMessage
+import com.linku.domain.entity.toConversation
+import com.linku.domain.extension.json
 import com.linku.domain.extension.use
 import com.linku.domain.repository.FileRepository
 import com.linku.domain.repository.FileResource
 import com.linku.domain.repository.MessageRepository
-import com.linku.domain.wrapper.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.ConversationService
 import com.linku.domain.service.MessageService
+import com.linku.domain.wrapper.Resource
+import com.linku.domain.wrapper.resultOf
 import com.tencent.mmkv.MMKV
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 class MessageRepositoryImpl @Inject constructor(
@@ -37,7 +50,6 @@ class MessageRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val fileRepository: FileRepository,
     private val mmkv: MMKV,
-    private val json: Json,
     private val authenticator: Authenticator
 ) : MessageRepository {
 
@@ -77,6 +89,7 @@ class MessageRepositoryImpl @Inject constructor(
                     } else readable
                 } else readable
             }
+
             is GraphicsMessage -> {
                 val url = readable.url
                 if (url.startsWith(SCHEMA_FILE)) {
@@ -91,6 +104,7 @@ class MessageRepositoryImpl @Inject constructor(
                     } else readable
                 } else readable
             }
+
             else -> readable
         }
     }
@@ -159,6 +173,7 @@ class MessageRepositoryImpl @Inject constructor(
                 it.toIO()
                 it.toMessage()
             } ?: fromIO()
+
             Strategy.CacheElseNetwork -> fromIO() ?: fromBackend()?.let {
                 it.toIO()
                 it.toMessage()
@@ -240,11 +255,12 @@ class MessageRepositoryImpl @Inject constructor(
                         createStagingMessage(staging)
                         trySend(Resource.Loading)
                     }
+
                     is FileResource.Success -> {
                         // 4. Make real HTTP-Connection to send message.
                         val cachedFile = resource.data
                         launch {
-                            val (width, height) = ImageUtil.getBitmapFromUri(
+                            val (width, height) = ImageUtil.decodeBitmap(
                                 context.contentResolver,
                                 cachedFile.localUri
                             )?.use {
@@ -302,12 +318,14 @@ class MessageRepositoryImpl @Inject constructor(
 
                         }
                     }
+
                     is FileResource.OtherError -> {
                         launch {
                             downgradeStagingMessage(staging.uuid)
                             trySend(Resource.Failure(resource.message))
                         }
                     }
+
                     else -> {
                         val resId = when (resource) {
                             FileResource.FileCannotFoundError -> R.string.error_file_cannot_found
@@ -351,11 +369,12 @@ class MessageRepositoryImpl @Inject constructor(
                         createStagingMessage(staging)
                         trySend(Resource.Loading)
                     }
+
                     is FileResource.Success -> {
                         // 4. Make real HTTP-Connection to send message.
                         val cachedFile = resource.data
                         launch {
-                            val (width, height) = ImageUtil.getBitmapFromUri(
+                            val (width, height) = ImageUtil.decodeBitmap(
                                 context.contentResolver,
                                 cachedFile.localUri
                             )?.use {
@@ -414,12 +433,14 @@ class MessageRepositoryImpl @Inject constructor(
                                 }
                         }
                     }
+
                     is FileResource.OtherError -> {
                         launch {
                             downgradeStagingMessage(staging.uuid)
                             trySend(Resource.Failure(resource.message))
                         }
                     }
+
                     else -> {
                         val resId = when (resource) {
                             FileResource.FileCannotFoundError -> R.string.error_file_cannot_found
@@ -457,8 +478,9 @@ class MessageRepositoryImpl @Inject constructor(
                     sendState = Message.STATE_PENDING
                 )
             }
+
             is StagingMessage.Image -> {
-                val (width, height) = ImageUtil.getBitmapFromUri(
+                val (width, height) = ImageUtil.decodeBitmap(
                     context.contentResolver,
                     staging.uri
                 )?.use {
@@ -483,8 +505,9 @@ class MessageRepositoryImpl @Inject constructor(
                     sendState = Message.STATE_PENDING
                 )
             }
+
             is StagingMessage.Graphics -> {
-                val (width, height) = ImageUtil.getBitmapFromUri(
+                val (width, height) = ImageUtil.decodeBitmap(
                     context.contentResolver, staging.uri
                 )?.use {
                     it.width to it.height

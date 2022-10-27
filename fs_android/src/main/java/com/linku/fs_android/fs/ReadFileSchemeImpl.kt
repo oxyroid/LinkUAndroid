@@ -23,6 +23,7 @@ class ReadFileSchemeImpl(
                 logger.error("Scheme: ${uri.scheme} should be delivered in WriteFileScheme.", true)
                 null
             }
+
             else -> {
                 logger.warn("The scheme: ${uri.scheme} is not supported.")
                 null

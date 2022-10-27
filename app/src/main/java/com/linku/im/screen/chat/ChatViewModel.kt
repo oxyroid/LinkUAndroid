@@ -5,13 +5,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
-import com.linku.data.usecase.*
+import com.linku.data.usecase.ApplicationUseCases
+import com.linku.data.usecase.ConversationUseCases
+import com.linku.data.usecase.EmojiUseCases
+import com.linku.data.usecase.MessageUseCases
+import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Strategy
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.bean.Bubble
 import com.linku.domain.bean.Reply
 import com.linku.domain.bean.ui.MessageUI
-import com.linku.domain.entity.*
+import com.linku.domain.entity.Conversation
+import com.linku.domain.entity.GraphicsMessage
+import com.linku.domain.entity.ImageMessage
+import com.linku.domain.entity.Message
+import com.linku.domain.entity.TextMessage
 import com.linku.domain.service.NotificationService
 import com.linku.domain.util.LinkedNode
 import com.linku.domain.util.forward
@@ -26,7 +34,23 @@ import com.linku.im.ktx.receiver.isSameDay
 import com.linku.im.ktx.receiver.isToday
 import com.linku.im.ktx.receiver.withTimeContentReceiver
 import com.linku.im.screen.BaseViewModel
-import com.linku.im.screen.chat.ChatEvent.*
+import com.linku.im.screen.chat.ChatEvent.CancelMessage
+import com.linku.im.screen.chat.ChatEvent.FetchChannel
+import com.linku.im.screen.chat.ChatEvent.FetchChannelDetail
+import com.linku.im.screen.chat.ChatEvent.Forward
+import com.linku.im.screen.chat.ChatEvent.ObserveMessage
+import com.linku.im.screen.chat.ChatEvent.OnEmoji
+import com.linku.im.screen.chat.ChatEvent.OnEmojiSpanExpanded
+import com.linku.im.screen.chat.ChatEvent.OnFile
+import com.linku.im.screen.chat.ChatEvent.OnFocus
+import com.linku.im.screen.chat.ChatEvent.OnReply
+import com.linku.im.screen.chat.ChatEvent.OnTextChange
+import com.linku.im.screen.chat.ChatEvent.PushShortcut
+import com.linku.im.screen.chat.ChatEvent.ReadAll
+import com.linku.im.screen.chat.ChatEvent.Remain
+import com.linku.im.screen.chat.ChatEvent.RemainIf
+import com.linku.im.screen.chat.ChatEvent.ResendMessage
+import com.linku.im.screen.chat.ChatEvent.SendMessage
 import com.linku.im.screen.chat.vo.MemberVO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -58,10 +82,9 @@ class ChatViewModel @Inject constructor(
     val linkedNode: State<LinkedNode<ChatMode>> get() = _linkedNode
 
     override fun onEvent(event: ChatEvent) = when (event) {
-        is ObserveChannel -> observeChannel(event)
-        ObserveMessage -> observeMessages()
-        is Fetch -> fetch()
+        is FetchChannel -> fetchChannel(event)
         FetchChannelDetail -> fetchChannelDetail()
+        ObserveMessage -> observeMessages()
         PushShortcut -> pushShortcut()
         is OnTextChange -> onTextChange(event)
         is OnEmoji -> onEmoji(event)
@@ -87,7 +110,7 @@ class ChatViewModel @Inject constructor(
     }
 
     private var observeChannelJob: Job? = null
-    private fun observeChannel(event: ObserveChannel) {
+    private fun fetchChannel(event: FetchChannel) {
         writable = readable.copy(
             cid = event.cid,
             emojis = emojis.getAll()
@@ -217,19 +240,11 @@ class ChatViewModel @Inject constructor(
 
     }
 
-    private var fetchJob: Job? = null
-    private fun fetch() {
-        fetchJob?.cancel()
-        fetchJob = conversations.fetchConversation(readable.cid).launchIn(viewModelScope)
-    }
-
-
     override fun restore() {
         super.restore()
         observeChannelJob?.cancel()
         observeMessagesJob?.cancel()
         mapMessagesJob?.cancel()
-        fetchJob?.cancel()
     }
 
     private var observeMessagesJob: Job? = null

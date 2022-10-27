@@ -11,7 +11,7 @@ import com.linku.fs_core.fs.WriteFileScheme
 import com.linku.fs_core.logger.Logger
 import java.io.File
 import java.nio.file.Files
-import java.util.*
+import java.util.UUID
 
 class WriteFileSchemeImpl(
     private val context: Context,

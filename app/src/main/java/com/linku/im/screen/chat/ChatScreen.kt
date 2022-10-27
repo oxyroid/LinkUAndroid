@@ -50,6 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
@@ -72,6 +74,7 @@ import com.linku.im.screen.chat.composable.ChatBubble
 import com.linku.im.screen.chat.composable.ChatTextField
 import com.linku.im.screen.chat.composable.ChatTimestamp
 import com.linku.im.screen.chat.composable.ChatTopBar
+import com.linku.im.screen.main.globalLabelOrElse
 import com.linku.im.ui.components.*
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
@@ -85,6 +88,7 @@ import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
@@ -101,9 +105,9 @@ fun ChatScreen(
         }
 
     ComposableLifecycle { _, event ->
-        if (event == Lifecycle.Event.ON_START) {
-            viewModel.onEvent(ChatEvent.ObserveChannel(cid))
-        } else if (event == Lifecycle.Event.ON_STOP) {
+        if (event == Lifecycle.Event.ON_CREATE) {
+            viewModel.onEvent(ChatEvent.FetchChannel(cid))
+        } else if (event == Lifecycle.Event.ON_DESTROY) {
             viewModel.restore()
         }
     }
@@ -200,7 +204,7 @@ fun ChatScreen(
             ChatTopBar(
                 modeProvider = { mode },
                 title = state.title,
-                subTitle = vm.readable.label ?: state.subTitle,
+                subTitle = globalLabelOrElse { state.subTitle },
                 introduce = "",
                 tonalElevation = when (mode) {
                     ChatMode.Messages -> LocalSpacing.current.small
@@ -230,7 +234,7 @@ fun ChatScreen(
             val height = configuration.screenHeightDp
             ListContent(
                 listState = listState,
-                loading = { !vm.readable.readyForObserveMessages },
+                loadingProvider = { !vm.readable.readyForObserveMessages },
                 messages = messages,
                 focusMessageIdProvider = { state.focusMessageId },
                 onReply = { viewModel.onEvent(ChatEvent.OnReply(it)) },
@@ -312,7 +316,7 @@ fun ChatScreen(
                         CircularProgressIndicator()
                     }
                 } else {
-                    val members by viewModel.memberFlow.collectAsState(emptyList())
+                    val members by viewModel.memberFlow.collectAsStateWithLifecycle(emptyList())
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -450,8 +454,8 @@ fun ChatScreen(
                                     any {
                                         suggest { offsetY <= -configuration.screenHeightDp / 2f }
                                         suggest {
-                                            (offsetY >= configuration.screenHeightDp / 2f).also {
-                                                if (it) {
+                                            (offsetY >= configuration.screenHeightDp / 2f).also { res ->
+                                                if (res) {
                                                     // TODO
                                                 }
                                             }
@@ -508,7 +512,7 @@ fun ChatScreen(
 fun ListContent(
     listState: LazyListState,
     messages: List<MessageUI>,
-    loading: () -> Boolean,
+    loadingProvider: () -> Boolean,
     focusMessageIdProvider: () -> Int?,
     onReply: (Int) -> Unit,
     onResend: (Int) -> Unit,
@@ -521,7 +525,7 @@ fun ListContent(
     modifier: Modifier = Modifier,
     spacing: Dp = 150.dp
 ) {
-    if (loading()) {
+    if (loadingProvider()) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = modifier

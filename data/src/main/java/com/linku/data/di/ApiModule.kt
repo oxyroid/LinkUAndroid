@@ -2,15 +2,15 @@ package com.linku.data.di
 
 import com.linku.data.BuildConfig
 import com.linku.data.ktx.serialization.asConverterFactory
-import com.linku.domain.auth.Authenticator
 import com.linku.domain.Constants
+import com.linku.domain.auth.Authenticator
+import com.linku.domain.extension.json
 import com.linku.domain.service.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -26,7 +26,6 @@ object ApiModule {
     @Provides
     @Singleton
     fun provideRetrofitClient(
-        json: Json,
         client: OkHttpClient
     ): Retrofit {
         val contentType = MediaType.get("application/json")

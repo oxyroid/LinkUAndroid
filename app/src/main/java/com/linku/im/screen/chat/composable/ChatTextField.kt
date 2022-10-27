@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,6 +55,7 @@ fun ChatTextField(
     onExpanded: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val feedback = LocalHapticFeedback.current
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
@@ -65,7 +67,6 @@ fun ChatTextField(
                     vertical = LocalSpacing.current.extraSmall
                 )
         ) {
-            // Real Text Field
             Surface(
                 color = LocalTheme.current.surface,
                 contentColor = LocalTheme.current.onSurface,
@@ -126,6 +127,7 @@ fun ChatTextField(
                 }
             }
             Spacer(modifier = Modifier.width(LocalSpacing.current.extraSmall))
+
             FilledIconButton(
                 onClick = {
                     if (text().text.isNotBlank() || uri() != null) onSend()

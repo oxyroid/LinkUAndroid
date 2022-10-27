@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.bumble.appyx.navmodel.backstack.BackStack
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.linku.im.appyx.target.NavTarget
+import com.linku.im.ktx.compose.ui.graphics.animated
 import com.linku.im.ktx.ifTrue
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.theme.LocalBackStack
@@ -35,8 +36,8 @@ fun ToolBar(
     actions: @Composable (RowScope.() -> Unit),
     text: String,
     navIcon: ImageVector = Icons.Default.ArrowBack,
-    backgroundColor: Color = LocalTheme.current.topBar,
-    contentColor: Color = LocalTheme.current.onTopBar
+    backgroundColor: Color = LocalTheme.current.topBar.animated(),
+    contentColor: Color = LocalTheme.current.onTopBar.animated()
 ) {
     CompositionLocalProvider(
         LocalContentColor provides contentColor

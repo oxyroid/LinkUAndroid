@@ -5,7 +5,13 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentAlpha
@@ -13,13 +19,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.BaselineShift
+import com.linku.im.ktx.compose.ui.graphics.animated
 import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -31,7 +45,9 @@ internal fun NotifyTextHolder(
     modifier: Modifier = Modifier,
     icon: ImageVector = Icons.Rounded.Warning,
     delay: Long = 800L,
-    animationSpec: AnimationSpec<Float> = spring()
+    animationSpec: AnimationSpec<Float> = spring(),
+    backgroundColor: Color = (LocalTheme.current.surface).animated(),
+    contentColor: Color = (LocalTheme.current.onSurface * 0.6f).animated()
 ) {
     var iconVisibility by remember { mutableStateOf(false) }
     val alpha by animateFloatAsState(
@@ -47,7 +63,7 @@ internal fun NotifyTextHolder(
         LocalContentAlpha provides ContentAlpha.disabled
     ) {
         Column(
-            modifier = Modifier.background(LocalTheme.current.surface)
+            modifier = Modifier.background(backgroundColor)
         ) {
             Row(
                 modifier = Modifier
@@ -66,7 +82,7 @@ internal fun NotifyTextHolder(
                         .graphicsLayer {
                             this.alpha = alpha
                         },
-                    tint = LocalTheme.current.onSurface * 0.6f
+                    tint = contentColor
                 )
 
                 Text(
@@ -75,7 +91,7 @@ internal fun NotifyTextHolder(
                         .copy(
                             baselineShift = BaselineShift.None
                         ),
-                    color = LocalTheme.current.onSurface * 0.6f,
+                    color = contentColor,
                     modifier = modifier.weight(1f)
                 )
             }

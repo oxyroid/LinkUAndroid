@@ -28,6 +28,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
@@ -48,6 +50,7 @@ import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import com.linku.im.vm
 
+@OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun SignScreen(
     viewModel: SignViewModel = hiltViewModel()
@@ -55,12 +58,12 @@ fun SignScreen(
     val systemUiController = rememberSystemUiController()
     val theme = LocalTheme.current
     ComposableLifecycle { _, event ->
-        if (event == Lifecycle.Event.ON_START) {
+        if (event == Lifecycle.Event.ON_CREATE) {
             systemUiController.setSystemBarsColor(
                 color = Color.Transparent,
                 darkIcons = !theme.isDark
             )
-        } else if (event == Lifecycle.Event.ON_STOP) {
+        } else if (event == Lifecycle.Event.ON_DESTROY) {
             systemUiController.setSystemBarsColor(
                 color = Color.Transparent,
                 darkIcons = theme.isDarkText
@@ -97,7 +100,7 @@ fun SignScreen(
         }
     }
 
-    val xray by viewModel.point3DFlow.collectAsState(initial = 0f)
+    val xray by viewModel.point3DFlow.collectAsStateWithLifecycle(0f)
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -133,12 +136,8 @@ fun SignScreen(
                 var offset by remember {
                     mutableStateOf(fullWidth / 2f)
                 }
-                val zoom by animateFloatAsState(
-                    if (isDragging) 0.8f
-                    else 1f
-                )
                 val animateProgress by animateFloatAsState(
-                    (offset / fullWidth + xray * 0.25f).coerceIn(0f..1f),
+                    (offset / fullWidth + xray * 0.15f).coerceIn(0f..1f),
                     spring(
                         dampingRatio = when (isDragging) {
                             true -> Spring.DampingRatioNoBouncy
@@ -146,6 +145,9 @@ fun SignScreen(
                         },
                         stiffness = Spring.StiffnessVeryLow
                     )
+                )
+                val zoom by animateFloatAsState(
+                    if (isDragging) 0.8f else 1f
                 )
                 var premiumVisible by remember { mutableStateOf(false) }
                 val draggableState = rememberDraggableState {

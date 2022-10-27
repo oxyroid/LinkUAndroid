@@ -9,7 +9,7 @@ import android.provider.MediaStore
 import androidx.core.graphics.decodeBitmap
 
 object ImageUtil {
-    fun getBitmapFromUri(contentResolver: ContentResolver, uri: Uri): Bitmap? {
+    fun decodeBitmap(contentResolver: ContentResolver, uri: Uri): Bitmap? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             ImageDecoder.createSource(contentResolver, uri).decodeBitmap { _, _ -> }
         } else {

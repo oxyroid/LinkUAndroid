@@ -1,10 +1,11 @@
 package com.linku.data.repository
 
-import com.linku.domain.*
+import com.linku.domain.Strategy
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.ConversationDTO
 import com.linku.domain.entity.Member
 import com.linku.domain.entity.toConversation
+import com.linku.domain.extension.json
 import com.linku.domain.repository.ConversationRepository
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.service.ConversationService
@@ -17,13 +18,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 class ConversationRepositoryImpl @Inject constructor(
     private val conversationDao: ConversationDao,
     private val conversationService: ConversationService,
-    private val json: Json,
     private val mmkv: MMKV,
 ) : ConversationRepository {
     override suspend fun findConversation(cid: Int, strategy: Strategy): Conversation? {

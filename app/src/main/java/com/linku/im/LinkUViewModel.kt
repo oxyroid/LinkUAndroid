@@ -1,7 +1,12 @@
 package com.linku.im
 
 import androidx.lifecycle.viewModelScope
-import com.linku.data.usecase.*
+import com.linku.data.usecase.ApplicationUseCases
+import com.linku.data.usecase.Configurations
+import com.linku.data.usecase.EmojiUseCases
+import com.linku.data.usecase.MessageUseCases
+import com.linku.data.usecase.SessionUseCases
+import com.linku.data.usecase.SettingUseCases
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.entity.toComposeTheme
 import com.linku.domain.repository.SessionRepository
@@ -23,7 +28,7 @@ class LinkUViewModel @Inject constructor(
     private val sessionUseCases: SessionUseCases,
     private val emojiUseCases: EmojiUseCases,
     private val applications: ApplicationUseCases,
-    private val sharedPreference: SharedPreferenceUseCase,
+    private val configurations: Configurations,
     connectivityObserver: ConnectivityObserver,
     val authenticator: Authenticator,
     private val themes: SettingUseCases.Themes
@@ -78,16 +83,18 @@ class LinkUViewModel @Inject constructor(
             LinkUEvent.InitConfig -> initConfig()
             LinkUEvent.ToggleDarkMode -> {
                 val saved = !readable.isDarkMode
-                sharedPreference.isDarkMode = saved
+                configurations.isDarkMode = saved
                 writable = readable.copy(
                     isDarkMode = saved
                 )
             }
+
             LinkUEvent.Disconnect -> {
                 viewModelScope.launch {
                     sessionUseCases.close()
                 }
             }
+
             is LinkUEvent.OnTheme -> {
                 viewModelScope.launch {
                     writable = if (event.isDarkMode) {
@@ -108,6 +115,7 @@ class LinkUViewModel @Inject constructor(
 
                 }
             }
+
             LinkUEvent.Premium -> {
                 onMessage(applications.getString(R.string.premium_unavailable))
             }
@@ -157,7 +165,7 @@ class LinkUViewModel @Inject constructor(
     private var initRemoteSessionJob: Job? = null
     private var times = 0
     private fun initRemoteSession() {
-        sharedPreference.log {
+        configurations.log {
             times++
             onMessage("Init session, times: $times")
         }
@@ -186,7 +194,7 @@ class LinkUViewModel @Inject constructor(
                                             readyForObserveMessages = true
                                         )
                                         delay(3000)
-                                        sharedPreference.log {
+                                        configurations.log {
                                             onMessage(it.message)
                                         }
                                         onEvent(LinkUEvent.InitSession)
@@ -199,7 +207,7 @@ class LinkUViewModel @Inject constructor(
                     is Resource.Failure -> {
                         deliverState(Label.Failed)
                         delay(3000)
-                        sharedPreference.log {
+                        configurations.log {
                             onMessage(resource.message)
                         }
                         onEvent(LinkUEvent.InitSession)
@@ -236,10 +244,10 @@ class LinkUViewModel @Inject constructor(
                         is Resource.Success -> {
                             writable = readable.copy(
                                 lightTheme = themes.findById(
-                                    sharedPreference.lightTheme
+                                    configurations.lightTheme
                                 )?.toComposeTheme() ?: readable.lightTheme,
                                 darkTheme = themes.findById(
-                                    sharedPreference.darkTheme
+                                    configurations.darkTheme
                                 )?.toComposeTheme() ?: readable.darkTheme,
                             )
                             onSuccess()
@@ -251,7 +259,7 @@ class LinkUViewModel @Inject constructor(
                 .launchIn(viewModelScope)
         }
 
-        val isDarkMode = sharedPreference.isDarkMode
+        val isDarkMode = configurations.isDarkMode
         initEmoji(
             onSuccess = {
                 writable = readable.copy(

@@ -3,9 +3,9 @@ package com.linku.data.repository
 import com.linku.domain.Strategy
 import com.linku.domain.entity.User
 import com.linku.domain.repository.UserRepository
-import com.linku.domain.wrapper.resultOf
 import com.linku.domain.room.dao.UserDao
 import com.linku.domain.service.UserService
+import com.linku.domain.wrapper.resultOf
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(
@@ -30,6 +30,7 @@ class UserRepositoryImpl @Inject constructor(
             }
             user ?: userDao.getById(id)
         }
+
         Strategy.NetworkElseCache -> resultOf { userService.getById(id) }
             .onSuccess {
                 userDao.insert(it.toUser())
@@ -37,6 +38,7 @@ class UserRepositoryImpl @Inject constructor(
             .getOrNull()
             ?.toUser()
             ?: userDao.getById(id)
+
         Strategy.Memory -> memory.getOrPut(id) {
             val user: User? = userDao.getById(id)
             if (user == null) {

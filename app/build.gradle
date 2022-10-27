@@ -13,8 +13,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 33
-        versionCode 107
-        versionName "0.15.2"
+        versionCode 108
+        versionName "0.15.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -62,7 +62,8 @@ dependencies {
     implementation project(':data')
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation "androidx.activity:activity-ktx:1.6.0"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.0-alpha02'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.0-alpha02'
     implementation 'androidx.activity:activity-compose:1.6.0'
     implementation 'androidx.core:core-splashscreen:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'

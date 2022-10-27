@@ -19,7 +19,7 @@ fun MaterialIconButton(
     contentDescription: String? = remember(icon) { icon.name }
 ) {
     IconButton(onClick, modifier) {
-        Crossfade(targetState = icon) { icon ->
+        Crossfade(icon) { icon ->
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,

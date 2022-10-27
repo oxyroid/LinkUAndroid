@@ -5,6 +5,7 @@ import com.linku.data.R
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.MessageDTO
+import com.linku.domain.extension.json
 import com.linku.domain.service.SessionService
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -13,14 +14,16 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
-import okhttp3.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 import okio.ByteString
 import javax.inject.Inject
 
 class OkHttpSessionService @Inject constructor(
     private val client: OkHttpClient,
-    private val serializer: Json,
     private val applications: ApplicationUseCases
 ) : SessionService {
     private val incoming = MutableSharedFlow<Message>()
@@ -44,7 +47,7 @@ class OkHttpSessionService @Inject constructor(
                 super.onMessage(webSocket, text)
                 launch {
                     val message = runCatching {
-                        val socketPackage = serializer.decodeFromString<Package<MessageDTO>>(text)
+                        val socketPackage = json.decodeFromString<Package<MessageDTO>>(text)
                         socketPackage.data.toMessage()
                     }
                         .getOrNull()

@@ -1,8 +1,8 @@
 package com.linku.domain.service
 
-import com.linku.domain.wrapper.BackendResult
 import com.linku.domain.entity.ConversationDTO
 import com.linku.domain.entity.Member
+import com.linku.domain.wrapper.BackendResult
 import retrofit2.http.*
 
 interface ConversationService {

@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import coil.compose.SubcomposeAsyncImage
 import com.linku.im.ktx.compose.layout.Content
 import com.linku.im.ktx.compose.layout.toBoxContent
@@ -24,6 +25,7 @@ fun CircleHeadPicture(
     SubcomposeAsyncImage(
         model = model,
         contentDescription = null,
+        contentScale = ContentScale.Crop,
         loading = {
             Box(
                 modifier = Modifier.fillMaxSize(),

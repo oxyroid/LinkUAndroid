@@ -83,7 +83,10 @@ class RootNode(
                 ThemeSettingScreen()
             }
 
-            NavTarget.Setting.DataSource -> node(buildContext) {}
+            NavTarget.Setting.DataSource -> node(buildContext) {
+
+            }
+
             NavTarget.Setting.Language -> node(buildContext) {}
             NavTarget.Setting.Notification -> node(buildContext) {}
             NavTarget.Setting.Safe -> node(buildContext) {}

@@ -2,18 +2,30 @@ package com.linku.data.repository
 
 import com.linku.data.R
 import com.linku.data.usecase.ApplicationUseCases
-import com.linku.domain.wrapper.Resource
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.SessionRepository
-import com.linku.domain.repository.SessionRepository.State.*
-import com.linku.domain.wrapper.resultOf
+import com.linku.domain.repository.SessionRepository.State.Connected
+import com.linku.domain.repository.SessionRepository.State.Connecting
+import com.linku.domain.repository.SessionRepository.State.Default
+import com.linku.domain.repository.SessionRepository.State.Failed
+import com.linku.domain.repository.SessionRepository.State.Lost
+import com.linku.domain.repository.SessionRepository.State.Subscribed
+import com.linku.domain.repository.SessionRepository.State.Subscribing
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.service.AuthService
 import com.linku.domain.service.ConversationService
 import com.linku.domain.service.NotificationService
 import com.linku.domain.service.SessionService
-import kotlinx.coroutines.flow.*
+import com.linku.domain.wrapper.Resource
+import com.linku.domain.wrapper.resultOf
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import okhttp3.WebSocket
 import javax.inject.Inject
@@ -37,13 +49,16 @@ class SessionRepositoryImpl @Inject constructor(
                     SessionService.State.Connecting -> {
                         sessionState.tryEmit(Connecting)
                     }
+
                     is SessionService.State.Connected -> {
                         session = state.session
                         sessionState.tryEmit(Connected)
                     }
+
                     SessionService.State.Closed -> {
                         sessionState.tryEmit(Lost)
                     }
+
                     is SessionService.State.Failed -> {
                         sessionState.tryEmit(Failed(state.reason))
                     }

@@ -6,11 +6,11 @@ import android.net.Uri
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
-import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Member
 import com.linku.domain.repository.ConversationRepository
+import com.linku.domain.wrapper.Resource
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

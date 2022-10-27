@@ -72,6 +72,7 @@ open class Message(
                     sendState = sendState
                 )
             }
+
             Type.Image -> {
                 val imageContent = ImageContent.decode(content)
                 ImageMessage(
@@ -87,6 +88,7 @@ open class Message(
                     sendState = sendState
                 )
             }
+
             Type.Graphics -> {
                 val graphicsContent = GraphicsContent.decode(content)
                 GraphicsMessage(
@@ -103,6 +105,7 @@ open class Message(
                     sendState = sendState
                 )
             }
+
             else -> this
         }
     }
@@ -207,6 +210,7 @@ data class MessageDTO(
                 sendState = sendState
             )
         }
+
         Message.Type.Image -> {
             val imageContent = ImageContent.decode(content)
             ImageMessage(
@@ -222,6 +226,7 @@ data class MessageDTO(
                 sendState = sendState
             )
         }
+
         Message.Type.Graphics -> {
             val graphicsContent = GraphicsContent.decode(content)
             GraphicsMessage(
@@ -238,6 +243,7 @@ data class MessageDTO(
                 sendState = sendState
             )
         }
+
         else -> Message(
             id = id,
             cid = cid,

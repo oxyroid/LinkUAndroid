@@ -1,26 +1,28 @@
 package com.linku.data.authenticator
 
-import com.linku.data.usecase.SharedPreferenceUseCase
+import com.linku.data.usecase.Configurations
 import com.linku.domain.auth.Authenticator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class PreferenceAuthenticator(
-    private val settings: SharedPreferenceUseCase
+    private val configurations: Configurations
 ) : Authenticator {
     override val currentUID: Int?
         get() = try {
-            settings.currentUID
-        } catch (e: NumberFormatException) {
+            val uid = configurations.currentUID
+            check(uid >= 0)
+            uid
+        } catch (e: IllegalStateException) {
             null
         }
 
     override val token: String?
         get() {
             if (currentUID == null) {
-                settings.token = null
+                configurations.token = null
             }
-            return settings.token
+            return configurations.token
         }
 
     private val _observeCurrent = MutableStateFlow(currentUID)
@@ -30,8 +32,8 @@ class PreferenceAuthenticator(
         uid: Int?,
         token: String?
     ) {
-        settings.currentUID = uid
-        settings.token = token
+        configurations.currentUID = uid ?: -1
+        configurations.token = token
         _observeCurrent.emit(uid)
     }
 

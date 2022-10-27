@@ -3,9 +3,8 @@ package com.linku.im.di
 import android.content.Context
 import com.linku.data.authenticator.PreferenceAuthenticator
 import com.linku.data.service.TwitterEmojiService
-import com.linku.data.usecase.SharedPreferenceUseCase
+import com.linku.data.usecase.Configurations
 import com.linku.domain.auth.Authenticator
-import com.linku.domain.extension.json
 import com.linku.domain.service.EmojiService
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.network.NetworkConnectivityObserver
@@ -15,7 +14,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.serialization.json.Json
 import javax.inject.Singleton
 
 @Module
@@ -23,18 +21,16 @@ import javax.inject.Singleton
 object UtilModule {
     @Provides
     @Singleton
-    fun provideJson(): Json = json
-
-    @Provides
-    @Singleton
-    fun provideMMKV(): MMKV = MMKV.defaultMMKV()
+    fun provideMMKV(): MMKV {
+        return MMKV.defaultMMKV()
+    }
 
     @Provides
     @Singleton
     fun provideAuthenticator(
-        sharedPreferenceUseCase: SharedPreferenceUseCase
+        configurations: Configurations
     ): Authenticator = PreferenceAuthenticator(
-        settings = sharedPreferenceUseCase
+        configurations = configurations
     )
 
     @Provides

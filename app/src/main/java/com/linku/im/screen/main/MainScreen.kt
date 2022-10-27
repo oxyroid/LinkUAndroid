@@ -1,7 +1,6 @@
 package com.linku.im.screen.main
 
 import androidx.activity.compose.BackHandler
-import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -9,7 +8,17 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -17,20 +26,44 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Done
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.WorkspacePremium
-import androidx.compose.material.icons.sharp.*
+import androidx.compose.material.icons.sharp.Add
+import androidx.compose.material.icons.sharp.DarkMode
+import androidx.compose.material.icons.sharp.LightMode
+import androidx.compose.material.icons.sharp.Notifications
+import androidx.compose.material.icons.sharp.Settings
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.*
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.*
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -47,11 +80,13 @@ import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.compose.runtime.ComposableLifecycle
+import com.linku.im.ktx.compose.ui.graphics.animated
 import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.rememberedRun
 import com.linku.im.ui.brush.premiumBrush
 import com.linku.im.ui.components.BottomSheetContent
 import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.components.item.PinnedConversationItem
 import com.linku.im.ui.components.notify.NotifyHolder
@@ -76,10 +111,13 @@ fun MainScreen(
     val pagerState = rememberPagerState()
     val scaffoldState = rememberScaffoldState()
 
+    val theme = LocalTheme.current
     val backStack = LocalBackStack.current
     val linkedNode by viewModel.linkedNode
     val mode = linkedNode.value
-    linkedNode.value
+
+    val feedback = LocalHapticFeedback.current
+
     val selections = rememberedRun(vm.readable.isDarkMode) {
         listOf(
             Selection.Button(
@@ -97,7 +135,12 @@ fun MainScreen(
                 value = this@rememberedRun,
                 onIcon = Icons.Sharp.LightMode,
                 offIcon = Icons.Sharp.DarkMode,
-                onClick = { vm.onEvent(LinkUEvent.ToggleDarkMode) }
+                onClick = {
+                    vm.onEvent(LinkUEvent.ToggleDarkMode)
+                },
+                onLongClick = {
+                    backStack.push(NavTarget.Setting.Theme)
+                }
             )
         )
     }
@@ -116,7 +159,6 @@ fun MainScreen(
         }
         vm.message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
     }
-    val theme = LocalTheme.current
     Scaffold(
         scaffoldState = scaffoldState,
         snackbarHost = {
@@ -126,9 +168,8 @@ fun MainScreen(
             )
         },
         topBar = {
-            val vmState = vm.readable
             ToolBar(
-                navIcon = Icons.Sharp.Menu,
+                navIcon = Icons.Rounded.Menu,
                 onNavClick = {
                     scope.launch {
                         pagerState.animateScrollToPage(2)
@@ -137,18 +178,20 @@ fun MainScreen(
                 actions = {
                     MaterialIconButton(
                         icon = when (mode) {
-                            is MainMode.Conversations -> Icons.Sharp.Search
-                            is MainMode.Notifications -> Icons.Sharp.Close
-                            is MainMode.NewChannel -> Icons.Sharp.Done
+                            is MainMode.Conversations -> Icons.Rounded.Search
+                            is MainMode.Notifications -> Icons.Rounded.Close
+                            is MainMode.NewChannel -> Icons.Rounded.Done
                         },
                         onClick = {
                             when (mode) {
                                 MainMode.Conversations -> {
                                     backStack.push(NavTarget.Query)
                                 }
+
                                 MainMode.Notifications -> {
                                     viewModel.onEvent(MainEvent.Remain)
                                 }
+
                                 MainMode.NewChannel -> {
 
                                 }
@@ -158,7 +201,7 @@ fun MainScreen(
                     )
                 },
                 text = when (mode) {
-                    is MainMode.Conversations -> vmState.label ?: stringResource(R.string.app_name)
+                    is MainMode.Conversations -> globalLabelOrElse { stringResource(R.string.app_name) }
                     is MainMode.Notifications -> stringResource(R.string.notification)
                     is MainMode.NewChannel -> stringResource(R.string.new_channel)
                 }
@@ -174,10 +217,7 @@ fun MainScreen(
         Box {
             Column(
                 modifier = Modifier
-                    .drawWithContent {
-                        drawRect(theme.background)
-                        drawContent()
-                    }
+                    .background(theme.background.animated())
                     .padding(innerPadding)
             ) {
                 TabRow(
@@ -194,7 +234,9 @@ fun MainScreen(
                                         topStart = LocalSpacing.current.extraSmall,
                                         topEnd = LocalSpacing.current.extraSmall
                                     )
-                                ), color = theme.primary, height = LocalSpacing.current.extraSmall
+                                ),
+                            color = theme.primary.animated(),
+                            height = LocalSpacing.current.extraSmall
                         )
                     },
                     divider = {},
@@ -219,130 +261,155 @@ fun MainScreen(
                             )
                         }
                     },
-                    containerColor = theme.topBar,
-                    contentColor = theme.onTopBar
+                    containerColor = theme.topBar.animated(),
+                    contentColor = theme.onTopBar.animated()
                 )
                 HorizontalPager(
                     count = pages.size,
-                    state = pagerState
-                ) { page ->
-                    if (page == 2) {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(LocalSpacing.current.small)
-                        ) {
-                            items(selections) { selection ->
-                                ListItem(
-                                    leadingContent = {
-                                        Crossfade(selection.icon) { icon ->
-                                            Icon(
-                                                imageVector = icon,
-                                                contentDescription = stringResource(selection.resId)
-                                            )
-                                        }
-                                    },
-                                    headlineText = {
-                                        Text(
-                                            text = stringResource(selection.resId),
-                                            style = MaterialTheme.typography.titleSmall
-                                        )
-                                    },
-                                    trailingContent = {
-                                        if (selection is Selection.Switch) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(LocalSpacing.current.small)
-                                                    .background(
-                                                        color = if (selection.value) Color.Green
-                                                        else theme.error, shape = CircleShape
-                                                    )
-                                            )
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .padding(LocalSpacing.current.small)
-                                        .clip(RoundedCornerShape(LocalSpacing.current.small))
-                                        .clickable {
-                                            when (selection) {
-                                                is Selection.Route -> {
-                                                    when (selection.target) {
-                                                        is NavTarget.Introduce -> {
-                                                            backStack.push(vm.authenticator.currentUID?.let {
-                                                                NavTarget.Introduce(it)
-                                                            } ?: NavTarget.Sign)
-                                                        }
-                                                        else -> backStack.push(selection.target)
-                                                    }
-                                                }
-                                                is Selection.Button -> selection.onClick()
-                                                is Selection.Switch -> selection.onClick()
+                    state = pagerState,
+                    key = { it }
+                ) { pageIndex ->
+                    when (pageIndex) {
+                        2 -> {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(LocalSpacing.current.small)
+                            ) {
+                                items(selections) { selection ->
+                                    ListItem(
+                                        leadingContent = {
+                                            Crossfade(selection.icon) { icon ->
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = stringResource(selection.resId)
+                                                )
                                             }
                                         },
-                                    colors = ListItemDefaults.colors(
-                                        containerColor = theme.surface,
-                                        leadingIconColor = theme.onSurface * 0.6f,
-                                        trailingIconColor = theme.onSurface * 0.6f,
-                                        headlineColor = theme.onSurface
-                                    )
-                                )
-                            }
-                            item {
-                                val brush = premiumBrush()
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(min = 56.dp)
-                                        .padding(LocalSpacing.current.small)
-                                        .clip(RoundedCornerShape(LocalSpacing.current.small))
-                                        .background(brush)
-                                        .clickable(
-                                            role = Role.Button,
-                                            onClick = {
-                                                vm.onEvent(LinkUEvent.Premium)
+                                        headlineText = {
+                                            Text(
+                                                text = stringResource(selection.resId),
+                                                style = MaterialTheme.typography.titleSmall
+                                            )
+                                        },
+                                        trailingContent = {
+                                            if (selection is Selection.Switch) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(LocalSpacing.current.small)
+                                                        .background(
+                                                            color = if (selection.value) Color.Green
+                                                            else theme.error, shape = CircleShape
+                                                        )
+                                                )
                                             }
+                                        },
+                                        modifier = Modifier
+                                            .padding(LocalSpacing.current.small)
+                                            .clip(RoundedCornerShape(LocalSpacing.current.small))
+                                            .combinedClickable(
+                                                onClick = {
+                                                    when (selection) {
+                                                        is Selection.Route -> {
+                                                            when (selection.target) {
+                                                                is NavTarget.Introduce -> {
+                                                                    backStack.push(vm.authenticator.currentUID?.let {
+                                                                        NavTarget.Introduce(it)
+                                                                    } ?: NavTarget.Sign)
+                                                                }
+
+                                                                else -> backStack.push(selection.target)
+                                                            }
+                                                        }
+
+                                                        is Selection.Button -> selection.onClick()
+                                                        is Selection.Switch -> selection.onClick()
+                                                    }
+                                                },
+                                                onLongClick = {
+                                                    if (selection !is Selection.Route) {
+                                                        feedback.performHapticFeedback(
+                                                            HapticFeedbackType.LongPress
+                                                        )
+                                                    }
+                                                    when (selection) {
+                                                        is Selection.Button -> selection.onLongClick()
+                                                        is Selection.Switch -> selection.onLongClick()
+                                                        else -> {}
+                                                    }
+                                                }
+                                            ),
+                                        colors = ListItemDefaults.colors(
+                                            containerColor = theme.surface.animated(),
+                                            leadingIconColor = (theme.onSurface * 0.6f).animated(),
+                                            trailingIconColor = (theme.onSurface * 0.6f).animated(),
+                                            headlineColor = theme.onSurface.animated()
                                         )
-                                        .padding(LocalSpacing.current.medium)
-                                ) {
-                                    CompositionLocalProvider(
-                                        LocalContentColor provides Color.White
+                                    )
+                                }
+                                item {
+                                    val brush = premiumBrush()
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(min = 56.dp)
+                                            .padding(LocalSpacing.current.small)
+                                            .clip(RoundedCornerShape(LocalSpacing.current.small))
+                                            .background(brush)
+                                            .clickable(
+                                                role = Role.Button,
+                                                onClick = {
+                                                    vm.onEvent(LinkUEvent.Premium)
+                                                }
+                                            )
+                                            .padding(LocalSpacing.current.medium)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.WorkspacePremium,
-                                            contentDescription = stringResource(R.string.premium),
-                                            modifier = Modifier.padding(end = 16.dp)
-                                        )
-                                        Text(
-                                            text = stringResource(R.string.premium),
-                                            style = MaterialTheme.typography.titleSmall
-                                        )
+                                        CompositionLocalProvider(
+                                            LocalContentColor provides Color.White
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.WorkspacePremium,
+                                                contentDescription = stringResource(R.string.premium),
+                                                modifier = Modifier.padding(end = 16.dp)
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.premium),
+                                                style = MaterialTheme.typography.titleSmall
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            userScrollEnabled = !state.loadingConversations
-                        ) {
-                            val conversations = when (page) {
-                                0 -> state.conversations
-                                1 -> state.contracts
-                                else -> emptyList()
-                            }
-                            itemsIndexed(conversations) { index, conversation ->
-                                PinnedConversationItem(conversation = conversation,
-                                    modifier = Modifier.animateItemPlacement(),
-                                    onClick = {
-                                        backStack.push(NavTarget.ChatTarget.Messages(conversation.id))
-                                    },
-                                    onLongClick = {
-                                        viewModel.onEvent(MainEvent.Pin(conversation.id))
-                                    })
-                                if (index != conversations.lastIndex) {
-                                    Divider(
-                                        color = LocalTheme.current.divider
-                                    )
+
+                        else -> {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = !state.loadingConversations
+                            ) {
+                                val conversations = when (pageIndex) {
+                                    0 -> state.conversations
+                                    1 -> state.contracts
+                                    else -> emptyList()
+                                }
+                                itemsIndexed(conversations) { index, conversation ->
+                                    PinnedConversationItem(conversation = conversation,
+                                        modifier = Modifier.animateItemPlacement(),
+                                        onClick = {
+                                            backStack.push(
+                                                NavTarget.ChatTarget.Messages(
+                                                    conversation.id
+                                                )
+                                            )
+                                        },
+                                        onLongClick = {
+                                            viewModel.onEvent(MainEvent.Pin(conversation.id))
+                                        })
+                                    if (index != conversations.lastIndex) {
+                                        Divider(
+                                            color = LocalTheme.current.divider
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -387,9 +454,11 @@ fun MainScreen(
                             MainMode.Conversations -> {
                                 viewModel.onEvent(MainEvent.Forward(MainMode.NewChannel))
                             }
+
                             MainMode.NewChannel -> {
 
                             }
+
                             MainMode.Notifications -> {
 
                             }
@@ -403,15 +472,35 @@ fun MainScreen(
                         height = height
                     )
                 ) {
-                    when (mode) {
-                        MainMode.Conversations, MainMode.Notifications -> {
-                            Icon(
-                                imageVector = Icons.Sharp.Add,
-                                contentDescription = null
-                            )
-                        }
-                        MainMode.NewChannel -> {
+                    Crossfade(mode) { mode ->
+                        when (mode) {
+                            MainMode.Conversations, MainMode.Notifications -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Sharp.Add,
+                                        contentDescription = null
+                                    )
+                                }
+                            }
 
+                            MainMode.NewChannel -> {
+                                Column(
+                                    verticalArrangement = Arrangement.Bottom,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(LocalSpacing.current.small)
+                                ) {
+                                    MaterialButton(
+                                        text = "Next",
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -446,28 +535,4 @@ fun MainScreen(
     BackHandler(mode !is MainMode.Conversations) {
         viewModel.onEvent(MainEvent.Remain)
     }
-}
-
-
-private sealed class Selection(
-    @StringRes open val resId: Int,
-    open val icon: ImageVector
-) {
-    data class Route(
-        override val resId: Int,
-        val target: NavTarget,
-        override val icon: ImageVector
-    ) : Selection(resId, icon)
-
-    data class Switch(
-        override val resId: Int,
-        val value: Boolean,
-        val onIcon: ImageVector,
-        val offIcon: ImageVector = onIcon,
-        val onClick: () -> Unit
-    ) : Selection(resId, if (value) onIcon else offIcon)
-
-    data class Button(
-        override val resId: Int, override val icon: ImageVector, val onClick: () -> Unit
-    ) : Selection(resId, icon)
 }

@@ -4,7 +4,14 @@ import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
@@ -23,8 +30,7 @@ import com.google.accompanist.placeholder.shimmer
 import com.linku.domain.entity.User
 import com.linku.im.ktx.compose.ui.graphics.times
 import com.linku.im.ktx.compose.ui.intervalClickable
-import com.linku.im.ui.components.item.CircleHeadPicture
-import com.linku.im.ui.components.item.TextImage
+import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
@@ -53,7 +59,8 @@ fun UserItem(
                 onClick = onClick
             )
             .padding(
-                horizontal = 12.dp
+                horizontal = LocalSpacing.current.medium,
+                vertical = LocalSpacing.current.extraSmall
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -65,9 +72,9 @@ fun UserItem(
         Column(
             modifier = Modifier
                 .padding(
-                    end = 12.dp,
-                    top = 8.dp,
-                    bottom = 8.dp
+                    end = LocalSpacing.current.medium,
+                    top = LocalSpacing.current.small,
+                    bottom = LocalSpacing.current.small
                 )
                 .weight(1f),
             verticalArrangement = Arrangement.Center

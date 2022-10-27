@@ -2,7 +2,16 @@ package com.linku.im.screen.query
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
@@ -10,7 +19,13 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.ArrowBack
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -23,7 +38,7 @@ import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
-import com.linku.im.ui.components.*
+import com.linku.im.ui.components.TextField
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.components.item.ConversationItem
 import com.linku.im.ui.components.item.UserItem
@@ -83,6 +98,7 @@ fun QueryScreen(
                     )
                     Spacer(modifier = Modifier.width(LocalSpacing.current.small))
                     TextField(
+                        placeholder = stringResource(R.string.query_input),
                         background = LocalTheme.current.surface,
                         textFieldValue = state.text,
                         onValueChange = { viewModel.onEvent(QueryEvent.OnText(it)) },

@@ -1,9 +1,9 @@
 package com.linku.domain.repository
 
-import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Member
+import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface ConversationRepository {

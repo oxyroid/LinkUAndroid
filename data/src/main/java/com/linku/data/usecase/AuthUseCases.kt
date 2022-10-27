@@ -2,9 +2,9 @@ package com.linku.data.usecase
 
 import android.net.Uri
 import com.linku.domain.auth.Authenticator
-import com.linku.domain.wrapper.Resource
 import com.linku.domain.repository.AuthRepository
 import com.linku.domain.repository.AuthRepository.AfterSignInBehaviour
+import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 

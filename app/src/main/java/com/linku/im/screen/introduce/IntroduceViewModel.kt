@@ -2,7 +2,15 @@ package com.linku.im.screen.introduce
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.*
+import androidx.compose.material.icons.sharp.DateRange
+import androidx.compose.material.icons.sharp.Edit
+import androidx.compose.material.icons.sharp.Email
+import androidx.compose.material.icons.sharp.FormatPaint
+import androidx.compose.material.icons.sharp.Language
+import androidx.compose.material.icons.sharp.Lock
+import androidx.compose.material.icons.sharp.Notifications
+import androidx.compose.material.icons.sharp.Upload
+import androidx.compose.material.icons.sharp.Visibility
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
@@ -10,12 +18,12 @@ import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.viewModelScope
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
-import com.linku.data.usecase.SharedPreferenceUseCase
+import com.linku.data.usecase.Configurations
 import com.linku.data.usecase.UserUseCases
-import com.linku.domain.auth.Authenticator
-import com.linku.domain.wrapper.Resource
 import com.linku.domain.Strategy
+import com.linku.domain.auth.Authenticator
 import com.linku.domain.entity.User
+import com.linku.domain.wrapper.Resource
 import com.linku.domain.wrapper.eventOf
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
@@ -36,7 +44,7 @@ class IntroduceViewModel @Inject constructor(
     private val authUseCases: AuthUseCases,
     private val applicationUseCases: ApplicationUseCases,
     private val authenticator: Authenticator,
-    private val settings: SharedPreferenceUseCase
+    private val configurations: Configurations
 ) : BaseViewModel<IntroduceState, IntroduceEvent>(IntroduceState()) {
     override fun onEvent(event: IntroduceEvent) {
         when (event) {
@@ -49,9 +57,9 @@ class IntroduceViewModel @Inject constructor(
             is IntroduceEvent.Edit -> edit(event)
 
             IntroduceEvent.ToggleLogMode -> {
-                val mode = settings.isLogMode
-                settings.isLogMode = !mode
-                val message = if (settings.isLogMode) getString(R.string.log_mode_on)
+                val mode = configurations.isLogMode
+                configurations.isLogMode = !mode
+                val message = if (configurations.isLogMode) getString(R.string.log_mode_on)
                 else getString(R.string.log_mode_off)
                 onMessage(message)
             }

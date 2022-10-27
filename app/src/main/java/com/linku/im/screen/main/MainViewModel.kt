@@ -18,6 +18,7 @@ import com.linku.domain.wrapper.Resource
 import com.linku.im.R
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
+import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
@@ -59,7 +60,7 @@ class MainViewModel @Inject constructor(
     override fun onEvent(event: MainEvent) {
         when (event) {
             MainEvent.ObserveConversations -> observeConversations()
-            MainEvent.UnsubscribeConversations -> unsubscribeConversations()
+            MainEvent.UnsubscribeConversations -> unsubscribe()
             MainEvent.FetchConversations -> fetchConversations()
             is MainEvent.Pin -> pin(event)
             is MainEvent.Forward -> forward(event)
@@ -158,7 +159,7 @@ class MainViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private fun unsubscribeConversations() {
+    private fun unsubscribe() {
         observeConversationsJob?.cancel()
     }
 
@@ -167,4 +168,8 @@ class MainViewModel @Inject constructor(
             conversationUseCases.pin(event.cid)
         }
     }
+}
+
+inline fun globalLabelOrElse(block: () -> String): String {
+    return vm.readable.label ?: block()
 }

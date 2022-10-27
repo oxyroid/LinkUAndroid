@@ -4,13 +4,11 @@ import android.content.Context
 import android.net.Uri
 import com.linku.data.R
 import com.linku.domain.auth.Authenticator
-import com.linku.domain.wrapper.Resource
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.AuthRepository
 import com.linku.domain.repository.AuthRepository.AfterSignInBehaviour
 import com.linku.domain.repository.FileRepository
 import com.linku.domain.repository.FileResource
-import com.linku.domain.wrapper.resultOf
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao
@@ -18,9 +16,15 @@ import com.linku.domain.service.AuthService
 import com.linku.domain.service.ConversationService
 import com.linku.domain.service.MessageService
 import com.linku.domain.service.ProfileService
+import com.linku.domain.wrapper.Resource
+import com.linku.domain.wrapper.resultOf
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -119,6 +123,7 @@ class AuthRepositoryImpl @Inject constructor(
                     FileResource.Loading -> {
                         trySend(Resource.Loading)
                     }
+
                     FileResource.FileCannotFoundError -> {
                         val msg = context.getString(R.string.error_file_cannot_found)
                         trySend(Resource.Failure(msg))
@@ -128,10 +133,12 @@ class AuthRepositoryImpl @Inject constructor(
                         val msg = context.getString(R.string.error_null_uri)
                         trySend(Resource.Failure(msg))
                     }
+
                     is FileResource.OtherError -> {
                         val defaultMsg = context.getString(R.string.error_unknown)
                         trySend(Resource.Failure(resource.message ?: defaultMsg))
                     }
+
                     is FileResource.Success -> {
                         launch {
                             resultOf { profileService.editAvatar(resource.data.remoteUrl) }

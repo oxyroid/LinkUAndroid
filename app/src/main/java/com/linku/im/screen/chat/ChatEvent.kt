@@ -4,9 +4,8 @@ import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
 
 sealed class ChatEvent {
-    data class ObserveChannel(val cid: Int) : ChatEvent()
+    data class FetchChannel(val cid: Int) : ChatEvent()
     object ObserveMessage : ChatEvent()
-    object Fetch : ChatEvent()
     object FetchChannelDetail : ChatEvent()
     object SendMessage : ChatEvent()
     data class OnTextChange(val text: TextFieldValue) : ChatEvent()
@@ -16,7 +15,6 @@ sealed class ChatEvent {
     data class OnReply(val mid: Int?) : ChatEvent()
     object ReadAll : ChatEvent()
     object PushShortcut : ChatEvent()
-
     data class OnFocus(val mid: Int?) : ChatEvent()
     data class ResendMessage(val mid: Int) : ChatEvent()
     data class CancelMessage(val mid: Int) : ChatEvent()

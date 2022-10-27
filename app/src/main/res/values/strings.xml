@@ -41,7 +41,7 @@
     <string name="profile_data_description">个人简介</string>
     <string name="email_verified">验证</string>
     <string name="email_verified_dialog_title">验证您的邮箱</string>
-    <string name="unknown"><![CDATA[<未知>]]></string>
+    <string name="unknown">/<未知 /></string>
     <string name="confirm">验证</string>
     <string name="cancel">取消</string>
     <string name="verifying">验证中</string>
@@ -65,9 +65,6 @@
     <string name="profile_settings_theme">主题与样式</string>
     <string name="profile_avatar_visit">查看原图</string>
     <string name="profile_avatar_update">上传图片</string>
-    <string name="crash_title">Crash</string>
-    <string name="crash_text">应用发送崩溃</string>
-    <string name="crash_channel">BUG</string>
     <string name="tab_more">更多</string>
     <string name="notification">通知</string>
     <string name="share">分享</string>
@@ -98,7 +95,6 @@
     <string name="theme_export_success">导出成功</string>
     <string name="theme_export">导出</string>
     <string name="theme_delete">删除</string>
-
     <string name="new_channel">创建会话</string>
     <string name="theme_error_delete_current">生效中的主题不可删除</string>
     <string name="theme_import_loading">导入中…</string>

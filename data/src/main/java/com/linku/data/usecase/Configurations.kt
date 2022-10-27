@@ -4,21 +4,23 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.linku.domain.extension.delegates.boolean
 import com.linku.domain.extension.delegates.int
-import com.linku.domain.extension.delegates.nullableInt
-import com.linku.domain.extension.delegates.nullableString
+import com.linku.domain.extension.delegates.string
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 
-class SharedPreferenceUseCase @Inject constructor(@ApplicationContext context: Context) {
+class Configurations @Inject constructor(
+    @ApplicationContext context: Context
+) {
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(SHARED_SETTINGS, Context.MODE_PRIVATE)
-    var isDarkMode: Boolean by sharedPreferences.boolean(false)
-    var isDynamicMode: Boolean by sharedPreferences.boolean(false)
-    var currentUID: Int? by sharedPreferences.nullableInt()
-    var token: String? by sharedPreferences.nullableString()
+
+    var currentUID: Int by sharedPreferences.int(-1)
+    var token: String? by sharedPreferences.string()
+
     var isLogMode: Boolean by sharedPreferences.boolean(false)
 
+    var isDarkMode: Boolean by sharedPreferences.boolean(false)
     var lightTheme: Int by sharedPreferences.int(-1)
     var darkTheme: Int by sharedPreferences.int(-1)
 

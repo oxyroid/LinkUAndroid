@@ -1,7 +1,7 @@
 package com.linku.domain.service
 
-import com.linku.domain.wrapper.BackendResult
 import com.linku.domain.entity.UserDTO
+import com.linku.domain.wrapper.BackendResult
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
