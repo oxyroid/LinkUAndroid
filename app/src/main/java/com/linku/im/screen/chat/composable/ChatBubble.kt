@@ -47,6 +47,7 @@ import coil.compose.SubcomposeAsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
+import com.linku.core.ktx.ifTrue
 import com.linku.domain.bean.Bubble
 import com.linku.domain.bean.ComposeTheme
 import com.linku.domain.entity.GraphicsMessage
@@ -54,10 +55,9 @@ import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
 import com.linku.im.R
-import com.linku.im.ktx.compose.ui.graphics.times
-import com.linku.im.ktx.compose.ui.intervalClickable
-import com.linku.im.ktx.ifTrue
-import com.linku.im.ktx.rememberedRun
+import com.linku.im.ktx.runtime.rememberedRun
+import com.linku.im.ktx.ui.graphics.times
+import com.linku.im.ktx.ui.intervalClickable
 import com.linku.im.ui.components.item.TextImage
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme

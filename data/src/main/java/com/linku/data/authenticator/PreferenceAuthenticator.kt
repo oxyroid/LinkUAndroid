@@ -1,11 +1,12 @@
 package com.linku.data.authenticator
 
-import com.linku.data.usecase.Configurations
+import com.linku.data.Configurations
 import com.linku.domain.auth.Authenticator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import javax.inject.Inject
 
-class PreferenceAuthenticator(
+class PreferenceAuthenticator @Inject constructor(
     private val configurations: Configurations
 ) : Authenticator {
     override val currentUID: Int?

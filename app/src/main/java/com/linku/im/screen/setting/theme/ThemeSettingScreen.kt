@@ -37,8 +37,8 @@ import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.linku.domain.repository.MimeType
 import com.linku.im.R
-import com.linku.im.ktx.compose.ui.graphics.animated
-import com.linku.im.ktx.compose.ui.graphics.times
+import com.linku.im.ktx.ui.graphics.animated
+import com.linku.im.ktx.ui.graphics.times
 import com.linku.im.screen.setting.SettingEvent
 import com.linku.im.ui.components.BottomSheetContent
 import com.linku.im.ui.components.Scrim

@@ -1,11 +1,11 @@
 package com.linku.data.service
 
 import androidx.annotation.Keep
+import com.linku.core.extension.json
 import com.linku.data.R
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.MessageDTO
-import com.linku.domain.extension.json
 import com.linku.domain.service.SessionService
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

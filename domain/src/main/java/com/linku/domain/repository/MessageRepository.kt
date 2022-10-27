@@ -4,7 +4,6 @@ import android.net.Uri
 import com.linku.domain.Strategy
 import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.Message
-import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
@@ -22,24 +21,24 @@ interface MessageRepository {
         cid: Int,
         text: String,
         reply: Int?
-    ): Flow<Resource<Unit>>
+    ): Flow<com.linku.core.wrapper.Resource<Unit>>
 
     fun sendImageMessage(
         cid: Int,
         uri: Uri,
         reply: Int?
-    ): Flow<Resource<Unit>>
+    ): Flow<com.linku.core.wrapper.Resource<Unit>>
 
     fun sendGraphicsMessage(
         cid: Int,
         text: String,
         uri: Uri,
         reply: Int?
-    ): Flow<Resource<Unit>>
+    ): Flow<com.linku.core.wrapper.Resource<Unit>>
 
     suspend fun cancelMessage(mid: Int)
 
-    suspend fun resendMessage(mid: Int): Flow<Resource<Unit>>
+    suspend fun resendMessage(mid: Int): Flow<com.linku.core.wrapper.Resource<Unit>>
 
     suspend fun fetchUnreadMessages()
 

@@ -1,6 +1,6 @@
 package com.linku.im.screen.introduce
 
-import com.linku.domain.wrapper.Event
+import com.linku.core.wrapper.Event
 import com.linku.im.screen.introduce.composable.Property
 
 data class IntroduceState(

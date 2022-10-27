@@ -1,12 +1,12 @@
 package com.linku.im.screen.setting.theme
 
 import androidx.lifecycle.viewModelScope
+import com.linku.core.extension.json
+import com.linku.core.wrapper.Resource
+import com.linku.data.Configurations
 import com.linku.data.usecase.ApplicationUseCases
-import com.linku.data.usecase.Configurations
 import com.linku.data.usecase.SettingUseCases
 import com.linku.domain.entity.Theme
-import com.linku.domain.extension.json
-import com.linku.domain.wrapper.Resource
 import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.screen.BaseViewModel

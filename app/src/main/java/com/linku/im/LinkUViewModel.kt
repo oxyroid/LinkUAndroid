@@ -1,8 +1,9 @@
 package com.linku.im
 
 import androidx.lifecycle.viewModelScope
+import com.linku.core.wrapper.Resource
+import com.linku.data.Configurations
 import com.linku.data.usecase.ApplicationUseCases
-import com.linku.data.usecase.Configurations
 import com.linku.data.usecase.EmojiUseCases
 import com.linku.data.usecase.MessageUseCases
 import com.linku.data.usecase.SessionUseCases
@@ -10,7 +11,6 @@ import com.linku.data.usecase.SettingUseCases
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.entity.toComposeTheme
 import com.linku.domain.repository.SessionRepository
-import com.linku.domain.wrapper.Resource
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel

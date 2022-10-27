@@ -4,7 +4,7 @@ import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
-import com.linku.domain.extension.json
+import com.linku.core.extension.json
 import com.linku.domain.room.converter.MessageTypeConverter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

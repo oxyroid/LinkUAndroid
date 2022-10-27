@@ -1,6 +1,7 @@
+@file:Suppress("unused")
 package com.linku.domain.service
 
-import com.linku.domain.wrapper.BackendResult
+import com.linku.core.wrapper.BackendResult
 import retrofit2.http.*
 
 interface ProfileService {

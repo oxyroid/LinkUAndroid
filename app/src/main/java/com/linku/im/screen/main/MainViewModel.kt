@@ -3,6 +3,10 @@ package com.linku.im.screen.main
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.viewModelScope
+import com.linku.core.util.LinkedNode
+import com.linku.core.util.forward
+import com.linku.core.util.remain
+import com.linku.core.wrapper.Resource
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.MessageUseCases
@@ -11,10 +15,6 @@ import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.TextMessage
-import com.linku.domain.util.LinkedNode
-import com.linku.domain.util.forward
-import com.linku.domain.util.remain
-import com.linku.domain.wrapper.Resource
 import com.linku.im.R
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel

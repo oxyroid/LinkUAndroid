@@ -2,10 +2,10 @@ package com.linku.im.screen.chat
 
 import android.net.Uri
 import androidx.compose.ui.text.input.TextFieldValue
+import com.linku.core.wrapper.Event
 import com.linku.domain.bean.Emoji
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Message
-import com.linku.domain.wrapper.Event
 
 data class ChatState(
     val title: String = "",

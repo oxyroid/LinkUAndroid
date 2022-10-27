@@ -5,6 +5,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
+import com.linku.core.ktx.dsl.suggestAny
+import com.linku.core.ktx.receiver.isSameDay
+import com.linku.core.ktx.receiver.isToday
+import com.linku.core.ktx.receiver.withTimeContentReceiver
+import com.linku.core.util.LinkedNode
+import com.linku.core.util.forward
+import com.linku.core.util.remain
+import com.linku.core.util.remainIf
+import com.linku.core.wrapper.Resource
+import com.linku.core.wrapper.eventOf
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.EmojiUseCases
@@ -21,18 +31,8 @@ import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
 import com.linku.domain.service.NotificationService
-import com.linku.domain.util.LinkedNode
-import com.linku.domain.util.forward
-import com.linku.domain.util.remain
-import com.linku.domain.util.remainIf
-import com.linku.domain.wrapper.Resource
-import com.linku.domain.wrapper.eventOf
 import com.linku.im.Constants
 import com.linku.im.R
-import com.linku.im.ktx.dsl.suggestAny
-import com.linku.im.ktx.receiver.isSameDay
-import com.linku.im.ktx.receiver.isToday
-import com.linku.im.ktx.receiver.withTimeContentReceiver
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.chat.ChatEvent.CancelMessage
 import com.linku.im.screen.chat.ChatEvent.FetchChannel
@@ -161,7 +161,7 @@ class ChatViewModel @Inject constructor(
         val next = getOrNull(index + 1)
         val pre = getOrNull(index - 1)
         val isAnother = authenticator.currentUID != message.uid
-        val isShowTime = com.linku.im.ktx.dsl.any {
+        val isShowTime = com.linku.core.ktx.dsl.any {
             suggest { next == null }
             suggest {
                 checkNotNull(next)
@@ -213,14 +213,14 @@ class ChatViewModel @Inject constructor(
                         sendState = message.sendState,
                         other = isAnother,
                         isShowTime = isShowTime,
-                        avatarVisibility = com.linku.im.ktx.dsl.all {
+                        avatarVisibility = com.linku.core.ktx.dsl.all {
                             suggest { isAnother }
                             suggestAny {
                                 it.suggest { index == 0 }
                                 it.suggest { get(index - 1).uid != message.uid }
                             }
                         },
-                        nameVisibility = com.linku.im.ktx.dsl.all {
+                        nameVisibility = com.linku.core.ktx.dsl.all {
                             suggest { isAnother }
                             suggestAny {
                                 it.suggest { index == lastIndex }

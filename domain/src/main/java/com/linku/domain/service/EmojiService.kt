@@ -1,7 +1,7 @@
 package com.linku.domain.service
 
+import com.linku.core.wrapper.Resource
 import com.linku.domain.bean.Emoji
-import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface EmojiService {

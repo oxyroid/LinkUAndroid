@@ -2,6 +2,8 @@ package com.linku.data.repository
 
 import android.content.Context
 import android.net.Uri
+import com.linku.core.wrapper.Resource
+import com.linku.core.wrapper.resultOf
 import com.linku.data.R
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.entity.toConversation
@@ -16,8 +18,6 @@ import com.linku.domain.service.AuthService
 import com.linku.domain.service.ConversationService
 import com.linku.domain.service.MessageService
 import com.linku.domain.service.ProfileService
-import com.linku.domain.wrapper.Resource
-import com.linku.domain.wrapper.resultOf
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

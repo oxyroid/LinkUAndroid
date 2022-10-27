@@ -16,18 +16,18 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.viewModelScope
+import com.linku.core.ktx.ifFalse
+import com.linku.core.wrapper.Resource
+import com.linku.core.wrapper.eventOf
+import com.linku.data.Configurations
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
-import com.linku.data.usecase.Configurations
 import com.linku.data.usecase.UserUseCases
 import com.linku.domain.Strategy
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.entity.User
-import com.linku.domain.wrapper.Resource
-import com.linku.domain.wrapper.eventOf
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
-import com.linku.im.ktx.ifFalse
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -280,7 +280,6 @@ class IntroduceViewModel @Inject constructor(
             }
 
             val descriptionActions = buildList {
-
                 readable.isOthers.ifFalse {
                     Property.Data.Action(
                         text = getString(R.string.edit),
@@ -299,23 +298,26 @@ class IntroduceViewModel @Inject constructor(
     private fun getString(@StringRes resId: Int): String = applicationUseCases.getString(resId)
 
     private fun CharSequence?.checkEmpty(): CharSequence =
-        if (isNullOrBlank()) getString(R.string.unknown) else this
+        if (isNullOrBlank()) "--" else this
 
-
-    private fun makeSettingsProperties(): List<Property> = buildList {
-        if (readable.isOthers) return@buildList
+    private fun makeSettingsProperties(): List<Property> = run {
+        if (readable.isOthers) return@run emptyList()
         val notification = getString(R.string.profile_settings_notification)
         val safe = getString(R.string.profile_settings_safe)
         val dataSource = getString(R.string.profile_settings_datasource)
         val theme = getString(R.string.profile_settings_theme)
         val language = getString(R.string.profile_settings_language)
-        Property.Folder(notification, Icons.Sharp.Notifications, NavTarget.Setting.Notification)
-            .addIt()
-        Property.Folder(safe, Icons.Sharp.Lock, NavTarget.Setting.Safe).addIt()
-        Property.Folder(dataSource, Icons.Sharp.DateRange, NavTarget.Setting.DataSource).addIt()
-        Property.Folder(theme, Icons.Sharp.FormatPaint, NavTarget.Setting.Theme).addIt()
-        Property.Folder(language, Icons.Sharp.Language, NavTarget.Setting.Language).addIt()
+        listOf(
+            Property.Folder(
+                notification,
+                Icons.Sharp.Notifications,
+                NavTarget.Setting.Notification
+            ),
+            Property.Folder(safe, Icons.Sharp.Lock, NavTarget.Setting.Safe),
+            Property.Folder(dataSource, Icons.Sharp.DateRange, NavTarget.Setting.DataSource),
+            Property.Folder(theme, Icons.Sharp.FormatPaint, NavTarget.Setting.Theme),
+            Property.Folder(language, Icons.Sharp.Language, NavTarget.Setting.Language)
+        )
     }
 
-    context(MutableList<E>) private fun <E> E.addIt() = add(this)
 }

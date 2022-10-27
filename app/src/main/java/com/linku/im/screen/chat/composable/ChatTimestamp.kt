@@ -9,9 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
-import com.linku.im.ktx.receiver.friendlyFormatted
-import com.linku.im.ktx.receiver.withTimeContentReceiver
-import com.linku.im.ktx.rememberedRun
+import com.linku.core.ktx.receiver.friendlyFormatted
+import com.linku.core.ktx.receiver.withTimeContentReceiver
+import com.linku.im.ktx.runtime.rememberedRun
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 

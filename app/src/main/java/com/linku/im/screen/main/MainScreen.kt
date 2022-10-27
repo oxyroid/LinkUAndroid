@@ -79,10 +79,10 @@ import com.google.accompanist.pager.rememberPagerState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
-import com.linku.im.ktx.compose.runtime.ComposableLifecycle
-import com.linku.im.ktx.compose.ui.graphics.animated
-import com.linku.im.ktx.compose.ui.graphics.times
-import com.linku.im.ktx.rememberedRun
+import com.linku.im.ktx.runtime.ComposableLifecycle
+import com.linku.im.ktx.runtime.rememberedRun
+import com.linku.im.ktx.ui.graphics.animated
+import com.linku.im.ktx.ui.graphics.times
 import com.linku.im.ui.brush.premiumBrush
 import com.linku.im.ui.components.BottomSheetContent
 import com.linku.im.ui.components.ToolBar

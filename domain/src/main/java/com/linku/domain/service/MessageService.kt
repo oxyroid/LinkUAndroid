@@ -1,7 +1,8 @@
+@file:Suppress("unused")
 package com.linku.domain.service
 
+import com.linku.core.wrapper.BackendResult
 import com.linku.domain.entity.MessageDTO
-import com.linku.domain.wrapper.BackendResult
 import retrofit2.http.*
 
 interface MessageService {

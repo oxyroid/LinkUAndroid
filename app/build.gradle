@@ -13,8 +13,8 @@ android {
         applicationId 'com.linku.im'
         minSdk 26
         targetSdk 33
-        versionCode 108
-        versionName "0.15.3"
+        versionCode 109
+        versionName "0.15.4"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -28,6 +28,11 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        benchmark {
+            signingConfig signingConfigs.debug
+            matchingFallbacks = ['release']
+            debuggable false
         }
     }
     compileOptions {
@@ -58,13 +63,15 @@ android {
 
 
 dependencies {
+    implementation project(':core')
     implementation project(':domain')
     implementation project(':data')
+
     implementation 'androidx.core:core-ktx:1.9.0'
-    implementation "androidx.activity:activity-ktx:1.6.0"
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.0-alpha02'
-    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.0-alpha02'
-    implementation 'androidx.activity:activity-compose:1.6.0'
+    implementation 'androidx.activity:activity-ktx:1.6.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.0-alpha03'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.0-alpha03'
+    implementation 'androidx.activity:activity-compose:1.6.1'
     implementation 'androidx.core:core-splashscreen:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     testImplementation 'junit:junit:4.13.2'
@@ -100,7 +107,7 @@ dependencies {
 
     // paging
     implementation "androidx.paging:paging-runtime:$paging_version"
-    implementation "androidx.paging:paging-compose:1.0.0-alpha16"
+    implementation 'androidx.paging:paging-compose:1.0.0-alpha17'
 
     // accompanist
     implementation "com.google.accompanist:accompanist-insets:$accompanist_version"
@@ -112,7 +119,7 @@ dependencies {
     implementation "com.google.accompanist:accompanist-pager-indicators:$accompanist_version"
 
     // json
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1'
 
     // appyx
     implementation "com.bumble.appyx:core:$appyx_version"

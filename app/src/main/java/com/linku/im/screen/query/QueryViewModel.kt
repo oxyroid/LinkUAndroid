@@ -2,11 +2,11 @@ package com.linku.im.screen.query
 
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
+import com.linku.core.ktx.ifFalse
+import com.linku.core.ktx.ifTrue
+import com.linku.core.wrapper.Resource
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.UserUseCases
-import com.linku.domain.wrapper.Resource
-import com.linku.im.ktx.ifFalse
-import com.linku.im.ktx.ifTrue
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn

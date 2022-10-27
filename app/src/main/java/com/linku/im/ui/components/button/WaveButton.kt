@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package com.linku.im.ui.components.button
 
 import androidx.compose.animation.AnimatedVisibility
@@ -24,7 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.linku.im.ktx.compose.ui.graphics.times
+import com.linku.im.ktx.ui.graphics.times
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable

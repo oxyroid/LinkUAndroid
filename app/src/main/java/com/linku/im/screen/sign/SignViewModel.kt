@@ -1,11 +1,11 @@
 package com.linku.im.screen.sign
 
 import androidx.lifecycle.viewModelScope
+import com.linku.core.wrapper.eventOf
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
 import com.linku.domain.repository.AuthRepository
 import com.linku.domain.service.system.SensorService
-import com.linku.domain.wrapper.eventOf
 import com.linku.im.R
 import com.linku.im.screen.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel

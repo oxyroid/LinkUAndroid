@@ -1,7 +1,7 @@
 package com.linku.data.usecase
 
+import com.linku.core.wrapper.Resource
 import com.linku.domain.repository.SessionRepository
-import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 

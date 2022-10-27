@@ -33,10 +33,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.linku.core.ktx.ifTrue
 import com.linku.domain.bean.Emoji
 import com.linku.im.R
-import com.linku.im.ktx.compose.ui.intervalClickable
-import com.linku.im.ktx.ifTrue
+import com.linku.im.ktx.ui.intervalClickable
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme

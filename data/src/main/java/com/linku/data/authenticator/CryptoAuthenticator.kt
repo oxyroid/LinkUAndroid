@@ -1,9 +1,10 @@
+@file:Suppress("unused")
 package com.linku.data.authenticator
 
 import android.content.Context
+import com.linku.core.fs.impl.readFs
+import com.linku.core.fs.impl.writeFs
 import com.linku.domain.auth.Authenticator
-import com.linku.fs_android.readFs
-import com.linku.fs_android.writeFs
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 

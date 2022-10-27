@@ -5,8 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.linku.domain.wrapper.Event
-import com.linku.domain.wrapper.eventOf
+import com.linku.core.wrapper.Event
+import com.linku.core.wrapper.eventOf
 
 abstract class BaseViewModel<S, E>(private val emptyState: S) : ViewModel() {
 

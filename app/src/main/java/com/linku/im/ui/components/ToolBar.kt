@@ -20,9 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bumble.appyx.navmodel.backstack.BackStack
 import com.bumble.appyx.navmodel.backstack.operation.pop
+import com.linku.core.ktx.ifTrue
 import com.linku.im.appyx.target.NavTarget
-import com.linku.im.ktx.compose.ui.graphics.animated
-import com.linku.im.ktx.ifTrue
+import com.linku.im.ktx.ui.graphics.animated
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalTheme

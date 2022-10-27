@@ -1,10 +1,10 @@
 package com.linku.data.di
 
+import com.linku.core.extension.json
+import com.linku.core.ktx.serialization.asConverterFactory
 import com.linku.data.BuildConfig
-import com.linku.data.ktx.serialization.asConverterFactory
 import com.linku.domain.Constants
 import com.linku.domain.auth.Authenticator
-import com.linku.domain.extension.json
 import com.linku.domain.service.*
 import dagger.Module
 import dagger.Provides

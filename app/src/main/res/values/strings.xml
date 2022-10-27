@@ -41,7 +41,6 @@
     <string name="profile_data_description">个人简介</string>
     <string name="email_verified">验证</string>
     <string name="email_verified_dialog_title">验证您的邮箱</string>
-    <string name="unknown">/<未知 /></string>
     <string name="confirm">验证</string>
     <string name="cancel">取消</string>
     <string name="verifying">验证中</string>

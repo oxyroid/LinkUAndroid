@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linku.domain.entity.Theme
 import com.linku.im.R
-import com.linku.im.ktx.compose.ui.graphics.toColor
+import com.linku.im.ktx.ui.graphics.toColor
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.SugarColors
 

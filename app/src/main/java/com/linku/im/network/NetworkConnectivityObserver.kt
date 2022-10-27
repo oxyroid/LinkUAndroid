@@ -3,13 +3,15 @@ package com.linku.im.network
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import javax.inject.Inject
 
-class NetworkConnectivityObserver(
-    context: Context
+class NetworkConnectivityObserver @Inject constructor(
+    @ApplicationContext context: Context
 ) : ConnectivityObserver {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager

@@ -1,7 +1,6 @@
 package com.linku.domain.repository
 
 import android.net.Uri
-import com.linku.domain.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
@@ -24,7 +23,7 @@ interface AuthRepository {
 
     suspend fun verifyEmail(): Result<Unit>
 
-    fun uploadAvatar(uri: Uri): Flow<Resource<Unit>>
+    fun uploadAvatar(uri: Uri): Flow<com.linku.core.wrapper.Resource<Unit>>
 
     sealed class SignInState {
         object Start : SignInState()

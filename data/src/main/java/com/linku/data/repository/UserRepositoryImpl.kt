@@ -1,11 +1,11 @@
 package com.linku.data.repository
 
+import com.linku.core.wrapper.resultOf
 import com.linku.domain.Strategy
 import com.linku.domain.entity.User
 import com.linku.domain.repository.UserRepository
 import com.linku.domain.room.dao.UserDao
 import com.linku.domain.service.UserService
-import com.linku.domain.wrapper.resultOf
 import javax.inject.Inject
 
 class UserRepositoryImpl @Inject constructor(

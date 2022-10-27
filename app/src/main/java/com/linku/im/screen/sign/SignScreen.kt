@@ -38,7 +38,7 @@ import com.google.accompanist.insets.ui.Scaffold
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.ktx.compose.runtime.ComposableLifecycle
+import com.linku.im.ktx.runtime.ComposableLifecycle
 import com.linku.im.ui.components.PasswordTextField
 import com.linku.im.ui.components.TextField
 import com.linku.im.ui.components.button.MaterialButton

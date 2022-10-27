@@ -17,5 +17,5 @@ rootProject.name = "LinkU-Android"
 include ':app'
 include ':domain'
 include ':data'
-include ':fs_core'
-include ':fs_android'
+include ':benchmark'
+include ':core'

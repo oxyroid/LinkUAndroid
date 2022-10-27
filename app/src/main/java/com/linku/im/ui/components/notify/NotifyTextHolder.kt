@@ -33,8 +33,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.BaselineShift
-import com.linku.im.ktx.compose.ui.graphics.animated
-import com.linku.im.ktx.compose.ui.graphics.times
+import com.linku.im.ktx.ui.graphics.animated
+import com.linku.im.ktx.ui.graphics.times
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import kotlinx.coroutines.delay

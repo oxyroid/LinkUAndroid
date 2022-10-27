@@ -12,8 +12,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.SubcomposeAsyncImage
-import com.linku.im.ktx.compose.layout.Content
-import com.linku.im.ktx.compose.layout.toBoxContent
+import com.linku.im.ktx.layout.Content
+import com.linku.im.ktx.layout.toBoxContent
 import com.linku.im.ui.theme.LocalSpacing
 
 @Composable

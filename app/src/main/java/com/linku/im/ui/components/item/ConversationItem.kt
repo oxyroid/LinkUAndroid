@@ -37,11 +37,11 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
+import com.linku.core.ktx.ifTrue
 import com.linku.domain.bean.ui.ConversationUI
 import com.linku.domain.entity.Conversation
-import com.linku.im.ktx.compose.ui.graphics.times
-import com.linku.im.ktx.compose.ui.intervalClickable
-import com.linku.im.ktx.ifTrue
+import com.linku.im.ktx.ui.graphics.times
+import com.linku.im.ktx.ui.intervalClickable
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 

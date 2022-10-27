@@ -24,7 +24,6 @@ data class ContentResolverUseCase @Inject constructor(
 data class GetSystemServiceUseCase @Inject constructor(
     @ApplicationContext val context: Context
 ) {
-    @Suppress("UNCHECKED_CAST")
     inline operator fun <reified T> invoke(): T {
         return context.getSystemService(T::class.java) as T
     }

@@ -22,8 +22,8 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
-import com.linku.im.ktx.compose.ui.graphics.times
-import com.linku.im.ktx.compose.ui.intervalClickable
+import com.linku.im.ktx.ui.graphics.times
+import com.linku.im.ktx.ui.intervalClickable
 import com.linku.im.ui.theme.LocalTheme
 
 private val PADDING_X = 24.dp
@@ -73,7 +73,7 @@ fun IntroduceItem(
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier
                                 .placeholder(
-                                    visible = value == null,
+                                    visible = value.isNullOrBlank(),
                                     color = LocalTheme.current.onBackground,
                                     shape = RoundedCornerShape(4.dp),
                                     highlight = PlaceholderHighlight.shimmer(
