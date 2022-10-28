@@ -79,7 +79,7 @@ import com.google.accompanist.pager.rememberPagerState
 import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
-import com.linku.im.ktx.runtime.ComposableLifecycle
+import com.linku.im.ktx.runtime.LifecycleEffect
 import com.linku.im.ktx.runtime.rememberedRun
 import com.linku.im.ktx.ui.graphics.animated
 import com.linku.im.ktx.ui.graphics.times
@@ -145,7 +145,7 @@ fun MainScreen(
         )
     }
 
-    ComposableLifecycle { _, event ->
+    LifecycleEffect {  event ->
         if (event == Lifecycle.Event.ON_START) {
             viewModel.onEvent(MainEvent.ObserveConversations)
         } else if (event == Lifecycle.Event.ON_STOP) {

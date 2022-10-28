@@ -38,7 +38,7 @@ import com.google.accompanist.insets.ui.Scaffold
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.ktx.runtime.ComposableLifecycle
+import com.linku.im.ktx.runtime.LifecycleEffect
 import com.linku.im.ui.components.PasswordTextField
 import com.linku.im.ui.components.TextField
 import com.linku.im.ui.components.button.MaterialButton
@@ -57,7 +57,7 @@ fun SignScreen(
 ) {
     val systemUiController = rememberSystemUiController()
     val theme = LocalTheme.current
-    ComposableLifecycle { _, event ->
+    LifecycleEffect { event ->
         if (event == Lifecycle.Event.ON_CREATE) {
             systemUiController.setSystemBarsColor(
                 color = Color.Transparent,
@@ -68,6 +68,7 @@ fun SignScreen(
                 color = Color.Transparent,
                 darkIcons = theme.isDarkText
             )
+            viewModel.restore()
         }
     }
 
@@ -78,12 +79,6 @@ fun SignScreen(
 
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
-
-    ComposableLifecycle { _, event ->
-        if (event == Lifecycle.Event.ON_DESTROY) {
-            viewModel.restore()
-        }
-    }
 
     LaunchedEffect(viewModel.message, vm.message) {
         viewModel.message.handle {

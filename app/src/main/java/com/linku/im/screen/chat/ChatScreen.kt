@@ -67,7 +67,7 @@ import com.linku.domain.entity.Message
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.foundation.lazy.isAtTop
-import com.linku.im.ktx.runtime.ComposableLifecycle
+import com.linku.im.ktx.runtime.LifecycleEffect
 import com.linku.im.ktx.runtime.rememberedRun
 import com.linku.im.ktx.ui.graphics.times
 import com.linku.im.screen.chat.composable.ChatBubble
@@ -104,7 +104,7 @@ fun ChatScreen(
             viewModel.onEvent(ChatEvent.OnFile(uri))
         }
 
-    ComposableLifecycle { _, event ->
+    LifecycleEffect {event ->
         if (event == Lifecycle.Event.ON_CREATE) {
             viewModel.onEvent(ChatEvent.FetchChannel(cid))
         } else if (event == Lifecycle.Event.ON_DESTROY) {
