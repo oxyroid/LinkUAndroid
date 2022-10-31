@@ -3,21 +3,20 @@ package com.linku.domain.entity
 import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
+import androidx.room.TypeConverter
 import com.linku.core.extension.json
-import com.linku.domain.room.converter.MessageTypeConverter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 
 @Entity
-@TypeConverters(MessageTypeConverter::class)
 @Stable
 open class Message(
     @PrimaryKey open val id: Int,
     open val cid: Int,
     open val uid: Int,
+    open val tid: Int = 0,
     open val content: String,
     val type: Type,
     open val timestamp: Long,
@@ -28,18 +27,30 @@ open class Message(
         object Text : Type("text")
         object Image : Type("image")
         object Graphics : Type("graphics")
+        object ContactRequest : Type("contact-request")
+
         object Unknown : Type("")
 
-        companion object {
-            fun parse(text: String) = when (text.lowercase().trim()) {
-                "text" -> Text
-                "image" -> Image
-                "graphics" -> Graphics
-                else -> Unknown
+        override fun toString(): String = text
+
+        @Suppress("unused")
+        object Converter {
+            @TypeConverter
+            fun decode(value: String?): Type {
+                return when (value?.lowercase()?.trim()) {
+                    "text" -> Text
+                    "image" -> Image
+                    "graphics" -> Graphics
+                    "contact-request" -> ContactRequest
+                    else -> Unknown
+                }
+            }
+
+            @TypeConverter
+            fun encode(type: Type): String {
+                return type.toString()
             }
         }
-
-        override fun toString(): String = text
     }
 
     override fun reply(): Int? = when (this) {
@@ -57,7 +68,7 @@ open class Message(
     }
 
     fun toReadable(): Message = when (this) {
-        is TextMessage, is ImageMessage, is GraphicsMessage -> this
+        is TextMessage, is ImageMessage, is GraphicsMessage, is ContactRequest -> this
         else -> when (type) {
             Type.Text -> {
                 val textContent = TextContent.decode(content)
@@ -106,6 +117,18 @@ open class Message(
                 )
             }
 
+            Type.ContactRequest -> {
+                ContactRequest(
+                    id = id,
+                    cid = cid,
+                    uid = uid,
+                    tid = tid,
+                    text = content,
+                    timestamp = timestamp,
+                    uuid = uuid,
+                    sendState = sendState
+                )
+            }
             else -> this
         }
     }
@@ -128,6 +151,7 @@ data class TextMessage(
     id = id,
     cid = cid,
     uid = uid,
+    tid = 0,
     content = TextContent(text, reply).let(json::encodeToString),
     type = Type.Text,
     timestamp = timestamp,
@@ -150,6 +174,7 @@ data class ImageMessage(
     id = id,
     cid = cid,
     uid = uid,
+    tid = 0,
     content = ImageContent(url, reply, width, height).let(json::encodeToString),
     type = Type.Image,
     timestamp = timestamp,
@@ -173,8 +198,30 @@ data class GraphicsMessage(
     id = id,
     cid = cid,
     uid = uid,
+    tid = 0,
     content = GraphicsContent(text, url, reply, width, height).let(json::encodeToString),
     type = Type.Image,
+    timestamp = timestamp,
+    uuid = uuid,
+    sendState = sendState
+)
+
+data class ContactRequest(
+    override val id: Int,
+    override val cid: Int,
+    override val uid: Int,
+    override val tid: Int,
+    val text: String,
+    override val timestamp: Long,
+    override val uuid: String,
+    override val sendState: Int
+) : Message(
+    id = id,
+    cid = cid,
+    uid = uid,
+    tid = tid,
+    content = text,
+    type = Type.ContactRequest,
     timestamp = timestamp,
     uuid = uuid,
     sendState = sendState
@@ -196,7 +243,7 @@ data class MessageDTO(
         else -> Message.STATE_SEND
     }
 
-    fun toMessage() = when (Message.Type.parse(type)) {
+    fun toMessage() = when (Message.Type.Converter.decode(type)) {
         Message.Type.Text -> {
             val textContent = TextContent.decode(content)
             TextMessage(
@@ -244,12 +291,26 @@ data class MessageDTO(
             )
         }
 
+        Message.Type.ContactRequest -> {
+            ContactRequest(
+                id = id,
+                cid = cid,
+                uid = uid,
+                tid = tid,
+                text = content,
+                timestamp = timestamp,
+                uuid = uuid,
+                sendState = sendState
+            )
+        }
+
         else -> Message(
             id = id,
             cid = cid,
             uid = uid,
+            tid = 0,
             content = content,
-            type = Message.Type.parse(type),
+            type = Message.Type.Converter.decode(type),
             timestamp = timestamp,
             uuid = uuid,
             sendState = sendState

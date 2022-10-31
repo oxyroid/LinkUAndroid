@@ -92,7 +92,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel(),
-    cid: Int
+    cid: Int,
+    navTarget: NavTarget
 ) {
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
@@ -104,7 +105,7 @@ fun ChatScreen(
             viewModel.onEvent(ChatEvent.OnFile(uri))
         }
 
-    LifecycleEffect {event ->
+    LifecycleEffect { event ->
         if (event == Lifecycle.Event.ON_CREATE) {
             viewModel.onEvent(ChatEvent.FetchChannel(cid))
         } else if (event == Lifecycle.Event.ON_DESTROY) {
@@ -666,14 +667,13 @@ fun BottomSheetContent(
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun PreviewDialog(
     uri: Uri?,
     onDismiss: () -> Unit
 ) {
-    AnimatedContent(
-        targetState = uri,
+    AnimatedVisibility(
+        visible = uri != null,
         modifier = Modifier
             .padding(LocalSpacing.current.extraSmall)
             .fillMaxWidth()
@@ -681,19 +681,24 @@ fun PreviewDialog(
                 state = rememberDraggableState { if (it > 20) onDismiss() },
                 orientation = Orientation.Vertical
             ),
-        transitionSpec = {
-            slideInVertically { it } with slideOutVertically { -it }
-        },
-        contentAlignment = Alignment.BottomCenter
+        enter = slideInVertically { it * 2 },
+        exit = slideOutVertically { it * 2 }
     ) {
-        if (it == null) return@AnimatedContent
         Surface(
             shape = RoundedCornerShape(5),
             border = BorderStroke(1.dp, LocalTheme.current.divider)
         ) {
             Box {
+                var realUrl by remember {
+                    mutableStateOf(Uri.EMPTY)
+                }
+                LaunchedEffect(uri) {
+                    if (uri != null) {
+                        realUrl = uri
+                    }
+                }
                 AsyncImage(
-                    model = it,
+                    model = realUrl,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()

@@ -56,4 +56,7 @@ interface MessageDao {
 
     @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC LIMIT 1")
     fun observeLatestMessageByCid(cid: Int): Flow<Message>
+
+    @Query("SELECT * FROM Message WHERE type = :type")
+    suspend fun findByType(type: Message.Type): List<Message>
 }

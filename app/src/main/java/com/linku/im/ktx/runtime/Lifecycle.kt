@@ -29,10 +29,13 @@ fun <T> rememberUpdatedStateWithLifecycle(
 }
 
 @Composable
-fun LifecycleEffect(block: LifecycleOwner.(Lifecycle.Event) -> Unit) {
-    val lifecycleOwner = LocalLifecycleOwner.current
+@NonRestartableComposable
+fun LifecycleEffect(
+    lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
+    effect: LifecycleOwner.(Lifecycle.Event) -> Unit
+) {
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver(block)
+        val observer = LifecycleEventObserver(effect)
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)

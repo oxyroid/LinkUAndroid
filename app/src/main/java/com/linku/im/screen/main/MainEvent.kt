@@ -8,4 +8,5 @@ sealed class MainEvent {
 
     data class Forward(val mode: MainMode) : MainEvent()
     object Remain : MainEvent()
+    object FetchNotifications : MainEvent()
 }

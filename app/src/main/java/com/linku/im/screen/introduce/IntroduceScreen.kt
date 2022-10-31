@@ -44,7 +44,7 @@ import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
-import com.linku.core.ktx.ifFalse
+import com.bumble.appyx.navmodel.backstack.operation.singleTop
 import com.linku.core.ktx.ifTrue
 import com.linku.core.wrapper.Event
 import com.linku.im.BuildConfig
@@ -58,6 +58,7 @@ import com.linku.im.screen.introduce.util.SquireCropImage
 import com.linku.im.ui.components.BottomSheetContent
 import com.linku.im.ui.components.Scrim
 import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.components.notify.NotifyHolder
 import com.linku.im.ui.theme.LocalBackStack
@@ -110,6 +111,12 @@ fun IntroduceScreen(
         state.runLauncher.handle { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
     }
 
+    LaunchedEffect(state.goChat) {
+        state.goChat.handle {
+            backStack.singleTop(NavTarget.ChatTarget.Messages(it))
+        }
+    }
+
     LaunchedEffect(state.editEvent) {
         state.editEvent.handle {
             backStack.push(NavTarget.Edit(it))
@@ -138,7 +145,7 @@ fun IntroduceScreen(
         actions = state.actions,
         avatar = state.avatar,
         message = viewModel.message,
-        isOthers = state.isOthers,
+        category = state.category,
         dataProperties = state.dataProperties,
         settingsProperties = state.settingsProperties,
         topBar = {
@@ -163,12 +170,13 @@ fun IntroduceScreen(
                     )
                 },
                 dropdownMenuExpended = dropdownMenuExpended,
-                isOthers = state.isOthers
+                category = state.category
             )
         },
         onPreview = { viewModel.onEvent(IntroduceEvent.AvatarClicked) },
         onAction = { viewModel.onEvent(IntroduceEvent.Actions(it.label, it.actions)) },
         toggleLogMode = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) },
+        onFriendshipAction = { viewModel.onEvent(IntroduceEvent.FriendShipAction) }
     )
     BackHandler(expanded.value) { expanded.value = false }
 }
@@ -284,7 +292,7 @@ private fun IntroduceScaffold(
     label: String,
     actions: List<Property.Data.Action>,
     expanded: MutableState<Boolean>,
-    isOthers: Boolean,
+    category: Category,
     avatar: String,
     dataProperties: List<Property>,
     settingsProperties: List<Property>,
@@ -292,7 +300,8 @@ private fun IntroduceScaffold(
     topBar: @Composable () -> Unit,
     onPreview: () -> Unit,
     onAction: (IntroduceEvent.Actions) -> Unit,
-    toggleLogMode: () -> Unit
+    toggleLogMode: () -> Unit,
+    onFriendshipAction: () -> Unit
 ) {
     val scaffoldState = rememberScaffoldState()
     LaunchedEffect(message, vm.message) {
@@ -311,7 +320,9 @@ private fun IntroduceScaffold(
             )
         },
         scaffoldState = scaffoldState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding(),
         backgroundColor = LocalTheme.current.background,
         contentColor = LocalTheme.current.onBackground
     ) { innerPadding ->
@@ -349,7 +360,7 @@ private fun IntroduceScaffold(
                     label = stringResource(R.string.account),
                     items = dataProperties,
                     onItemClick = { setting ->
-                        if (isOthers) return@ProfileList
+                        if (category is Category.User) return@ProfileList
                         if (setting is Property.Data) {
                             IntroduceEvent.Actions(
                                 label = setting.key,
@@ -403,6 +414,34 @@ private fun IntroduceScaffold(
                             color = LocalTheme.current.onBackground
                         )
                     }
+                }
+            }
+        }
+
+        when (category) {
+            Category.Personal -> {}
+            is Category.User -> {
+                Column(
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize()
+                        .padding(LocalSpacing.current.medium)
+                ) {
+                    val state = category.friendship
+                    MaterialButton(
+                        enabled = state != Friendship.Loading,
+                        textRes = when (state) {
+                            Friendship.Loading -> R.string.friendship_loading
+                            Friendship.None -> R.string.friendship_none
+                            is Friendship.Pending -> if (state.isReceived) R.string.friendship_pending_received
+                            else R.string.friendship_pending_sent
+
+                            is Friendship.Completed -> R.string.friendship_completed
+                        },
+                        onClick = onFriendshipAction,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }
@@ -469,7 +508,7 @@ private fun IntroduceScaffold(
 
 @Composable
 private fun IntroduceTopBar(
-    isOthers: Boolean,
+    category: Category,
     dropdownMenuExpended: Boolean,
     onDropdownMenuRequest: () -> Unit,
     onDismissDropdownMenuRequest: () -> Unit,
@@ -489,8 +528,10 @@ private fun IntroduceTopBar(
                 expanded = dropdownMenuExpended,
                 onDismissRequest = onDismissDropdownMenuRequest
             ) {
-                isOthers.ifFalse { ownDropdown() }
-                isOthers.ifTrue { otherDropdown() }
+                when (category) {
+                    Category.Personal -> ownDropdown()
+                    is Category.User -> otherDropdown()
+                }
             }
         },
         text = "",

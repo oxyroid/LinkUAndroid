@@ -5,7 +5,7 @@ import com.linku.im.screen.introduce.composable.Property
 
 data class IntroduceState(
     val uploading: Boolean = false,
-    val isOthers: Boolean = false,
+    val category: Category = Category.Personal,
     val uid: Int = -1,
     val verifiedEmailStarting: Boolean = false,
     val verifiedEmailDialogShowing: Boolean = false,
@@ -18,5 +18,21 @@ data class IntroduceState(
     val editEvent: Event<IntroduceEvent.Edit.Type> = Event.Handled(),
     val avatar: String = "",
     val preview: String = "",
-    val runLauncher: Event<Unit> = Event.Handled()
+    val runLauncher: Event<Unit> = Event.Handled(),
+    val goChat: Event<Int> = Event.Handled()
 )
+
+sealed class Category {
+    object Personal : Category()
+    data class User(
+        val friendship: Friendship = Friendship.Loading
+    ) : Category()
+}
+
+sealed class Friendship {
+    object None : Friendship()
+    data class Pending(val isReceived: Boolean) : Friendship()
+    data class Completed(val cid: Int) : Friendship()
+
+    object Loading: Friendship()
+}

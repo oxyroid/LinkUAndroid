@@ -3,15 +3,12 @@ package com.linku.domain.entity
 import androidx.compose.runtime.Stable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
-import com.linku.domain.room.converter.ConversationTypeConverter
-import com.linku.domain.room.converter.IntListConverter
+import androidx.room.TypeConverter
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Entity
 @Stable
-@TypeConverters(IntListConverter::class, ConversationTypeConverter::class)
 data class Conversation(
     @PrimaryKey
     val id: Int,
@@ -33,12 +30,22 @@ data class Conversation(
 
         override fun toString(): String = type.toString()
 
-        companion object {
-            fun parse(type: Int) = when (type) {
-                0 -> PM
-                1 -> GROUP
-                2 -> BANNED
-                else -> UNKNOWN
+
+        @Suppress("unused")
+        object Converter {
+            @TypeConverter
+            fun decode(value: Int?): Type {
+                return when (value) {
+                    0 -> PM
+                    1 -> GROUP
+                    2 -> BANNED
+                    else -> UNKNOWN
+                }
+            }
+
+            @TypeConverter
+            fun encode(type: Type): Int {
+                return type.type
             }
         }
     }
@@ -67,7 +74,7 @@ data class ConversationDTO(
 
 fun ConversationDTO.toConversation() = Conversation(
     id = id,
-    type = Conversation.Type.parse(type),
+    type = Conversation.Type.Converter.decode(type),
     updatedAt = updatedAt,
     name = name,
     avatar = avatar,

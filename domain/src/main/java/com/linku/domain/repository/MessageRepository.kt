@@ -7,7 +7,10 @@ import com.linku.domain.entity.Message
 import kotlinx.coroutines.flow.Flow
 
 interface MessageRepository {
-    suspend fun getMessageById(mid: Int, strategy: Strategy): Message?
+    suspend fun getMessageById(
+        mid: Int,
+        strategy: Strategy
+    ): Message?
     fun incoming(): Flow<List<Message>>
     fun incoming(cid: Int): Flow<List<Message>>
     fun observeLatestMessageVOs(

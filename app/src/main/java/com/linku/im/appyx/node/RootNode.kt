@@ -59,7 +59,11 @@ class RootNode(
 
         is NavTarget.ChatTarget -> node(buildContext) {
             val viewModel: ChatViewModel = hiltViewModel()
-            ChatScreen(cid = navTarget.cid, viewModel = viewModel)
+            ChatScreen(
+                cid = navTarget.cid,
+                viewModel = viewModel,
+                navTarget = navTarget
+            )
         }
 
         is NavTarget.Introduce -> node(buildContext) {

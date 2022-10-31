@@ -73,6 +73,7 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.bumble.appyx.navmodel.backstack.operation.push
+import com.bumble.appyx.navmodel.backstack.operation.singleTop
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
@@ -123,7 +124,9 @@ fun MainScreen(
             Selection.Button(
                 resId = R.string.notification,
                 icon = Icons.Sharp.Notifications,
-                onClick = { viewModel.onEvent(MainEvent.Forward(MainMode.Notifications)) }
+                onClick = {
+                    viewModel.onEvent(MainEvent.Forward(MainMode.Notifications))
+                }
             ),
             Selection.Route(
                 resId = R.string.settings,
@@ -145,7 +148,7 @@ fun MainScreen(
         )
     }
 
-    LifecycleEffect {  event ->
+    LifecycleEffect { event ->
         if (event == Lifecycle.Event.ON_START) {
             viewModel.onEvent(MainEvent.ObserveConversations)
         } else if (event == Lifecycle.Event.ON_STOP) {
@@ -396,7 +399,7 @@ fun MainScreen(
                                     PinnedConversationItem(conversation = conversation,
                                         modifier = Modifier.animateItemPlacement(),
                                         onClick = {
-                                            backStack.push(
+                                            backStack.singleTop(
                                                 NavTarget.ChatTarget.Messages(
                                                     conversation.id
                                                 )
@@ -506,27 +509,41 @@ fun MainScreen(
                 }
 
             }
-
+            val isNotification = mode is MainMode.Notifications
             BottomSheetContent(
-                visible = mode is MainMode.Notifications,
+                visible = isNotification,
                 maxHeight = true,
                 onDismiss = { viewModel.onEvent(MainEvent.Remain) }
             ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .align(Alignment.CenterHorizontally)
-
-                ) {
-                    val composition by rememberLottieComposition(
-                        LottieCompositionSpec.RawRes(R.raw.lottie_empty_box)
-                    )
-                    LottieAnimation(
-                        composition = composition,
+                LaunchedEffect(isNotification) {
+                    if (isNotification) {
+                        viewModel.onEvent(MainEvent.FetchNotifications)
+                    }
+                }
+                val requests = state.requests
+                if (requests.isEmpty()) {
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
-                            .size(160.dp)
-                    )
+                            .fillMaxSize()
+                            .align(Alignment.CenterHorizontally)
+
+                    ) {
+                        val composition by rememberLottieComposition(
+                            LottieCompositionSpec.RawRes(R.raw.lottie_empty_box)
+                        )
+                        LottieAnimation(
+                            composition = composition,
+                            modifier = Modifier
+                                .size(160.dp)
+                        )
+                    }
+                } else {
+                    LazyColumn {
+                        items(requests) {
+                            Text(text = it.timestamp.toString())
+                        }
+                    }
                 }
             }
 

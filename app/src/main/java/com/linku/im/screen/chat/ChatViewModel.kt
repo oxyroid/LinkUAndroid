@@ -352,7 +352,6 @@ class ChatViewModel @Inject constructor(
                             if (message == readable.repliedMessage) null
                             else message
                         }
-
                 }
             )
         }

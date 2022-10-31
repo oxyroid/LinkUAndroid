@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.linku.domain.service
 
 import com.linku.core.wrapper.BackendResult
@@ -33,6 +34,7 @@ interface MessageService {
     @FormUrlEncoded
     @POST("chats/contact/request")
     suspend fun request(
+        @Field("tid") tid: Int,
         @Field("content") content: String? = null
     ): BackendResult<Unit>
 

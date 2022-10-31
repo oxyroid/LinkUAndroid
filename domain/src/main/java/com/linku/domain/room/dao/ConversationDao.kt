@@ -32,4 +32,7 @@ interface ConversationDao {
 
     @Query("UPDATE Conversation SET pinned = NOT pinned WHERE id = :cid")
     suspend fun pin(cid: Int)
+
+    @Query("SELECT * FROM Conversation WHERE type = :type")
+    suspend fun findByType(type: Conversation.Type): List<Conversation>
 }

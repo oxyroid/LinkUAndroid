@@ -8,9 +8,11 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.linku.core.wrapper.Resource
 import com.linku.domain.Strategy
+import com.linku.domain.auth.Authenticator
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.Member
 import com.linku.domain.repository.ConversationRepository
+import com.linku.domain.room.dao.ConversationDao
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -24,7 +26,8 @@ data class ConversationUseCases @Inject constructor(
     val fetchMembers: FetchMembersUseCase,
     val queryConversations: QueryConversationsUseCase,
     val pushConversationShort: PushConversationShortCutUseCase,
-    val pin: PinUseCase
+    val pin: PinUseCase,
+    val findChatRoom: FindChatRoomUseCase
 )
 
 data class PinUseCase @Inject constructor(
@@ -105,5 +108,20 @@ data class PushConversationShortCutUseCase @Inject constructor(
         }
             .onSuccess { emit(Resource.Success(Unit)) }
             .onFailure { emit(Resource.Failure(it.message)) }
+    }
+}
+
+
+data class FindChatRoomUseCase @Inject constructor(
+    private val dao: ConversationDao,
+    private val authenticator: Authenticator,
+    private val repository: ConversationRepository
+) {
+    suspend operator fun invoke(uid: Int): Int? {
+        val currentUID = authenticator.currentUID
+        val conversations = dao.findByType(Conversation.Type.PM)
+        return conversations
+            .find { it.member.contains(currentUID) && it.member.contains(uid) }
+            .let { it?.id }
     }
 }

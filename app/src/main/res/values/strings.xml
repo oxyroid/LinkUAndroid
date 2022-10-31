@@ -101,4 +101,9 @@
     <string name="theme_import_error">导入失败</string>
     <string name="premium">Premium Account</string>
     <string name="premium_unavailable">Premium is unavailable in your area now</string>
+    <string name="friendship_loading">加载中…</string>
+    <string name="friendship_none">发送好友请求</string>
+    <string name="friendship_pending_received">回应请求</string>
+    <string name="friendship_pending_sent">等待回应请求</string>
+    <string name="friendship_completed">发送消息</string>
 </resources>

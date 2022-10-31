@@ -5,7 +5,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-open class IntListConverter {
+class IntList {
     @TypeConverter
     fun decode(value: String?): List<Int> {
         return value?.let { Json.decodeFromString(value) } ?: emptyList()

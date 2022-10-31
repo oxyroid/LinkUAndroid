@@ -105,7 +105,25 @@ class ConversationRepositoryImpl @Inject constructor(
         runCatching {
             resultOf { conversationService.getConversationsBySelf() }
                 .onSuccess { conversations ->
-                    conversations.forEach { conversationDao.insert(it.toConversation()) }
+                    for (it in conversations) {
+                        if (it.type == Conversation.Type.PM.type) {
+                            resultOf { conversationService.getMembersByCid(it.id) }
+                                .onSuccess { members ->
+                                    val conversation = conversationDao.getById(it.id)
+                                    if (conversation != null) {
+                                        conversationDao.insert(
+                                            conversation.copy(
+                                                member = members.map { it.uid }
+                                            )
+                                        )
+                                    }
+                                }
+                                .onFailure {
+                                    emitResource(it.message)
+                                }
+                        }
+                        conversationDao.insert(it.toConversation())
+                    }
                     emitResource(Unit)
                 }
                 .onFailure {
@@ -138,7 +156,18 @@ class ConversationRepositoryImpl @Inject constructor(
                 conversationService
                     .getMembersByCid(cid)
             }
-                .onSuccess { emitResource(it) }
+                .onSuccess { members ->
+                    val conversation = conversationDao.getById(cid) ?: run {
+                        emitResource(members)
+                        return@onSuccess
+                    }
+                    conversationDao.insert(
+                        conversation.copy(
+                            member = members.map { it.uid }
+                        )
+                    )
+                    emitResource(members)
+                }
                 .onFailure { emitResource(it.message) }
         }.onFailure {
             emitResource(it.message)

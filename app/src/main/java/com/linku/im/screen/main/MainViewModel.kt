@@ -11,9 +11,11 @@ import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.MessageUseCases
 import com.linku.domain.bean.ui.toUI
+import com.linku.domain.entity.ContactRequest
 import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
+import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
 import com.linku.im.R
 import com.linku.im.network.ConnectivityObserver
@@ -65,6 +67,17 @@ class MainViewModel @Inject constructor(
             is MainEvent.Pin -> pin(event)
             is MainEvent.Forward -> forward(event)
             MainEvent.Remain -> remain()
+            MainEvent.FetchNotifications -> fetchNotifications()
+        }
+    }
+
+    private fun fetchNotifications() {
+        viewModelScope.launch {
+            val requests =
+                messageUseCases.findMessagesByType<ContactRequest>(Message.Type.ContactRequest)
+            writable = readable.copy(
+                requests = requests
+            )
         }
     }
 
@@ -114,7 +127,7 @@ class MainViewModel @Inject constructor(
                                     oldContracts.remove(oldContract)
                                     val copy = oldContract.copy(
                                         content = when (message) {
-                                            is TextMessage -> message.content
+                                            is TextMessage -> message.text
                                             is ImageMessage -> applicationUseCases.getString(R.string.image_message)
                                             is GraphicsMessage -> applicationUseCases.getString(R.string.graphics_message)
                                             else -> applicationUseCases.getString(R.string.unknown_message_type)
