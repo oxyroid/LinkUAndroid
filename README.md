@@ -21,6 +21,7 @@ This repository is **Jetpack Compose** instant messaging example.
   Injection Framework
 - **[Appyx](https://github.com/bumble-tech/appyx)** provide Model-driven navigation for Jetpack
   Compose
+- Kotlin DSL as Gradle Language
 - Multi-module development
 
 #### 🎉 Build in your environment
