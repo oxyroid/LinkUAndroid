@@ -129,6 +129,7 @@ open class Message(
                     sendState = sendState
                 )
             }
+
             else -> this
         }
     }

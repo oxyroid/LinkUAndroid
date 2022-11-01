@@ -1,5 +1,6 @@
 @file:JvmName("KotlinSerializationConverterFactory")
 @file:Suppress("unused")
+
 package com.linku.core.ktx.serialization
 
 import com.linku.core.ktx.serialization.Serializer.FromBytes

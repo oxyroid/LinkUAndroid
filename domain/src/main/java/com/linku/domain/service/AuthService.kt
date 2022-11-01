@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.linku.domain.service
 
 import com.linku.core.wrapper.BackendResult

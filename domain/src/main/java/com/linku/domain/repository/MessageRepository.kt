@@ -11,6 +11,7 @@ interface MessageRepository {
         mid: Int,
         strategy: Strategy
     ): Message?
+
     fun incoming(): Flow<List<Message>>
     fun incoming(cid: Int): Flow<List<Message>>
     fun observeLatestMessageVOs(

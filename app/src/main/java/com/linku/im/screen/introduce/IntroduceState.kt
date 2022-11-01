@@ -34,5 +34,5 @@ sealed class Friendship {
     data class Pending(val isReceived: Boolean) : Friendship()
     data class Completed(val cid: Int) : Friendship()
 
-    object Loading: Friendship()
+    object Loading : Friendship()
 }

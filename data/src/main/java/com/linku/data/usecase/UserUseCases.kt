@@ -1,12 +1,8 @@
 package com.linku.data.usecase
 
 import com.linku.domain.Strategy
-import com.linku.domain.auth.Authenticator
-import com.linku.domain.entity.Conversation
 import com.linku.domain.entity.User
-import com.linku.domain.repository.ConversationRepository
 import com.linku.domain.repository.UserRepository
-import com.linku.domain.room.dao.ConversationDao
 import javax.inject.Inject
 
 data class UserUseCases @Inject constructor(

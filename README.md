@@ -19,7 +19,8 @@ This repository is **Jetpack Compose** instant messaging example.
 - **[Lottie](https://github.com/airbnb/lottie-android)** to render after effects animations natively
 - **[Hilt](https://developer.android.com/training/dependency-injection/hilt-android)** as Dependency
   Injection Framework
-- **[Appyx](https://github.com/bumble-tech/appyx)** provide Model-driven navigation for Jetpack Compose
+- **[Appyx](https://github.com/bumble-tech/appyx)** provide Model-driven navigation for Jetpack
+  Compose
 - Multi-module development
 
 #### 🎉 Build in your environment

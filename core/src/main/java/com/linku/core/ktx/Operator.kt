@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.linku.core.ktx
 
 inline fun <R> Boolean?.ifTrue(block: () -> R): R? {

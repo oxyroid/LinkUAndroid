@@ -1,4 +1,5 @@
 @file:Suppress("unused")
+
 package com.linku.im.ui.components.button
 
 import androidx.compose.animation.AnimatedVisibility
@@ -68,14 +69,6 @@ fun WaveIconButton(
                 targetValue = 1f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(1600),
-                    repeatMode = RepeatMode.Reverse
-                )
-            )
-            val rotation3 by infiniteTransition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(2400),
                     repeatMode = RepeatMode.Reverse
                 )
             )

@@ -274,7 +274,8 @@ class IntroduceViewModel @Inject constructor(
                         avatar = user?.avatar ?: ""
                     )
                 } else {
-                    val requests = messages.findMessagesByType<ContactRequest>(Message.Type.ContactRequest)
+                    val requests =
+                        messages.findMessagesByType<ContactRequest>(Message.Type.ContactRequest)
                     var friendship: Friendship = if (requests.isEmpty())
                         Friendship.None else Friendship.Loading
                     for (request in requests) {
