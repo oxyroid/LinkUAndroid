@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -10,12 +12,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://jitpack.io' }
+        maven(url = "https://jitpack.io")
     }
 }
 rootProject.name = "LinkU-Android"
-include ':app'
-include ':domain'
-include ':data'
-include ':benchmark'
-include ':core'
+include(":app", ":core", ":domain", ":data", ":benchmark")
