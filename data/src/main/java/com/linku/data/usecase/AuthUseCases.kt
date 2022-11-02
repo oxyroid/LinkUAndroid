@@ -4,7 +4,6 @@ import android.net.Uri
 import com.linku.core.wrapper.Resource
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.repository.AuthRepository
-import com.linku.domain.repository.AuthRepository.AfterSignInBehaviour
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -22,9 +21,8 @@ data class SignInUseCase @Inject constructor(
 ) {
     operator fun invoke(
         email: String,
-        password: String,
-        behaviour: AfterSignInBehaviour = AfterSignInBehaviour.DoNothing
-    ): Flow<AuthRepository.SignInState> = repository.signIn(email, password, behaviour)
+        password: String
+    ): Flow<Resource<Unit>> = repository.signIn(email, password)
 }
 
 data class SignUpUseCase @Inject constructor(

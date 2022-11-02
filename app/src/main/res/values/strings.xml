@@ -40,6 +40,7 @@
     <string name="profile_data_email">电子邮箱</string>
     <string name="profile_data_description">个人简介</string>
     <string name="email_verified">验证</string>
+    <string name="email_verified_already">邮箱已验证</string>
     <string name="email_verified_dialog_title">验证您的邮箱</string>
     <string name="confirm">验证</string>
     <string name="cancel">取消</string>
@@ -76,6 +77,7 @@
     <string name="dropdown_retry">重试</string>
     <string name="query_result_conversation">会话</string>
     <string name="query_result_user">用户</string>
+    <string name="query_result_message">消息</string>
     <string name="channel_exit">退出频道</string>
     <string name="channel_add_to_desktop">添加到桌面</string>
     <string name="channel_member_root">所有者</string>
@@ -106,4 +108,5 @@
     <string name="friendship_pending_received">回应请求</string>
     <string name="friendship_pending_sent">等待回应请求</string>
     <string name="friendship_completed">发送消息</string>
+    <string name="signing">登录中...</string>
 </resources>

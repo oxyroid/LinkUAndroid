@@ -22,4 +22,5 @@ sealed class ChatEvent {
     data class Forward(val mode: ChatMode) : ChatEvent()
     object Remain : ChatEvent()
     data class RemainIf(val block: () -> Boolean) : ChatEvent()
+    object ResetNode: ChatEvent()
 }

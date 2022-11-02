@@ -14,8 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.MoreVert
-import androidx.compose.material.icons.sharp.Verified
+import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -39,7 +39,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.bumble.appyx.navmodel.backstack.operation.pop
@@ -51,7 +50,6 @@ import com.linku.im.BuildConfig
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.ui.graphics.times
-import com.linku.im.ktx.ui.intervalClickable
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.screen.introduce.util.SquireCropImage
@@ -80,17 +78,14 @@ fun IntroduceScreen(
     val context = LocalContext.current
 
     val uCropLauncher = rememberLauncherForActivityResult(SquireCropImage()) { uri ->
-        uri?.let {
-            viewModel.onEvent(IntroduceEvent.UpdateAvatar(it))
-        }
+        uri?.let { viewModel.onEvent(IntroduceEvent.UpdateAvatar(it)) }
     }
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let {
+                val file = File(context.cacheDir, "temp_image_file_${Date().time}")
                 uCropLauncher.launch(
-                    it to Uri.fromFile(
-                        File(context.cacheDir, "temp_image_file_${Date().time}")
-                    )
+                    it to Uri.fromFile(file)
                 )
             }
         }
@@ -122,8 +117,6 @@ fun IntroduceScreen(
             backStack.push(NavTarget.Edit(it))
         }
     }
-
-    ImagePreviewDialog(state.preview) { viewModel.onEvent(IntroduceEvent.DismissPreview) }
 
     CircularProgressDialog(enable = with(state) { verifiedEmailStarting || uploading })
 
@@ -182,28 +175,6 @@ fun IntroduceScreen(
 }
 
 @Composable
-private fun ImagePreviewDialog(
-    model: String,
-    onDismissRequest: () -> Unit
-) {
-    (model.isNotBlank()).ifTrue {
-        AlertDialog(
-            text = {
-                AsyncImage(
-                    model = model,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(LocalSpacing.current.small))
-                )
-            },
-            confirmButton = {},
-            onDismissRequest = { onDismissRequest() }
-        )
-    }
-}
-
-@Composable
 private fun CircularProgressDialog(enable: Boolean) {
     if (enable)
         AlertDialog(
@@ -222,14 +193,15 @@ private fun VerifiedEmailDialog(
     onVerified: (String) -> Unit,
     onCanceled: () -> Unit
 ) {
+    val theme = LocalTheme.current
     enable.ifTrue {
         var code by remember { mutableStateOf("") }
         AlertDialog(
             icon = {
                 Icon(
-                    imageVector = Icons.Sharp.Verified,
+                    imageVector = Icons.Rounded.Verified,
                     contentDescription = null,
-                    tint = LocalTheme.current.onSurface
+                    tint = theme.onSurface
                 )
             },
             onDismissRequest = {},
@@ -238,8 +210,8 @@ private fun VerifiedEmailDialog(
                     value = code,
                     onValueChange = { code = it },
                     colors = TextFieldDefaults.outlinedTextFieldColors(
-                        textColor = LocalTheme.current.onBackground,
-                        containerColor = LocalTheme.current.background
+                        textColor = theme.onBackground,
+                        containerColor = theme.background
                     ),
                     enabled = !verifying,
                     maxLines = 1
@@ -274,10 +246,10 @@ private fun VerifiedEmailDialog(
                     ?: stringResource(id = R.string.email_verified_dialog_title)
                 Text(text = title, style = MaterialTheme.typography.titleMedium)
             },
-            containerColor = LocalTheme.current.surface,
-            titleContentColor = LocalTheme.current.onSurface,
-            iconContentColor = LocalTheme.current.onSurface,
-            textContentColor = LocalTheme.current.onSurface
+            containerColor = theme.surface,
+            titleContentColor = theme.onSurface,
+            iconContentColor = theme.onSurface,
+            textContentColor = theme.onSurface
         )
     }
 }
@@ -304,6 +276,7 @@ private fun IntroduceScaffold(
     onFriendshipAction: () -> Unit
 ) {
     val scaffoldState = rememberScaffoldState()
+    val spacing = LocalSpacing.current
     LaunchedEffect(message, vm.message) {
         message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
         vm.message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
@@ -311,6 +284,7 @@ private fun IntroduceScaffold(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val theme = LocalTheme.current
 
     Scaffold(
         snackbarHost = {
@@ -320,11 +294,9 @@ private fun IntroduceScaffold(
             )
         },
         scaffoldState = scaffoldState,
-        modifier = Modifier
-            .fillMaxSize()
-            .navigationBarsPadding(),
-        backgroundColor = LocalTheme.current.background,
-        contentColor = LocalTheme.current.onBackground
+        modifier = Modifier.fillMaxSize(),
+        backgroundColor = theme.background,
+        contentColor = theme.onBackground
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -333,8 +305,8 @@ private fun IntroduceScaffold(
         ) {
             item {
                 Surface(
-                    color = LocalTheme.current.primary,
-                    contentColor = LocalTheme.current.onPrimary,
+                    color = theme.primary,
+                    contentColor = theme.onPrimary,
                     onClick = {
                         onPreview()
                         scope.launch { expanded.value = true }
@@ -376,9 +348,9 @@ private fun IntroduceScaffold(
                 item {
                     Spacer(
                         modifier = Modifier
-                            .height(LocalSpacing.current.medium)
+                            .height(spacing.medium)
                             .fillMaxWidth()
-                            .background(LocalTheme.current.divider)
+                            .background(theme.divider)
                     )
                 }
                 item {
@@ -399,7 +371,7 @@ private fun IntroduceScaffold(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(LocalTheme.current.divider)
+                            .background(theme.divider)
                             .combinedClickable(
                                 onClick = {},
                                 onLongClick = toggleLogMode,
@@ -410,8 +382,8 @@ private fun IntroduceScaffold(
                             text = "$versionLabel${BuildConfig.VERSION_NAME}",
                             style = MaterialTheme.typography.bodySmall,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(vertical = LocalSpacing.current.medium),
-                            color = LocalTheme.current.onBackground
+                            modifier = Modifier.padding(vertical = spacing.medium),
+                            color = theme.onBackground
                         )
                     }
                 }
@@ -426,7 +398,7 @@ private fun IntroduceScaffold(
                     modifier = Modifier
                         .padding(innerPadding)
                         .fillMaxSize()
-                        .padding(LocalSpacing.current.medium)
+                        .padding(spacing.medium)
                 ) {
                     val state = category.friendship
                     MaterialButton(
@@ -469,9 +441,9 @@ private fun IntroduceScaffold(
                         Text(
                             text = label,
                             style = MaterialTheme.typography.titleSmall.copy(
-                                color = LocalTheme.current.primary
+                                color = theme.primary
                             ),
-                            modifier = Modifier.padding(LocalSpacing.current.medium)
+                            modifier = Modifier.padding(spacing.medium)
                         )
                     }
                     items(actions) {
@@ -479,24 +451,25 @@ private fun IntroduceScaffold(
                             text = {
                                 Text(
                                     text = it.text,
-                                    color = LocalTheme.current.onBackground
+                                    color = theme.onBackground
                                 )
                             },
                             icon = {
                                 Icon(
                                     imageVector = it.icon,
                                     contentDescription = it.text,
-                                    tint = LocalTheme.current.onBackground
+                                    tint = theme.onBackground * 0.65f
                                 )
                             },
                             modifier = Modifier
-                                .background(LocalTheme.current.background)
-                                .intervalClickable {
-                                    scope.launch {
+                                .clip(RoundedCornerShape(spacing.medium))
+                                .background(theme.background)
+                                .combinedClickable(
+                                    onClick = {
                                         it.onClick()
                                         expanded.value = false
                                     }
-                                }
+                                )
                         )
                     }
                 }
@@ -516,11 +489,12 @@ private fun IntroduceTopBar(
     otherDropdown: @Composable ColumnScope.() -> Unit,
     ownDropdown: @Composable ColumnScope.() -> Unit
 ) {
+    val theme = LocalTheme.current
     ToolBar(
         onNavClick = onNavClick,
         actions = {
             MaterialIconButton(
-                icon = Icons.Sharp.MoreVert,
+                icon = Icons.Rounded.MoreVert,
                 onClick = onDropdownMenuRequest,
                 contentDescription = null
             )
@@ -536,6 +510,6 @@ private fun IntroduceTopBar(
         },
         text = "",
         backgroundColor = Color.Transparent,
-        contentColor = LocalTheme.current.onSurface
+        contentColor = theme.onSurface
     )
 }

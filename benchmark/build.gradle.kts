@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         targetSdk = 33
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -41,10 +41,10 @@ android {
 }
 
 dependencies {
-    implementation("androidx.test.ext:junit:$androidTestExtJunitVersion")
-    implementation("androidx.test.espresso:espresso-core:$androidTestEspressoCoreVersion")
-    implementation("androidx.test.uiautomator:uiautomator:$uiautomatorVersion")
-    implementation("androidx.benchmark:benchmark-macro-junit4:$benchmarkMacroJunit4Version")
+    implementation(libs.test.androidTestExtJunit)
+    implementation(libs.test.androidTestEspressoCore)
+    implementation(libs.test.uiautomator)
+    implementation(libs.test.benchmarkMacroJunit4)
 }
 
 androidComponents {

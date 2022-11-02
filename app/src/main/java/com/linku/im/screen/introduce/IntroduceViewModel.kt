@@ -2,15 +2,15 @@ package com.linku.im.screen.introduce
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.DateRange
-import androidx.compose.material.icons.sharp.Edit
-import androidx.compose.material.icons.sharp.Email
-import androidx.compose.material.icons.sharp.FormatPaint
-import androidx.compose.material.icons.sharp.Language
-import androidx.compose.material.icons.sharp.Lock
-import androidx.compose.material.icons.sharp.Notifications
-import androidx.compose.material.icons.sharp.Upload
-import androidx.compose.material.icons.sharp.Visibility
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DateRange
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material.icons.rounded.FormatPaint
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Upload
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
@@ -62,7 +62,6 @@ class IntroduceViewModel @Inject constructor(
             is IntroduceEvent.Edit -> edit(event)
             IntroduceEvent.ToggleLogMode -> toggleLogMode()
             IntroduceEvent.AvatarClicked -> avatarClicked()
-            IntroduceEvent.DismissPreview -> dismissPreview()
             is IntroduceEvent.UpdateAvatar -> updateAvatar(event)
             IntroduceEvent.FriendShipAction -> friendshipAction()
         }
@@ -119,12 +118,6 @@ class IntroduceViewModel @Inject constructor(
         }
     }
 
-    private fun dismissPreview() {
-        writable = readable.copy(
-            preview = ""
-        )
-    }
-
     private fun updateAvatar(event: IntroduceEvent.UpdateAvatar) {
         val uri = event.uri
         writable = readable.copy(
@@ -160,20 +153,11 @@ class IntroduceViewModel @Inject constructor(
 
     private fun avatarClicked() {
         onActions(getString(R.string.profile_avatar_label), buildList {
-            Property.Data.Action(
-                text = getString(R.string.profile_avatar_visit),
-                icon = Icons.Sharp.Visibility,
-                onClick = {
-                    writable = readable.copy(
-                        preview = readable.avatar
-                    )
-                }
-            ).also(::add)
             when (readable.category) {
                 Category.Personal -> {
                     Property.Data.Action(
                         text = getString(R.string.profile_avatar_update),
-                        icon = Icons.Sharp.Upload,
+                        icon = Icons.Rounded.Upload,
                         onClick = {
                             writable = readable.copy(
                                 runLauncher = eventOf(Unit)
@@ -352,14 +336,24 @@ class IntroduceViewModel @Inject constructor(
             Property.Data(description, null).also(::add)
         } else {
             val emailActions = buildList {
-                if (readable.category == Category.Personal && !user.verified) {
-                    Property.Data.Action(
-                        text = getString(R.string.email_verified),
-                        icon = Icons.Sharp.Email,
-                        onClick = {
-                            onEvent(IntroduceEvent.VerifiedEmail)
-                        }
-                    ).also(::add)
+                if (readable.category == Category.Personal) {
+                    if (!user.verified) {
+                        Property.Data.Action(
+                            text = getString(R.string.email_verified),
+                            icon = Icons.Rounded.Email,
+                            onClick = {
+                                onEvent(IntroduceEvent.VerifiedEmail)
+                            }
+                        ).also(::add)
+                    } else {
+                        Property.Data.Action(
+                            text = getString(R.string.email_verified_already),
+                            icon = Icons.Rounded.Email,
+                            onClick = {
+
+                            }
+                        ).also(::add)
+                    }
                 }
             }
             val emailText = if (readable.category is Category.User || user.verified) user.email
@@ -379,7 +373,7 @@ class IntroduceViewModel @Inject constructor(
                 if (readable.category == Category.Personal) {
                     Property.Data.Action(
                         text = getString(R.string.edit),
-                        icon = Icons.Sharp.Edit,
+                        icon = Icons.Rounded.Edit,
                         onClick = {
                             onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.NickName))
                         }
@@ -402,7 +396,7 @@ class IntroduceViewModel @Inject constructor(
                 if (readable.category == Category.Personal) {
                     Property.Data.Action(
                         text = getString(R.string.edit),
-                        icon = Icons.Sharp.Edit,
+                        icon = Icons.Rounded.Edit,
                         onClick = {
                             onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.Description))
                         }
@@ -429,13 +423,13 @@ class IntroduceViewModel @Inject constructor(
         listOf(
             Property.Folder(
                 notification,
-                Icons.Sharp.Notifications,
+                Icons.Rounded.Notifications,
                 NavTarget.Setting.Notification
             ),
-            Property.Folder(safe, Icons.Sharp.Lock, NavTarget.Setting.Safe),
-            Property.Folder(dataSource, Icons.Sharp.DateRange, NavTarget.Setting.DataSource),
-            Property.Folder(theme, Icons.Sharp.FormatPaint, NavTarget.Setting.Theme),
-            Property.Folder(language, Icons.Sharp.Language, NavTarget.Setting.Language)
+            Property.Folder(safe, Icons.Rounded.Lock, NavTarget.Setting.Safe),
+            Property.Folder(dataSource, Icons.Rounded.DateRange, NavTarget.Setting.DataSource),
+            Property.Folder(theme, Icons.Rounded.FormatPaint, NavTarget.Setting.Theme),
+            Property.Folder(language, Icons.Rounded.Language, NavTarget.Setting.Language)
         )
     }
 

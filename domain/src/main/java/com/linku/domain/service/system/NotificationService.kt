@@ -1,4 +1,4 @@
-package com.linku.domain.service
+package com.linku.domain.service.system
 
 import com.linku.domain.entity.Message
 

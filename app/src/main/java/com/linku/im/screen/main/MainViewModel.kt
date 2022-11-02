@@ -6,10 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.linku.core.util.LinkedNode
 import com.linku.core.util.forward
 import com.linku.core.util.remain
-import com.linku.core.wrapper.Resource
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.MessageUseCases
+import com.linku.domain.bean.ui.ConversationUI
+import com.linku.domain.bean.ui.toContactUI
 import com.linku.domain.bean.ui.toUI
 import com.linku.domain.entity.ContactRequest
 import com.linku.domain.entity.Conversation
@@ -18,13 +19,11 @@ import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
 import com.linku.im.R
-import com.linku.im.network.ConnectivityObserver
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,26 +32,8 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
     private val conversationUseCases: ConversationUseCases,
     private val applicationUseCases: ApplicationUseCases,
-    private val messageUseCases: MessageUseCases,
-    connectivityObserver: ConnectivityObserver
+    private val messageUseCases: MessageUseCases
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
-    init {
-        connectivityObserver.observe()
-            .onEach { state ->
-                when (state) {
-                    ConnectivityObserver.State.Available -> {
-                        onEvent(MainEvent.FetchConversations)
-                    }
-
-                    else -> {
-                        if (observeConversationsJob == null) {
-                            onEvent(MainEvent.FetchConversations)
-                        }
-                    }
-                }
-            }
-            .launchIn(viewModelScope)
-    }
 
     private val _linkedNode = mutableStateOf<LinkedNode<MainMode>>(
         LinkedNode(MainMode.Conversations)
@@ -63,7 +44,6 @@ class MainViewModel @Inject constructor(
         when (event) {
             MainEvent.ObserveConversations -> observeConversations()
             MainEvent.UnsubscribeConversations -> unsubscribe()
-            MainEvent.FetchConversations -> fetchConversations()
             is MainEvent.Pin -> pin(event)
             is MainEvent.Forward -> forward(event)
             MainEvent.Remain -> remain()
@@ -97,11 +77,22 @@ class MainViewModel @Inject constructor(
                     conversations = conversations
                         .filter { it.type == Conversation.Type.GROUP }
                         .map(Conversation::toUI)
-                        .sorted(),
+                        .sortedByDescending { it.updatedAt },
                     contracts = conversations
                         .filter { it.type == Conversation.Type.PM }
-                        .map(Conversation::toUI)
-                        .sorted()
+//                            .map {
+//                                val uid = conversationUseCases.convertConversationToContact(it.id)
+//                                it.toContactUI(
+//                                    username = uid?.let { notnull ->
+//                                        users.findUser(
+//                                            notnull,
+//                                            Strategy.OnlyCache
+//                                        )?.name.orEmpty()
+//                                    }.orEmpty()
+//                                )
+//                            }
+                        .map(Conversation::toContactUI)
+                        .sortedByDescending { it.updatedAt }
                 )
                 observeConversationsJob?.cancel()
                 observeConversationsJob = viewModelScope.launch {
@@ -110,7 +101,8 @@ class MainViewModel @Inject constructor(
                             .onEach { message ->
                                 val oldConversations = readable.conversations.toMutableList()
                                 val oldContracts = readable.contracts.toMutableList()
-                                val oldConversation = oldConversations.find { it.id == message.cid }
+                                val oldConversation: ConversationUI? =
+                                    oldConversations.find { it.id == message.cid }
                                 val oldContract = oldContracts.find { it.id == message.cid }
                                 if (oldConversation != null) {
                                     oldConversations.remove(oldConversation)
@@ -149,28 +141,6 @@ class MainViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private var fetchConversationsJob: Job? = null
-    private fun fetchConversations() {
-        if (observeConversationsJob == null) return
-        fetchConversationsJob?.cancel()
-        fetchConversationsJob = conversationUseCases.fetchConversations()
-            .onEach { resource ->
-                when (resource) {
-                    Resource.Loading -> writable = readable.copy(
-                        loadingConversations = true
-                    )
-
-                    is Resource.Success -> {}
-                    is Resource.Failure -> {}
-                }
-            }
-            .onCompletion {
-                writable = readable.copy(
-                    loadingConversations = false
-                )
-            }
-            .launchIn(viewModelScope)
-    }
 
     private fun unsubscribe() {
         observeConversationsJob?.cancel()

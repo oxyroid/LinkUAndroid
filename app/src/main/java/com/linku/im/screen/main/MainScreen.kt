@@ -31,11 +31,11 @@ import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.WorkspacePremium
-import androidx.compose.material.icons.sharp.Add
-import androidx.compose.material.icons.sharp.DarkMode
-import androidx.compose.material.icons.sharp.LightMode
-import androidx.compose.material.icons.sharp.Notifications
-import androidx.compose.material.icons.sharp.Settings
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.DarkMode
+import androidx.compose.material.icons.rounded.LightMode
+import androidx.compose.material.icons.rounded.Notifications
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,8 +46,8 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
@@ -89,6 +89,7 @@ import com.linku.im.ui.components.BottomSheetContent
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
+import com.linku.im.ui.components.item.PinnedContractsItem
 import com.linku.im.ui.components.item.PinnedConversationItem
 import com.linku.im.ui.components.notify.NotifyHolder
 import com.linku.im.ui.theme.LocalBackStack
@@ -123,7 +124,7 @@ fun MainScreen(
         listOf(
             Selection.Button(
                 resId = R.string.notification,
-                icon = Icons.Sharp.Notifications,
+                icon = Icons.Rounded.Notifications,
                 onClick = {
                     viewModel.onEvent(MainEvent.Forward(MainMode.Notifications))
                 }
@@ -131,13 +132,13 @@ fun MainScreen(
             Selection.Route(
                 resId = R.string.settings,
                 target = NavTarget.Introduce(-1),
-                icon = Icons.Sharp.Settings
+                icon = Icons.Rounded.Settings
             ),
             Selection.Switch(
                 resId = R.string.toggle_theme,
                 value = this@rememberedRun,
-                onIcon = Icons.Sharp.LightMode,
-                offIcon = Icons.Sharp.DarkMode,
+                onIcon = Icons.Rounded.LightMode,
+                offIcon = Icons.Rounded.DarkMode,
                 onClick = {
                     vm.onEvent(LinkUEvent.ToggleDarkMode)
                 },
@@ -223,7 +224,7 @@ fun MainScreen(
                     .background(theme.background.animated())
                     .padding(innerPadding)
             ) {
-                TabRow(
+                ScrollableTabRow(
                     selectedTabIndex = pagerState.currentPage,
                     indicator = { tabPositions ->
                         TabRowDefaults.Indicator(
@@ -245,8 +246,9 @@ fun MainScreen(
                     divider = {},
                     tabs = {
                         pages.forEachIndexed { index, page ->
+                            val selected = pagerState.currentPage == index
                             Tab(
-                                selected = pagerState.currentPage == index,
+                                selected = selected,
                                 text = {
                                     Text(
                                         text = page,
@@ -272,8 +274,8 @@ fun MainScreen(
                     state = pagerState,
                     key = { it }
                 ) { pageIndex ->
-                    when (pageIndex) {
-                        2 -> {
+                    when (PageConfig.parse(pageIndex)) {
+                        PageConfig.More -> {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(LocalSpacing.current.small)
@@ -385,19 +387,39 @@ fun MainScreen(
                             }
                         }
 
-                        else -> {
+                        PageConfig.Conversation -> {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 userScrollEnabled = !state.loadingConversations
                             ) {
-                                val conversations = when (pageIndex) {
-                                    0 -> state.conversations
-                                    1 -> state.contracts
-                                    else -> emptyList()
+                                val conversations = state.conversations
+                                val grouped = conversations.groupBy { it.pinned }
+
+                                items(
+                                    items = grouped[true] ?: emptyList(),
+                                    key = { it.id }
+                                ) { contact ->
+                                    PinnedConversationItem(
+                                        conversation = contact,
+                                        onClick = {
+                                            backStack.singleTop(
+                                                NavTarget.ChatTarget.Messages(
+                                                    contact.id
+                                                )
+                                            )
+                                        },
+                                        onLongClick = {
+                                            viewModel.onEvent(MainEvent.Pin(contact.id))
+                                        },
+                                        modifier = Modifier.animateItemPlacement()
+                                    )
                                 }
-                                itemsIndexed(conversations) { index, conversation ->
-                                    PinnedConversationItem(conversation = conversation,
-                                        modifier = Modifier.animateItemPlacement(),
+                                itemsIndexed(
+                                    grouped[false] ?: emptyList(),
+                                    key = { _, item -> item.id }
+                                ) { index, conversation ->
+                                    PinnedConversationItem(
+                                        conversation = conversation,
                                         onClick = {
                                             backStack.singleTop(
                                                 NavTarget.ChatTarget.Messages(
@@ -407,12 +429,60 @@ fun MainScreen(
                                         },
                                         onLongClick = {
                                             viewModel.onEvent(MainEvent.Pin(conversation.id))
-                                        })
-                                    if (index != conversations.lastIndex) {
-                                        Divider(
-                                            color = LocalTheme.current.divider
-                                        )
-                                    }
+                                        },
+                                        modifier = Modifier.animateItemPlacement()
+                                    )
+                                    Divider(color = LocalTheme.current.divider)
+                                }
+                            }
+                        }
+
+                        PageConfig.Contract -> {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = !state.loadingConversations
+                            ) {
+                                val contracts = state.contracts
+                                val grouped = contracts.groupBy { it.pinned }
+
+                                items(
+                                    items = grouped[true] ?: emptyList(),
+                                    key = { it.id }
+                                ) { contact ->
+                                    PinnedContractsItem(
+                                        contact = contact,
+                                        onClick = {
+                                            backStack.singleTop(
+                                                NavTarget.ChatTarget.Messages(
+                                                    contact.id
+                                                )
+                                            )
+                                        },
+                                        onLongClick = {
+                                            viewModel.onEvent(MainEvent.Pin(contact.id))
+                                        },
+                                        modifier = Modifier.animateItemPlacement()
+                                    )
+                                }
+                                itemsIndexed(
+                                    grouped[false] ?: emptyList(),
+                                    key = { _, item -> item.id }
+                                ) { index, contact ->
+                                    PinnedContractsItem(
+                                        contact = contact,
+                                        onClick = {
+                                            backStack.singleTop(
+                                                NavTarget.ChatTarget.Messages(
+                                                    contact.id
+                                                )
+                                            )
+                                        },
+                                        onLongClick = {
+                                            viewModel.onEvent(MainEvent.Pin(contact.id))
+                                        },
+                                        modifier = Modifier.animateItemPlacement()
+                                    )
+                                    Divider(color = LocalTheme.current.divider)
                                 }
                             }
                         }
@@ -483,7 +553,7 @@ fun MainScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Sharp.Add,
+                                        imageVector = Icons.Rounded.Add,
                                         contentDescription = null
                                     )
                                 }

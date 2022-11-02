@@ -20,7 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.Lock
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +38,7 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
 import com.linku.core.ktx.ifTrue
+import com.linku.domain.bean.ui.ContactUI
 import com.linku.domain.bean.ui.ConversationUI
 import com.linku.domain.entity.Conversation
 import com.linku.im.ktx.ui.graphics.times
@@ -78,7 +79,7 @@ fun ConversationItem(
     ) {
         CircleHeadPicture(
             model = conversation?.avatar,
-            placeholder = { TextImage(text = conversation?.name ?: "") }
+            placeholder = { TextImage(text = conversation?.name.orEmpty()) }
         )
         Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
         Column(
@@ -92,7 +93,7 @@ fun ConversationItem(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = conversation?.name ?: "",
+                text = conversation?.name.orEmpty(),
                 style = MaterialTheme.typography.titleMedium,
                 color = LocalTheme.current.onSurface,
                 maxLines = 1,
@@ -112,7 +113,7 @@ fun ConversationItem(
             Spacer(modifier = Modifier.weight(1f))
             CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
                 Text(
-                    text = conversation?.description ?: "",
+                    text = conversation?.description.orEmpty(),
                     maxLines = 1,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
@@ -178,7 +179,7 @@ fun PinnedConversationItem(
     ) {
         CircleHeadPicture(
             model = conversation?.image,
-            placeholder = { TextImage(conversation?.name ?: "") }
+            placeholder = { TextImage(conversation?.name.orEmpty()) }
         )
         Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
         Column(
@@ -192,7 +193,7 @@ fun PinnedConversationItem(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = conversation?.name ?: "",
+                text = conversation?.name.orEmpty(),
                 style = MaterialTheme.typography.titleMedium,
                 color = LocalTheme.current.onSurface,
                 maxLines = 1,
@@ -212,7 +213,7 @@ fun PinnedConversationItem(
             Spacer(modifier = Modifier.weight(1f))
             CompositionLocalProvider(LocalContentColor provides LocalTheme.current.onSurface * 0.8f) {
                 Text(
-                    text = conversation?.content ?: "",
+                    text = conversation?.content.orEmpty(),
                     maxLines = 1,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
@@ -256,7 +257,136 @@ fun PinnedConversationItem(
                     modifier = Modifier.size(LocalSpacing.current.large)
                 ) {
                     Icon(
-                        imageVector = Icons.Sharp.Lock,
+                        imageVector = Icons.Rounded.Lock,
+                        contentDescription = "",
+                        tint = LocalTheme.current.onPrimary,
+                        modifier = Modifier.padding(LocalSpacing.current.extraSmall)
+                    )
+                }
+            }
+        }
+    }
+}@Composable
+fun PinnedContractsItem(
+    modifier: Modifier = Modifier,
+    contact: ContactUI? = null,
+    onClick: () -> Unit = {},
+    onLongClick: () -> Unit = {}
+) {
+    val unreadCount: Int = contact?.unreadCount ?: 0
+    val pinned: Boolean = contact?.pinned ?: false
+    val shimmerColor = LocalTheme.current.divider * 0.3f
+    val onShimmerColor = Color.White
+    val shimmerAnimationSpec: InfiniteRepeatableSpec<Float> by lazy {
+        infiniteRepeatable(
+            animation = tween(
+                durationMillis = 2000,
+                delayMillis = 400
+            ),
+            repeatMode = RepeatMode.Restart
+        )
+    }
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp)
+            .let {
+                pinned.ifTrue {
+                    it.background(LocalTheme.current.surface * 0.8f)
+                } ?: it
+            }
+            .intervalClickable(
+                enabled = contact != null,
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
+            .padding(
+                horizontal = LocalSpacing.current.medium,
+                vertical = LocalSpacing.current.extraSmall
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircleHeadPicture(
+            model = contact?.image,
+            placeholder = { TextImage(contact?.username.orEmpty()) }
+        )
+        Spacer(modifier = Modifier.width(LocalSpacing.current.medium))
+        Column(
+            modifier = Modifier
+                .padding(
+                    end = LocalSpacing.current.medium,
+                    top = LocalSpacing.current.small,
+                    bottom = LocalSpacing.current.small
+                )
+                .weight(1f),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = contact?.username.orEmpty(),
+                style = MaterialTheme.typography.titleMedium,
+                color = LocalTheme.current.onSurface,
+                maxLines = 1,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .placeholder(
+                        visible = contact == null,
+                        color = shimmerColor,
+                        shape = RoundedCornerShape(4.dp),
+                        highlight = PlaceholderHighlight.shimmer(
+                            highlightColor = onShimmerColor,
+                            animationSpec = shimmerAnimationSpec,
+                        )
+                    ),
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            CompositionLocalProvider(LocalContentColor provides LocalTheme.current.onSurface * 0.8f) {
+                Text(
+                    text = contact?.content.orEmpty(),
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .placeholder(
+                            visible = (contact == null),
+                            color = shimmerColor,
+                            shape = RoundedCornerShape(4.dp),
+                            highlight = PlaceholderHighlight.shimmer(
+                                highlightColor = onShimmerColor,
+                                animationSpec = shimmerAnimationSpec
+                            ),
+                        )
+                        .fillMaxWidth(),
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+        }
+        Spacer(modifier = Modifier.width(LocalSpacing.current.small))
+        when {
+            (unreadCount != 0) -> {
+                Surface(
+                    shape = CircleShape,
+                    color = LocalTheme.current.primary
+                ) {
+                    Text(
+                        text = unreadCount.toString(),
+                        color = LocalTheme.current.onPrimary,
+                        modifier = Modifier.padding(horizontal = LocalSpacing.current.small),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+        }
+        Crossfade(pinned) { pinned ->
+            if (pinned) {
+                Surface(
+                    shape = CircleShape,
+                    color = LocalTheme.current.primary,
+                    modifier = Modifier.size(LocalSpacing.current.large)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Lock,
                         contentDescription = "",
                         tint = LocalTheme.current.onPrimary,
                         modifier = Modifier.padding(LocalSpacing.current.extraSmall)

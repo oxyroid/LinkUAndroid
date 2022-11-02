@@ -6,22 +6,16 @@ import com.linku.core.wrapper.Resource
 import com.linku.core.wrapper.resultOf
 import com.linku.data.R
 import com.linku.domain.auth.Authenticator
-import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.AuthRepository
-import com.linku.domain.repository.AuthRepository.AfterSignInBehaviour
 import com.linku.domain.repository.FileRepository
 import com.linku.domain.repository.FileResource
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
 import com.linku.domain.room.dao.UserDao
-import com.linku.domain.service.AuthService
-import com.linku.domain.service.ConversationService
-import com.linku.domain.service.MessageService
-import com.linku.domain.service.ProfileService
+import com.linku.domain.service.api.AuthService
+import com.linku.domain.service.api.ProfileService
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -31,8 +25,6 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val authService: AuthService,
     private val profileService: ProfileService,
-    private val messageService: MessageService,
-    private val conversationService: ConversationService,
     private val conversationDao: ConversationDao,
     private val messageDao: MessageDao,
     private val userDao: UserDao,
@@ -42,61 +34,21 @@ class AuthRepositoryImpl @Inject constructor(
 ) : AuthRepository {
     override fun signIn(
         email: String,
-        password: String,
-        behaviour: AfterSignInBehaviour
-    ): Flow<AuthRepository.SignInState> = channelFlow {
-        trySend(AuthRepository.SignInState.Start)
-        suspend fun makeBehaviour() {
-            when (behaviour) {
-                AfterSignInBehaviour.DoNothing -> {}
-                is AfterSignInBehaviour.SyncUnreadMessages -> {
-                    trySend(AuthRepository.SignInState.Syncing)
-                    launch(Dispatchers.IO) {
-                        val timestamp: Long = messageDao.getLatestMessage()?.timestamp
-                            ?: (System.currentTimeMillis() - behaviour.duration)
-                        resultOf {
-                            messageService.getMessageAfter(timestamp)
-                        }
-                            .onSuccess { messages ->
-                                messages.sortedBy { it.cid }.forEach { message ->
-                                    if (messageDao.getById(message.id) == null) {
-                                        messageDao.insert(message.toMessage())
-                                    }
-                                    if (conversationDao.getById(message.cid) == null) {
-                                        launch {
-                                            resultOf {
-                                                conversationService
-                                                    .getConversationById(message.cid)
-                                            }
-                                                .onSuccess {
-                                                    conversationDao.insert(it.toConversation())
-                                                }
-                                        }
-                                    }
-                                }
-                            }
-                    }
-
-                }
-            }
-
-        }
+        password: String
+    ): Flow<Resource<Unit>> = channelFlow {
+        trySend(Resource.Loading)
         launch {
             resultOf {
                 authService.signIn(email, password)
             }
                 .onSuccess { token ->
                     authenticator.update(token.id, token.token)
-                    makeBehaviour()
-                    trySend(AuthRepository.SignInState.Completed)
+                    trySend(Resource.Success(Unit))
                 }
                 .onFailure {
-                    trySend(AuthRepository.SignInState.Failed(it.message))
+                    trySend(Resource.Failure(it.message))
                 }
         }
-    }.catch {
-        it.printStackTrace()
-        emit(AuthRepository.SignInState.Failed(it.message))
     }
 
     override suspend fun signUp(

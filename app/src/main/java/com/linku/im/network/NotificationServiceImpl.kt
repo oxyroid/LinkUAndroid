@@ -12,7 +12,7 @@ import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
-import com.linku.domain.service.NotificationService
+import com.linku.domain.service.system.NotificationService
 import com.linku.im.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

@@ -1,10 +1,10 @@
 package com.linku.im.screen.sign
 
 import androidx.lifecycle.viewModelScope
+import com.linku.core.wrapper.Resource
 import com.linku.core.wrapper.eventOf
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.AuthUseCases
-import com.linku.domain.repository.AuthRepository
 import com.linku.domain.service.system.SensorService
 import com.linku.im.R
 import com.linku.im.screen.BaseViewModel
@@ -62,23 +62,20 @@ class SignViewModel @Inject constructor(
         authUseCases.signIn(email, password)
             .onEach { resource ->
                 writable = when (resource) {
-                    AuthRepository.SignInState.Start -> readable.copy(
-                        loading = true
-                    )
-
-                    AuthRepository.SignInState.Syncing -> readable.copy(
-                        syncing = true
-                    )
-
-                    AuthRepository.SignInState.Completed -> {
+                    Resource.Loading -> {
                         readable.copy(
-                            syncing = false,
+                            loading = true
+                        )
+                    }
+
+                    is Resource.Success -> {
+                        readable.copy(
                             loading = false,
                             loginEvent = eventOf(Unit)
                         )
                     }
 
-                    is AuthRepository.SignInState.Failed -> {
+                    is Resource.Failure -> {
                         onMessage(resource.message)
                         readable.copy(
                             loading = false

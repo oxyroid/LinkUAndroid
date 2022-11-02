@@ -226,9 +226,9 @@ fun SignScreen(
                 ) {
                     MaterialButton(
                         text = run {
-                            val syncing = state.syncing
-                            if (syncing) {
-                                stringResource(R.string.syncing)
+                            val loading = state.loading
+                            if (loading) {
+                                stringResource(R.string.signing)
                             } else {
                                 stringResource(R.string.screen_login_btn_login)
                             }

@@ -12,9 +12,10 @@ import com.linku.domain.entity.Member
 import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.ConversationRepository
 import com.linku.domain.room.dao.ConversationDao
-import com.linku.domain.service.ConversationService
+import com.linku.domain.service.api.ConversationService
 import com.tencent.mmkv.MMKV
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -23,7 +24,7 @@ import javax.inject.Inject
 class ConversationRepositoryImpl @Inject constructor(
     private val conversationDao: ConversationDao,
     private val conversationService: ConversationService,
-    private val mmkv: MMKV,
+    private val mmkv: MMKV
 ) : ConversationRepository {
     override suspend fun findConversation(cid: Int, strategy: Strategy): Conversation? {
         suspend fun fromBackend(): ConversationDTO? = try {
@@ -72,7 +73,7 @@ class ConversationRepositoryImpl @Inject constructor(
     }
 
     override fun observeConversation(cid: Int): Flow<Conversation> = runCatching {
-        conversationDao.observeConversation(cid)
+        conversationDao.observeConversation(cid).filterNotNull()
     }
         .getOrNull()
         ?: flow { }
@@ -106,6 +107,7 @@ class ConversationRepositoryImpl @Inject constructor(
             resultOf { conversationService.getConversationsBySelf() }
                 .onSuccess { conversations ->
                     for (it in conversations) {
+                        // Fetch Member List If it is PM.
                         if (it.type == Conversation.Type.PM.type) {
                             resultOf { conversationService.getMembersByCid(it.id) }
                                 .onSuccess { members ->
@@ -122,6 +124,7 @@ class ConversationRepositoryImpl @Inject constructor(
                                     emitResource(it.message)
                                 }
                         }
+                        // Save into DB.
                         conversationDao.insert(it.toConversation())
                     }
                     emitResource(Unit)
@@ -135,18 +138,19 @@ class ConversationRepositoryImpl @Inject constructor(
     }
 
 
-    override fun queryConversations(
+    override suspend fun queryConversations(
         name: String?,
         description: String?
-    ): Flow<Resource<List<Conversation>>> = resourceFlow {
-        runCatching {
+    ): List<Conversation> {
+        return try {
             resultOf {
                 conversationService.queryConversations(name, description)
             }
-                .onSuccess { conversations -> emitResource(conversations.map { it.toConversation() }) }
-                .onFailure { emitResource(it.message) }
-        }.onFailure {
-            emitResource(it.message)
+                .getOrNull()
+                ?.map { it.toConversation() }
+                ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 

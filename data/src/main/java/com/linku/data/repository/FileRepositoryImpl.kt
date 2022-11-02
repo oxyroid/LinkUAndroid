@@ -8,7 +8,7 @@ import com.linku.core.wrapper.resultOf
 import com.linku.domain.bean.CachedFile
 import com.linku.domain.repository.FileRepository
 import com.linku.domain.repository.FileResource
-import com.linku.domain.service.FileService
+import com.linku.domain.service.api.FileService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

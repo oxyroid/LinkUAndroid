@@ -3,11 +3,11 @@
 package com.linku.im.di
 
 import com.linku.data.authenticator.PreferenceAuthenticator
-import com.linku.data.service.TwitterEmojiService
+import com.linku.data.service.system.EmojiServiceImpl
 import com.linku.data.service.system.SensorServiceImpl
 import com.linku.domain.auth.Authenticator
-import com.linku.domain.service.EmojiService
-import com.linku.domain.service.NotificationService
+import com.linku.domain.service.system.EmojiService
+import com.linku.domain.service.system.NotificationService
 import com.linku.domain.service.system.SensorService
 import com.linku.im.network.ConnectivityObserver
 import com.linku.im.network.NetworkConnectivityObserver
@@ -31,7 +31,7 @@ abstract class AppModule {
 
     @Binds
     @Singleton
-    abstract fun bindEmojiService(service: TwitterEmojiService): EmojiService
+    abstract fun bindEmojiService(service: EmojiServiceImpl): EmojiService
 
     @Binds
     @Singleton

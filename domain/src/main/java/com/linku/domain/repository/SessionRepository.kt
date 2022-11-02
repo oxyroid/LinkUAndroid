@@ -1,10 +1,11 @@
 package com.linku.domain.repository
 
+import com.linku.core.wrapper.Resource
 import kotlinx.coroutines.flow.Flow
 
 interface SessionRepository {
-    fun initSession(uid: Int?): Flow<com.linku.core.wrapper.Resource<Unit>>
-    fun subscribeRemote(): Flow<com.linku.core.wrapper.Resource<Unit>>
+    fun initSession(uid: Int?): Flow<Resource<Unit>>
+    fun subscribeRemote(): Flow<Resource<Unit>>
     suspend fun closeSession()
     fun observerSessionState(): Flow<State>
 

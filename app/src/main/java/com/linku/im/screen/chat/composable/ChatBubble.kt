@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.Cancel
-import androidx.compose.material.icons.sharp.ContentCopy
-import androidx.compose.material.icons.sharp.Refresh
-import androidx.compose.material.icons.sharp.Reply
+import androidx.compose.material.icons.rounded.Cancel
+import androidx.compose.material.icons.rounded.ContentCopy
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Reply
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -367,7 +367,7 @@ fun ChatBubble(
                                 text = { Text(stringResource(R.string.dropdown_copy)) },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Sharp.ContentCopy,
+                                        imageVector = Icons.Rounded.ContentCopy,
                                         contentDescription = null
                                     )
                                 },
@@ -388,7 +388,7 @@ fun ChatBubble(
                                 text = { Text(stringResource(R.string.dropdown_copy)) },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Sharp.ContentCopy,
+                                        imageVector = Icons.Rounded.ContentCopy,
                                         contentDescription = null
                                     )
                                 },
@@ -413,7 +413,7 @@ fun ChatBubble(
                                 text = { Text(stringResource(id = R.string.dropdown_reply)) },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Sharp.Reply,
+                                        imageVector = Icons.Rounded.Reply,
                                         contentDescription = null
                                     )
                                 },
@@ -434,7 +434,7 @@ fun ChatBubble(
                                 text = { Text(stringResource(id = R.string.dropdown_cancel)) },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Sharp.Cancel,
+                                        imageVector = Icons.Rounded.Cancel,
                                         contentDescription = null
                                     )
                                 },
@@ -455,7 +455,7 @@ fun ChatBubble(
                                 text = { Text(stringResource(id = R.string.dropdown_retry)) },
                                 leadingIcon = {
                                     Icon(
-                                        imageVector = Icons.Sharp.Refresh,
+                                        imageVector = Icons.Rounded.Refresh,
                                         contentDescription = null
                                     )
                                 },

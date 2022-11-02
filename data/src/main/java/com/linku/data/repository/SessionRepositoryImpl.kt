@@ -15,10 +15,10 @@ import com.linku.domain.repository.SessionRepository.State.Subscribed
 import com.linku.domain.repository.SessionRepository.State.Subscribing
 import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
-import com.linku.domain.service.AuthService
-import com.linku.domain.service.ConversationService
-import com.linku.domain.service.NotificationService
-import com.linku.domain.service.SessionService
+import com.linku.domain.service.api.AuthService
+import com.linku.domain.service.api.ConversationService
+import com.linku.domain.service.system.NotificationService
+import com.linku.domain.service.api.SessionService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow

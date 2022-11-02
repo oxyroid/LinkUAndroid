@@ -15,8 +15,8 @@ android {
         applicationId = "com.linku.im"
         minSdk = 26
         targetSdk = 33
-        versionCode = versionCodeConfig
-        versionName = versionNameConfig
+        versionCode = configs.versionCode
+        versionName = configs.versionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -29,14 +29,16 @@ android {
         val release by getting {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+        val debug by getting {
+            isMinifyEnabled = false
+            isDebuggable = true
+        }
         val benchmark by creating {
-            signingConfig = signingConfigs.getByName("debug")
             isDebuggable = false
             isMinifyEnabled = false
         }
@@ -62,7 +64,7 @@ android {
         }
     }
     androidResources {
-        noCompress += "config"
+        noCompress += "txt"
     }
 }
 
@@ -75,68 +77,53 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
 
-    implementation("androidx.core:core-ktx:$coreKtxVersion")
-    implementation("androidx.activity:activity-ktx:$activityVersion")
-    implementation("androidx.activity:activity-compose:$activityVersion")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
-    implementation("androidx.core:core-splashscreen:$splashscreenVersion")
-    implementation("androidx.recyclerview:recyclerview:$recyclerviewVersion")
-    testImplementation("junit:junit:$junitVersion")
-    androidTestImplementation("androidx.test.ext:junit:$androidTestExtJunitVersion")
-    implementation("androidx.compose.ui:ui:$composeVersion")
-    implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
-    implementation("androidx.compose.material3:material3:$composeMaterial3Version")
-    implementation("androidx.compose.material:material-icons-extended:$composeVersion")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeVersion")
-    debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:$composeVersion")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.splashscreen)
+    implementation(libs.androidx.constraintlayout.compose)
 
-    // constraint Layout
-    implementation("androidx.constraintlayout:constraintlayout-compose:$constraintVersion")
+    implementation(libs.google.material.material)
 
-    // hilt
-    implementation("com.google.dagger:hilt-android:$hiltVersion")
-    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    kapt("androidx.hilt:hilt-compiler:$hiltCompilerVersion")
-    implementation("androidx.hilt:hilt-navigation-compose:$hiltNavigationVersion")
+    implementation(libs.androidx.compose.ui.ui)
+    androidTestImplementation(libs.androidx.compose.ui.`ui-test-junit`)
+    debugImplementation(libs.androidx.compose.ui.`ui-tooling`.core)
+    debugImplementation(libs.androidx.compose.ui.`ui-tooling`.preview)
+    implementation(libs.androidx.compose.material.`icons-extended`)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.test.manifest)
 
-    // WorkManager
-    implementation("androidx.work:work-runtime-ktx:$workVersion")
 
-    // coil
-    implementation("io.coil-kt:coil-compose:$coilVersion")
-    implementation("io.coil-kt:coil-gif:$coilVersion")
+    kapt(libs.androidx.hilt.compiler)
+    kapt(libs.google.dagger.android_compiler)
+    implementation(libs.google.dagger.android)
+    implementation(libs.androidx.hilt.navigation)
+    implementation(libs.androidx.hilt.work)
 
-    // lottie
-    implementation("com.airbnb.android:lottie-compose:$lottieComposeVersion")
+    implementation(libs.androidx.workmanager)
 
-    // retrofit
-    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
 
-    // paging
-    implementation("androidx.paging:paging-runtime:$pagingVersion")
-    implementation("androidx.paging:paging-compose:$pagingComposeVersion")
+    implementation(libs.google.accompanist.insets)
+    implementation(libs.google.accompanist.`insets-ui`)
+    implementation(libs.google.accompanist.permissions)
+    implementation(libs.google.accompanist.placeholder)
+    implementation(libs.google.accompanist.systemuicontroller)
+    implementation(libs.google.accompanist.pager)
+    implementation(libs.google.accompanist.`pager-indicators`)
 
-    // accompanist
-    implementation("com.google.accompanist:accompanist-insets:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-insets-ui:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-permissions:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-placeholder:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-pager:$accompanistVersion")
-    implementation("com.google.accompanist:accompanist-pager-indicators:$accompanistVersion")
+    implementation(libs.kotlinx.serialzation.json)
 
-    // json
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationJsonVersion")
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
 
-    // appyx
-    implementation("com.bumble.appyx:core:$appyxVersion")
-
-    // uCrop
-    implementation("com.github.yalantis:ucrop:$ucropVersion")
-
-    // mmkv
-    implementation("com.tencent:mmkv:$mmkvVersion")
-
+    implementation(libs.lottie.compose)
+    implementation(libs.retrofit)
+    implementation(libs.appyx)
+    implementation(libs.ucrop)
+    implementation(libs.mmkv)
 }

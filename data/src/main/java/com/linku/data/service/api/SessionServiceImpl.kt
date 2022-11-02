@@ -1,4 +1,4 @@
-package com.linku.data.service
+package com.linku.data.service.api
 
 import androidx.annotation.Keep
 import com.linku.core.extension.json
@@ -6,7 +6,7 @@ import com.linku.data.R
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.MessageDTO
-import com.linku.domain.service.SessionService
+import com.linku.domain.service.api.SessionService
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,7 +22,7 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 import javax.inject.Inject
 
-class OkHttpSessionService @Inject constructor(
+class SessionServiceImpl @Inject constructor(
     private val client: OkHttpClient,
     private val applications: ApplicationUseCases
 ) : SessionService {

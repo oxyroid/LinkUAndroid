@@ -16,13 +16,16 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.ExpandCircleDown
-import androidx.compose.material.icons.sharp.ExpandMore
-import androidx.compose.material.icons.sharp.Reply
+import androidx.compose.material.icons.rounded.ExpandCircleDown
+import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.Reply
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +42,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -59,6 +63,7 @@ import coil.decode.ImageDecoderDecoder
 import coil.request.ImageRequest
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.core.ktx.dsl.any
 import com.linku.core.ktx.ifTrue
 import com.linku.core.util.hasCache
@@ -70,10 +75,7 @@ import com.linku.im.ktx.foundation.lazy.isAtTop
 import com.linku.im.ktx.runtime.LifecycleEffect
 import com.linku.im.ktx.runtime.rememberedRun
 import com.linku.im.ktx.ui.graphics.times
-import com.linku.im.screen.chat.composable.ChatBubble
-import com.linku.im.screen.chat.composable.ChatTextField
-import com.linku.im.screen.chat.composable.ChatTimestamp
-import com.linku.im.screen.chat.composable.ChatTopBar
+import com.linku.im.screen.chat.composable.*
 import com.linku.im.screen.main.globalLabelOrElse
 import com.linku.im.ui.components.*
 import com.linku.im.ui.components.button.MaterialButton
@@ -91,10 +93,25 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = hiltViewModel(),
-    cid: Int,
-    navTarget: NavTarget
+    viewModel: ChatViewModel,
+    cid: Int
 ) {
+    val systemUiController = rememberSystemUiController()
+    val theme = LocalTheme.current
+    LifecycleEffect { event ->
+        if (event == Lifecycle.Event.ON_CREATE) {
+            systemUiController.setNavigationBarColor(
+                color = theme.surface,
+                darkIcons = !theme.isDarkText
+            )
+        } else if (event == Lifecycle.Event.ON_DESTROY) {
+            systemUiController.setNavigationBarColor(
+                color = Color.Transparent,
+                darkIcons = theme.isDarkText
+            )
+            viewModel.restore()
+        }
+    }
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
     val backStack = LocalBackStack.current
@@ -105,6 +122,11 @@ fun ChatScreen(
             viewModel.onEvent(ChatEvent.OnFile(uri))
         }
 
+    LaunchedEffect(cid) {
+        if (cid != state.cid) {
+            viewModel.onEvent(ChatEvent.ResetNode)
+        }
+    }
     LifecycleEffect { event ->
         if (event == Lifecycle.Event.ON_CREATE) {
             viewModel.onEvent(ChatEvent.FetchChannel(cid))
@@ -139,7 +161,7 @@ fun ChatScreen(
         listContent: @Composable BoxScope.() -> Unit,
         bottomSheetContent: @Composable BoxScope.() -> Unit,
         channelDetailContent: @Composable () -> Unit,
-        imageDetailContent: @Composable (String, Rect, Float) -> Unit,
+        imageDetailContent: @Composable (String, Rect, Float) -> Unit
     ) {
         Scaffold(
             snackbarHost = {
@@ -149,11 +171,11 @@ fun ChatScreen(
                 )
             },
             topBar = topBar,
-            backgroundColor = LocalTheme.current.surface,
-            contentColor = LocalTheme.current.onSurface
+            backgroundColor = theme.surface,
+            contentColor = theme.onSurface
         ) { innerPadding ->
             Wrapper {
-                val chatBackgroundColor = LocalTheme.current.chatBackground
+                val chatBackgroundColor = theme.chatBackground
                 Box(
                     Modifier
                         .fillMaxSize()
@@ -162,8 +184,7 @@ fun ChatScreen(
                             drawContent()
                         }
                         .padding(innerPadding)
-                        .imePadding()
-                        .navigationBarsPadding(),
+                        .imePadding(),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     Wrapper {
@@ -179,10 +200,11 @@ fun ChatScreen(
                 enter = slideInHorizontally { it },
                 exit = slideOutHorizontally { it }
             ) {
+
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .background(LocalTheme.current.background)
+                        .background(theme.background)
                         .navigationBarsPadding()
                         .padding(innerPadding)
                 ) {
@@ -286,15 +308,36 @@ fun ChatScreen(
                 snackHostContent = { SnackbarHost(hostState) },
                 content = {
                     ChatTextField(
-                        text = { state.textFieldValue },
-                        uri = { state.uri },
-                        emojis = state.emojis,
-                        emojiSpanExpanded = { state.emojiSpanExpanded },
+                        text = state.textFieldValue,
+                        uri = state.uri,
                         onSend = { viewModel.onEvent(ChatEvent.SendMessage) },
                         onFile = { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                         onText = { viewModel.onEvent(ChatEvent.OnTextChange(it)) },
-                        onEmoji = { viewModel.onEvent(ChatEvent.OnEmoji(it)) },
                         onExpanded = { viewModel.onEvent(ChatEvent.OnEmojiSpanExpanded(!state.emojiSpanExpanded)) }
+                    )
+                    AnimatedVisibility(
+                        visible = state.emojiSpanExpanded,
+                        enter = slideInVertically { it },
+                        exit = slideOutVertically { it }
+                    ) {
+                        LazyVerticalGrid(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(theme.surface),
+                            columns = GridCells.Adaptive(48.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            items(state.emojis) {
+                                EmojiButton(it) { viewModel.onEvent(ChatEvent.OnEmoji(it.emoji)) }
+                            }
+                        }
+                    }
+
+                    Spacer(
+                        modifier = Modifier
+                            .background(theme.surface)
+                            .navigationBarsPadding()
                     )
                 }
             )
@@ -333,7 +376,7 @@ fun ChatScreen(
                                 }
                                 Divider(
                                     thickness = 1.dp,
-                                    color = LocalTheme.current.divider
+                                    color = theme.divider
                                 )
                             }
 
@@ -356,8 +399,8 @@ fun ChatScreen(
                 }
                 MaterialButton(
                     textRes = R.string.channel_exit,
-                    containerColor = LocalTheme.current.error,
-                    contentColor = LocalTheme.current.onError,
+                    containerColor = theme.error,
+                    contentColor = theme.onError,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = LocalSpacing.current.medium)
@@ -454,13 +497,6 @@ fun ChatScreen(
                                 viewModel.onEvent(ChatEvent.RemainIf {
                                     any {
                                         suggest { offsetY <= -configuration.screenHeightDp / 2f }
-                                        suggest {
-                                            (offsetY >= configuration.screenHeightDp / 2f).also { res ->
-                                                if (res) {
-                                                    // TODO
-                                                }
-                                            }
-                                        }
                                     }
                                 })
 
@@ -629,7 +665,7 @@ fun BottomSheetContent(
                     onClick = onScrollToBottom,
                     content = {
                         Icon(
-                            imageVector = Icons.Sharp.ExpandMore,
+                            imageVector = Icons.Rounded.ExpandMore,
                             contentDescription = null,
                             tint = LocalTheme.current.onPrimary
                         )
@@ -648,7 +684,7 @@ fun BottomSheetContent(
                     onClick = onDismissReply,
                     content = {
                         Icon(
-                            imageVector = Icons.Sharp.Reply,
+                            imageVector = Icons.Rounded.Reply,
                             contentDescription = null,
                             tint = LocalTheme.current.onPrimary
                         )
@@ -672,21 +708,47 @@ fun PreviewDialog(
     uri: Uri?,
     onDismiss: () -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current.density
+    var offset by remember {
+        mutableStateOf(0f)
+    }
+    val animateOffset by animateFloatAsState(offset)
+    var pressed by remember {
+        mutableStateOf(false)
+    }
+    val draggableState = rememberDraggableState {
+        offset += it
+    }
     AnimatedVisibility(
         visible = uri != null,
         modifier = Modifier
             .padding(LocalSpacing.current.extraSmall)
-            .fillMaxWidth()
-            .draggable(
-                state = rememberDraggableState { if (it > 20) onDismiss() },
-                orientation = Orientation.Vertical
-            ),
+            .fillMaxWidth(),
         enter = slideInVertically { it * 2 },
         exit = slideOutVertically { it * 2 }
     ) {
         Surface(
             shape = RoundedCornerShape(5),
-            border = BorderStroke(1.dp, LocalTheme.current.divider)
+            border = BorderStroke(1.dp, LocalTheme.current.divider),
+            modifier = Modifier
+                .graphicsLayer {
+                    translationY = animateOffset.coerceAtLeast(0f)
+                }
+                .draggable(
+                    orientation = Orientation.Vertical,
+                    state = draggableState,
+                    onDragStarted = {
+                        pressed = true
+                    },
+                    onDragStopped = {
+                        if (offset > configuration.screenHeightDp * density / 4) {
+                            onDismiss()
+                        }
+                        offset = 0f
+                        pressed = false
+                    },
+                )
         ) {
             Box {
                 var realUrl by remember {
@@ -707,7 +769,7 @@ fun PreviewDialog(
                 )
 
                 MaterialIconButton(
-                    icon = Icons.Sharp.ExpandCircleDown,
+                    icon = Icons.Rounded.ExpandCircleDown,
                     onClick = { onDismiss() },
                     modifier = Modifier.align(Alignment.TopEnd),
                     contentDescription = null

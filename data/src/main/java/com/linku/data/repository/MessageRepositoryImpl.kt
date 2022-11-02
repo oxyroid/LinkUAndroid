@@ -12,7 +12,6 @@ import com.linku.data.R
 import com.linku.domain.Strategy
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.bean.StagingMessage
-import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.GraphicsContent
 import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageContent
@@ -21,18 +20,16 @@ import com.linku.domain.entity.Message
 import com.linku.domain.entity.MessageDTO
 import com.linku.domain.entity.TextContent
 import com.linku.domain.entity.TextMessage
-import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.FileRepository
 import com.linku.domain.repository.FileResource
 import com.linku.domain.repository.MessageRepository
-import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
-import com.linku.domain.service.ConversationService
-import com.linku.domain.service.MessageService
+import com.linku.domain.service.api.MessageService
 import com.tencent.mmkv.MMKV
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -44,9 +41,7 @@ import javax.inject.Inject
 
 class MessageRepositoryImpl @Inject constructor(
     private val messageService: MessageService,
-    private val conversationService: ConversationService,
     private val messageDao: MessageDao,
-    private val conversationDao: ConversationDao,
     @ApplicationContext private val context: Context,
     private val fileRepository: FileRepository,
     private val mmkv: MMKV,
@@ -109,31 +104,13 @@ class MessageRepositoryImpl @Inject constructor(
         }
     }
 
-
-    private val messagesMap = mutableMapOf<Int, Flow<List<MessageUI>>>()
-    override fun observeLatestMessageVOs(
-        cid: Int, attachPrevious: Boolean
-    ): Flow<List<MessageUI>> {
-        val flow = if (!messagesMap.contains(cid))
-            channelFlow<List<MessageUI>> {
-                messageDao.observeLatestMessageByCid(cid)
-                    .onEach { message: Message ->
-                        // TODO:
-                        //  Convert Message to MessageVO then save it into cache,
-                        //  Update pre-first one and replied one (if needed)
-                    }
-                    .launchIn(this)
-            }
-        else flow { }
-        return if (attachPrevious) {
-            messagesMap.replace(cid, flow)
-            flow
-        } else messagesMap.getOrPut(cid) { flow }
-    }
-
-
     override fun observeLatestMessage(cid: Int): Flow<Message> {
-        return messageDao.observeLatestMessageByCid(cid).map { it.toReadable() }
+        return messageDao
+            .observeLatestMessageByCid(cid)
+            .filterNotNull()
+            .map {
+                it.toReadable()
+            }
     }
 
     override suspend fun getMessageById(mid: Int, strategy: Strategy): Message? {
@@ -563,11 +540,6 @@ class MessageRepositoryImpl @Inject constructor(
         messageDao.failedStagingMessage(uuid)
     }
 
-    override suspend fun fetchUnreadMessages() = resultOf {
-        messageService.getUnreadMessages()
-    }.saveIntoDBIfSuccess()
-
-
     override suspend fun fetchMessagesAtLeast(after: Long) = resultOf {
         messageService.getMessageAfter(after)
     }.saveIntoDBIfSuccess()
@@ -580,12 +552,6 @@ class MessageRepositoryImpl @Inject constructor(
                     if (old == null) {
                         messageDao.insert(it.toMessage())
                     }
-                }
-                if (conversationDao.getById(it.cid) == null) {
-                    resultOf { conversationService.getConversationById(it.cid) }
-                        .onSuccess { conversation ->
-                            conversationDao.insert(conversation.toConversation())
-                        }
                 }
             }
         }

@@ -13,7 +13,6 @@ sealed class IntroduceEvent {
     object CancelVerifiedEmail : IntroduceEvent()
     object SignOut : IntroduceEvent()
     object AvatarClicked : IntroduceEvent()
-    object DismissPreview : IntroduceEvent()
     object FriendShipAction : IntroduceEvent()
 
     data class UpdateAvatar(val uri: Uri?) : IntroduceEvent()

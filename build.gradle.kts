@@ -5,8 +5,8 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.google.dagger:hilt-android-gradle-plugin:$hiltVersion")
-        classpath("org.jetbrains.kotlin:kotlin-serialization:$kotlinVersion")
+        classpath(libs.google.dagger.agp)
+        classpath(libs.kotlinx.serialzation.core)
     }
 }
 

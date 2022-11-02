@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.linku.core.wrapper.Resource
 import com.linku.data.Configurations
 import com.linku.data.usecase.ApplicationUseCases
+import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.EmojiUseCases
 import com.linku.data.usecase.MessageUseCases
 import com.linku.data.usecase.SessionUseCases
@@ -29,6 +30,7 @@ class LinkUViewModel @Inject constructor(
     private val emojiUseCases: EmojiUseCases,
     private val applications: ApplicationUseCases,
     private val configurations: Configurations,
+    private val conversations: ConversationUseCases,
     connectivityObserver: ConnectivityObserver,
     val authenticator: Authenticator,
     private val themes: SettingUseCases.Themes
@@ -52,8 +54,8 @@ class LinkUViewModel @Inject constructor(
             .onEach { state ->
                 when (state) {
                     ConnectivityObserver.State.Available -> {
-                        initRemoteSessionJob?.cancel()
-                        initRemoteSessionJob = authenticator.observeCurrent
+                        initSessionJob?.cancel()
+                        initSessionJob = authenticator.observeCurrent
                             .distinctUntilChanged()
                             .onEach { userId ->
                                 if (userId != null) onEvent(LinkUEvent.InitSession)
@@ -66,7 +68,7 @@ class LinkUViewModel @Inject constructor(
                     }
 
                     ConnectivityObserver.State.Losing -> {
-                        initRemoteSessionJob?.cancel()
+                        initSessionJob?.cancel()
                     }
 
                     ConnectivityObserver.State.Lost -> {
@@ -162,15 +164,22 @@ class LinkUViewModel @Inject constructor(
         )
     }
 
-    private var initRemoteSessionJob: Job? = null
+    private var initSessionJob: Job? = null
+    private var fetchConversationsJob: Job? = null
     private var times = 0
     private fun initRemoteSession() {
         configurations.log {
             times++
             onMessage("Init session, times: $times")
         }
-        initRemoteSessionJob?.cancel()
-        initRemoteSessionJob = sessionUseCases
+
+        fetchConversationsJob?.cancel()
+        fetchConversationsJob = conversations
+            .fetchConversations()
+            .launchIn(viewModelScope)
+
+        initSessionJob?.cancel()
+        initSessionJob = sessionUseCases
             .init(authenticator.currentUID)
             .onEach { resource ->
                 when (resource) {
@@ -181,7 +190,7 @@ class LinkUViewModel @Inject constructor(
                                 when (it) {
                                     Resource.Loading -> {}
                                     is Resource.Success -> {
-                                        messageUseCases.fetchUnreadMessages()
+                                        messageUseCases.syncingMessages()
                                         deliverState(Label.Default)
                                         writable = readable.copy(
                                             readyForObserveMessages = true

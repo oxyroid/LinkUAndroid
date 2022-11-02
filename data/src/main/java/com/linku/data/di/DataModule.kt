@@ -3,9 +3,9 @@
 package com.linku.data.di
 
 import com.linku.data.repository.*
-import com.linku.data.service.OkHttpSessionService
+import com.linku.data.service.api.SessionServiceImpl
 import com.linku.domain.repository.*
-import com.linku.domain.service.SessionService
+import com.linku.domain.service.api.SessionService
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -53,5 +53,5 @@ interface DataModule {
 
     @Binds
     @Singleton
-    fun bindSessionService(service: OkHttpSessionService): SessionService
+    fun bindSessionService(service: SessionServiceImpl): SessionService
 }

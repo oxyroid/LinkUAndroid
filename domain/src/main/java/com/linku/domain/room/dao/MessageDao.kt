@@ -34,7 +34,7 @@ interface MessageDao {
     suspend fun getAll(): List<Message>
 
     @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC")
-    fun getAllByCid(cid: Int): List<Message>
+    suspend fun getAllByCid(cid: Int): List<Message>
 
     @Query("SELECT * FROM Message WHERE id = :id")
     suspend fun getById(id: Int): Message?
@@ -52,11 +52,14 @@ interface MessageDao {
     suspend fun clearStagingMessages()
 
     @Query("SELECT * FROM Message ORDER BY timestamp DESC LIMIT 1")
-    fun getLatestMessage(): Message?
+    suspend fun getLatestMessage(): Message?
 
     @Query("SELECT * FROM Message WHERE cid = :cid ORDER BY timestamp DESC LIMIT 1")
-    fun observeLatestMessageByCid(cid: Int): Flow<Message>
+    fun observeLatestMessageByCid(cid: Int): Flow<Message?>
 
     @Query("SELECT * FROM Message WHERE type = :type")
     suspend fun findByType(type: Message.Type): List<Message>
+
+    @Query("SELECT * FROM Message WHERE content LIKE '%'||:key||'%' AND type != 'contact-request'")
+    suspend fun query(key: String): List<Message>
 }

@@ -1,8 +1,8 @@
 package com.linku.domain.repository
 
 import android.net.Uri
+import com.linku.core.wrapper.Resource
 import com.linku.domain.Strategy
-import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.Message
 import kotlinx.coroutines.flow.Flow
 
@@ -14,10 +14,6 @@ interface MessageRepository {
 
     fun incoming(): Flow<List<Message>>
     fun incoming(cid: Int): Flow<List<Message>>
-    fun observeLatestMessageVOs(
-        cid: Int,
-        attachPrevious: Boolean
-    ): Flow<List<MessageUI>>
 
     fun observeLatestMessage(cid: Int): Flow<Message>
 
@@ -25,26 +21,24 @@ interface MessageRepository {
         cid: Int,
         text: String,
         reply: Int?
-    ): Flow<com.linku.core.wrapper.Resource<Unit>>
+    ): Flow<Resource<Unit>>
 
     fun sendImageMessage(
         cid: Int,
         uri: Uri,
         reply: Int?
-    ): Flow<com.linku.core.wrapper.Resource<Unit>>
+    ): Flow<Resource<Unit>>
 
     fun sendGraphicsMessage(
         cid: Int,
         text: String,
         uri: Uri,
         reply: Int?
-    ): Flow<com.linku.core.wrapper.Resource<Unit>>
+    ): Flow<Resource<Unit>>
 
     suspend fun cancelMessage(mid: Int)
 
-    suspend fun resendMessage(mid: Int): Flow<com.linku.core.wrapper.Resource<Unit>>
-
-    suspend fun fetchUnreadMessages()
+    suspend fun resendMessage(mid: Int): Flow<Resource<Unit>>
 
     suspend fun fetchMessagesAtLeast(after: Long)
 

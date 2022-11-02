@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-import java.util.Properties
+import dsl.localProperties
 
 plugins {
     id("com.android.library")
@@ -20,26 +20,23 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
-        val localProperties = Properties().apply {
-            val file = rootProject.file("local.properties")
-            if (file.exists()) file.inputStream().use(::load)
-        }
-        val baseUrl: String = localProperties.getProperty("BASE_URL", "")
-        val apiKey: String = localProperties.getProperty("API_KEY", "")
-        val storageBaseUrl: String = localProperties.getProperty("STORAGE_PRE", "")
-
+        val baseUrl: String = localProperties.getProperty("base_url", "")
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
-        buildConfigField("String", "API_KEY", "\"$apiKey\"")
-        buildConfigField("String", "STORAGE_PRE", "\"$storageBaseUrl\"")
     }
 
     buildTypes {
-        release {
+        val release by getting {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        val debug by getting {
+            isMinifyEnabled = false
+        }
+        val benchmark by creating {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -56,38 +53,26 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":domain"))
 
-    implementation("androidx.core:core-ktx:$coreKtxVersion")
-    implementation("androidx.appcompat:appcompat:$appcompatVersion")
-    implementation("com.google.android.material:material:$materialVersion")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
-    testImplementation("junit:junit:$junitVersion")
-    androidTestImplementation("androidx.test.ext:junit:$androidTestExtJunitVersion")
-    androidTestImplementation("androidx.test.espresso:espresso-core:$androidTestEspressoCoreVersion")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.appcompat)
 
-    // room
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
 
-    // Json
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationJsonVersion")
+    implementation(libs.kotlinx.serialzation.json)
 
-    // retrofit
-    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    implementation(libs.retrofit)
 
-    // mmkv
-    implementation("com.tencent:mmkv:$mmkvVersion")
+    implementation(libs.mmkv)
 
-    // paging
-    implementation("androidx.paging:paging-runtime:$pagingVersion")
-    implementation("androidx.paging:paging-compose:$pagingComposeVersion")
-    // WorkManager
-    implementation("androidx.work:work-runtime-ktx:$workVersion")
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
 
-    // Hilt
-    implementation("com.google.dagger:hilt-android:$hiltVersion")
-    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    kapt("androidx.hilt:hilt-compiler:$hiltCompilerVersion")
-    implementation("androidx.hilt:hilt-navigation-compose:$hiltNavigationVersion")
+    implementation(libs.google.dagger.android)
+    kapt(libs.google.dagger.android_compiler)
+    kapt(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation)
 
 }

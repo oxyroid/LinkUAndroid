@@ -22,7 +22,7 @@ interface ConversationDao {
     suspend fun getById(id: Int): Conversation?
 
     @Query("SELECT * FROM Conversation WHERE id = :cid")
-    fun observeConversation(cid: Int): Flow<Conversation>
+    fun observeConversation(cid: Int): Flow<Conversation?>
 
     @Query("SELECT * FROM Conversation ORDER BY updatedAt")
     fun observeConversations(): Flow<List<Conversation>>

@@ -4,20 +4,23 @@ import android.net.Uri
 import com.linku.core.wrapper.Resource
 import com.linku.core.wrapper.resultOf
 import com.linku.domain.Strategy
-import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.Message
+import com.linku.domain.entity.toConversation
 import com.linku.domain.repository.MessageRepository
+import com.linku.domain.room.dao.ConversationDao
 import com.linku.domain.room.dao.MessageDao
-import com.linku.domain.service.MessageService
+import com.linku.domain.service.api.ConversationService
+import com.linku.domain.service.api.MessageService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class MessageUseCases @Inject constructor(
     val observeAllMessages: ObserveAllMessagesUseCase,
     val observeMessages: ObserveMessagesUseCase,
-    val observeMessageVO: ObserveMessageVOUseCase,
     val observeLatestMessage: ObserveLatestMessagesUseCase,
     val textMessage: TextMessageUseCase,
     val imageMessage: ImageMessageUseCase,
@@ -25,11 +28,22 @@ data class MessageUseCases @Inject constructor(
     val cancelMessage: CancelMessageUseCase,
     val resendMessage: ResendMessageUseCase,
     val getMessage: GetMessageUseCase,
-    val fetchUnreadMessages: FetchUnreadMessagesUseCase,
+    val syncingMessages: SyncingUseCase,
     val fetchMessagesAtLeastUseCase: FetchMessagesAtLeastUseCase,
     val findMessagesByType: FindMessageByTypeUseCase,
-    val contactRequest: ContactRequestUseCase
+    val contactRequest: ContactRequestUseCase,
+    val queryMessages: QueryMessagesUseCase
 )
+
+data class QueryMessagesUseCase @Inject constructor(
+    private val messageDao: MessageDao
+) {
+    suspend operator fun invoke(
+        key: String
+    ): List<Message> {
+        return messageDao.query(key)
+    }
+}
 
 data class ContactRequestUseCase @Inject constructor(
     private val messageService: MessageService
@@ -76,19 +90,35 @@ data class ResendMessageUseCase @Inject constructor(
     }
 }
 
-data class FetchUnreadMessagesUseCase @Inject constructor(
-    private val repository: MessageRepository
+data class SyncingUseCase @Inject constructor(
+    private val messageDao: MessageDao,
+    private val conversationDao: ConversationDao,
+    private val messageService: MessageService,
+    private val conversationService: ConversationService,
 ) {
-    suspend operator fun invoke() = repository.fetchUnreadMessages()
-}
+    suspend operator fun invoke() = withContext(Dispatchers.IO) {
+        resultOf { messageService.getMessageAfter(getLatestLocalMessageTime()) }
+            .onSuccess { result ->
+                result.sortedBy { it.cid }.forEach { message ->
+                    if (messageDao.getById(message.id) == null) {
+                        messageDao.insert(message.toMessage())
+                    }
+                    if (conversationDao.getById(message.cid) == null) {
+                        launch {
+                            resultOf {
+                                conversationService.getConversationById(message.cid)
+                            }.onSuccess {
+                                conversationDao.insert(it.toConversation())
+                            }
+                        }
+                    }
+                }
+            }
+    }
 
-data class ObserveMessageVOUseCase @Inject constructor(
-    private val repository: MessageRepository
-) {
-    operator fun invoke(
-        cid: Int,
-        attachPrevious: Boolean = true
-    ): Flow<List<MessageUI>> = repository.observeLatestMessageVOs(cid, attachPrevious)
+    private suspend fun getLatestLocalMessageTime(): Long {
+        return messageDao.getLatestMessage()?.timestamp ?: (System.currentTimeMillis())
+    }
 }
 
 data class ObserveLatestMessagesUseCase @Inject constructor(

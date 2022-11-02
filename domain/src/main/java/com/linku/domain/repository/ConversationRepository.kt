@@ -13,10 +13,10 @@ interface ConversationRepository {
     fun fetchConversation(cid: Int): Flow<Resource<Unit>>
     fun fetchConversations(): Flow<Resource<Unit>>
     fun fetchMembers(cid: Int): Flow<Resource<List<Member>>>
-    fun queryConversations(
+    suspend fun queryConversations(
         name: String?,
         description: String?
-    ): Flow<Resource<List<Conversation>>>
+    ): List<Conversation>
 
     suspend fun pin(cid: Int)
 }

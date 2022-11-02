@@ -17,11 +17,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.sharp.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -91,7 +92,7 @@ fun QueryScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     MaterialIconButton(
-                        icon = Icons.Sharp.ArrowBack,
+                        icon = Icons.Rounded.ArrowBack,
                         onClick = { backStack.pop() },
                         modifier = Modifier.padding(LocalSpacing.current.extraSmall),
                         contentDescription = "back"
@@ -171,6 +172,34 @@ fun QueryScreen(
                         UserItem(user = user) {
                             backStack.push(NavTarget.Introduce(user.id))
                         }
+                    }
+                    if (state.messages.isNotEmpty())
+                        stickyHeader {
+                            Surface(
+                                color = (
+                                        if (vm.readable.isDarkMode) LocalTheme.current.surface
+                                        else LocalTheme.current.primary
+                                        ).copy(alpha = 0.8f),
+                                contentColor = if (vm.readable.isDarkMode) LocalTheme.current.onSurface
+                                else LocalTheme.current.onPrimary,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.query_result_message),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    modifier = Modifier.padding(
+                                        horizontal = LocalSpacing.current.medium,
+                                        vertical = LocalSpacing.current.extraSmall
+                                    )
+                                )
+                            }
+                        }
+                    items(state.messages) { message ->
+                        ListItem(
+                            headlineText = {
+                                Text(text = message.content)
+                            }
+                        )
                     }
                 }
                 Row(

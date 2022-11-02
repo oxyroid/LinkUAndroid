@@ -1,4 +1,4 @@
-package com.linku.domain.service
+package com.linku.domain.service.api
 
 import com.linku.core.wrapper.BackendResult
 import com.linku.domain.entity.UserDTO

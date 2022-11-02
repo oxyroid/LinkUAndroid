@@ -30,7 +30,7 @@ import com.linku.domain.entity.GraphicsMessage
 import com.linku.domain.entity.ImageMessage
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.TextMessage
-import com.linku.domain.service.NotificationService
+import com.linku.domain.service.system.NotificationService
 import com.linku.im.Constants
 import com.linku.im.R
 import com.linku.im.screen.BaseViewModel
@@ -99,6 +99,11 @@ class ChatViewModel @Inject constructor(
         is Forward -> forward(event)
         Remain -> remain()
         is RemainIf -> remainIf(event)
+        ChatEvent.ResetNode -> resetNode()
+    }
+
+    private fun resetNode() {
+        _linkedNode.value = LinkedNode(ChatMode.Messages)
     }
 
     private fun resendMessage(event: ResendMessage) {

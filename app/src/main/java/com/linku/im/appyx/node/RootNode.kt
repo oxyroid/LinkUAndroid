@@ -61,8 +61,7 @@ class RootNode(
             val viewModel: ChatViewModel = hiltViewModel()
             ChatScreen(
                 cid = navTarget.cid,
-                viewModel = viewModel,
-                navTarget = navTarget
+                viewModel = viewModel
             )
         }
 

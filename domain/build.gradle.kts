@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-import java.util.Properties
+import dsl.localProperties
 
 plugins {
     id("com.android.library")
@@ -21,24 +21,26 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
 
-        val localProperties = Properties().apply {
-            val file = rootProject.file("local.properties")
-            if (file.exists()) file.inputStream().use(::load)
-        }
-        val baseUrl: String = localProperties.getProperty("BASE_URL", "")
-        val wsUrl: String = localProperties.getProperty("WS_URL", "")
+        val baseUrl: String = localProperties.getProperty("base_url", "")
+        val wsUrl: String = localProperties.getProperty("ws_url", "")
 
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
         buildConfigField("String", "WS_URL", "\"$wsUrl\"")
     }
 
     buildTypes {
-        release {
+        val release by getting {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        val debug by getting {
+            isMinifyEnabled = false
+        }
+        val benchmark by creating {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -54,28 +56,23 @@ android {
 dependencies {
     implementation(project(":core"))
 
-    implementation("androidx.core:core-ktx:$coreKtxVersion")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // hilt
-    implementation("com.google.dagger:hilt-android:$hiltVersion")
-    implementation("androidx.hilt:hilt-navigation-compose:$hiltNavigationVersion")
-    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    kapt("androidx.hilt:hilt-compiler:$hiltCompilerVersion")
+    implementation(libs.google.dagger.android)
+    kapt(libs.google.dagger.android_compiler)
+    kapt(libs.androidx.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation)
 
-    // room
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    kapt("androidx.room:room-compiler:$roomVersion")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    kapt(libs.androidx.room.compiler)
 
-    // retrofit
-    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    implementation(libs.retrofit)
 
-    // Json
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationJsonVersion")
+    implementation(libs.kotlinx.serialzation.json)
 
-    // paging
-    implementation("androidx.paging:paging-runtime:$pagingVersion")
-    implementation("androidx.paging:paging-compose:$pagingComposeVersion")
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
 
 }

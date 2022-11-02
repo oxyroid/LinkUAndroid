@@ -27,7 +27,8 @@ data class ConversationUseCases @Inject constructor(
     val queryConversations: QueryConversationsUseCase,
     val pushConversationShort: PushConversationShortCutUseCase,
     val pin: PinUseCase,
-    val findChatRoom: FindChatRoomUseCase
+    val findChatRoom: FindChatRoomUseCase,
+    val convertConversationToContact: ConvertConversationToContactUseCase
 )
 
 data class PinUseCase @Inject constructor(
@@ -75,7 +76,7 @@ data class FetchConversationsUseCase @Inject constructor(
 data class QueryConversationsUseCase @Inject constructor(
     private val repository: ConversationRepository
 ) {
-    operator fun invoke(name: String?, description: String?): Flow<Resource<List<Conversation>>> =
+    suspend operator fun invoke(name: String?, description: String?): List<Conversation> =
         repository.queryConversations(name, description)
 }
 
@@ -123,5 +124,22 @@ data class FindChatRoomUseCase @Inject constructor(
         return conversations
             .find { it.member.contains(currentUID) && it.member.contains(uid) }
             .let { it?.id }
+    }
+}
+
+data class ConvertConversationToContactUseCase @Inject constructor(
+    private val authenticator: Authenticator,
+    private val dao: ConversationDao
+) {
+    suspend operator fun invoke(cid: Int): Int? {
+        val conversation = dao.getById(cid)
+        return run {
+            val c = if (conversation == null) return null
+            else if (conversation.type != Conversation.Type.PM) return null
+            else conversation
+            val member = c.member
+            if (member.size != 2) null
+            else member.find { it != authenticator.currentUID }
+        }
     }
 }

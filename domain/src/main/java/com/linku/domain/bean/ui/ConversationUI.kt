@@ -10,14 +10,7 @@ data class ConversationUI(
     var unreadCount: Int = 0,
     var updatedAt: Long = 0,
     var pinned: Boolean = false,
-) : Comparable<ConversationUI> {
-    override fun compareTo(other: ConversationUI): Int = run {
-        if (pinned == other.pinned) (other.updatedAt - updatedAt).toInt()
-        else {
-            if (pinned) 1 else 0
-        }
-    }
-}
+)
 
 fun Conversation.toUI(
     content: String = "",

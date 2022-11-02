@@ -19,12 +19,18 @@ android {
     }
 
     buildTypes {
-        getByName("release") {
+        val release by getting {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+        val debug by getting {
+            isMinifyEnabled = false
+        }
+        val benchmark by creating {
+            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -38,16 +44,12 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:$coreKtxVersion")
-    implementation("androidx.appcompat:appcompat:$appcompatVersion")
-    implementation("com.google.android.material:material:$materialVersion")
-    testImplementation("junit:junit:$junitVersion")
-    androidTestImplementation("androidx.test.ext:junit:$androidTestExtJunitVersion")
-    androidTestImplementation("androidx.test.espresso:espresso-core:$androidTestEspressoCoreVersion")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycleVersion")
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
 
-    // Json
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationJsonVersion")
-    // retrofit
-    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
+    implementation(libs.kotlinx.serialzation.json)
+
+    implementation(libs.retrofit)
 }
