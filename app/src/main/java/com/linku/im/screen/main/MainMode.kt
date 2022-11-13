@@ -4,4 +4,5 @@ sealed class MainMode {
     object Conversations : MainMode()
     object Notifications : MainMode()
     object NewChannel : MainMode()
+    object Query : MainMode()
 }

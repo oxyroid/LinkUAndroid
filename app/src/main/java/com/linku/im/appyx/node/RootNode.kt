@@ -18,7 +18,6 @@ import com.linku.im.screen.chat.ChatViewModel
 import com.linku.im.screen.edit.EditScreen
 import com.linku.im.screen.introduce.IntroduceScreen
 import com.linku.im.screen.main.MainScreen
-import com.linku.im.screen.query.QueryScreen
 import com.linku.im.screen.setting.theme.ThemeSettingScreen
 import com.linku.im.screen.sign.SignScreen
 import com.linku.im.ui.theme.LocalBackStack
@@ -71,10 +70,6 @@ class RootNode(
 
         is NavTarget.Edit -> node(buildContext) {
             EditScreen(type = navTarget.type)
-        }
-
-        NavTarget.Query -> node(buildContext) {
-            QueryScreen()
         }
 
         NavTarget.Sign -> node(buildContext) {

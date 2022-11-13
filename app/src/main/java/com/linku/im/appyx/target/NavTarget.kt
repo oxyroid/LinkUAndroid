@@ -36,10 +36,7 @@ sealed class NavTarget : Parcelable {
     object Sign : NavTarget()
 
     @Parcelize
-    object Query : NavTarget()
-
-    @Parcelize
-    data class Edit(val type: IntroduceEvent.Edit.Type?) : NavTarget()
+    data class Edit(val type: IntroduceEvent.Edit.Type) : NavTarget()
 
     sealed class Setting : NavTarget() {
         @Parcelize

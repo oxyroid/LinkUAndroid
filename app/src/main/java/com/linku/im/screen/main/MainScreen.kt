@@ -1,61 +1,27 @@
 package com.linku.im.screen.main
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Done
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.WorkspacePremium
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +32,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -77,6 +44,7 @@ import com.bumble.appyx.navmodel.backstack.operation.singleTop
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
+import com.linku.core.ktx.ifTrue
 import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
@@ -84,13 +52,19 @@ import com.linku.im.ktx.runtime.LifecycleEffect
 import com.linku.im.ktx.runtime.rememberedRun
 import com.linku.im.ktx.ui.graphics.animated
 import com.linku.im.ktx.ui.graphics.times
+import com.linku.im.screen.ConversationList
+import com.linku.im.screen.MessageList
+import com.linku.im.screen.UserList
+import com.linku.im.screen.main.composable.MainToolBar
 import com.linku.im.ui.brush.premiumBrush
 import com.linku.im.ui.components.BottomSheetContent
-import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.TextField
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
+import com.linku.im.ui.components.item.ConversationItem
 import com.linku.im.ui.components.item.PinnedContractsItem
 import com.linku.im.ui.components.item.PinnedConversationItem
+import com.linku.im.ui.components.item.UserItem
 import com.linku.im.ui.components.notify.NotifyHolder
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalDuration
@@ -102,10 +76,12 @@ import kotlinx.coroutines.launch
 @OptIn(
     ExperimentalFoundationApi::class,
     ExperimentalPagerApi::class,
-    ExperimentalMaterial3Api::class
+    ExperimentalMaterial3Api::class,
+    ExperimentalAnimationApi::class
 )
 @Composable
 fun MainScreen(
+    modifier: Modifier = Modifier,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
@@ -114,11 +90,13 @@ fun MainScreen(
     val scaffoldState = rememberScaffoldState()
 
     val theme = LocalTheme.current
+    val spacing = LocalSpacing.current
     val backStack = LocalBackStack.current
+    val feedback = LocalHapticFeedback.current
+
     val linkedNode by viewModel.linkedNode
     val mode = linkedNode.value
 
-    val feedback = LocalHapticFeedback.current
 
     val selections = rememberedRun(vm.readable.isDarkMode) {
         listOf(
@@ -163,6 +141,18 @@ fun MainScreen(
         }
         vm.message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
     }
+    val topBarColor by animateColorAsState(
+        when (mode) {
+            is MainMode.Query -> theme.secondaryTopBar
+            else -> theme.topBar
+        }
+    )
+    val onTopBarColor by animateColorAsState(
+        when (mode) {
+            is MainMode.Query -> theme.onSecondaryTopBar
+            else -> theme.onTopBar
+        }
+    )
     Scaffold(
         scaffoldState = scaffoldState,
         snackbarHost = {
@@ -172,11 +162,22 @@ fun MainScreen(
             )
         },
         topBar = {
-            ToolBar(
-                navIcon = Icons.Rounded.Menu,
+            MainToolBar(
+                navIcon = when (mode) {
+                    is MainMode.Query -> Icons.Rounded.ArrowBack
+                    else -> Icons.Rounded.Menu
+                },
                 onNavClick = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(2)
+                    when (mode) {
+                        is MainMode.Query -> {
+                            viewModel.onEvent(MainEvent.Remain)
+                        }
+                        is MainMode.Conversations -> {
+                            scope.launch {
+                                pagerState.animateScrollToPage(2)
+                            }
+                        }
+                        else -> {}
                     }
                 },
                 actions = {
@@ -185,11 +186,12 @@ fun MainScreen(
                             is MainMode.Conversations -> Icons.Rounded.Search
                             is MainMode.Notifications -> Icons.Rounded.Close
                             is MainMode.NewChannel -> Icons.Rounded.Done
+                            is MainMode.Query -> Icons.Rounded.Search
                         },
                         onClick = {
                             when (mode) {
                                 MainMode.Conversations -> {
-                                    backStack.push(NavTarget.Query)
+                                    viewModel.onEvent(MainEvent.Forward(MainMode.Query))
                                 }
 
                                 MainMode.Notifications -> {
@@ -199,25 +201,94 @@ fun MainScreen(
                                 MainMode.NewChannel -> {
 
                                 }
+
+                                MainMode.Query -> {
+                                    viewModel.onEvent(MainEvent.Query)
+                                }
                             }
                         },
                         contentDescription = null
                     )
                 },
-                text = when (mode) {
-                    is MainMode.Conversations -> globalLabelOrElse { stringResource(R.string.app_name) }
-                    is MainMode.Notifications -> stringResource(R.string.notification)
-                    is MainMode.NewChannel -> stringResource(R.string.new_channel)
-                }
+                text = {
+                    val text = when (mode) {
+                        is MainMode.Conversations -> globalLabelOrElse { stringResource(R.string.app_name) }
+                        is MainMode.Notifications -> stringResource(R.string.notification)
+                        is MainMode.NewChannel -> stringResource(R.string.new_channel)
+                        is MainMode.Query -> ""
+                    }
+                    val duration = text.isNotEmpty().ifTrue(800) ?: 0
+                    Row {
+                        when (mode is MainMode.Query) {
+                            true -> {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    TextField(
+                                        placeholder = stringResource(R.string.query_input),
+                                        background = LocalTheme.current.surface,
+                                        textFieldValue = state.queryText,
+                                        onValueChange = {
+                                            viewModel.onEvent(
+                                                MainEvent.OnQueryText(it)
+                                            )
+                                        },
+                                        imeAction = ImeAction.Search,
+                                        keyboardActions = KeyboardActions(
+                                            onSearch = {
+                                                viewModel.onEvent(MainEvent.Query)
+                                            }
+                                        ),
+                                        modifier = Modifier.padding(LocalSpacing.current.small)
+                                    )
+
+                                }
+                            }
+                            false -> {
+                                val animation = remember {
+                                    slideInVertically(tween(duration)) { it } +
+                                            fadeIn(tween(duration)) with
+                                            slideOutVertically(tween(duration)) { -it } +
+                                            fadeOut(tween(duration))
+                                }
+                                AnimatedContent(
+                                    targetState = text,
+                                    transitionSpec = {
+                                        animation.using(
+                                            SizeTransform(true)
+                                        )
+                                    }
+                                ) { target ->
+                                    Text(
+                                        text = target,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                backgroundColor = topBarColor,
+                contentColor = onTopBarColor
             )
         },
-        backgroundColor = Color.Unspecified
+        backgroundColor = Color.Unspecified,
+        modifier = modifier
     ) { innerPadding ->
-        val pages = listOf(
-            stringResource(R.string.tab_notification),
-            stringResource(R.string.tab_contact),
-            stringResource(R.string.tab_more)
-        )
+        val pages = if (mode is MainMode.Query) {
+            listOf(
+                stringResource(R.string.query_result_message),
+                stringResource(R.string.query_result_conversation),
+                stringResource(R.string.query_result_user)
+            )
+        } else {
+            listOf(
+                stringResource(R.string.tab_notification),
+                stringResource(R.string.tab_contact),
+                stringResource(R.string.tab_more)
+            )
+        }
         Box {
             Column(
                 modifier = Modifier
@@ -232,15 +303,15 @@ fun MainScreen(
                                 .tabIndicatorOffset(
                                     tabPositions[pagerState.currentPage]
                                 )
-                                .padding(horizontal = LocalSpacing.current.large)
+                                .padding(horizontal = spacing.large)
                                 .clip(
                                     RoundedCornerShape(
-                                        topStart = LocalSpacing.current.extraSmall,
-                                        topEnd = LocalSpacing.current.extraSmall
+                                        topStart = spacing.extraSmall,
+                                        topEnd = spacing.extraSmall
                                     )
                                 ),
                             color = theme.primary.animated(),
-                            height = LocalSpacing.current.extraSmall
+                            height = spacing.extraSmall
                         )
                     },
                     divider = {},
@@ -258,27 +329,125 @@ fun MainScreen(
                                 onClick = {
                                     scope.launch { pagerState.animateScrollToPage(index) }
                                 },
-                                selectedContentColor = theme.onTopBar,
-                                unselectedContentColor = theme.onTopBar * 0.6f,
+                                selectedContentColor = onTopBarColor,
+                                unselectedContentColor = onTopBarColor * 0.6f,
                                 modifier = Modifier
-                                    .padding(LocalSpacing.current.small)
-                                    .clip(RoundedCornerShape(LocalSpacing.current.extraSmall))
+                                    .padding(spacing.small)
+                                    .clip(RoundedCornerShape(spacing.extraSmall))
                             )
                         }
                     },
-                    containerColor = theme.topBar.animated(),
-                    contentColor = theme.onTopBar.animated()
+                    containerColor = topBarColor,
+                    contentColor = onTopBarColor
                 )
                 HorizontalPager(
                     count = pages.size,
                     state = pagerState,
                     key = { it }
                 ) { pageIndex ->
-                    when (PageConfig.parse(pageIndex)) {
-                        PageConfig.More -> {
+                    when (PageConfig.parse(mode !is MainMode.Query, pageIndex)) {
+                        PageConfig.Common.Conversation -> {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(LocalSpacing.current.small)
+                                userScrollEnabled = !state.loadingConversations
+                            ) {
+                                val conversations = state.conversations.value
+                                val grouped = conversations.groupBy { it.pinned }
+
+                                items(
+                                    items = grouped[true] ?: emptyList(),
+                                    key = { it.id }
+                                ) { contact ->
+                                    PinnedConversationItem(
+                                        conversation = contact,
+                                        onClick = {
+                                            backStack.singleTop(
+                                                NavTarget.ChatTarget.Messages(
+                                                    contact.id
+                                                )
+                                            )
+                                        },
+                                        onLongClick = {
+                                            viewModel.onEvent(MainEvent.Pin(contact.id))
+                                        },
+                                        modifier = Modifier.animateItemPlacement()
+                                    )
+                                }
+                                itemsIndexed(
+                                    grouped[false] ?: emptyList(),
+                                    key = { _, item -> item.id }
+                                ) { index, conversation ->
+                                    PinnedConversationItem(
+                                        conversation = conversation,
+                                        onClick = {
+                                            backStack.singleTop(
+                                                NavTarget.ChatTarget.Messages(
+                                                    conversation.id
+                                                )
+                                            )
+                                        },
+                                        onLongClick = {
+                                            viewModel.onEvent(MainEvent.Pin(conversation.id))
+                                        },
+                                        modifier = Modifier.animateItemPlacement()
+                                    )
+                                    Divider(color = theme.divider)
+                                }
+                            }
+                        }
+                        PageConfig.Common.Contract -> {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                userScrollEnabled = !state.loadingConversations
+                            ) {
+                                val contracts = state.contracts.value
+                                val grouped = contracts.groupBy { it.pinned }
+
+                                items(
+                                    items = grouped[true] ?: emptyList(),
+                                    key = { it.id }
+                                ) { contact ->
+                                    PinnedContractsItem(
+                                        contact = contact,
+                                        onClick = {
+                                            backStack.singleTop(
+                                                NavTarget.ChatTarget.Messages(
+                                                    contact.id
+                                                )
+                                            )
+                                        },
+                                        onLongClick = {
+                                            viewModel.onEvent(MainEvent.Pin(contact.id))
+                                        },
+                                        modifier = Modifier.animateItemPlacement()
+                                    )
+                                }
+                                itemsIndexed(
+                                    grouped[false] ?: emptyList(),
+                                    key = { _, item -> item.id }
+                                ) { index, contact ->
+                                    PinnedContractsItem(
+                                        contact = contact,
+                                        onClick = {
+                                            backStack.singleTop(
+                                                NavTarget.ChatTarget.Messages(
+                                                    contact.id
+                                                )
+                                            )
+                                        },
+                                        onLongClick = {
+                                            viewModel.onEvent(MainEvent.Pin(contact.id))
+                                        },
+                                        modifier = Modifier.animateItemPlacement()
+                                    )
+                                    Divider(color = theme.divider)
+                                }
+                            }
+                        }
+                        PageConfig.Common.More -> {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(spacing.small)
                             ) {
                                 items(selections) { selection ->
                                     ListItem(
@@ -300,7 +469,7 @@ fun MainScreen(
                                             if (selection is Selection.Switch) {
                                                 Box(
                                                     modifier = Modifier
-                                                        .size(LocalSpacing.current.small)
+                                                        .size(spacing.small)
                                                         .background(
                                                             color = if (selection.value) Color.Green
                                                             else theme.error, shape = CircleShape
@@ -309,8 +478,8 @@ fun MainScreen(
                                             }
                                         },
                                         modifier = Modifier
-                                            .padding(LocalSpacing.current.small)
-                                            .clip(RoundedCornerShape(LocalSpacing.current.small))
+                                            .padding(spacing.small)
+                                            .clip(RoundedCornerShape(spacing.small))
                                             .combinedClickable(
                                                 onClick = {
                                                     when (selection) {
@@ -358,8 +527,8 @@ fun MainScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .heightIn(min = 56.dp)
-                                            .padding(LocalSpacing.current.small)
-                                            .clip(RoundedCornerShape(LocalSpacing.current.small))
+                                            .padding(spacing.small)
+                                            .clip(RoundedCornerShape(spacing.small))
                                             .background(brush)
                                             .clickable(
                                                 role = Role.Button,
@@ -367,7 +536,7 @@ fun MainScreen(
                                                     vm.onEvent(LinkUEvent.Premium)
                                                 }
                                             )
-                                            .padding(LocalSpacing.current.medium)
+                                            .padding(spacing.medium)
                                     ) {
                                         CompositionLocalProvider(
                                             LocalContentColor provides Color.White
@@ -386,106 +555,9 @@ fun MainScreen(
                                 }
                             }
                         }
-
-                        PageConfig.Conversation -> {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                userScrollEnabled = !state.loadingConversations
-                            ) {
-                                val conversations = state.conversations
-                                val grouped = conversations.groupBy { it.pinned }
-
-                                items(
-                                    items = grouped[true] ?: emptyList(),
-                                    key = { it.id }
-                                ) { contact ->
-                                    PinnedConversationItem(
-                                        conversation = contact,
-                                        onClick = {
-                                            backStack.singleTop(
-                                                NavTarget.ChatTarget.Messages(
-                                                    contact.id
-                                                )
-                                            )
-                                        },
-                                        onLongClick = {
-                                            viewModel.onEvent(MainEvent.Pin(contact.id))
-                                        },
-                                        modifier = Modifier.animateItemPlacement()
-                                    )
-                                }
-                                itemsIndexed(
-                                    grouped[false] ?: emptyList(),
-                                    key = { _, item -> item.id }
-                                ) { index, conversation ->
-                                    PinnedConversationItem(
-                                        conversation = conversation,
-                                        onClick = {
-                                            backStack.singleTop(
-                                                NavTarget.ChatTarget.Messages(
-                                                    conversation.id
-                                                )
-                                            )
-                                        },
-                                        onLongClick = {
-                                            viewModel.onEvent(MainEvent.Pin(conversation.id))
-                                        },
-                                        modifier = Modifier.animateItemPlacement()
-                                    )
-                                    Divider(color = LocalTheme.current.divider)
-                                }
-                            }
-                        }
-
-                        PageConfig.Contract -> {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                userScrollEnabled = !state.loadingConversations
-                            ) {
-                                val contracts = state.contracts
-                                val grouped = contracts.groupBy { it.pinned }
-
-                                items(
-                                    items = grouped[true] ?: emptyList(),
-                                    key = { it.id }
-                                ) { contact ->
-                                    PinnedContractsItem(
-                                        contact = contact,
-                                        onClick = {
-                                            backStack.singleTop(
-                                                NavTarget.ChatTarget.Messages(
-                                                    contact.id
-                                                )
-                                            )
-                                        },
-                                        onLongClick = {
-                                            viewModel.onEvent(MainEvent.Pin(contact.id))
-                                        },
-                                        modifier = Modifier.animateItemPlacement()
-                                    )
-                                }
-                                itemsIndexed(
-                                    grouped[false] ?: emptyList(),
-                                    key = { _, item -> item.id }
-                                ) { index, contact ->
-                                    PinnedContractsItem(
-                                        contact = contact,
-                                        onClick = {
-                                            backStack.singleTop(
-                                                NavTarget.ChatTarget.Messages(
-                                                    contact.id
-                                                )
-                                            )
-                                        },
-                                        onLongClick = {
-                                            viewModel.onEvent(MainEvent.Pin(contact.id))
-                                        },
-                                        modifier = Modifier.animateItemPlacement()
-                                    )
-                                    Divider(color = LocalTheme.current.divider)
-                                }
-                            }
-                        }
+                        PageConfig.Query.Conversation -> ConversationsQueryList(state.queryResultConversations)
+                        PageConfig.Query.User -> UsersQueryList(state.queryResultUsers)
+                        PageConfig.Query.Message -> MessagesQueryList(state.queryResultMessages)
                     }
                 }
             }
@@ -495,8 +567,8 @@ fun MainScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        horizontal = LocalSpacing.current.medium,
-                        vertical = LocalSpacing.current.large
+                        horizontal = spacing.medium,
+                        vertical = spacing.large
                     )
             ) {
                 val configuration = LocalConfiguration.current
@@ -521,61 +593,65 @@ fun MainScreen(
                     else theme.onPrimary,
                     tween(LocalDuration.current.medium)
                 )
-                FloatingActionButton(
-                    onClick = {
-                        when (mode) {
-                            MainMode.Conversations -> {
-                                viewModel.onEvent(MainEvent.Forward(MainMode.NewChannel))
-                            }
-
-                            MainMode.NewChannel -> {
-
-                            }
-
-                            MainMode.Notifications -> {
-
-                            }
-                        }
-                    },
-                    elevation = FloatingActionButtonDefaults.loweredElevation(),
-                    containerColor = fabColor,
-                    contentColor = fabContentColor,
-                    modifier = Modifier.size(
-                        width = width,
-                        height = height
-                    )
+                AnimatedVisibility(
+                    visible = mode != MainMode.Query,
+                    enter = scaleIn(),
+                    exit = scaleOut()
                 ) {
-                    Crossfade(mode) { mode ->
-                        when (mode) {
-                            MainMode.Conversations, MainMode.Notifications -> {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Add,
-                                        contentDescription = null
-                                    )
+                    FloatingActionButton(
+                        onClick = {
+                            when (mode) {
+                                MainMode.Conversations -> {
+                                    viewModel.onEvent(MainEvent.Forward(MainMode.NewChannel))
                                 }
+                                MainMode.NewChannel -> {}
+                                MainMode.Notifications -> {}
+                                MainMode.Query -> {}
                             }
-
-                            MainMode.NewChannel -> {
-                                Column(
-                                    verticalArrangement = Arrangement.Bottom,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(LocalSpacing.current.small)
-                                ) {
-                                    MaterialButton(
-                                        text = "Next",
-                                        modifier = Modifier.fillMaxWidth()
+                        },
+                        elevation = FloatingActionButtonDefaults.loweredElevation(),
+                        containerColor = fabColor,
+                        contentColor = fabContentColor,
+                        modifier = Modifier.size(
+                            width = width,
+                            height = height
+                        )
+                    ) {
+                        Crossfade(mode) { mode ->
+                            when (mode) {
+                                MainMode.Conversations, MainMode.Notifications -> {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
                                     ) {
-
+                                        Icon(
+                                            imageVector = Icons.Rounded.Add,
+                                            contentDescription = null
+                                        )
                                     }
                                 }
+
+                                MainMode.NewChannel -> {
+                                    Column(
+                                        verticalArrangement = Arrangement.Bottom,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(spacing.small)
+                                    ) {
+                                        MaterialButton(
+                                            text = "Next",
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+
+                                        }
+                                    }
+                                }
+
+                                MainMode.Query -> {}
                             }
                         }
                     }
+
                 }
 
             }
@@ -583,43 +659,113 @@ fun MainScreen(
             BottomSheetContent(
                 visible = isNotification,
                 maxHeight = true,
-                onDismiss = { viewModel.onEvent(MainEvent.Remain) }
-            ) {
-                LaunchedEffect(isNotification) {
-                    if (isNotification) {
-                        viewModel.onEvent(MainEvent.FetchNotifications)
+                onDismiss = { viewModel.onEvent(MainEvent.Remain) },
+                content = {
+                    LaunchedEffect(isNotification) {
+                        if (isNotification) {
+                            viewModel.onEvent(MainEvent.FetchNotifications)
+                        }
                     }
-                }
-                val requests = state.requests
-                if (requests.isEmpty()) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .align(Alignment.CenterHorizontally)
-
-                    ) {
-                        val composition by rememberLottieComposition(
-                            LottieCompositionSpec.RawRes(R.raw.lottie_empty_box)
-                        )
-                        LottieAnimation(
-                            composition = composition,
+                    val requests = state.requests.value
+                    if (requests.isEmpty()) {
+                        Box(
+                            contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .size(160.dp)
-                        )
-                    }
-                } else {
-                    LazyColumn {
-                        items(requests) {
-                            Text(text = it.timestamp.toString())
+                                .fillMaxSize()
+                                .align(Alignment.CenterHorizontally)
+
+                        ) {
+                            val composition by rememberLottieComposition(
+                                LottieCompositionSpec.RawRes(R.raw.lottie_empty_box)
+                            )
+                            LottieAnimation(
+                                composition = composition,
+                                modifier = Modifier
+                                    .size(160.dp)
+                            )
+                        }
+                    } else {
+                        LazyColumn {
+                            items(requests) {
+                                Text(text = it.timestamp.toString())
+                            }
                         }
                     }
                 }
-            }
+            )
 
         }
     }
     BackHandler(mode !is MainMode.Conversations) {
         viewModel.onEvent(MainEvent.Remain)
+    }
+}
+
+@Composable
+private fun ConversationsQueryList(
+    conversations: ConversationList
+) {
+    val theme = LocalTheme.current
+    val backStack = LocalBackStack.current
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = theme.background,
+            )
+    ) {
+        items(conversations.value) { conversation ->
+            ConversationItem(conversation = conversation) {
+                backStack.push(
+                    NavTarget.ChatTarget.Messages(
+                        conversation.id
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UsersQueryList(
+    users: UserList
+) {
+    val theme = LocalTheme.current
+    val backStack = LocalBackStack.current
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = theme.background,
+            )
+    ) {
+        items(users.value) { user ->
+            UserItem(user = user) {
+                backStack.push(NavTarget.Introduce(user.id))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MessagesQueryList(
+    messages: MessageList
+) {
+    val theme = LocalTheme.current
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = theme.background,
+            )
+    ) {
+        items(messages.value) { message ->
+            ListItem(
+                headlineText = {
+                    Text(text = message.content)
+                }
+            )
+        }
     }
 }
