@@ -2,24 +2,23 @@ package com.linku.im.screen.main
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
+import com.linku.core.ktx.ifFalse
+import com.linku.core.ktx.ifTrue
 import com.linku.core.util.LinkedNode
 import com.linku.core.util.forward
 import com.linku.core.util.remain
 import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.MessageUseCases
+import com.linku.data.usecase.UserUseCases
 import com.linku.domain.bean.ui.ConversationUI
 import com.linku.domain.bean.ui.toContactUI
 import com.linku.domain.bean.ui.toUI
-import com.linku.domain.entity.ContactRequest
-import com.linku.domain.entity.Conversation
-import com.linku.domain.entity.GraphicsMessage
-import com.linku.domain.entity.ImageMessage
-import com.linku.domain.entity.Message
-import com.linku.domain.entity.TextMessage
+import com.linku.domain.entity.*
 import com.linku.im.R
-import com.linku.im.screen.BaseViewModel
+import com.linku.im.screen.*
 import com.linku.im.vm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -30,9 +29,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val conversationUseCases: ConversationUseCases,
-    private val applicationUseCases: ApplicationUseCases,
-    private val messageUseCases: MessageUseCases
+    private val conversations: ConversationUseCases,
+    private val applications: ApplicationUseCases,
+    private val messages: MessageUseCases,
+    private val users: UserUseCases
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
 
     private val _linkedNode = mutableStateOf<LinkedNode<MainMode>>(
@@ -48,15 +48,20 @@ class MainViewModel @Inject constructor(
             is MainEvent.Forward -> forward(event)
             MainEvent.Remain -> remain()
             MainEvent.FetchNotifications -> fetchNotifications()
+
+            MainEvent.Query -> query()
+            is MainEvent.OnQueryText -> onText(event.text)
+            MainEvent.ToggleQueryIncludeDescription -> toggleIncludeDescription()
+            MainEvent.ToggleQueryIncludeEmail -> toggleIncludeEmail()
         }
     }
 
     private fun fetchNotifications() {
         viewModelScope.launch {
             val requests =
-                messageUseCases.findMessagesByType<ContactRequest>(Message.Type.ContactRequest)
+                messages.findMessagesByType<ContactRequest>(Message.Type.ContactRequest)
             writable = readable.copy(
-                requests = requests
+                requests = ContactRequestList(requests)
             )
         }
     }
@@ -71,13 +76,14 @@ class MainViewModel @Inject constructor(
 
     private var observeConversationsJob: Job? = null
     private fun observeConversations() {
-        conversationUseCases.observeConversations()
+        conversations.observeConversations()
             .onEach { conversations ->
                 writable = readable.copy(
                     conversations = conversations
                         .filter { it.type == Conversation.Type.GROUP }
                         .map(Conversation::toUI)
-                        .sortedByDescending { it.updatedAt },
+                        .sortedByDescending { it.updatedAt }
+                        .let { ConversationUIList(it) },
                     contracts = conversations
                         .filter { it.type == Conversation.Type.PM }
 //                            .map {
@@ -93,14 +99,15 @@ class MainViewModel @Inject constructor(
 //                            }
                         .map(Conversation::toContactUI)
                         .sortedByDescending { it.updatedAt }
+                        .let { ContactUIList(it) }
                 )
                 observeConversationsJob?.cancel()
                 observeConversationsJob = viewModelScope.launch {
                     conversations.forEach { conversation ->
-                        messageUseCases.observeLatestMessage(conversation.id)
+                        messages.observeLatestMessage(conversation.id)
                             .onEach { message ->
-                                val oldConversations = readable.conversations.toMutableList()
-                                val oldContracts = readable.contracts.toMutableList()
+                                val oldConversations = readable.conversations.value.toMutableList()
+                                val oldContracts = readable.contracts.value.toMutableList()
                                 val oldConversation: ConversationUI? =
                                     oldConversations.find { it.id == message.cid }
                                 val oldContract = oldContracts.find { it.id == message.cid }
@@ -109,9 +116,9 @@ class MainViewModel @Inject constructor(
                                     val copy = oldConversation.copy(
                                         content = when (message) {
                                             is TextMessage -> message.text
-                                            is ImageMessage -> applicationUseCases.getString(R.string.image_message)
-                                            is GraphicsMessage -> applicationUseCases.getString(R.string.graphics_message)
-                                            else -> applicationUseCases.getString(R.string.unknown_message_type)
+                                            is ImageMessage -> applications.getString(R.string.image_message)
+                                            is GraphicsMessage -> applications.getString(R.string.graphics_message)
+                                            else -> applications.getString(R.string.unknown_message_type)
                                         }
                                     )
                                     oldConversations.add(copy)
@@ -120,9 +127,9 @@ class MainViewModel @Inject constructor(
                                     val copy = oldContract.copy(
                                         content = when (message) {
                                             is TextMessage -> message.text
-                                            is ImageMessage -> applicationUseCases.getString(R.string.image_message)
-                                            is GraphicsMessage -> applicationUseCases.getString(R.string.graphics_message)
-                                            else -> applicationUseCases.getString(R.string.unknown_message_type)
+                                            is ImageMessage -> applications.getString(R.string.image_message)
+                                            is GraphicsMessage -> applications.getString(R.string.graphics_message)
+                                            else -> applications.getString(R.string.unknown_message_type)
                                         }
                                     )
                                     oldContracts.add(copy)
@@ -130,8 +137,8 @@ class MainViewModel @Inject constructor(
                                     // TODO
                                 }
                                 writable = readable.copy(
-                                    conversations = oldConversations,
-                                    contracts = oldContracts
+                                    conversations = ConversationUIList(oldConversations),
+                                    contracts = ContactUIList(oldContracts)
                                 )
                             }
                             .launchIn(this)
@@ -148,8 +155,60 @@ class MainViewModel @Inject constructor(
 
     private fun pin(event: MainEvent.Pin) {
         viewModelScope.launch {
-            conversationUseCases.pin(event.cid)
+            conversations.pin(event.cid)
         }
+    }
+
+    private fun toggleIncludeDescription() {
+        writable = readable.copy(
+            queryTextIsDescription = !readable.queryTextIsDescription
+        )
+        hasQuery.ifTrue(::query)
+    }
+
+    private fun toggleIncludeEmail() {
+        writable = readable.copy(
+            queryTextIsEmail = !readable.queryTextIsEmail
+        )
+        hasQuery.ifTrue(::query)
+    }
+
+    private fun onText(text: TextFieldValue) {
+        writable = readable.copy(
+            queryText = text
+        )
+    }
+
+    private var hasQuery: Boolean = false
+    private fun query() {
+        hasQuery = true
+        viewModelScope.launch {
+            val list = conversations.queryConversations(
+                name = readable.queryTextIsDescription.ifFalse { readable.queryText.text },
+                description = readable.queryTextIsDescription.ifTrue { readable.queryText.text }
+            )
+            writable = readable.copy(
+                queryResultConversations = ConversationList(list)
+            )
+
+        }
+        viewModelScope.launch {
+            val users = users.query(
+                name = readable.queryTextIsEmail.ifFalse { readable.queryText.text },
+                email = readable.queryTextIsEmail.ifTrue { readable.queryText.text }
+            )
+            writable = readable.copy(
+                queryResultUsers = UserList(users)
+            )
+        }
+
+        viewModelScope.launch {
+            val list = messages.queryMessages(readable.queryText.text)
+            writable = readable.copy(
+                queryResultMessages = MessageList(list)
+            )
+        }
+
     }
 }
 

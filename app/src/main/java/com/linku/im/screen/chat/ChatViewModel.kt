@@ -34,6 +34,7 @@ import com.linku.domain.service.system.NotificationService
 import com.linku.im.Constants
 import com.linku.im.R
 import com.linku.im.screen.BaseViewModel
+import com.linku.im.screen.MessageUIList
 import com.linku.im.screen.chat.ChatEvent.CancelMessage
 import com.linku.im.screen.chat.ChatEvent.FetchChannel
 import com.linku.im.screen.chat.ChatEvent.FetchChannelDetail
@@ -71,8 +72,8 @@ class ChatViewModel @Inject constructor(
     private val authenticator: Authenticator,
     private val applications: ApplicationUseCases
 ) : BaseViewModel<ChatState, ChatEvent>(ChatState()) {
-    private val _messageFlow = MutableStateFlow(emptyList<MessageUI>())
-    val messageFlow: SharedFlow<List<MessageUI>> = _messageFlow
+    private val _messageFlow = MutableStateFlow(MessageUIList())
+    val messageFlow: SharedFlow<MessageUIList> = _messageFlow
 
     private val _memberFlow = MutableStateFlow(emptyList<MemberVO>())
     val memberFlow: SharedFlow<List<MemberVO>> = _memberFlow
@@ -121,7 +122,7 @@ class ChatViewModel @Inject constructor(
             emojis = emojis.getAll()
         )
         viewModelScope.launch {
-            _messageFlow.emit(emptyList())
+            _messageFlow.emit(MessageUIList())
         }
         observeChannelJob?.cancel()
         observeChannelJob = conversations.observeConversation(event.cid)
@@ -151,7 +152,7 @@ class ChatViewModel @Inject constructor(
                     messages
                         .mapIndexedNotNull { index, m -> messages.calculate(index, m) }
                         .also {
-                            _messageFlow.emit(it)
+                            _messageFlow.emit(MessageUIList(it))
                         }
                     writable = readable.copy(
                         scroll = eventOf(0)

@@ -18,8 +18,9 @@ import androidx.compose.ui.semantics.semantics
 @Composable
 fun Scrim(
     color: Color,
+    visible: Boolean,
     onDismiss: () -> Unit,
-    visible: Boolean
+    modifier: Modifier = Modifier
 ) {
     if (color.isSpecified) {
         val alpha by animateFloatAsState(
@@ -38,7 +39,7 @@ fun Scrim(
         }
 
         Canvas(
-            Modifier
+            modifier
                 .fillMaxSize()
                 .then(dismissModifier)
         ) {

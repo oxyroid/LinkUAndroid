@@ -27,14 +27,7 @@ import androidx.compose.material.icons.rounded.ExpandCircleDown
 import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Reply
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,7 +45,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -67,7 +59,6 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.core.ktx.dsl.any
 import com.linku.core.ktx.ifTrue
 import com.linku.core.util.hasCache
-import com.linku.domain.bean.ui.MessageUI
 import com.linku.domain.entity.Message
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
@@ -75,6 +66,7 @@ import com.linku.im.ktx.foundation.lazy.isAtTop
 import com.linku.im.ktx.runtime.LifecycleEffect
 import com.linku.im.ktx.runtime.rememberedRun
 import com.linku.im.ktx.ui.graphics.times
+import com.linku.im.screen.MessageUIList
 import com.linku.im.screen.chat.composable.*
 import com.linku.im.screen.main.globalLabelOrElse
 import com.linku.im.ui.components.*
@@ -94,7 +86,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel,
-    cid: Int
+    cid: Int,
+    modifier: Modifier = Modifier
 ) {
     val systemUiController = rememberSystemUiController()
     val theme = LocalTheme.current
@@ -144,7 +137,7 @@ fun ChatScreen(
         }
     }
 
-    val messages by viewModel.messageFlow.collectAsState(emptyList())
+    val messages by viewModel.messageFlow.collectAsState(MessageUIList())
 
     LaunchedEffect(vm.readable.readyForObserveMessages) {
         if (vm.readable.readyForObserveMessages) {
@@ -172,7 +165,8 @@ fun ChatScreen(
             },
             topBar = topBar,
             backgroundColor = theme.surface,
-            contentColor = theme.onSurface
+            contentColor = theme.onSurface,
+            modifier = modifier
         ) { innerPadding ->
             Wrapper {
                 val chatBackgroundColor = theme.chatBackground
@@ -301,9 +295,12 @@ fun ChatScreen(
                     }
                 },
                 dialogContent = {
-                    PreviewDialog(state.uri) {
-                        viewModel.onEvent(ChatEvent.OnFile(null))
-                    }
+                    PreviewDialog(
+                        uri = state.uri,
+                        onDismiss = {
+                            viewModel.onEvent(ChatEvent.OnFile(null))
+                        }
+                    )
                 },
                 snackHostContent = { SnackbarHost(hostState) },
                 content = {
@@ -329,7 +326,10 @@ fun ChatScreen(
                             horizontalArrangement = Arrangement.Start
                         ) {
                             items(state.emojis) {
-                                EmojiButton(it) { viewModel.onEvent(ChatEvent.OnEmoji(it.emoji)) }
+                                EmojiButton(
+                                    emoji = it,
+                                    onClick = { viewModel.onEvent(ChatEvent.OnEmoji(it.emoji)) }
+                                )
                             }
                         }
                     }
@@ -350,7 +350,9 @@ fun ChatScreen(
             }
             Column(
                 verticalArrangement = Arrangement.Bottom,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = LocalSpacing.current.medium)
             ) {
                 if (state.channelDetailLoading) {
                     Box(
@@ -546,9 +548,10 @@ fun ChatScreen(
 
 
 @Composable
+@Suppress("LongParameterList")
 fun ListContent(
     listState: LazyListState,
-    messages: List<MessageUI>,
+    messages: MessageUIList,
     loadingProvider: () -> Boolean,
     focusMessageIdProvider: () -> Int?,
     onReply: (Int) -> Unit,
@@ -574,7 +577,7 @@ fun ListContent(
             )
         }
     } else {
-        val paddingValues = rememberedRun(messages) {
+        val paddingValues = rememberedRun(messages.value) {
             map {
                 PaddingValues(
                     top = 6.dp,
@@ -582,10 +585,10 @@ fun ListContent(
                 )
             }
         }
-        val isShowTimes = rememberedRun(messages) {
+        val isShowTimes = rememberedRun(messages.value) {
             map { it.config.isShowTime }
         }
-        val timestamps = rememberedRun(messages) {
+        val timestamps = rememberedRun(messages.value) {
             map { it.message.timestamp }
         }
         LazyColumn(
@@ -602,7 +605,7 @@ fun ListContent(
                 )
             }
             itemsIndexed(
-                items = messages,
+                items = messages.value,
                 key = { _, item -> item.message.id }
             ) { index, it ->
                 ChatBubble(
@@ -635,6 +638,7 @@ fun ListContent(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
+@Suppress("LongParameterList")
 fun BottomSheetContent(
     repliedMessage: Message?,
     hasScrolled: Boolean,
@@ -706,23 +710,18 @@ fun BottomSheetContent(
 @Composable
 fun PreviewDialog(
     uri: Uri?,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current.density
-    var offset by remember {
-        mutableStateOf(0f)
-    }
+    var offset by remember { mutableStateOf(0f) }
     val animateOffset by animateFloatAsState(offset)
-    var pressed by remember {
-        mutableStateOf(false)
-    }
-    val draggableState = rememberDraggableState {
-        offset += it
-    }
+    var pressed by remember { mutableStateOf(false) }
+    val draggableState = rememberDraggableState { offset += it }
     AnimatedVisibility(
         visible = uri != null,
-        modifier = Modifier
+        modifier = modifier
             .padding(LocalSpacing.current.extraSmall)
             .fillMaxWidth(),
         enter = slideInVertically { it * 2 },
@@ -742,22 +741,16 @@ fun PreviewDialog(
                         pressed = true
                     },
                     onDragStopped = {
-                        if (offset > configuration.screenHeightDp * density / 4) {
-                            onDismiss()
-                        }
+                        if (offset > configuration.screenHeightDp * density / 4) { onDismiss() }
                         offset = 0f
                         pressed = false
                     },
                 )
         ) {
             Box {
-                var realUrl by remember {
-                    mutableStateOf(Uri.EMPTY)
-                }
+                var realUrl by remember { mutableStateOf(Uri.EMPTY) }
                 LaunchedEffect(uri) {
-                    if (uri != null) {
-                        realUrl = uri
-                    }
+                    if (uri != null) realUrl = uri
                 }
                 AsyncImage(
                     model = realUrl,

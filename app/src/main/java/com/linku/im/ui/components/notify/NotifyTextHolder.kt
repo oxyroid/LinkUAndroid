@@ -47,7 +47,7 @@ internal fun NotifyTextHolder(
     delay: Long = 800L,
     animationSpec: AnimationSpec<Float> = spring(),
     backgroundColor: Color = (LocalTheme.current.surface).animated(),
-    contentColor: Color = (LocalTheme.current.onSurface * 0.6f).animated()
+    contentColor: Color = (LocalTheme.current.onSurface * LocalContentAlpha.current).animated()
 ) {
     var iconVisibility by remember { mutableStateOf(false) }
     val alpha by animateFloatAsState(

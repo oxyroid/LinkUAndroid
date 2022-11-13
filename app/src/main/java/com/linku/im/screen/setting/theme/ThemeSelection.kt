@@ -37,9 +37,9 @@ import com.linku.im.ui.theme.SugarColors
 fun ThemeSelection(
     theme: Theme,
     currentTid: Int,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val selected = currentTid == theme.id
     val alpha by animateFloatAsState(

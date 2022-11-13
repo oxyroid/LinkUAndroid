@@ -40,10 +40,10 @@ import com.linku.im.ui.theme.LocalTheme
 @Composable
 fun BottomSheetContent(
     visible: Boolean,
-    modifier: Modifier = Modifier,
-    maxHeight: Boolean = false,
     onDismiss: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
+    modifier: Modifier = Modifier,
+    maxHeight: Boolean = false
 ) {
     var offset by remember {
         mutableStateOf(0f)

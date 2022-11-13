@@ -5,30 +5,36 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import com.bumble.appyx.navmodel.backstack.operation.pop
+import androidx.compose.ui.res.stringResource
+import com.linku.im.R
 import com.linku.im.screen.introduce.IntroduceEvent
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.components.notify.NotifyHolder
-import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
 fun EditScreen(
-    type: IntroduceEvent.Edit.Type?
+    type: IntroduceEvent.Edit.Type,
+    modifier: Modifier = Modifier
 ) {
-    val backStack = LocalBackStack.current
-    LaunchedEffect(Unit) { type ?: run { backStack.pop() } }
-
     Scaffold(
         snackbarHost = {
             NotifyHolder(
                 state = it,
-                modifier = Modifier.fillMaxWidth()
+                modifier = modifier.fillMaxWidth()
             )
         },
-        topBar = { ToolBar(onNavClick = { /*TODO*/ }, actions = {}, text = "") },
+        topBar = {
+            ToolBar(
+                actions = {},
+                text = when (type) {
+                    IntroduceEvent.Edit.Type.Description -> stringResource(R.string.profile_data_description)
+                    IntroduceEvent.Edit.Type.Name -> stringResource(R.string.profile_data_realName)
+                    IntroduceEvent.Edit.Type.NickName -> stringResource(R.string.profile_data_name)
+                }
+            )
+        },
         contentColor = LocalTheme.current.onBackground,
         backgroundColor = LocalTheme.current.background,
     ) { innerPadding ->

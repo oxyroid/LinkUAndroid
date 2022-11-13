@@ -71,6 +71,7 @@ import java.util.*
 @Composable
 fun IntroduceScreen(
     uid: Int,
+    modifier: Modifier = Modifier,
     viewModel: IntroduceViewModel = hiltViewModel()
 ) {
     val state = viewModel.readable
@@ -128,12 +129,13 @@ fun IntroduceScreen(
         onCanceled = { viewModel.onEvent(IntroduceEvent.CancelVerifiedEmail) }
     )
 
-    val expanded = remember {
+    val (expanded, onExpanded) = remember {
         mutableStateOf(false)
     }
 
     IntroduceScaffold(
         expanded = expanded,
+        onExpanded = onExpanded,
         label = state.actionsLabel,
         actions = state.actions,
         avatar = state.avatar,
@@ -169,9 +171,10 @@ fun IntroduceScreen(
         onPreview = { viewModel.onEvent(IntroduceEvent.AvatarClicked) },
         onAction = { viewModel.onEvent(IntroduceEvent.Actions(it.label, it.actions)) },
         toggleLogMode = { viewModel.onEvent(IntroduceEvent.ToggleLogMode) },
-        onFriendshipAction = { viewModel.onEvent(IntroduceEvent.FriendShipAction) }
+        onFriendshipAction = { viewModel.onEvent(IntroduceEvent.FriendShipAction) },
+        modifier = modifier
     )
-    BackHandler(expanded.value) { expanded.value = false }
+    BackHandler(expanded) { onExpanded(false) }
 }
 
 @Composable
@@ -263,7 +266,8 @@ private fun VerifiedEmailDialog(
 private fun IntroduceScaffold(
     label: String,
     actions: List<Property.Data.Action>,
-    expanded: MutableState<Boolean>,
+    expanded: Boolean,
+    onExpanded: (Boolean) -> Unit,
     category: Category,
     avatar: String,
     dataProperties: List<Property>,
@@ -273,7 +277,8 @@ private fun IntroduceScaffold(
     onPreview: () -> Unit,
     onAction: (IntroduceEvent.Actions) -> Unit,
     toggleLogMode: () -> Unit,
-    onFriendshipAction: () -> Unit
+    onFriendshipAction: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val scaffoldState = rememberScaffoldState()
     val spacing = LocalSpacing.current
@@ -294,7 +299,7 @@ private fun IntroduceScaffold(
             )
         },
         scaffoldState = scaffoldState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         backgroundColor = theme.background,
         contentColor = theme.onBackground
     ) { innerPadding ->
@@ -309,7 +314,7 @@ private fun IntroduceScaffold(
                     contentColor = theme.onPrimary,
                     onClick = {
                         onPreview()
-                        scope.launch { expanded.value = true }
+                        scope.launch { onExpanded(true) }
                     }
                 ) {
                     val model = ImageRequest.Builder(context)
@@ -338,7 +343,7 @@ private fun IntroduceScaffold(
                                 label = setting.key,
                                 actions = setting.actions
                             ).also(onAction)
-                            scope.launch { expanded.value = true }
+                            scope.launch { onExpanded(true) }
                         }
                     }
                 )
@@ -402,7 +407,8 @@ private fun IntroduceScaffold(
                 ) {
                     val state = category.friendship
                     MaterialButton(
-                        enabled = state != Friendship.Loading,
+                        enabled = state != Friendship.Loading &&
+                                (state !is Friendship.Pending || state.isReceived),
                         textRes = when (state) {
                             Friendship.Loading -> R.string.friendship_loading
                             Friendship.None -> R.string.friendship_none
@@ -422,8 +428,8 @@ private fun IntroduceScaffold(
 
         Scrim(
             color = Color.Black * 0.35f,
-            onDismiss = { expanded.value = false },
-            visible = expanded.value
+            onDismiss = { onExpanded(false) },
+            visible = expanded
         )
 
         Column(
@@ -432,49 +438,49 @@ private fun IntroduceScaffold(
             verticalArrangement = Arrangement.Bottom
         ) {
             BottomSheetContent(
-                visible = expanded.value,
-                onDismiss = { expanded.value = false },
-                maxHeight = false
-            ) {
-                LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
-                    item {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                color = theme.primary
-                            ),
-                            modifier = Modifier.padding(spacing.medium)
-                        )
+                visible = expanded,
+                onDismiss = { onExpanded(false) },
+                maxHeight = false,
+                modifier = Modifier,
+                content = {
+                    LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
+                        item {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = theme.primary
+                                ),
+                                modifier = Modifier.padding(spacing.medium)
+                            )
+                        }
+                        items(actions) {
+                            ListItem(
+                                text = {
+                                    Text(
+                                        text = it.text,
+                                        color = theme.onBackground
+                                    )
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = it.icon,
+                                        contentDescription = it.text,
+                                        tint = theme.onBackground * 0.65f
+                                    )
+                                },
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(spacing.medium))
+                                    .background(theme.background)
+                                    .combinedClickable(
+                                        onClick = {
+                                            it.onClick()
+                                            onExpanded(false)
+                                        }
+                                    )
+                            )
+                        }
                     }
-                    items(actions) {
-                        ListItem(
-                            text = {
-                                Text(
-                                    text = it.text,
-                                    color = theme.onBackground
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = it.icon,
-                                    contentDescription = it.text,
-                                    tint = theme.onBackground * 0.65f
-                                )
-                            },
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(spacing.medium))
-                                .background(theme.background)
-                                .combinedClickable(
-                                    onClick = {
-                                        it.onClick()
-                                        expanded.value = false
-                                    }
-                                )
-                        )
-                    }
-                }
-
-            }
+                })
         }
     }
 }

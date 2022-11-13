@@ -2,15 +2,7 @@ package com.linku.im.screen.introduce
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.DateRange
-import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.Email
-import androidx.compose.material.icons.rounded.FormatPaint
-import androidx.compose.material.icons.rounded.Language
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.Notifications
-import androidx.compose.material.icons.rounded.Upload
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
@@ -19,11 +11,7 @@ import androidx.lifecycle.viewModelScope
 import com.linku.core.wrapper.Resource
 import com.linku.core.wrapper.eventOf
 import com.linku.data.Configurations
-import com.linku.data.usecase.ApplicationUseCases
-import com.linku.data.usecase.AuthUseCases
-import com.linku.data.usecase.ConversationUseCases
-import com.linku.data.usecase.MessageUseCases
-import com.linku.data.usecase.UserUseCases
+import com.linku.data.usecase.*
 import com.linku.domain.Strategy
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.entity.ContactRequest
@@ -75,11 +63,9 @@ class IntroduceViewModel @Inject constructor(
                     Friendship.Loading -> {}
                     Friendship.None -> {
                         // TODO send a friendship request
-                        messages
-                            .contactRequest(
+                        messages.contactRequest(
                                 uid = readable.uid
-                            )
-                            .onEach { resource ->
+                            ).onEach { resource ->
                                 writable = when (resource) {
                                     Resource.Loading -> readable.copy(
                                         category = category.copy(
@@ -102,8 +88,7 @@ class IntroduceViewModel @Inject constructor(
                                         )
                                     }
                                 }
-                            }
-                            .launchIn(viewModelScope)
+                            }.launchIn(viewModelScope)
                     }
 
                     is Friendship.Pending -> {}
@@ -124,9 +109,7 @@ class IntroduceViewModel @Inject constructor(
             avatar = uri?.toString() ?: "",
         )
         uri?.also {
-            authUseCases
-                .uploadAvatar(it)
-                .onEach { resource ->
+            authUseCases.uploadAvatar(it).onEach { resource ->
                     writable = when (resource) {
                         Resource.Loading -> readable.copy(
                             uploading = true
@@ -141,13 +124,11 @@ class IntroduceViewModel @Inject constructor(
                         is Resource.Failure -> {
                             onMessage(resource.message)
                             readable.copy(
-                                uploading = false,
-                                avatar = ""
+                                uploading = false, avatar = ""
                             )
                         }
                     }
-                }
-                .launchIn(viewModelScope)
+                }.launchIn(viewModelScope)
         }
     }
 
@@ -155,20 +136,16 @@ class IntroduceViewModel @Inject constructor(
         onActions(getString(R.string.profile_avatar_label), buildList {
             when (readable.category) {
                 Category.Personal -> {
-                    Property.Data.Action(
-                        text = getString(R.string.profile_avatar_update),
+                    Property.Data.Action(text = getString(R.string.profile_avatar_update),
                         icon = Icons.Rounded.Upload,
                         onClick = {
                             writable = readable.copy(
                                 runLauncher = eventOf(Unit)
                             )
-                        }
-                    ).also(::add)
+                        })
                 }
-
                 is Category.User -> {}
             }
-
         })
     }
 
@@ -191,14 +168,11 @@ class IntroduceViewModel @Inject constructor(
             writable = readable.copy(
                 verifiedEmailStarting = true
             )
-            authUseCases.verifiedEmail()
-                .onSuccess {
+            authUseCases.verifiedEmail().onSuccess {
                     writable = readable.copy(
-                        verifiedEmailStarting = false,
-                        verifiedEmailDialogShowing = true
+                        verifiedEmailStarting = false, verifiedEmailDialogShowing = true
                     )
-                }
-                .onFailure {
+                }.onFailure {
                     onMessage(it.message)
                     writable = readable.copy(
                         verifiedEmailStarting = false,
@@ -210,17 +184,14 @@ class IntroduceViewModel @Inject constructor(
     private fun verifiedEmailCode(code: String) {
         viewModelScope.launch {
             writable = readable.copy(
-                verifiedEmailCodeVerifying = true,
-                verifiedEmailCodeMessage = ""
+                verifiedEmailCodeVerifying = true, verifiedEmailCodeMessage = ""
             )
-            authUseCases.verifiedEmailCode(code)
-                .onSuccess {
+            authUseCases.verifiedEmailCode(code).onSuccess {
                     writable = readable.copy(
                         verifiedEmailCodeVerifying = false,
                     )
                     onEvent(IntroduceEvent.FetchIntroduce(readable.uid))
-                }
-                .onFailure {
+                }.onFailure {
                     writable = readable.copy(
                         verifiedEmailCodeVerifying = false,
                         verifiedEmailCodeMessage = it.message ?: ""
@@ -260,8 +231,8 @@ class IntroduceViewModel @Inject constructor(
                 } else {
                     val requests =
                         messages.findMessagesByType<ContactRequest>(Message.Type.ContactRequest)
-                    var friendship: Friendship = if (requests.isEmpty())
-                        Friendship.None else Friendship.Loading
+                    var friendship: Friendship =
+                        if (requests.isEmpty()) Friendship.None else Friendship.Loading
                     for (request in requests) {
                         val requestFrom = request.uid
                         val requestTo = request.tid
@@ -317,8 +288,7 @@ class IntroduceViewModel @Inject constructor(
 
     private fun onActions(label: String, actions: List<Property.Data.Action>) {
         writable = readable.copy(
-            actions = actions,
-            actionsLabel = label
+            actions = actions, actionsLabel = label
         )
     }
 
@@ -338,21 +308,17 @@ class IntroduceViewModel @Inject constructor(
             val emailActions = buildList {
                 if (readable.category == Category.Personal) {
                     if (!user.verified) {
-                        Property.Data.Action(
-                            text = getString(R.string.email_verified),
+                        Property.Data.Action(text = getString(R.string.email_verified),
                             icon = Icons.Rounded.Email,
                             onClick = {
                                 onEvent(IntroduceEvent.VerifiedEmail)
-                            }
-                        ).also(::add)
+                            }).also(::add)
                     } else {
-                        Property.Data.Action(
-                            text = getString(R.string.email_verified_already),
+                        Property.Data.Action(text = getString(R.string.email_verified_already),
                             icon = Icons.Rounded.Email,
                             onClick = {
 
-                            }
-                        ).also(::add)
+                            }).also(::add)
                     }
                 }
             }
@@ -371,13 +337,11 @@ class IntroduceViewModel @Inject constructor(
 
             val nickNameActions = buildList {
                 if (readable.category == Category.Personal) {
-                    Property.Data.Action(
-                        text = getString(R.string.edit),
+                    Property.Data.Action(text = getString(R.string.edit),
                         icon = Icons.Rounded.Edit,
                         onClick = {
                             onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.NickName))
-                        }
-                    ).also(::add)
+                        }).also(::add)
                 }
             }
 
@@ -394,15 +358,14 @@ class IntroduceViewModel @Inject constructor(
 
             val descriptionActions = buildList {
                 if (readable.category == Category.Personal) {
-                    Property.Data.Action(
-                        text = getString(R.string.edit),
+                    Property.Data.Action(text = getString(R.string.edit),
                         icon = Icons.Rounded.Edit,
                         onClick = {
                             onEvent(IntroduceEvent.Edit(IntroduceEvent.Edit.Type.Description))
-                        }
-                    ).also(::add)
+                        }).also(::add)
                 }
             }
+
             Property.Data(description, "".checkEmpty(), descriptionActions).also(::add)
         }
     }
@@ -410,8 +373,7 @@ class IntroduceViewModel @Inject constructor(
 
     private fun getString(@StringRes resId: Int): String = applicationUseCases.getString(resId)
 
-    private fun CharSequence?.checkEmpty(): CharSequence =
-        if (isNullOrBlank()) "--" else this
+    private fun CharSequence?.checkEmpty(): CharSequence = if (isNullOrBlank()) "--" else this
 
     private fun makeSettingsProperties(): List<Property> = run {
         if (readable.category is Category.User) return@run emptyList()
@@ -422,9 +384,7 @@ class IntroduceViewModel @Inject constructor(
         val language = getString(R.string.profile_settings_language)
         listOf(
             Property.Folder(
-                notification,
-                Icons.Rounded.Notifications,
-                NavTarget.Setting.Notification
+                notification, Icons.Rounded.Notifications, NavTarget.Setting.Notification
             ),
             Property.Folder(safe, Icons.Rounded.Lock, NavTarget.Setting.Safe),
             Property.Folder(dataSource, Icons.Rounded.DateRange, NavTarget.Setting.DataSource),

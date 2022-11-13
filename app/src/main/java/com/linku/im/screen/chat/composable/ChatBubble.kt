@@ -68,11 +68,11 @@ private val HORIZONTAL_OUT_PADDING = 18.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
+@Suppress("LongParameterList")
 fun ChatBubble(
     message: Message,
     configProvider: () -> Bubble,
     focusIdProvider: () -> Int?,
-    modifier: Modifier = Modifier,
     onImagePreview: (String, Rect) -> Unit,
     onProfile: (Int) -> Unit,
     onScroll: (Int) -> Unit,
@@ -81,6 +81,7 @@ fun ChatBubble(
     onCancel: (Int) -> Unit,
     onFocus: (Int) -> Unit,
     onDismissFocus: () -> Unit,
+    modifier: Modifier = Modifier,
     theme: ComposeTheme = LocalTheme.current
 ) {
     val hasFocus = rememberedRun(focusIdProvider) { invoke() == message.id }

@@ -1,15 +1,10 @@
 package com.linku.im.screen.chat.composable
 
 import android.net.Uri
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -34,7 +29,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.linku.core.ktx.ifTrue
 import com.linku.domain.bean.Emoji
@@ -164,13 +158,14 @@ fun ChatTextField(
 @Composable
 fun LazyGridItemScope.EmojiButton(
     emoji: Emoji,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
     AsyncImage(
         model = emoji.bitmap,
         contentDescription = null,
-        modifier = Modifier
+        modifier = modifier
             .animateItemPlacement()
             .padding(vertical = spacing.extraSmall)
             .clip(RoundedCornerShape(spacing.medium))

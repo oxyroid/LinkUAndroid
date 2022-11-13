@@ -33,12 +33,13 @@ private val FOLDER_PADDING_Y = 12.dp
 @Composable
 fun IntroduceItem(
     property: Property,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     when (property) {
         is Property.Data -> {
             Column(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxWidth()
                     .intervalClickable(onClick = onClick)
                     .background(LocalTheme.current.background)
@@ -93,10 +94,9 @@ fun IntroduceItem(
                 }
             }
         }
-
         is Property.Folder -> {
             Row(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxWidth()
                     .background(LocalTheme.current.background)
                     .intervalClickable(onClick = onClick)

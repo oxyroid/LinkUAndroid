@@ -16,10 +16,11 @@ import com.linku.im.ui.theme.LocalTheme
 fun ProfileList(
     label: String,
     items: List<Property>,
+    modifier: Modifier = Modifier,
     onItemClick: (Property) -> Unit = {}
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(LocalTheme.current.background)
             .padding(top = 12.dp)

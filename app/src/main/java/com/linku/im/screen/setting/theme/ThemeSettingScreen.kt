@@ -4,12 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -82,125 +77,125 @@ fun ThemeSettingScreen(
         }
     }
 
-    fun onDismiss() {
-        viewModel.onEvent(SettingEvent.Themes.PressedCancel)
-    }
+    val onDismiss = { viewModel.onEvent(SettingEvent.Themes.PressedCancel) }
 
     LaunchedEffect(viewModel.message) {
         viewModel.message.handle {
             scaffoldState.snackbarHostState.showSnackbar(it)
         }
     }
-    Scaffold(
-        scaffoldState = scaffoldState,
-        snackbarHost = {
-            NotifyHolder(
-                state = it,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        topBar = {
-            ToolBar(
-                actions = {},
-                text = stringResource(id = R.string.profile_settings_theme),
-                backgroundColor = LocalTheme.current.topBar.animated(),
-                contentColor = LocalTheme.current.onTopBar.animated()
-            )
-        },
-        modifier = modifier,
-        backgroundColor = LocalTheme.current.background.animated(),
-        contentColor = LocalTheme.current.onBackground.animated()
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            val themes by viewModel.allTheme.collectAsStateWithLifecycle(emptyList())
-            LazyRow(
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
+    Box {
+        Scaffold(
+            scaffoldState = scaffoldState,
+            snackbarHost = {
+                NotifyHolder(
+                    state = it,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            topBar = {
+                ToolBar(
+                    actions = {},
+                    text = stringResource(id = R.string.profile_settings_theme),
+                    backgroundColor = LocalTheme.current.topBar.animated(),
+                    contentColor = LocalTheme.current.onTopBar.animated()
+                )
+            },
+            modifier = modifier,
+            backgroundColor = LocalTheme.current.background.animated(),
+            contentColor = LocalTheme.current.onBackground.animated()
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier.padding(innerPadding)
             ) {
-                items(themes) {
-                    ThemeSelection(
-                        theme = it,
-                        currentTid = state.currentTheme,
-                        modifier = Modifier.height(96.dp),
-                        onClick = {
-                            val msg = context.getString(R.string.theme_warn_premium)
-                            scope.launch {
-                                scaffoldState.snackbarHostState.showSnackbar(msg)
+                val themes by viewModel.allTheme.collectAsStateWithLifecycle(emptyList())
+                LazyRow(
+                    horizontalArrangement = Arrangement.Start,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(themes) {
+                        ThemeSelection(
+                            theme = it,
+                            currentTid = state.currentTheme,
+                            modifier = Modifier.height(96.dp),
+                            onClick = {
+                                val msg = context.getString(R.string.theme_warn_premium)
+                                scope.launch {
+                                    scaffoldState.snackbarHostState.showSnackbar(msg)
+                                }
+                                viewModel.onEvent(SettingEvent.Themes.SelectThemes(it.id))
+                            },
+                            onLongClick = {
+                                viewModel.onEvent(SettingEvent.Themes.Press(it.id))
                             }
-                            viewModel.onEvent(SettingEvent.Themes.SelectThemes(it.id))
-                        },
-                        onLongClick = {
-                            viewModel.onEvent(SettingEvent.Themes.Press(it.id))
+                        )
+                    }
+                    item {
+                        ThemeAddSelection(
+                            modifier = Modifier.height(96.dp)
+                        ) {
+                            importer.launch(arrayOf(MimeType.Txt.value))
                         }
-                    )
-                }
-                item {
-                    ThemeAddSelection(
-                        modifier = Modifier.height(96.dp)
-                    ) {
-                        importer.launch(arrayOf(MimeType.Txt.value))
                     }
                 }
             }
         }
-    }
-    Scrim(
-        color = Color.Black * 0.35f,
-        onDismiss = ::onDismiss,
-        visible = state.currentPressedTheme != -1
-    )
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Bottom
-    ) {
-        BottomSheetContent(
-            visible = state.currentPressedTheme != -1,
-            onDismiss = ::onDismiss,
-            maxHeight = false
+        Scrim(
+            color = Color.Black * 0.35f,
+            onDismiss = onDismiss,
+            visible = state.currentPressedTheme != -1
+        )
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Bottom
         ) {
-            Column {
-                ListItem(
-                    headlineText = {
-                        Text(text = stringResource(R.string.theme_export))
-                    },
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(LocalSpacing.current.medium))
-                        .fillMaxWidth()
-                        .clickable {
-                            exportedTid = state.currentPressedTheme
-                            exporter.launch("Theme_${System.currentTimeMillis()}.txt")
-                            onDismiss()
-                        },
-                    colors = ListItemDefaults.colors(
-                        containerColor = LocalTheme.current.background,
-                        headlineColor = LocalTheme.current.onBackground,
-                        leadingIconColor = LocalTheme.current.onBackground,
-                        overlineColor = LocalTheme.current.onBackground
-                    )
-                )
-                ListItem(
-                    headlineText = {
-                        Text(text = stringResource(R.string.theme_delete))
-                    },
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(LocalSpacing.current.medium))
-                        .fillMaxWidth()
-                        .clickable {
-                            viewModel.onEvent(SettingEvent.Themes.DeletePressedTheme)
-                            onDismiss()
-                        },
-                    colors = ListItemDefaults.colors(
-                        containerColor = LocalTheme.current.background,
-                        headlineColor = LocalTheme.current.onBackground,
-                        leadingIconColor = LocalTheme.current.onBackground,
-                        overlineColor = LocalTheme.current.onBackground
-                    )
-                )
-            }
+            BottomSheetContent(
+                visible = state.currentPressedTheme != -1,
+                onDismiss = onDismiss,
+                maxHeight = false,
+                content = {
+                    Column {
+                        ListItem(
+                            headlineText = {
+                                Text(text = stringResource(R.string.theme_export))
+                            },
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(LocalSpacing.current.medium))
+                                .fillMaxWidth()
+                                .clickable {
+                                    exportedTid = state.currentPressedTheme
+                                    exporter.launch("Theme_${System.currentTimeMillis()}.txt")
+                                    onDismiss()
+                                },
+                            colors = ListItemDefaults.colors(
+                                containerColor = LocalTheme.current.background,
+                                headlineColor = LocalTheme.current.onBackground,
+                                leadingIconColor = LocalTheme.current.onBackground,
+                                overlineColor = LocalTheme.current.onBackground
+                            )
+                        )
+                        ListItem(
+                            headlineText = {
+                                Text(text = stringResource(R.string.theme_delete))
+                            },
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(LocalSpacing.current.medium))
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.onEvent(SettingEvent.Themes.DeletePressedTheme)
+                                    onDismiss()
+                                },
+                            colors = ListItemDefaults.colors(
+                                containerColor = LocalTheme.current.background,
+                                headlineColor = LocalTheme.current.onBackground,
+                                leadingIconColor = LocalTheme.current.onBackground,
+                                overlineColor = LocalTheme.current.onBackground
+                            )
+                        )
+                    }
+                }
+            )
         }
     }
-
-    BackHandler(state.currentPressedTheme != -1, ::onDismiss)
+    BackHandler(state.currentPressedTheme != -1, onDismiss)
 }
