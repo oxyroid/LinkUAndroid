@@ -14,6 +14,12 @@ dependencyResolutionManagement {
         mavenCentral()
         maven(url = "https://jitpack.io")
     }
+    versionCatalogs {
+        create("libs2") {
+            from(files("gradle/libs2.versions.toml"))
+        }
+    }
 }
 rootProject.name = "LinkU-Android"
 include(":app", ":core", ":domain", ":data", ":benchmark")
+enableFeaturePreview("VERSION_CATALOGS")
