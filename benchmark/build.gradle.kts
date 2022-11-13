@@ -1,8 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-    id("com.android.test")
-    id("org.jetbrains.kotlin.android")
+    id(libs.plugins.android.test)
+    id(libs.plugins.kotlin.android)
 }
 
 android {
@@ -10,12 +10,12 @@ android {
     compileSdk = 33
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
     }
 
     defaultConfig {
@@ -41,10 +41,10 @@ android {
 }
 
 dependencies {
-    implementation(libs.test.androidTestExtJunit)
-    implementation(libs.test.androidTestEspressoCore)
-    implementation(libs.test.uiautomator)
-    implementation(libs.test.benchmarkMacroJunit4)
+    implementation(libs2.test.ext.junit)
+    implementation(libs2.espresso.core)
+    implementation(libs2.uiautomator)
+    implementation(libs2.benchmarkMacroJunit4)
 }
 
 androidComponents {

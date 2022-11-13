@@ -1,4 +1,4 @@
 object configs {
-    val versionCode = 111
-    val versionName = "0.15.6"
+    const val versionCode = 112
+    const val versionName = "0.15.7"
 }

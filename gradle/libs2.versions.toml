@@ -1,0 +1,117 @@
+[versions]
+material = "1.7.0"
+accompanist = "0.27.0"
+hilt-android = "2.44"
+core-ktx = "1.9.0"
+appcompat = "1.7.0-alpha01"
+activity = "1.6.1"
+lifecycle = "2.6.0-alpha03"
+constraintlayout-compose = "1.0.1"
+room = "2.4.3"
+work = "2.7.1"
+recyclerview = "1.2.1"
+core-splashscreen = "1.0.0"
+hilt-compiler = "1.0.0"
+hilt-work = "1.0.0"
+hilt-navigation-compose = "1.0.0"
+paging-runtime = "3.2.0-alpha03"
+paging-compose = "1.0.0-alpha17"
+compose = "1.4.0-alpha01"
+material3 = "1.1.0-alpha01"
+startup-runtime = "1.1.1"
+test-ext-junit = "1.1.3"
+uiautomator = "2.2.0"
+benchmarkMacroJunit4 = "1.2.0-alpha06"
+lottie-compose = "5.2.0"
+ucrop = "2.2.6"
+retrofit = "2.9.0"
+appyx = "1.0.0-rc02"
+coil = "2.2.2"
+mmkv = "1.2.14"
+kotlin-serialization = "1.7.10"
+kotlinx-serialization-json = "1.4.1"
+twitter-compose-rules-detekt = "0.0.24"
+androidGradlePlugin = "7.3.1"
+ksp = "1.7.20-1.0.8"
+kotlin = "1.7.10"
+
+[libraries]
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+accompanist-insets = { group = "com.google.accompanist", name = "accompanist-insets", version.ref = "accompanist" }
+accompanist-insets-ui = { group = "com.google.accompanist", name = "accompanist-insets-ui", version.ref = "accompanist" }
+accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
+accompanist-placeholder = { group = "com.google.accompanist", name = "accompanist-placeholder", version.ref = "accompanist" }
+accompanist-systemuicontroller = { group = "com.google.accompanist", name = "accompanist-systemuicontroller", version.ref = "accompanist" }
+accompanist-pager = { group = "com.google.accompanist", name = "accompanist-pager", version.ref = "accompanist" }
+accompanist-pager-indicators = { group = "com.google.accompanist", name = "accompanist-pager-indicators", version.ref = "accompanist" }
+
+
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+activity-ktx = { group = "androidx.activity", name = "activity-ktx", version = "1.7.0-alpha02" }
+activity-compose = { group = "androidx.activity", name = "activity-compose", version = "1.7.0-alpha02" }
+
+lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
+lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+
+constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version = "1.1.0-alpha04" }
+
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+
+work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version = "2.8.0-beta02" }
+recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version = "1.3.0-rc01" }
+core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "core-splashscreen" }
+
+hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "hilt-compiler" }
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt-android" }
+hilt-android-gradle-plugin = { group = "com.google.dagger", name = "hilt-android-gradle-plugin", version.ref = "hilt-android" }
+hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version = "2.44.1" }
+hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref = "hilt-work" }
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
+
+paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging-runtime" }
+paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging-compose" }
+
+compose-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "compose" }
+compose-ui-test-junit = { group = "androidx.compose.ui", name = "ui-test-junit", version.ref = "compose" }
+compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "compose" }
+compose-ui-tooling-core = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "compose" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version.ref = "compose" }
+test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "test-ext-junit" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version = "3.4.0" }
+
+material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.4.0-alpha02" }
+material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+startup-runtime = { group = "androidx.startup", name = "startup-runtime", version = "1.2.0-alpha01" }
+uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+benchmarkMacroJunit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmarkMacroJunit4" }
+lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie-compose" }
+ucrop = { group = "com.github.yalantis", name = "ucrop", version.ref = "ucrop" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+appyx = { group = "com.bumble.appyx", name = "core", version.ref = "appyx" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
+mmkv = { group = "com.tencent", name = "mmkv", version.ref = "mmkv" }
+kotlin-serialization = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin-serialization" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
+twitter-compose-rules-detekt = { group = "com.twitter.compose.rules", name = "detekt", version.ref = "twitter-compose-rules-detekt" }
+[bundles]
+room = ["room-runtime", "room-ktx"]
+paging = ["paging-runtime", "paging-compose"]
+accompanist = ["accompanist-insets", "accompanist-insets-ui", "accompanist-permissions", "accompanist-placeholder", "accompanist-systemuicontroller", "accompanist-pager", "accompanist-pager-indicators"]
+hilt = ["hilt-android", "hilt-work", "hilt-navigation-compose"]
+coil = ["coil-compose", "coil-gif"]
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+android-test = { id = "com.android.test", version.ref = "androidGradlePlugin" }
+kapt = { id = "kotlin.kapt" }
+hilt = { id = "dagger.hilt.android.plugin" }
+parcelize = { id = "kotlin.parcelize" }
+kotlin-serialization = { id = "kotlin-serialization", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt" }
+dargger = { id = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hilt-android" }

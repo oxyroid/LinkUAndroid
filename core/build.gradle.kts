@@ -1,9 +1,9 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("kotlinx-serialization")
+    id(libs.plugins.android.library)
+    id(libs.plugins.kotlin.android)
+    id(libs.plugins.kotlinx.serialization)
 }
 
 android {
@@ -34,22 +34,19 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
         freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn", "-Xcontext-receivers")
     }
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-
-    implementation(libs.androidx.lifecycle.runtime.compose)
-
-    implementation(libs.kotlinx.serialzation.json)
-
-    implementation(libs.retrofit)
+    implementation(libs2.core.ktx)
+    implementation(libs2.appcompat)
+    implementation(libs2.lifecycle.runtime.compose)
+    implementation(libs2.kotlinx.serialization.json)
+    implementation(libs2.retrofit)
 }

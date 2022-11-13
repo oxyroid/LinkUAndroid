@@ -1,12 +1,13 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
-    id("dagger.hilt.android.plugin")
-    id("kotlinx-serialization")
-    id("kotlin-parcelize")
+    id(libs.plugins.android.application)
+    id(libs.plugins.kotlin.android)
+    id(libs.plugins.kotlin.kapt)
+    id(libs.plugins.kotlin.parcelize)
+    id(libs.plugins.kotlinx.serialization)
+    id(libs.plugins.hilt.android)
+    id(libs.plugins.detekt.detekt)
 }
 android {
     namespace = "com.linku.im"
@@ -44,11 +45,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
         freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn", "-Xcontext-receivers")
     }
     buildFeatures {
@@ -66,10 +67,15 @@ android {
     androidResources {
         noCompress += "txt"
     }
+    configurations {
+        // implementation.exclude group: 'org.jetbrains' , module:'annotations'
+        implementation.get().exclude(group = "com.intellij", module = "annotations")
+    }
 }
 
-tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
+detekt {
+    source = files("src/main/java")
+    config = files("$rootDir/config/detekt.yml")
 }
 
 dependencies {
@@ -77,53 +83,44 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.runtime.compose)
-    implementation(libs.androidx.recyclerview)
-    implementation(libs.androidx.splashscreen)
-    implementation(libs.androidx.constraintlayout.compose)
+    implementation(libs2.core.ktx)
+    implementation(libs2.activity.ktx)
+    implementation(libs2.activity.compose)
+    implementation(libs2.lifecycle.runtime.compose)
+    implementation(libs2.lifecycle.runtime.ktx)
+    implementation(libs2.recyclerview)
+    implementation(libs2.core.splashscreen)
+    implementation(libs2.constraintlayout.compose)
+    implementation(libs2.material.asProvider())
 
-    implementation(libs.google.material.material)
+    implementation(libs2.compose.ui.asProvider())
+    implementation(libs2.compose.ui.test.manifest)
+    implementation(libs2.compose.ui.tooling.core)
+    implementation(libs2.compose.ui.tooling.preview)
+    implementation(libs2.material.icons.extended)
+    implementation(libs2.material3)
 
-    implementation(libs.androidx.compose.ui.ui)
-    androidTestImplementation(libs.androidx.compose.ui.`ui-test-junit`)
-    debugImplementation(libs.androidx.compose.ui.`ui-tooling`.core)
-    debugImplementation(libs.androidx.compose.ui.`ui-tooling`.preview)
-    implementation(libs.androidx.compose.material.`icons-extended`)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.ui.test.manifest)
+    kapt(libs2.hilt.compiler)
+    kapt(libs2.hilt.android.compiler)
+    implementation(libs2.bundles.hilt)
 
+    implementation(libs2.work.runtime.ktx)
 
-    kapt(libs.androidx.hilt.compiler)
-    kapt(libs.google.dagger.android_compiler)
-    implementation(libs.google.dagger.android)
-    implementation(libs.androidx.hilt.navigation)
-    implementation(libs.androidx.hilt.work)
+    implementation(libs2.bundles.paging)
 
-    implementation(libs.androidx.workmanager)
+    implementation(libs2.startup.runtime)
 
-    implementation(libs.androidx.paging.runtime)
-    implementation(libs.androidx.paging.compose)
+    implementation(libs2.bundles.accompanist)
 
-    implementation(libs.google.accompanist.insets)
-    implementation(libs.google.accompanist.`insets-ui`)
-    implementation(libs.google.accompanist.permissions)
-    implementation(libs.google.accompanist.placeholder)
-    implementation(libs.google.accompanist.systemuicontroller)
-    implementation(libs.google.accompanist.pager)
-    implementation(libs.google.accompanist.`pager-indicators`)
+    implementation(libs2.kotlinx.serialization.json)
 
-    implementation(libs.kotlinx.serialzation.json)
+    implementation(libs2.bundles.coil)
 
-    implementation(libs.coil.compose)
-    implementation(libs.coil.gif)
+    implementation(libs2.lottie.compose)
+    implementation(libs2.retrofit)
+    implementation(libs2.appyx)
+    implementation(libs2.ucrop)
+    implementation(libs2.mmkv)
 
-    implementation(libs.lottie.compose)
-    implementation(libs.retrofit)
-    implementation(libs.appyx)
-    implementation(libs.ucrop)
-    implementation(libs.mmkv)
+    detektPlugins(libs2.twitter.compose.rules.detekt)
 }

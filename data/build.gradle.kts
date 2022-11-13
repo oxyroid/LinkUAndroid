@@ -3,11 +3,11 @@
 import dsl.localProperties
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("kotlin-kapt")
-    id("dagger.hilt.android.plugin")
-    id("kotlinx-serialization")
+    id(libs.plugins.android.library)
+    id(libs.plugins.kotlin.android)
+    id(libs.plugins.hilt.android)
+    id(libs.plugins.kotlinx.serialization)
+    id(libs.plugins.kotlin.kapt)
 }
 
 android {
@@ -40,11 +40,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility(JavaVersion.VERSION_1_8)
-        targetCompatibility(JavaVersion.VERSION_1_8)
+        sourceCompatibility(JavaVersion.VERSION_11)
+        targetCompatibility(JavaVersion.VERSION_11)
     }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
         freeCompilerArgs = listOf("-Xcontext-receivers")
     }
 }
@@ -53,26 +53,21 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":domain"))
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.appcompat)
+    implementation(libs2.core.ktx)
+    implementation(libs2.lifecycle.runtime.ktx)
+    implementation(libs2.appcompat)
 
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    kapt(libs.androidx.room.compiler)
+    implementation(libs2.bundles.room)
+    kapt(libs2.room.compiler)
 
-    implementation(libs.kotlinx.serialzation.json)
+    implementation(libs2.kotlinx.serialization.json)
+    implementation(libs2.retrofit)
 
-    implementation(libs.retrofit)
+    implementation(libs2.mmkv)
 
-    implementation(libs.mmkv)
+    implementation(libs2.bundles.paging)
 
-    implementation(libs.androidx.paging.runtime)
-    implementation(libs.androidx.paging.compose)
-
-    implementation(libs.google.dagger.android)
-    kapt(libs.google.dagger.android_compiler)
-    kapt(libs.androidx.hilt.compiler)
-    implementation(libs.androidx.hilt.navigation)
-
+    kapt(libs2.hilt.compiler)
+    kapt(libs2.hilt.android.compiler)
+    implementation(libs2.bundles.hilt)
 }
