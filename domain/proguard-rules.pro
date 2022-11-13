@@ -59,3 +59,4 @@
 #-keepnames class <1>$$serializer { # -keepnames suffices; class is kept when serializer() is kept.
 #    static <1>$$serializer INSTANCE;
 #}
+-dontwarn java.lang.invoke.StringConcatFactory
