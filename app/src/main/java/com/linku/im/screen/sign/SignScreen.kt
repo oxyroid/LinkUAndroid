@@ -53,6 +53,7 @@ import com.linku.im.vm
 @OptIn(ExperimentalLifecycleComposeApi::class)
 @Composable
 fun SignScreen(
+    modifier: Modifier = Modifier,
     viewModel: SignViewModel = hiltViewModel()
 ) {
     val systemUiController = rememberSystemUiController()
@@ -106,7 +107,8 @@ fun SignScreen(
             )
         },
         backgroundColor = LocalTheme.current.background,
-        contentColor = LocalTheme.current.onBackground
+        contentColor = LocalTheme.current.onBackground,
+        modifier = modifier
     ) { innerPadding ->
         Box(
             contentAlignment = Alignment.Center,

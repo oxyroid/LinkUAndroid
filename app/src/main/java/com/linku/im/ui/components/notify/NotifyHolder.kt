@@ -21,8 +21,8 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun NotifyHolder(
-    modifier: Modifier = Modifier,
     state: SnackbarHostState,
+    modifier: Modifier = Modifier,
     enter: EnterTransition = slideInVertically(initialOffsetY = { it }),
     exit: ExitTransition = slideOutVertically(targetOffsetY = { it })
 ) {
