@@ -25,19 +25,19 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LinkUViewModel @Inject constructor(
-    private val messageUseCases: MessageUseCases,
-    private val sessionUseCases: SessionUseCases,
-    private val emojiUseCases: EmojiUseCases,
+    private val messages: MessageUseCases,
+    private val sessions: SessionUseCases,
+    private val emojis: EmojiUseCases,
     private val applications: ApplicationUseCases,
     private val configurations: Configurations,
     private val conversations: ConversationUseCases,
-    connectivityObserver: ConnectivityObserver,
+    private val themes: SettingUseCases.Themes,
     val authenticator: Authenticator,
-    private val themes: SettingUseCases.Themes
+    connectivityObserver: ConnectivityObserver,
 ) : BaseViewModel<LinkUState, LinkUEvent>(LinkUState()) {
     init {
         onEvent(LinkUEvent.InitConfig)
-        sessionUseCases.state()
+        sessions.state()
             .onEach { state ->
                 when (state) {
                     SessionRepository.State.Default -> deliverState(Label.NoAuth)
@@ -93,7 +93,7 @@ class LinkUViewModel @Inject constructor(
 
             LinkUEvent.Disconnect -> {
                 viewModelScope.launch {
-                    sessionUseCases.close()
+                    sessions.close()
                 }
             }
 
@@ -179,18 +179,18 @@ class LinkUViewModel @Inject constructor(
             .launchIn(viewModelScope)
 
         initSessionJob?.cancel()
-        initSessionJob = sessionUseCases
+        initSessionJob = sessions
             .init(authenticator.currentUID)
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> {}
                     is Resource.Success -> {
-                        sessionUseCases.subscribeRemote()
+                        sessions.subscribeRemote()
                             .onEach {
                                 when (it) {
                                     Resource.Loading -> {}
                                     is Resource.Success -> {
-                                        messageUseCases.syncingMessages()
+                                        messages.syncingMessages()
                                         deliverState(Label.Default)
                                         writable = readable.copy(
                                             readyForObserveMessages = true
@@ -231,7 +231,7 @@ class LinkUViewModel @Inject constructor(
             onSuccess: () -> Unit,
             onFailure: (String?) -> Unit
         ) {
-            emojiUseCases.initialize()
+            emojis.initialize()
                 .onEach { resource ->
                     when (resource) {
                         Resource.Loading -> {}
