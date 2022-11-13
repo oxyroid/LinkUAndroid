@@ -23,10 +23,14 @@ This repository is **Jetpack Compose** instant messaging example.
   Compose
 - Kotlin DSL as Gradle Language
 - Multi-module development
+- [Detekt](https://github.com/detekt/detekt) provide static code analysis for Kotlin
+- [Compose-rules](https://github.com/twitter/compose-rules) provide
+  static checks to aid with a healthy adoption of Compose
 
 #### 🎉 Build in your environment
 
 - Install latest **[Android Studio](https://developer.android.com/studio)**
+- JDK 11 and Kotlin 1.7.20 required
 - Clone this repository
 - Open project and build it, wait for all dependencies syncing finished
 - Connect a device, install and run it
