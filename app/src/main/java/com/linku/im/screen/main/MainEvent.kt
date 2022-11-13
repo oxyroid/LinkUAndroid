@@ -1,11 +1,17 @@
 package com.linku.im.screen.main
 
-sealed class MainEvent {
-    object ObserveConversations : MainEvent()
-    object UnsubscribeConversations : MainEvent()
-    data class Pin(val cid: Int) : MainEvent()
+import androidx.compose.ui.text.input.TextFieldValue
 
-    data class Forward(val mode: MainMode) : MainEvent()
-    object Remain : MainEvent()
-    object FetchNotifications : MainEvent()
+sealed interface MainEvent {
+    object ObserveConversations : MainEvent
+    object UnsubscribeConversations : MainEvent
+    data class Pin(val cid: Int) : MainEvent
+
+    data class Forward(val mode: MainMode) : MainEvent
+    object Remain : MainEvent
+    object FetchNotifications : MainEvent
+    object Query : MainEvent
+    data class OnQueryText(val text: TextFieldValue) : MainEvent
+    object ToggleQueryIncludeDescription : MainEvent
+    object ToggleQueryIncludeEmail : MainEvent
 }

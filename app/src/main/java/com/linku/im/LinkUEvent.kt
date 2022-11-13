@@ -6,11 +6,11 @@ package com.linku.im
  * These can be invoked in [LinkUViewModel]
  * @see LinkUViewModel
  */
-sealed class LinkUEvent {
-    object InitConfig : LinkUEvent()
-    object ToggleDarkMode : LinkUEvent()
-    data class OnTheme(val tid: Int, val isDarkMode: Boolean) : LinkUEvent()
-    object Disconnect : LinkUEvent()
-    object InitSession : LinkUEvent()
-    object Premium : LinkUEvent()
+sealed interface LinkUEvent {
+    object InitConfig : LinkUEvent
+    object ToggleDarkMode : LinkUEvent
+    data class OnTheme(val tid: Int, val isDarkMode: Boolean) : LinkUEvent
+    object Disconnect : LinkUEvent
+    object InitSession : LinkUEvent
+    object Premium : LinkUEvent
 }
