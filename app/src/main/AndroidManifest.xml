@@ -22,6 +22,16 @@
             android:shell="true"
             tools:targetApi="29" />
 
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="com.linku.im.initializer.MMKVInitializer"
+                android:value="androidx.startup" />
+        </provider>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
