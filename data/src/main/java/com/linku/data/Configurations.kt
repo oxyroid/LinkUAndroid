@@ -2,6 +2,7 @@ package com.linku.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.lifecycle.Observer
 import com.linku.core.extension.delegates.boolean
 import com.linku.core.extension.delegates.int
 import com.linku.core.extension.delegates.string
@@ -19,9 +20,25 @@ class Configurations @Inject constructor(
 
     var isLogMode: Boolean by sharedPreferences.boolean(false)
 
-    var isDarkMode: Boolean by sharedPreferences.boolean(false)
+    var isDarkMode: Boolean by sharedPreferences.boolean(false) { newValue ->
+        isDarkModeSubscribers.forEach { it.onChanged(newValue) }
+    }
     var lightTheme: Int by sharedPreferences.int(-1)
     var darkTheme: Int by sharedPreferences.int(-1)
+    var isNativeSnackBar: Boolean by sharedPreferences.boolean(true) { newValue ->
+        isNativeSnackBarSubscribers.forEach { it.onChanged(newValue) }
+    }
+
+    private val isDarkModeSubscribers = mutableSetOf<Observer<Boolean>>()
+    private val isNativeSnackBarSubscribers = mutableSetOf<Observer<Boolean>>()
+
+    fun subscribeIsDarkMode(observer: Observer<Boolean>) {
+        isDarkModeSubscribers.add(observer)
+    }
+
+    fun subscribeIsNativeSnackBar(observer: Observer<Boolean>) {
+        isNativeSnackBarSubscribers.add(observer)
+    }
 
     inline fun log(block: () -> Unit) {
         if (isLogMode) block()
