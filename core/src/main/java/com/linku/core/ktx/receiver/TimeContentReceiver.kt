@@ -1,8 +1,7 @@
 package com.linku.core.ktx.receiver
 
 import com.linku.core.ktx.ifTrue
-import java.util.Calendar
-import java.util.Date
+import java.util.*
 
 object TimeContentReceiver
 

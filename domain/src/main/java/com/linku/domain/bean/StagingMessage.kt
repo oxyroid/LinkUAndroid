@@ -1,7 +1,7 @@
 package com.linku.domain.bean
 
 import android.net.Uri
-import java.util.UUID
+import java.util.*
 
 sealed class StagingMessage {
     data class Text(

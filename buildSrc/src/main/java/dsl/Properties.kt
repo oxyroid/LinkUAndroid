@@ -1,7 +1,7 @@
 package dsl
 
 import org.gradle.api.Project
-import java.util.Properties
+import java.util.*
 
 inline val Project.localProperties: Properties
     get() = Properties().apply {

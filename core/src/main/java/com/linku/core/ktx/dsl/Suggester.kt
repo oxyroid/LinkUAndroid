@@ -1,4 +1,4 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "BooleanMethodIsAlwaysInverted")
 
 package com.linku.core.ktx.dsl
 

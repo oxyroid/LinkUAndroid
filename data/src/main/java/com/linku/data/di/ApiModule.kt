@@ -6,12 +6,7 @@ import com.linku.data.BuildConfig
 import com.linku.domain.Constants
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.service.*
-import com.linku.domain.service.api.AuthService
-import com.linku.domain.service.api.ConversationService
-import com.linku.domain.service.api.FileService
-import com.linku.domain.service.api.MessageService
-import com.linku.domain.service.api.ProfileService
-import com.linku.domain.service.api.UserService
+import com.linku.domain.service.api.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

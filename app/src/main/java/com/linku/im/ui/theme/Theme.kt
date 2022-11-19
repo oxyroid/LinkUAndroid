@@ -1,7 +1,7 @@
 package com.linku.im.ui.theme
 
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.linku.domain.bean.ComposeTheme
+import com.linku.domain.bean.seaSalt
 
 
-val LocalTheme = staticCompositionLocalOf<ComposeTheme> { error("no theme provided") }
+val LocalTheme = staticCompositionLocalOf { seaSalt }

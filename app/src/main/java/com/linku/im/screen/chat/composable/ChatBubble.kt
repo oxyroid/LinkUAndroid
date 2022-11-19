@@ -11,11 +11,7 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Reply
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +42,7 @@ import coil.ImageLoader
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
+import coil.memory.MemoryCache
 import coil.request.ImageRequest
 import com.linku.core.ktx.ifTrue
 import com.linku.domain.bean.Bubble
@@ -61,6 +58,9 @@ import com.linku.im.ktx.ui.intervalClickable
 import com.linku.im.ui.components.item.TextImage
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private val HORIZONTAL_IN_PADDING = 12.dp
 private val VERTICAL_IN_PADDING = 8.dp
@@ -602,10 +602,30 @@ private fun ThumbView(
         color = backgroundColor,
         contentColor = contentColor
     ) {
-        val model = ImageRequest.Builder(LocalContext.current)
-            .data(realUrl)
-            .crossfade(200)
-            .build()
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        var job: Job? by remember {
+            mutableStateOf(null)
+        }
+        var key: MemoryCache.Key? by remember { mutableStateOf(null) }
+        val model = remember(context, realUrl, key) {
+            val request = ImageRequest.Builder(context)
+                .data(realUrl)
+                .crossfade(200)
+                .apply {
+                    if (key != null) {
+                        placeholderMemoryCacheKey(key)
+                    }
+                }
+                .build()
+            job?.cancel()
+            job = scope.launch {
+                delay(800L)
+                key = request.placeholderMemoryCacheKey
+            }
+            request
+        }
+
         val loader = ImageLoader.Builder(LocalContext.current)
             .components {
                 add(ImageDecoderDecoder.Factory())

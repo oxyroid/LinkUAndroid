@@ -8,19 +8,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -31,14 +24,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.linku.domain.repository.MimeType
+import com.linku.domain.repository.getValue
 import com.linku.im.R
-import com.linku.im.ktx.ui.graphics.animated
 import com.linku.im.ktx.ui.graphics.times
+import com.linku.im.screen.setting.BasicSettingScreen
 import com.linku.im.screen.setting.SettingEvent
 import com.linku.im.ui.components.BottomSheetContent
 import com.linku.im.ui.components.Scrim
-import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.components.notify.NotifyHolder
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
 import kotlinx.coroutines.launch
@@ -60,8 +52,9 @@ fun ThemeSettingScreen(
     var exportedTid: Int? by remember {
         mutableStateOf(null)
     }
+    val mime by remember { MimeType.TestPlain }
     val exporter = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument(MimeType.Txt.value)
+        ActivityResultContracts.CreateDocument(mime)
     ) {
         it?.let {
             exportedTid?.let { exportedTid ->
@@ -85,43 +78,28 @@ fun ThemeSettingScreen(
         }
     }
     Box {
-        Scaffold(
-            scaffoldState = scaffoldState,
-            snackbarHost = {
-                NotifyHolder(
-                    state = it,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            topBar = {
-                ToolBar(
-                    actions = {},
-                    text = stringResource(id = R.string.profile_settings_theme),
-                    backgroundColor = LocalTheme.current.topBar.animated(),
-                    contentColor = LocalTheme.current.onTopBar.animated()
-                )
-            },
+        BasicSettingScreen(
+            title = stringResource(R.string.profile_settings_theme),
             modifier = modifier,
-            backgroundColor = LocalTheme.current.background.animated(),
-            contentColor = LocalTheme.current.onBackground.animated()
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier.padding(innerPadding)
-            ) {
+            scaffoldState = scaffoldState,
+            content = {
                 val themes by viewModel.allTheme.collectAsStateWithLifecycle(emptyList())
                 LazyRow(
                     horizontalArrangement = Arrangement.Start,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(themes) {
+                    items(themes, key = { it.id }) {
                         ThemeSelection(
                             theme = it,
                             currentTid = state.currentTheme,
                             modifier = Modifier.height(96.dp),
                             onClick = {
-                                val msg = context.getString(R.string.theme_warn_premium)
-                                scope.launch {
-                                    scaffoldState.snackbarHostState.showSnackbar(msg)
+                                // TODO
+                                if (it.id == 3) {
+                                    val msg = context.getString(R.string.theme_warn_premium)
+                                    scope.launch {
+                                        scaffoldState.snackbarHostState.showSnackbar(msg)
+                                    }
                                 }
                                 viewModel.onEvent(SettingEvent.Themes.SelectThemes(it.id))
                             },
@@ -134,12 +112,13 @@ fun ThemeSettingScreen(
                         ThemeAddSelection(
                             modifier = Modifier.height(96.dp)
                         ) {
-                            importer.launch(arrayOf(MimeType.Txt.value))
+                            importer.launch(arrayOf(MimeType.TestPlain.value))
                         }
                     }
                 }
+
             }
-        }
+        )
         Scrim(
             color = Color.Black * 0.35f,
             onDismiss = onDismiss,

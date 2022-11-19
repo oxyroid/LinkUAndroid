@@ -3,12 +3,7 @@ package com.linku.im
 import androidx.lifecycle.viewModelScope
 import com.linku.core.wrapper.Resource
 import com.linku.data.Configurations
-import com.linku.data.usecase.ApplicationUseCases
-import com.linku.data.usecase.ConversationUseCases
-import com.linku.data.usecase.EmojiUseCases
-import com.linku.data.usecase.MessageUseCases
-import com.linku.data.usecase.SessionUseCases
-import com.linku.data.usecase.SettingUseCases
+import com.linku.data.usecase.*
 import com.linku.domain.auth.Authenticator
 import com.linku.domain.entity.toComposeTheme
 import com.linku.domain.repository.SessionRepository
@@ -120,6 +115,11 @@ class LinkUViewModel @Inject constructor(
 
             LinkUEvent.Premium -> {
                 onMessage(applications.getString(R.string.premium_unavailable))
+            }
+            is LinkUEvent.OnNativeSnackBar -> {
+                writable = readable.copy(
+                    isNativeSnackBar = event.target
+                )
             }
         }
     }

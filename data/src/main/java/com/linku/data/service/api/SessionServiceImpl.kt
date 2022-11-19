@@ -14,12 +14,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import okhttp3.WebSocket
-import okhttp3.WebSocketListener
-import okio.ByteString
+import okhttp3.*
 import javax.inject.Inject
 
 class SessionServiceImpl @Inject constructor(
@@ -53,14 +48,6 @@ class SessionServiceImpl @Inject constructor(
                         .getOrNull()
                     message?.also { incoming.emit(it) }
                 }
-            }
-
-            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                super.onMessage(webSocket, bytes)
-            }
-
-            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                super.onClosing(webSocket, code, reason)
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {

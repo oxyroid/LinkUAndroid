@@ -1,7 +1,7 @@
 package com.linku.core.util
 
 import androidx.compose.runtime.Immutable
-import java.util.Stack
+import java.util.*
 
 /**
  * Immutable LinkedList Node.
