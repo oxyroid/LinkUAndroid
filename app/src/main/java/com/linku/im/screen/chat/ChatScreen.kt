@@ -74,7 +74,7 @@ import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.components.button.MaterialTextButton
 import com.linku.im.ui.components.item.MemberItem
-import com.linku.im.ui.components.notify.NotifyHolder
+import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalDuration
 import com.linku.im.ui.theme.LocalSpacing
@@ -157,12 +157,7 @@ fun ChatScreen(
         imageDetailContent: @Composable (String, Rect, Float) -> Unit
     ) {
         Scaffold(
-            snackbarHost = {
-                NotifyHolder(
-                    state = it,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
+            snackbarHost = { NotifyCompat(state = it) },
             topBar = topBar,
             backgroundColor = theme.surface,
             contentColor = theme.onSurface,
@@ -352,7 +347,7 @@ fun ChatScreen(
                 verticalArrangement = Arrangement.Bottom,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(vertical = LocalSpacing.current.medium)
+                    .padding(bottom = LocalSpacing.current.medium)
             ) {
                 if (state.channelDetailLoading) {
                     Box(
@@ -741,7 +736,9 @@ fun PreviewDialog(
                         pressed = true
                     },
                     onDragStopped = {
-                        if (offset > configuration.screenHeightDp * density / 4) { onDismiss() }
+                        if (offset > configuration.screenHeightDp * density / 4) {
+                            onDismiss()
+                        }
                         offset = 0f
                         pressed = false
                     },

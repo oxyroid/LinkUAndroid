@@ -4,7 +4,7 @@ import android.net.Uri
 
 sealed interface SettingEvent {
     sealed interface Notification : SettingEvent {
-
+        object OnNativeSnackBar : Notification
     }
 
     sealed interface PrivacySecurity : SettingEvent {

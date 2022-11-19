@@ -1,7 +1,6 @@
 package com.linku.im.screen.edit
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
@@ -10,7 +9,7 @@ import androidx.compose.ui.res.stringResource
 import com.linku.im.R
 import com.linku.im.screen.introduce.IntroduceEvent
 import com.linku.im.ui.components.ToolBar
-import com.linku.im.ui.components.notify.NotifyHolder
+import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalTheme
 
 @Composable
@@ -19,12 +18,7 @@ fun EditScreen(
     modifier: Modifier = Modifier
 ) {
     Scaffold(
-        snackbarHost = {
-            NotifyHolder(
-                state = it,
-                modifier = modifier.fillMaxWidth()
-            )
-        },
+        snackbarHost = { NotifyCompat(state = it) },
         topBar = {
             ToolBar(
                 actions = {},
@@ -37,6 +31,7 @@ fun EditScreen(
         },
         contentColor = LocalTheme.current.onBackground,
         backgroundColor = LocalTheme.current.background,
+        modifier = modifier
     ) { innerPadding ->
         Column(
             modifier = Modifier

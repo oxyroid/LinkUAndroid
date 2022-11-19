@@ -19,16 +19,16 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import javax.inject.Inject
 
-sealed class SettingUseCases {
-    class Notification() : SettingUseCases() {
+sealed interface SettingUseCases {
+    class Notification() : SettingUseCases {
 
     }
 
-    class PrivacySecurity() : SettingUseCases() {
+    class PrivacySecurity() : SettingUseCases {
 
     }
 
-    class DataStorage : SettingUseCases() {
+    class DataStorage : SettingUseCases {
 
     }
 
@@ -41,11 +41,11 @@ sealed class SettingUseCases {
         val importFromClipboard: ImportFromClipboardUseCase,
         val findById: FindByIdUseCase,
         val deleteById: DeleteByIdUseCase
-    ) : SettingUseCases() {
+    ) : SettingUseCases {
         data class InstallDefaultThemeUseCase @Inject constructor(
             private val themeDao: ThemeDao,
             private val configurations: Configurations
-        ) : SettingUseCases() {
+        ) : SettingUseCases {
             operator fun invoke(): Flow<Resource<Unit>> = flow {
                 emit(Resource.Loading)
                 runCatching {
@@ -164,7 +164,7 @@ sealed class SettingUseCases {
         }
     }
 
-    class Language : SettingUseCases() {
+    class Language : SettingUseCases {
 
     }
 }

@@ -44,7 +44,7 @@ import com.linku.im.ui.components.TextField
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialPremiumButton
 import com.linku.im.ui.components.button.MaterialTextButton
-import com.linku.im.ui.components.notify.NotifyHolder
+import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -100,12 +100,7 @@ fun SignScreen(
 
     Scaffold(
         scaffoldState = scaffoldState,
-        snackbarHost = {
-            NotifyHolder(
-                state = it,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
+        snackbarHost = { NotifyCompat(state = it) },
         backgroundColor = LocalTheme.current.background,
         contentColor = LocalTheme.current.onBackground,
         modifier = modifier

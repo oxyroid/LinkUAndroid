@@ -58,7 +58,7 @@ import com.linku.im.ui.components.Scrim
 import com.linku.im.ui.components.ToolBar
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
-import com.linku.im.ui.components.notify.NotifyHolder
+import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -292,12 +292,7 @@ private fun IntroduceScaffold(
     val theme = LocalTheme.current
 
     Scaffold(
-        snackbarHost = {
-            NotifyHolder(
-                state = it,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
+        snackbarHost = { NotifyCompat(state = it) },
         scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
         backgroundColor = theme.background,

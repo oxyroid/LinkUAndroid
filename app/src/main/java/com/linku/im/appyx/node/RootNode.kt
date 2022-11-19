@@ -18,6 +18,10 @@ import com.linku.im.screen.chat.ChatViewModel
 import com.linku.im.screen.edit.EditScreen
 import com.linku.im.screen.introduce.IntroduceScreen
 import com.linku.im.screen.main.MainScreen
+import com.linku.im.screen.setting.data.DataStorageSettingScreen
+import com.linku.im.screen.setting.language.LanguageSettingScreen
+import com.linku.im.screen.setting.notification.NotificationSettingScreen
+import com.linku.im.screen.setting.safe.SafeSettingScreen
 import com.linku.im.screen.setting.theme.ThemeSettingScreen
 import com.linku.im.screen.sign.SignScreen
 import com.linku.im.ui.theme.LocalBackStack
@@ -53,41 +57,56 @@ class RootNode(
         buildContext: BuildContext
     ): Node = when (navTarget) {
         NavTarget.Main -> node(buildContext) {
-            MainScreen()
+            MainScreen(
+                modifier = it
+            )
         }
 
         is NavTarget.ChatTarget -> node(buildContext) {
             val viewModel: ChatViewModel = hiltViewModel()
             ChatScreen(
                 cid = navTarget.cid,
-                viewModel = viewModel
+                viewModel = viewModel,
+                modifier = it
             )
         }
 
         is NavTarget.Introduce -> node(buildContext) {
-            IntroduceScreen(uid = navTarget.uid)
+            IntroduceScreen(
+                uid = navTarget.uid,
+                modifier = it
+            )
         }
 
         is NavTarget.Edit -> node(buildContext) {
-            EditScreen(type = navTarget.type)
+            EditScreen(
+                type = navTarget.type,
+                modifier = it
+            )
         }
 
         NavTarget.Sign -> node(buildContext) {
-            SignScreen()
+            SignScreen(modifier = it)
         }
 
         is NavTarget.Setting -> when (navTarget) {
             NavTarget.Setting.Theme -> node(buildContext) {
-                ThemeSettingScreen()
+                ThemeSettingScreen(modifier = it)
             }
 
             NavTarget.Setting.DataSource -> node(buildContext) {
-
+                DataStorageSettingScreen(modifier = it)
             }
 
-            NavTarget.Setting.Language -> node(buildContext) {}
-            NavTarget.Setting.Notification -> node(buildContext) {}
-            NavTarget.Setting.Safe -> node(buildContext) {}
+            NavTarget.Setting.Language -> node(buildContext) {
+                LanguageSettingScreen(modifier = it)
+            }
+            NavTarget.Setting.Notification -> node(buildContext) {
+                NotificationSettingScreen(modifier = it)
+            }
+            NavTarget.Setting.Safe -> node(buildContext) {
+                SafeSettingScreen(modifier = it)
+            }
         }
     }
 }
