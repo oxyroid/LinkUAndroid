@@ -21,5 +21,5 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "LinkU-Android"
-include(":app", ":core", ":domain", ":data", ":benchmark")
+include(":app", ":core", ":domain", ":data", ":benchmark", ":ffmpeg")
 enableFeaturePreview("VERSION_CATALOGS")
