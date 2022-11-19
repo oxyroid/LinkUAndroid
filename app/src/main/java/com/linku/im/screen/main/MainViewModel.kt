@@ -6,6 +6,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.viewModelScope
 import com.linku.core.ktx.ifFalse
 import com.linku.core.ktx.ifTrue
+import com.linku.core.ktx.receiver.friendlyFormatted
+import com.linku.core.ktx.receiver.withTimeContentReceiver
 import com.linku.core.util.LinkedNode
 import com.linku.core.util.forward
 import com.linku.core.util.remain
@@ -13,6 +15,8 @@ import com.linku.data.usecase.ApplicationUseCases
 import com.linku.data.usecase.ConversationUseCases
 import com.linku.data.usecase.MessageUseCases
 import com.linku.data.usecase.UserUseCases
+import com.linku.domain.auth.Authenticator
+import com.linku.domain.bean.ui.ContactRequestUI
 import com.linku.domain.bean.ui.ConversationUI
 import com.linku.domain.bean.ui.toContactUI
 import com.linku.domain.bean.ui.toUI
@@ -32,7 +36,8 @@ class MainViewModel @Inject constructor(
     private val conversations: ConversationUseCases,
     private val applications: ApplicationUseCases,
     private val messages: MessageUseCases,
-    private val users: UserUseCases
+    private val users: UserUseCases,
+    private val authenticator: Authenticator
 ) : BaseViewModel<MainState, MainEvent>(MainState()) {
 
     private val _linkedNode = mutableStateOf<LinkedNode<MainMode>>(
@@ -57,11 +62,25 @@ class MainViewModel @Inject constructor(
     }
 
     private fun fetchNotifications() {
+        val currentUID = authenticator.currentUID
         viewModelScope.launch {
-            val requests =
-                messages.findMessagesByType<ContactRequest>(Message.Type.ContactRequest)
+            val requests = messages
+                .findMessagesByType<ContactRequest>(Message.Type.ContactRequest)
+                .filter { it.tid == currentUID }
+                .map { request ->
+                    val user = users.findUser(request.uid)
+                    val requestUI = ContactRequestUI(
+                        name = user?.name.orEmpty(),
+                        message = request.text,
+                        url = user?.avatar.orEmpty(),
+                        time = request.timestamp.withTimeContentReceiver { it.friendlyFormatted },
+                        uid = request.uid
+                    )
+                    requestUI
+                }
+                .let(::ContactRequestUIList)
             writable = readable.copy(
-                requests = ContactRequestList(requests)
+                requests = requests
             )
         }
     }

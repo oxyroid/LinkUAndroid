@@ -7,7 +7,7 @@ import com.linku.im.screen.*
 data class MainState(
     val conversations: ConversationUIList = ConversationUIList(),
     val contracts: ContactUIList = ContactUIList(),
-    val requests: ContactRequestList = ContactRequestList(),
+    val requests: ContactRequestUIList = ContactRequestUIList(),
     val loadingConversations: Boolean = true,
     val loadingMessages: Boolean = true,
 

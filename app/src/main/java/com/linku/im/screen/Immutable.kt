@@ -1,6 +1,7 @@
 package com.linku.im.screen
 
 import androidx.compose.runtime.Immutable
+import com.linku.domain.bean.ui.ContactRequestUI
 import com.linku.domain.bean.ui.ContactUI
 import com.linku.domain.bean.ui.ConversationUI
 import com.linku.domain.bean.ui.MessageUI
@@ -32,6 +33,11 @@ data class UserList(
 @Immutable
 data class ContactRequestList(
     val value: List<ContactRequest> = emptyList()
+)
+
+@Immutable
+data class ContactRequestUIList(
+    val value: List<ContactRequestUI> = emptyList()
 )
 
 @Immutable
