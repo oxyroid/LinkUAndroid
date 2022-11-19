@@ -16,10 +16,6 @@ interface FileRepository {
 
 }
 
-sealed class MimeType(val value: String) {
-    object Txt : MimeType("text/plain")
-}
-
 sealed class FileResource {
     object Loading : FileResource()
     data class Success(
