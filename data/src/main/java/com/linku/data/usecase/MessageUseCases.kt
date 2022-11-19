@@ -69,7 +69,7 @@ data class FindMessageByTypeUseCase @Inject constructor(
     private val messageDao: MessageDao
 ) {
     @Suppress("UNCHECKED_CAST")
-    suspend operator fun <E: Message> invoke(type: Message.Type): List<E> {
+    suspend operator fun <E : Message> invoke(type: Message.Type): List<E> {
         return messageDao.findByType(type).map { it.toReadable() as E }
     }
 }

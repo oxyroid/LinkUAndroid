@@ -64,31 +64,31 @@ class IntroduceViewModel @Inject constructor(
                     Friendship.None -> {
                         // TODO send a friendship request
                         messages.contactRequest(
-                                uid = readable.uid
-                            ).onEach { resource ->
-                                writable = when (resource) {
-                                    Resource.Loading -> readable.copy(
+                            uid = readable.uid
+                        ).onEach { resource ->
+                            writable = when (resource) {
+                                Resource.Loading -> readable.copy(
+                                    category = category.copy(
+                                        friendship = Friendship.Loading
+                                    )
+                                )
+
+                                is Resource.Success -> readable.copy(
+                                    category = category.copy(
+                                        friendship = Friendship.Pending(false)
+                                    )
+                                )
+
+                                is Resource.Failure -> {
+                                    onMessage(resource.message)
+                                    readable.copy(
                                         category = category.copy(
-                                            friendship = Friendship.Loading
+                                            friendship = Friendship.None
                                         )
                                     )
-
-                                    is Resource.Success -> readable.copy(
-                                        category = category.copy(
-                                            friendship = Friendship.Pending(false)
-                                        )
-                                    )
-
-                                    is Resource.Failure -> {
-                                        onMessage(resource.message)
-                                        readable.copy(
-                                            category = category.copy(
-                                                friendship = Friendship.None
-                                            )
-                                        )
-                                    }
                                 }
-                            }.launchIn(viewModelScope)
+                            }
+                        }.launchIn(viewModelScope)
                     }
 
                     is Friendship.Pending -> {}
@@ -110,25 +110,25 @@ class IntroduceViewModel @Inject constructor(
         )
         uri?.also {
             authUseCases.uploadAvatar(it).onEach { resource ->
-                    writable = when (resource) {
-                        Resource.Loading -> readable.copy(
-                            uploading = true
+                writable = when (resource) {
+                    Resource.Loading -> readable.copy(
+                        uploading = true
+                    )
+
+                    is Resource.Success -> {
+                        readable.copy(
+                            uploading = false
                         )
-
-                        is Resource.Success -> {
-                            readable.copy(
-                                uploading = false
-                            )
-                        }
-
-                        is Resource.Failure -> {
-                            onMessage(resource.message)
-                            readable.copy(
-                                uploading = false, avatar = ""
-                            )
-                        }
                     }
-                }.launchIn(viewModelScope)
+
+                    is Resource.Failure -> {
+                        onMessage(resource.message)
+                        readable.copy(
+                            uploading = false, avatar = ""
+                        )
+                    }
+                }
+            }.launchIn(viewModelScope)
         }
     }
 
@@ -169,15 +169,15 @@ class IntroduceViewModel @Inject constructor(
                 verifiedEmailStarting = true
             )
             authUseCases.verifiedEmail().onSuccess {
-                    writable = readable.copy(
-                        verifiedEmailStarting = false, verifiedEmailDialogShowing = true
-                    )
-                }.onFailure {
-                    onMessage(it.message)
-                    writable = readable.copy(
-                        verifiedEmailStarting = false,
-                    )
-                }
+                writable = readable.copy(
+                    verifiedEmailStarting = false, verifiedEmailDialogShowing = true
+                )
+            }.onFailure {
+                onMessage(it.message)
+                writable = readable.copy(
+                    verifiedEmailStarting = false,
+                )
+            }
         }
     }
 
@@ -187,16 +187,16 @@ class IntroduceViewModel @Inject constructor(
                 verifiedEmailCodeVerifying = true, verifiedEmailCodeMessage = ""
             )
             authUseCases.verifiedEmailCode(code).onSuccess {
-                    writable = readable.copy(
-                        verifiedEmailCodeVerifying = false,
-                    )
-                    onEvent(IntroduceEvent.FetchIntroduce(readable.uid))
-                }.onFailure {
-                    writable = readable.copy(
-                        verifiedEmailCodeVerifying = false,
-                        verifiedEmailCodeMessage = it.message ?: ""
-                    )
-                }
+                writable = readable.copy(
+                    verifiedEmailCodeVerifying = false,
+                )
+                onEvent(IntroduceEvent.FetchIntroduce(readable.uid))
+            }.onFailure {
+                writable = readable.copy(
+                    verifiedEmailCodeVerifying = false,
+                    verifiedEmailCodeMessage = it.message ?: ""
+                )
+            }
 
         }
     }

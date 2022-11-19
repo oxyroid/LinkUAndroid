@@ -11,7 +11,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -55,6 +54,7 @@ import com.linku.im.ktx.ui.graphics.times
 import com.linku.im.screen.ConversationList
 import com.linku.im.screen.MessageList
 import com.linku.im.screen.UserList
+import com.linku.im.screen.main.composable.ContactRequestItem
 import com.linku.im.screen.main.composable.MainToolBar
 import com.linku.im.ui.brush.premiumBrush
 import com.linku.im.ui.components.BottomSheetContent
@@ -65,7 +65,7 @@ import com.linku.im.ui.components.item.ConversationItem
 import com.linku.im.ui.components.item.PinnedContractsItem
 import com.linku.im.ui.components.item.PinnedConversationItem
 import com.linku.im.ui.components.item.UserItem
-import com.linku.im.ui.components.notify.NotifyHolder
+import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalDuration
 import com.linku.im.ui.theme.LocalSpacing
@@ -155,12 +155,7 @@ fun MainScreen(
     )
     Scaffold(
         scaffoldState = scaffoldState,
-        snackbarHost = {
-            NotifyHolder(
-                state = it,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
+        snackbarHost = { NotifyCompat(state = it) },
         topBar = {
             MainToolBar(
                 navIcon = when (mode) {
@@ -373,10 +368,10 @@ fun MainScreen(
                                         modifier = Modifier.animateItemPlacement()
                                     )
                                 }
-                                itemsIndexed(
-                                    grouped[false] ?: emptyList(),
-                                    key = { _, item -> item.id }
-                                ) { index, conversation ->
+                                items(
+                                    items = grouped[false] ?: emptyList(),
+                                    key = { item -> item.id }
+                                ) { conversation ->
                                     PinnedConversationItem(
                                         conversation = conversation,
                                         onClick = {
@@ -422,10 +417,10 @@ fun MainScreen(
                                         modifier = Modifier.animateItemPlacement()
                                     )
                                 }
-                                itemsIndexed(
-                                    grouped[false] ?: emptyList(),
-                                    key = { _, item -> item.id }
-                                ) { index, contact ->
+                                items(
+                                    items = grouped[false] ?: emptyList(),
+                                    key = { it.id }
+                                ) { contact ->
                                     PinnedContractsItem(
                                         contact = contact,
                                         onClick = {
@@ -685,9 +680,16 @@ fun MainScreen(
                             )
                         }
                     } else {
-                        LazyColumn {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(spacing.small)
+                        ) {
                             items(requests) {
-                                Text(text = it.timestamp.toString())
+                                ContactRequestItem(
+                                    request = it,
+                                    onClick = {
+                                        backStack.push(NavTarget.Introduce(it.uid))
+                                    }
+                                )
                             }
                         }
                     }
