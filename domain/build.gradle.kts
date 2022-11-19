@@ -56,19 +56,18 @@ android {
 dependencies {
     implementation(project(":core"))
 
-    implementation(libs2.core.ktx)
-    implementation(libs2.lifecycle.runtime.ktx)
+    implementation(libs2.androidx.core.ktx)
+    implementation(libs2.androidx.lifecycle.runtime.ktx)
 
-    kapt(libs2.hilt.compiler)
-    kapt(libs2.hilt.android.compiler)
-    implementation(libs2.bundles.hilt)
+    kapt(libs2.bundles.hilt.kapt)
+    implementation(libs2.bundles.hilt.implementation)
 
-    implementation(libs2.bundles.room)
-    kapt(libs2.room.compiler)
+    implementation(libs2.bundles.androidx.room)
+    kapt(libs2.androidx.room.compiler)
 
-    implementation(libs2.retrofit)
+    implementation(libs2.squareup.retrofit)
 
     implementation(libs2.kotlinx.serialization.json)
 
-    implementation(libs2.bundles.paging)
+    implementation(libs2.bundles.androidx.paging)
 }

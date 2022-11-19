@@ -1,13 +1,11 @@
 @file:Suppress("UnstableApiUsage")
-
 plugins {
-    id(libs.plugins.android.library)
-    id(libs.plugins.kotlin.android)
-    id(libs.plugins.kotlinx.serialization)
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "com.linku.core"
+    namespace = "com.thxbrop.ffmpeg"
     compileSdk = 33
 
     defaultConfig {
@@ -19,18 +17,12 @@ android {
     }
 
     buildTypes {
-        val release by getting {
+        release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-        }
-        val debug by getting {
-            isMinifyEnabled = false
-        }
-        val benchmark by creating {
-            isMinifyEnabled = false
         }
     }
     compileOptions {
@@ -39,14 +31,15 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs = listOf("-opt-in=kotlin.RequiresOptIn", "-Xcontext-receivers")
     }
 }
 
 dependencies {
     implementation(libs2.androidx.core.ktx)
     implementation(libs2.androidx.appcompat)
-    implementation(libs2.androidx.lifecycle.runtime.compose)
-    implementation(libs2.kotlinx.serialization.json)
-    implementation(libs2.squareup.retrofit)
+    implementation(libs2.material)
+    implementation(libs2.androidx.test.ext.junit)
+    implementation(libs2.androidx.test.espresso.core)
+
+    implementation(libs2.arthenica.ffmpeg.kit.full)
 }

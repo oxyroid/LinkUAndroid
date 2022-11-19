@@ -20,10 +20,6 @@ android {
         versionName = configs.versionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        vectorDrawables {
-            useSupportLibrary = true
-        }
     }
 
     buildTypes {
@@ -57,7 +53,7 @@ android {
         viewBinding = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.3.1"
+        kotlinCompilerExtensionVersion = "1.3.2"
     }
     packagingOptions {
         resources {
@@ -68,7 +64,6 @@ android {
         noCompress += "txt"
     }
     configurations {
-        // implementation.exclude group: 'org.jetbrains' , module:'annotations'
         implementation.get().exclude(group = "com.intellij", module = "annotations")
     }
 }
@@ -83,32 +78,31 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
 
-    implementation(libs2.core.ktx)
-    implementation(libs2.activity.ktx)
-    implementation(libs2.activity.compose)
-    implementation(libs2.lifecycle.runtime.compose)
-    implementation(libs2.lifecycle.runtime.ktx)
-    implementation(libs2.recyclerview)
-    implementation(libs2.core.splashscreen)
-    implementation(libs2.constraintlayout.compose)
-    implementation(libs2.material.asProvider())
+    implementation(libs2.androidx.core.ktx)
+    implementation(libs2.androidx.activity.ktx)
+    implementation(libs2.androidx.activity.compose)
+    implementation(libs2.androidx.lifecycle.runtime.compose)
+    implementation(libs2.androidx.lifecycle.runtime.ktx)
+    implementation(libs2.androidx.recyclerview)
+    implementation(libs2.androidx.core.splashscreen)
+    implementation(libs2.androidx.constraintlayout.compose)
+    implementation(libs2.material)
 
-    implementation(libs2.compose.ui.asProvider())
-    implementation(libs2.compose.ui.test.manifest)
-    implementation(libs2.compose.ui.tooling.core)
-    implementation(libs2.compose.ui.tooling.preview)
-    implementation(libs2.material.icons.extended)
-    implementation(libs2.material3)
+    implementation(libs2.androidx.compose.ui.asProvider())
+    implementation(libs2.androidx.compose.ui.test.manifest)
+    implementation(libs2.androidx.compose.ui.tooling.core)
+    implementation(libs2.androidx.compose.ui.tooling.preview)
+    implementation(libs2.androidx.compose.material.icons.extended)
+    implementation(libs2.androidx.compose.material3)
 
-    kapt(libs2.hilt.compiler)
-    kapt(libs2.hilt.android.compiler)
-    implementation(libs2.bundles.hilt)
+    kapt(libs2.bundles.hilt.kapt)
+    implementation(libs2.bundles.hilt.implementation)
 
-    implementation(libs2.work.runtime.ktx)
+    implementation(libs2.androidx.work.runtime.ktx)
 
-    implementation(libs2.bundles.paging)
+    implementation(libs2.bundles.androidx.paging)
 
-    implementation(libs2.startup.runtime)
+    implementation(libs2.androidx.startup.runtime)
 
     implementation(libs2.bundles.accompanist)
 
@@ -116,11 +110,11 @@ dependencies {
 
     implementation(libs2.bundles.coil)
 
-    implementation(libs2.lottie.compose)
-    implementation(libs2.retrofit)
-    implementation(libs2.appyx)
-    implementation(libs2.ucrop)
-    implementation(libs2.mmkv)
+    implementation(libs2.airbnb.android.lottie.compose)
+    implementation(libs2.squareup.retrofit)
+    implementation(libs2.bumble.appyx.core)
+    implementation(libs2.yalantis.ucrop)
+    implementation(libs2.tencent.mmkv)
 
     detektPlugins(libs2.twitter.compose.rules.detekt)
 }

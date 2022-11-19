@@ -1,4 +1,5 @@
 @file:Suppress("UnstableApiUsage")
+
 import io.gitlab.arturbosch.detekt.Detekt
 
 buildscript {
@@ -9,17 +10,20 @@ buildscript {
     }
 
     dependencies {
-        classpath(libs2.hilt.android.gradle.plugin)
+        classpath(libs2.dagger.hilt.android.gradle.plugin)
         classpath(libs2.kotlin.serialization)
     }
 }
 
 plugins {
-    id(libs.plugins.android.application) version libs.plugins.agp_version apply false
-    id(libs.plugins.android.library) version libs.plugins.agp_version apply false
-    id(libs.plugins.android.test) version libs.plugins.agp_version apply false
-    id(libs.plugins.kotlin.android) version libs.plugins.kotlin_version apply false
-    id(libs.plugins.detekt.detekt) version libs.plugins.detekt_version apply true
+    val kotlinVersion = "1.7.20"
+    val agpVersion = "7.3.1"
+    val detektVersion = "1.22.0-RC3"
+    id(libs.plugins.android.application) version agpVersion apply false
+    id(libs.plugins.android.library) version agpVersion apply false
+    id(libs.plugins.android.test) version agpVersion apply false
+    id(libs.plugins.kotlin.android) version kotlinVersion apply false
+    id(libs.plugins.detekt.detekt) version detektVersion apply true
 }
 
 tasks.withType<Detekt>().configureEach {

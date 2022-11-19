@@ -41,10 +41,10 @@ android {
 }
 
 dependencies {
-    implementation(libs2.test.ext.junit)
-    implementation(libs2.espresso.core)
-    implementation(libs2.uiautomator)
-    implementation(libs2.benchmarkMacroJunit4)
+    implementation(libs2.androidx.test.ext.junit)
+    implementation(libs2.androidx.test.espresso.core)
+    implementation(libs2.androidx.test.uiautomator)
+    implementation(libs2.androidx.benchmark.macro.junit4)
 }
 
 androidComponents {

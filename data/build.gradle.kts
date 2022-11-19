@@ -53,21 +53,20 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":domain"))
 
-    implementation(libs2.core.ktx)
-    implementation(libs2.lifecycle.runtime.ktx)
-    implementation(libs2.appcompat)
+    implementation(libs2.androidx.core.ktx)
+    implementation(libs2.androidx.lifecycle.runtime.ktx)
+    implementation(libs2.androidx.appcompat)
 
-    implementation(libs2.bundles.room)
-    kapt(libs2.room.compiler)
+    implementation(libs2.bundles.androidx.room)
+    kapt(libs2.androidx.room.compiler)
 
     implementation(libs2.kotlinx.serialization.json)
-    implementation(libs2.retrofit)
+    implementation(libs2.squareup.retrofit)
 
-    implementation(libs2.mmkv)
+    implementation(libs2.tencent.mmkv)
 
-    implementation(libs2.bundles.paging)
+    implementation(libs2.bundles.androidx.paging)
 
-    kapt(libs2.hilt.compiler)
-    kapt(libs2.hilt.android.compiler)
-    implementation(libs2.bundles.hilt)
+    kapt(libs2.bundles.hilt.kapt)
+    implementation(libs2.bundles.hilt.implementation)
 }
