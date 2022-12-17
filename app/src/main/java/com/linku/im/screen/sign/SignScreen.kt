@@ -9,7 +9,6 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +43,6 @@ import com.linku.im.ui.components.MaterialTextField
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialPremiumButton
 import com.linku.im.ui.components.button.MaterialTextButton
-import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
@@ -74,21 +72,11 @@ fun SignScreen(
     }
 
     val state = viewModel.readable
-    val scaffoldState = rememberScaffoldState()
     val backStack = LocalBackStack.current
     val lottie by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
 
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(viewModel.message, vm.message) {
-        viewModel.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
-        }
-        vm.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
-        }
-    }
 
     LaunchedEffect(state.loginEvent) {
         state.loginEvent.handle {
@@ -99,8 +87,6 @@ fun SignScreen(
     val xray by viewModel.point3DFlow.collectAsStateWithLifecycle(0f)
 
     Scaffold(
-        scaffoldState = scaffoldState,
-        snackbarHost = { NotifyCompat(state = it) },
         backgroundColor = LocalTheme.current.background,
         contentColor = LocalTheme.current.onBackground,
         modifier = modifier

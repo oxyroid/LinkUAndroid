@@ -45,24 +45,21 @@ import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
 import com.bumble.appyx.navmodel.backstack.operation.singleTop
 import com.linku.core.extension.ifTrue
-import com.linku.core.wrapper.Event
 import com.linku.im.BuildConfig
 import com.linku.im.R
-import com.linku.im.appyx.target.NavTarget
+import com.linku.im.nav.target.NavTarget
 import com.linku.im.ktx.ui.graphics.times
 import com.linku.im.screen.introduce.composable.ProfileList
 import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.screen.introduce.util.SquireCropImage
 import com.linku.im.ui.components.BottomSheetContent
-import com.linku.im.ui.components.Scrim
 import com.linku.im.ui.components.MaterialTopBar
+import com.linku.im.ui.components.Scrim
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
-import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
-import com.linku.im.vm
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -139,7 +136,6 @@ fun IntroduceScreen(
         label = state.actionsLabel,
         actions = state.actions,
         avatar = state.avatar,
-        message = viewModel.message,
         category = state.category,
         dataProperties = state.dataProperties,
         settingsProperties = state.settingsProperties,
@@ -272,7 +268,6 @@ private fun IntroduceScaffold(
     avatar: String,
     dataProperties: List<Property>,
     settingsProperties: List<Property>,
-    message: Event<String>,
     topBar: @Composable () -> Unit,
     onPreview: () -> Unit,
     onAction: (IntroduceEvent.Actions) -> Unit,
@@ -280,204 +275,188 @@ private fun IntroduceScaffold(
     onFriendshipAction: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scaffoldState = rememberScaffoldState()
     val spacing = LocalSpacing.current
-    LaunchedEffect(message, vm.message) {
-        message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
-        vm.message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
-    }
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val theme = LocalTheme.current
+    LazyColumn(
+        modifier = modifier.fillMaxSize()
+    ) {
+        item {
+            Surface(
+                color = theme.primary,
+                contentColor = theme.onPrimary,
+                onClick = {
+                    onPreview()
+                    scope.launch { onExpanded(true) }
+                }
+            ) {
+                val model = ImageRequest.Builder(context)
+                    .data(avatar)
+                    .crossfade(true)
+                    .build()
+                SubcomposeAsyncImage(
+                    model = model,
+                    contentDescription = "",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(4 / 3f),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
 
-    Scaffold(
-        snackbarHost = { NotifyCompat(state = it) },
-        scaffoldState = scaffoldState,
-        modifier = modifier.fillMaxSize(),
-        backgroundColor = theme.background,
-        contentColor = theme.onBackground
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            item {
-                Surface(
-                    color = theme.primary,
-                    contentColor = theme.onPrimary,
-                    onClick = {
-                        onPreview()
+        item {
+            ProfileList(
+                label = stringResource(R.string.account),
+                items = dataProperties,
+                onItemClick = { setting ->
+                    if (category is Category.User) return@ProfileList
+                    if (setting is Property.Data) {
+                        IntroduceEvent.Actions(
+                            label = setting.key,
+                            actions = setting.actions
+                        ).also(onAction)
                         scope.launch { onExpanded(true) }
                     }
-                ) {
-                    val model = ImageRequest.Builder(context)
-                        .data(avatar)
-                        .crossfade(true)
-                        .build()
-                    SubcomposeAsyncImage(
-                        model = model,
-                        contentDescription = "",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(4 / 3f),
-                        contentScale = ContentScale.Crop
-                    )
                 }
-            }
+            )
+        }
 
+        if (settingsProperties.isNotEmpty()) {
             item {
+                Spacer(
+                    modifier = Modifier
+                        .height(spacing.medium)
+                        .fillMaxWidth()
+                        .background(theme.divider)
+                )
+            }
+            item {
+                val backStack = LocalBackStack.current
                 ProfileList(
-                    label = stringResource(R.string.account),
-                    items = dataProperties,
-                    onItemClick = { setting ->
-                        if (category is Category.User) return@ProfileList
-                        if (setting is Property.Data) {
-                            IntroduceEvent.Actions(
-                                label = setting.key,
-                                actions = setting.actions
-                            ).also(onAction)
-                            scope.launch { onExpanded(true) }
+                    label = stringResource(R.string.settings),
+                    items = settingsProperties,
+                    onItemClick = { property ->
+                        when (property) {
+                            is Property.Data -> {}
+                            is Property.Folder -> backStack.push(property.setting)
                         }
                     }
                 )
             }
+            item {
+                val versionLabel = stringResource(R.string.version_label)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(theme.divider)
+                        .combinedClickable(
+                            onClick = {},
+                            onLongClick = toggleLogMode,
+                            role = Role.Button
+                        ), contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "$versionLabel${BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(vertical = spacing.medium),
+                        color = theme.onBackground
+                    )
+                }
+            }
+        }
+    }
 
-            if (settingsProperties.isNotEmpty()) {
-                item {
-                    Spacer(
-                        modifier = Modifier
-                            .height(spacing.medium)
-                            .fillMaxWidth()
-                            .background(theme.divider)
-                    )
-                }
-                item {
-                    val backStack = LocalBackStack.current
-                    ProfileList(
-                        label = stringResource(R.string.settings),
-                        items = settingsProperties,
-                        onItemClick = { property ->
-                            when (property) {
-                                is Property.Data -> {}
-                                is Property.Folder -> backStack.push(property.setting)
-                            }
-                        }
-                    )
-                }
-                item {
-                    val versionLabel = stringResource(R.string.version_label)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(theme.divider)
-                            .combinedClickable(
-                                onClick = {},
-                                onLongClick = toggleLogMode,
-                                role = Role.Button
-                            ), contentAlignment = Alignment.Center
-                    ) {
+    when (category) {
+        Category.Personal -> {}
+        is Category.User -> {
+            Column(
+                verticalArrangement = Arrangement.Bottom,
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(spacing.medium)
+            ) {
+                val state = category.friendship
+                MaterialButton(
+                    enabled = state != Friendship.Loading &&
+                            (state !is Friendship.Pending || state.isReceived),
+                    textRes = when (state) {
+                        Friendship.Loading -> R.string.friendship_loading
+                        Friendship.None -> R.string.friendship_none
+                        is Friendship.Pending -> if (state.isReceived) R.string.friendship_pending_received
+                        else R.string.friendship_pending_sent
+
+                        is Friendship.Completed -> R.string.friendship_completed
+                    },
+                    onClick = onFriendshipAction,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+
+    topBar()
+
+    Scrim(
+        color = Color.Black * 0.35f,
+        onDismiss = { onExpanded(false) },
+        visible = expanded
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        BottomSheetContent(
+            visible = expanded,
+            onDismiss = { onExpanded(false) },
+            maxHeight = false,
+            modifier = Modifier,
+            content = {
+                LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
+                    item {
                         Text(
-                            text = "$versionLabel${BuildConfig.VERSION_NAME}",
-                            style = MaterialTheme.typography.bodySmall,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(vertical = spacing.medium),
-                            color = theme.onBackground
+                            text = label,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                color = theme.primary
+                            ),
+                            modifier = Modifier.padding(spacing.medium)
+                        )
+                    }
+                    items(actions) {
+                        ListItem(
+                            text = {
+                                Text(
+                                    text = it.text,
+                                    color = theme.onBackground
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = it.icon,
+                                    contentDescription = it.text,
+                                    tint = theme.onBackground * 0.65f
+                                )
+                            },
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(spacing.medium))
+                                .background(theme.background)
+                                .combinedClickable(
+                                    onClick = {
+                                        it.onClick()
+                                        onExpanded(false)
+                                    }
+                                )
                         )
                     }
                 }
-            }
-        }
-
-        when (category) {
-            Category.Personal -> {}
-            is Category.User -> {
-                Column(
-                    verticalArrangement = Arrangement.Bottom,
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .fillMaxSize()
-                        .padding(spacing.medium)
-                ) {
-                    val state = category.friendship
-                    MaterialButton(
-                        enabled = state != Friendship.Loading &&
-                                (state !is Friendship.Pending || state.isReceived),
-                        textRes = when (state) {
-                            Friendship.Loading -> R.string.friendship_loading
-                            Friendship.None -> R.string.friendship_none
-                            is Friendship.Pending -> if (state.isReceived) R.string.friendship_pending_received
-                            else R.string.friendship_pending_sent
-
-                            is Friendship.Completed -> R.string.friendship_completed
-                        },
-                        onClick = onFriendshipAction,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        }
-
-        topBar()
-
-        Scrim(
-            color = Color.Black * 0.35f,
-            onDismiss = { onExpanded(false) },
-            visible = expanded
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Bottom
-        ) {
-            BottomSheetContent(
-                visible = expanded,
-                onDismiss = { onExpanded(false) },
-                maxHeight = false,
-                modifier = Modifier,
-                content = {
-                    LazyColumn(Modifier.defaultMinSize(minHeight = 1.dp)) {
-                        item {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    color = theme.primary
-                                ),
-                                modifier = Modifier.padding(spacing.medium)
-                            )
-                        }
-                        items(actions) {
-                            ListItem(
-                                text = {
-                                    Text(
-                                        text = it.text,
-                                        color = theme.onBackground
-                                    )
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = it.icon,
-                                        contentDescription = it.text,
-                                        tint = theme.onBackground * 0.65f
-                                    )
-                                },
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(spacing.medium))
-                                    .background(theme.background)
-                                    .combinedClickable(
-                                        onClick = {
-                                            it.onClick()
-                                            onExpanded(false)
-                                        }
-                                    )
-                            )
-                        }
-                    }
-                })
-        }
+            })
     }
+
 }
 
 @Composable

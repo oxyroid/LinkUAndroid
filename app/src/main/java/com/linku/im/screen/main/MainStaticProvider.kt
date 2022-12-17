@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import com.linku.im.R
-import com.linku.im.appyx.target.NavTarget
+import com.linku.im.nav.target.NavTarget
 
 internal object MainStaticProvider {
     @Composable

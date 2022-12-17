@@ -75,9 +75,7 @@ class SessionRepositoryImpl @Inject constructor(
             trySend(Resource.Failure(msg))
         }
         sessionState.tryEmit(Subscribing)
-        resultOf {
-            authService.subscribe()
-        }
+        resultOf { authService.subscribe() }
             .onSuccess {
                 sessionState.tryEmit(Subscribed)
                 trySend(Resource.Success(Unit))

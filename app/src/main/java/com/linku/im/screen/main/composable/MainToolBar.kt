@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.bumble.appyx.navmodel.backstack.BackStack
 import com.bumble.appyx.navmodel.backstack.operation.pop
-import com.linku.im.appyx.target.NavTarget
+import com.linku.im.nav.target.NavTarget
 import com.linku.im.ktx.ui.graphics.animated
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.theme.LocalBackStack

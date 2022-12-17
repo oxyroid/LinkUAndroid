@@ -17,7 +17,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.Scaffold
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
@@ -46,7 +45,7 @@ import com.google.accompanist.pager.rememberPagerState
 import com.linku.core.extension.ifTrue
 import com.linku.im.LinkUEvent
 import com.linku.im.R
-import com.linku.im.appyx.target.NavTarget
+import com.linku.im.nav.target.NavTarget
 import com.linku.im.ktx.runtime.LifecycleEffect
 import com.linku.im.ktx.ui.graphics.animated
 import com.linku.im.ktx.ui.graphics.times
@@ -64,7 +63,6 @@ import com.linku.im.ui.components.item.ConversationItem
 import com.linku.im.ui.components.item.PinnedContractsItem
 import com.linku.im.ui.components.item.PinnedConversationItem
 import com.linku.im.ui.components.item.UserItem
-import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalDuration
 import com.linku.im.ui.theme.LocalSpacing
@@ -86,7 +84,6 @@ fun MainScreen(
     val state = viewModel.readable
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState()
-    val scaffoldState = rememberScaffoldState()
 
     val theme = LocalTheme.current
     val spacing = LocalSpacing.current
@@ -122,13 +119,6 @@ fun MainScreen(
         }
     }
 
-    LaunchedEffect(viewModel.message, vm.message) {
-        viewModel.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
-        }
-        vm.message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
-    }
-
     val topBarColor by animateColorAsState(
         when (mode) {
             is MainMode.Query -> theme.secondaryTopBar
@@ -143,8 +133,6 @@ fun MainScreen(
     )
 
     Scaffold(
-        scaffoldState = scaffoldState,
-        snackbarHost = { NotifyCompat(state = it) },
         topBar = {
             MainToolBar(
                 navIcon = when (mode) {

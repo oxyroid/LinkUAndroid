@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -33,6 +32,7 @@ import com.linku.im.ui.components.BottomSheetContent
 import com.linku.im.ui.components.Scrim
 import com.linku.im.ui.theme.LocalSpacing
 import com.linku.im.ui.theme.LocalTheme
+import com.linku.im.vm
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLifecycleComposeApi::class)
@@ -45,7 +45,6 @@ fun ThemeSettingScreen(
         viewModel.onEvent(SettingEvent.Themes.Init)
     }
     val state = viewModel.readable
-    val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -72,16 +71,10 @@ fun ThemeSettingScreen(
 
     val onDismiss = { viewModel.onEvent(SettingEvent.Themes.PressedCancel) }
 
-    LaunchedEffect(viewModel.message) {
-        viewModel.message.handle {
-            scaffoldState.snackbarHostState.showSnackbar(it)
-        }
-    }
     Box {
         BasicSettingScreen(
             title = stringResource(R.string.profile_settings_theme),
             modifier = modifier,
-            scaffoldState = scaffoldState,
             content = {
                 val themes by viewModel.allTheme.collectAsStateWithLifecycle(emptyList())
                 LazyRow(
@@ -98,7 +91,7 @@ fun ThemeSettingScreen(
                                 if (it.id == 3) {
                                     val msg = context.getString(R.string.theme_warn_premium)
                                     scope.launch {
-                                        scaffoldState.snackbarHostState.showSnackbar(msg)
+                                        vm.onMessage(msg)
                                     }
                                 }
                                 viewModel.onEvent(SettingEvent.Themes.SelectThemes(it.id))

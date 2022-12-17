@@ -61,7 +61,7 @@ import com.linku.core.extension.ifTrue
 import com.linku.core.utils.hasCache
 import com.linku.domain.entity.Message
 import com.linku.im.R
-import com.linku.im.appyx.target.NavTarget
+import com.linku.im.nav.target.NavTarget
 import com.linku.im.ktx.foundation.lazy.isAtTop
 import com.linku.im.ktx.runtime.LifecycleEffect
 import com.linku.im.ktx.runtime.rememberedRun
@@ -74,7 +74,6 @@ import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.components.button.MaterialTextButton
 import com.linku.im.ui.components.item.MemberItem
-import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalBackStack
 import com.linku.im.ui.theme.LocalDuration
 import com.linku.im.ui.theme.LocalSpacing
@@ -128,15 +127,6 @@ fun ChatScreen(
         }
     }
 
-    LaunchedEffect(viewModel.message, vm.message) {
-        viewModel.message.handle {
-            hostState.showSnackbar(it)
-        }
-        vm.message.handle {
-            hostState.showSnackbar(it)
-        }
-    }
-
     val messages by viewModel.messageFlow.collectAsState(MessageUIList())
 
     LaunchedEffect(vm.readable.readyForObserveMessages) {
@@ -157,7 +147,6 @@ fun ChatScreen(
         imageDetailContent: @Composable (String, Rect, Float) -> Unit
     ) {
         Scaffold(
-            snackbarHost = { NotifyCompat(state = it) },
             topBar = topBar,
             backgroundColor = theme.surface,
             contentColor = theme.onSurface,

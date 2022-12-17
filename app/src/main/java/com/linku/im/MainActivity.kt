@@ -12,7 +12,7 @@ import androidx.core.view.WindowCompat
 import com.bumble.appyx.core.integration.NodeHost
 import com.bumble.appyx.core.integrationpoint.NodeActivity
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.linku.im.appyx.node.RootNode
+import com.linku.im.nav.node.RootNode
 import com.linku.im.ui.theme.AppTheme
 import com.linku.im.ui.theme.LocalTheme
 import dagger.hilt.android.AndroidEntryPoint

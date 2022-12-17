@@ -18,7 +18,7 @@ import com.linku.domain.entity.ContactRequest
 import com.linku.domain.entity.Message
 import com.linku.domain.entity.User
 import com.linku.im.R
-import com.linku.im.appyx.target.NavTarget
+import com.linku.im.nav.target.NavTarget
 import com.linku.im.screen.BaseViewModel
 import com.linku.im.screen.introduce.composable.Property
 import dagger.hilt.android.lifecycle.HiltViewModel

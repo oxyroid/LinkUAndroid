@@ -1,7 +1,12 @@
 package com.linku.im
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
+import com.linku.core.wrapper.Event
 import com.linku.core.wrapper.Resource
+import com.linku.core.wrapper.eventOf
 import com.linku.data.Configurations
 import com.linku.data.usecase.*
 import com.linku.domain.auth.Authenticator
@@ -124,6 +129,13 @@ class LinkUViewModel @Inject constructor(
         }
     }
 
+    private var _message = mutableStateOf<Event<String>>(Event.Handled())
+    var message by _message
+        private set
+    public override fun onMessage(message: String?) {
+        this.message = eventOf(message ?: return)
+    }
+
     private sealed class Label {
         object Default : Label()
         object Connecting : Label()
@@ -179,8 +191,7 @@ class LinkUViewModel @Inject constructor(
             .launchIn(viewModelScope)
 
         initSessionJob?.cancel()
-        initSessionJob = sessions
-            .init(authenticator.currentUID)
+        initSessionJob = sessions.init(authenticator.currentUID)
             .onEach { resource ->
                 when (resource) {
                     Resource.Loading -> {}

@@ -1,4 +1,4 @@
-package com.linku.im.appyx.target
+package com.linku.im.nav.target
 
 import android.os.Parcelable
 import androidx.compose.ui.geometry.Rect

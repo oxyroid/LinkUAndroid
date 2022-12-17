@@ -2,7 +2,7 @@ package com.linku.im.screen.main
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.linku.im.appyx.target.NavTarget
+import com.linku.im.nav.target.NavTarget
 
 internal sealed class Selection(
     @StringRes open val resId: Int,
