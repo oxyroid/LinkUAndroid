@@ -1,4 +1,4 @@
-# LinkU-Android, by thxbrop
+# Msg-android
 
 #### 🙋‍♂️Introduce
 
@@ -36,7 +36,3 @@ This repository is **Jetpack Compose** instant messaging android project.
 - Custom your own `local.properties` in rootDir (`base_url` and `ws_url` are required)
 - Open project and build it, wait for all dependencies syncing finished
 - Connect a device, install and run it
-
-#### Release
-
-- Visit [LinkURelease](https://t.me/linkUAndroid) for latest release.
