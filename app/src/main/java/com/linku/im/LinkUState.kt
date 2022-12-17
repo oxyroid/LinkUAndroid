@@ -11,7 +11,7 @@ data class LinkUState(
     val lightTheme: ComposeTheme = seaSalt,
     val darkTheme: ComposeTheme = midNight,
     val isEmojiReady: Boolean = false,
-    val isNativeSnackBar: Boolean = true,
+    val isExperimentMode: Boolean = true,
     val isThemeReady: Boolean = false,
     val readyForObserveMessages: Boolean = false,
 )

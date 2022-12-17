@@ -3,8 +3,8 @@
 package com.linku.data.authenticator
 
 import android.content.Context
-import com.linku.core.fs.impl.readFs
-import com.linku.core.fs.impl.writeFs
+import com.linku.core.fs.readFs
+import com.linku.core.fs.writeFs
 import com.linku.domain.auth.Authenticator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

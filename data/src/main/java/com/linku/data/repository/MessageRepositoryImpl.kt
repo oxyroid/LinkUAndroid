@@ -4,8 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toFile
 import com.linku.core.extension.json
-import com.linku.core.extension.use
-import com.linku.core.util.ImageUtil
+import com.linku.core.extension.io.use
+import com.linku.core.extension.ContentResolverUtil
 import com.linku.core.wrapper.Resource
 import com.linku.core.wrapper.resultOf
 import com.linku.data.R
@@ -224,7 +224,7 @@ class MessageRepositoryImpl @Inject constructor(
                         // 4. Make real HTTP-Connection to send message.
                         val cachedFile = resource.data
                         launch {
-                            val (width, height) = ImageUtil.decodeBitmap(
+                            val (width, height) = ContentResolverUtil.decodeToBitmap(
                                 context.contentResolver,
                                 cachedFile.localUri
                             )?.use {
@@ -338,7 +338,7 @@ class MessageRepositoryImpl @Inject constructor(
                         // 4. Make real HTTP-Connection to send message.
                         val cachedFile = resource.data
                         launch {
-                            val (width, height) = ImageUtil.decodeBitmap(
+                            val (width, height) = ContentResolverUtil.decodeToBitmap(
                                 context.contentResolver,
                                 cachedFile.localUri
                             )?.use {
@@ -444,7 +444,7 @@ class MessageRepositoryImpl @Inject constructor(
             }
 
             is StagingMessage.Image -> {
-                val (width, height) = ImageUtil.decodeBitmap(
+                val (width, height) = ContentResolverUtil.decodeToBitmap(
                     context.contentResolver,
                     staging.uri
                 )?.use {
@@ -471,7 +471,7 @@ class MessageRepositoryImpl @Inject constructor(
             }
 
             is StagingMessage.Graphics -> {
-                val (width, height) = ImageUtil.decodeBitmap(
+                val (width, height) = ContentResolverUtil.decodeToBitmap(
                     context.contentResolver, staging.uri
                 )?.use {
                     it.width to it.height

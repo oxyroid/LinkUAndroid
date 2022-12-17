@@ -44,7 +44,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.decode.ImageDecoderDecoder
 import coil.memory.MemoryCache
 import coil.request.ImageRequest
-import com.linku.core.ktx.ifTrue
+import com.linku.core.extension.ifTrue
 import com.linku.domain.bean.Bubble
 import com.linku.domain.bean.ComposeTheme
 import com.linku.domain.entity.GraphicsMessage
@@ -68,7 +68,6 @@ private val HORIZONTAL_OUT_PADDING = 18.dp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-@Suppress("LongParameterList")
 fun ChatBubble(
     message: Message,
     configProvider: () -> Bubble,
@@ -81,9 +80,10 @@ fun ChatBubble(
     onCancel: (Int) -> Unit,
     onFocus: (Int) -> Unit,
     onDismissFocus: () -> Unit,
-    modifier: Modifier = Modifier,
-    theme: ComposeTheme = LocalTheme.current
+    modifier: Modifier = Modifier
 ) {
+    val theme: ComposeTheme = LocalTheme.current
+
     val hasFocus = rememberedRun(focusIdProvider) { invoke() == message.id }
     val config = configProvider()
     val isAnother = config.isAnother

@@ -1,17 +1,19 @@
-package com.linku.core.fs.impl.fs
+package com.linku.core.fs.core
 
 import android.content.ContentResolver.SCHEME_CONTENT
 import android.content.ContentResolver.SCHEME_FILE
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toFile
+import com.linku.core.fs.crypto.CryptoManager
+import com.linku.core.fs.logger.Logger
 import java.io.File
 
 class ReadFileSchemeImpl(
     private val context: Context,
-    private val logger: com.linku.core.fs.logger.Logger,
-    private val cryptoManager: com.linku.core.fs.crypto.CryptoManager
-) : com.linku.core.fs.fs.ReadFileScheme {
+    private val logger: Logger,
+    private val cryptoManager: CryptoManager
+) : ReadFileScheme {
     override fun get(uri: Uri): File? {
         val s = uri.toString()
         return when {

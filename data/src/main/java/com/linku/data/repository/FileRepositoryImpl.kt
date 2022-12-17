@@ -3,7 +3,7 @@ package com.linku.data.repository
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
-import com.linku.core.fs.impl.writeFs
+import com.linku.core.fs.writeFs
 import com.linku.core.wrapper.resultOf
 import com.linku.domain.bean.CachedFile
 import com.linku.domain.repository.FileRepository

@@ -1,4 +1,4 @@
-package com.linku.core.fs.impl.fs
+package com.linku.core.fs.core
 
 import android.content.ContentResolver.SCHEME_CONTENT
 import android.content.ContentResolver.SCHEME_FILE
@@ -6,8 +6,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.core.net.toFile
 import com.linku.core.fs.crypto.CryptoManager
-import com.linku.core.fs.fs.WriteFileScheme
-import com.linku.core.fs.impl.util.Resolver
+import com.linku.core.fs.util.Resolver
 import com.linku.core.fs.logger.Logger
 import java.io.File
 import java.nio.file.Files

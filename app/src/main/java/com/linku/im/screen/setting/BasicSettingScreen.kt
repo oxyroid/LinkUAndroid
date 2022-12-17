@@ -9,7 +9,7 @@ import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.linku.im.ktx.ui.graphics.animated
-import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.MaterialTopBar
 import com.linku.im.ui.components.notify.NotifyCompat
 import com.linku.im.ui.theme.LocalTheme
 
@@ -24,7 +24,7 @@ inline fun BasicSettingScreen(
     Scaffold(
         scaffoldState = scaffoldState,
         topBar = {
-            ToolBar(
+            MaterialTopBar(
                 actions = {},
                 text = title,
                 backgroundColor = theme.topBar.animated(),

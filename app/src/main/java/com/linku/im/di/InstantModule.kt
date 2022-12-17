@@ -19,7 +19,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object NotificationModule {
+object InstantModule {
     @Provides
     @Singleton
     fun provideSoundPool(): SoundPool {
@@ -51,7 +51,6 @@ object NotificationModule {
         manager.createNotificationChannel(channel)
         return manager
     }
-
 
     @Provides
     @Singleton

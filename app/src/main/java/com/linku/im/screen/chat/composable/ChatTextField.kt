@@ -30,7 +30,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import coil.compose.AsyncImage
-import com.linku.core.ktx.ifTrue
+import com.linku.core.extension.ifTrue
 import com.linku.domain.bean.Emoji
 import com.linku.im.R
 import com.linku.im.ktx.ui.graphics.times

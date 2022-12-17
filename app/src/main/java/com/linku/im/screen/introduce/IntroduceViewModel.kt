@@ -33,7 +33,7 @@ import javax.inject.Inject
 class IntroduceViewModel @Inject constructor(
     private val useCases: UserUseCases,
     private val authUseCases: AuthUseCases,
-    private val applicationUseCases: ApplicationUseCases,
+    private val applications: ApplicationUseCases,
     private val authenticator: Authenticator,
     private val configurations: Configurations,
     private val messages: MessageUseCases,
@@ -351,8 +351,8 @@ class IntroduceViewModel @Inject constructor(
             if (readable.category == Category.Personal) {
                 Property.Data(
                     key = realName,
-                    value = if (user.realName == null) applicationUseCases.getString(R.string.profile_data_realName_false)
-                    else applicationUseCases.getString(R.string.profile_data_realName_true)
+                    value = if (user.realName == null) applications.getString(R.string.profile_data_realName_false)
+                    else applications.getString(R.string.profile_data_realName_true)
                 ).also(::add)
             }
 
@@ -371,7 +371,7 @@ class IntroduceViewModel @Inject constructor(
     }
 
 
-    private fun getString(@StringRes resId: Int): String = applicationUseCases.getString(resId)
+    private fun getString(@StringRes resId: Int): String = applications.getString(resId)
 
     private fun CharSequence?.checkEmpty(): CharSequence = if (isNullOrBlank()) "--" else this
 

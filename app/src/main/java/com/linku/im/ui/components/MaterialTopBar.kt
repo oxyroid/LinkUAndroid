@@ -12,7 +12,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -21,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.bumble.appyx.navmodel.backstack.BackStack
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.linku.im.appyx.target.NavTarget
+import com.linku.im.ktx.runtime.rememberedRun
 import com.linku.im.ktx.ui.graphics.animated
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.theme.LocalBackStack
@@ -28,7 +28,7 @@ import com.linku.im.ui.theme.LocalTheme
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun ToolBar(
+fun MaterialTopBar(
     text: String,
     actions: @Composable (RowScope.() -> Unit),
     modifier: Modifier = Modifier,
@@ -45,12 +45,14 @@ fun ToolBar(
             Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
             TopAppBar(
                 title = {
-                    val duration = textSwitcherDuration(text.isNotEmpty())
+                    val duration = if (text.isNotEmpty()) MaterialTopBarDefaults.EnabledDuration
+                    else MaterialTopBarDefaults.DisabledDuration
                     Row {
-                        val animation = remember {
-                            slideInVertically(tween(duration)) { it } + fadeIn(tween(duration)) with slideOutVertically(
-                                tween(duration)
-                            ) { -it } + fadeOut(tween(duration))
+                        val animation = rememberedRun(duration) {
+                            slideInVertically(tween(this)) { it } +
+                                    fadeIn(tween(this)) with
+                                    slideOutVertically(tween(this)) { -it } +
+                                    fadeOut(tween(this))
                         }
                         AnimatedContent(targetState = text, transitionSpec = {
                             animation.using(
@@ -58,13 +60,15 @@ fun ToolBar(
                             )
                         }) { target ->
                             Text(
-                                text = target, style = MaterialTheme.typography.titleMedium.copy(
+                                text = target,
+                                style = MaterialTheme.typography.titleMedium.copy(
                                     fontFamily = null
-                                ), fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth()
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.fillMaxWidth()
                             )
                         }
                     }
-
                 },
                 navigationIcon = {
                     MaterialIconButton(
@@ -81,11 +85,7 @@ fun ToolBar(
     }
 }
 
-private fun textSwitcherDuration(enable: Boolean): Int {
-    return if (enable) TextSwitcherDuration.Default else TextSwitcherDuration.None
-}
-
-private object TextSwitcherDuration {
-    const val None: Int = 0
-    const val Default: Int = 800
+private object MaterialTopBarDefaults {
+    const val EnabledDuration = 800
+    const val DisabledDuration = 0
 }

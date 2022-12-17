@@ -1,4 +1,4 @@
-package com.linku.core.fs.impl.util
+package com.linku.core.fs.util
 
 import android.content.Context
 import android.net.Uri

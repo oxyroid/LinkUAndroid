@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.placeholder
 import com.google.accompanist.placeholder.shimmer
-import com.linku.core.ktx.ifTrue
+import com.linku.core.extension.ifTrue
 import com.linku.domain.bean.ui.ContactUI
 import com.linku.domain.bean.ui.ConversationUI
 import com.linku.domain.entity.Conversation

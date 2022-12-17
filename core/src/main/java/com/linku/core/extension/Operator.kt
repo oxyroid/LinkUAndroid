@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.linku.core.ktx
+package com.linku.core.extension
 
 inline fun <R> Boolean?.ifTrue(block: () -> R): R? {
     return if (this == true) block()

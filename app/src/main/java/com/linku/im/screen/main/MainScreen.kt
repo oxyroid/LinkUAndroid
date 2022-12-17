@@ -43,12 +43,11 @@ import com.bumble.appyx.navmodel.backstack.operation.singleTop
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.rememberPagerState
-import com.linku.core.ktx.ifTrue
+import com.linku.core.extension.ifTrue
 import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
 import com.linku.im.ktx.runtime.LifecycleEffect
-import com.linku.im.ktx.runtime.rememberedRun
 import com.linku.im.ktx.ui.graphics.animated
 import com.linku.im.ktx.ui.graphics.times
 import com.linku.im.screen.ConversationList
@@ -58,7 +57,7 @@ import com.linku.im.screen.main.composable.ContactRequestItem
 import com.linku.im.screen.main.composable.MainToolBar
 import com.linku.im.ui.brush.premiumBrush
 import com.linku.im.ui.components.BottomSheetContent
-import com.linku.im.ui.components.TextField
+import com.linku.im.ui.components.MaterialTextField
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.components.item.ConversationItem
@@ -97,35 +96,23 @@ fun MainScreen(
     val linkedNode by viewModel.linkedNode
     val mode = linkedNode.value
 
+    val labels = MainStaticProvider.provideTabLabels(mode is MainMode.Query)
 
-    val selections = rememberedRun(vm.readable.isDarkMode) {
-        listOf(
-            Selection.Button(
-                resId = R.string.notification,
-                icon = Icons.Rounded.Notifications,
-                onClick = {
-                    viewModel.onEvent(MainEvent.Forward(MainMode.Notifications))
-                }
-            ),
-            Selection.Route(
-                resId = R.string.settings,
-                target = NavTarget.Introduce(-1),
-                icon = Icons.Rounded.Settings
-            ),
-            Selection.Switch(
-                resId = R.string.toggle_theme,
-                value = this@rememberedRun,
-                onIcon = Icons.Rounded.LightMode,
-                offIcon = Icons.Rounded.DarkMode,
-                onClick = {
-                    vm.onEvent(LinkUEvent.ToggleDarkMode)
-                },
-                onLongClick = {
-                    backStack.push(NavTarget.Setting.Theme)
-                }
-            )
-        )
-    }
+    val selections = MainStaticProvider.provideSelections(
+        isDarkMode = vm.readable.isDarkMode,
+        onNotification = {
+            viewModel.onEvent(MainEvent.Forward(MainMode.Notifications))
+        },
+        onTheme = {
+            backStack.push(NavTarget.Setting.Theme)
+        },
+        onGift = {
+
+        },
+        onToggleDarkMode = {
+            vm.onEvent(LinkUEvent.ToggleDarkMode)
+        }
+    )
 
     LifecycleEffect { event ->
         if (event == Lifecycle.Event.ON_START) {
@@ -141,6 +128,7 @@ fun MainScreen(
         }
         vm.message.handle { scaffoldState.snackbarHostState.showSnackbar(it) }
     }
+
     val topBarColor by animateColorAsState(
         when (mode) {
             is MainMode.Query -> theme.secondaryTopBar
@@ -153,6 +141,7 @@ fun MainScreen(
             else -> theme.onTopBar
         }
     )
+
     Scaffold(
         scaffoldState = scaffoldState,
         snackbarHost = { NotifyCompat(state = it) },
@@ -169,7 +158,7 @@ fun MainScreen(
                         }
                         is MainMode.Conversations -> {
                             scope.launch {
-                                pagerState.animateScrollToPage(2)
+                                pagerState.animateScrollToPage(labels.lastIndex)
                             }
                         }
                         else -> {}
@@ -219,7 +208,7 @@ fun MainScreen(
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    TextField(
+                                    MaterialTextField(
                                         placeholder = stringResource(R.string.query_input),
                                         background = LocalTheme.current.surface,
                                         textFieldValue = state.queryText,
@@ -271,19 +260,6 @@ fun MainScreen(
         backgroundColor = Color.Unspecified,
         modifier = modifier
     ) { innerPadding ->
-        val pages = if (mode is MainMode.Query) {
-            listOf(
-                stringResource(R.string.query_result_message),
-                stringResource(R.string.query_result_conversation),
-                stringResource(R.string.query_result_user)
-            )
-        } else {
-            listOf(
-                stringResource(R.string.tab_notification),
-                stringResource(R.string.tab_contact),
-                stringResource(R.string.tab_more)
-            )
-        }
         Box {
             Column(
                 modifier = Modifier
@@ -311,7 +287,7 @@ fun MainScreen(
                     },
                     divider = {},
                     tabs = {
-                        pages.forEachIndexed { index, page ->
+                        labels.forEachIndexed { index, page ->
                             val selected = pagerState.currentPage == index
                             Tab(
                                 selected = selected,
@@ -336,11 +312,14 @@ fun MainScreen(
                     contentColor = onTopBarColor
                 )
                 HorizontalPager(
-                    count = pages.size,
+                    count = labels.size,
                     state = pagerState,
                     key = { it }
                 ) { pageIndex ->
                     when (PageConfig.parse(mode !is MainMode.Query, pageIndex)) {
+                        PageConfig.Common.Main -> {
+
+                        }
                         PageConfig.Common.Conversation -> {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),

@@ -1,4 +1,4 @@
-package com.linku.core.util
+package com.linku.core.utils
 
 import androidx.compose.runtime.Immutable
 import java.util.*

@@ -1,4 +1,4 @@
-package com.linku.core.fs.fs
+package com.linku.core.fs.core
 
 /**
  * Basic File Scheme Interface.

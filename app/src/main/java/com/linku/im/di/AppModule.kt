@@ -1,5 +1,3 @@
-@file:Suppress("unused")
-
 package com.linku.im.di
 
 import com.linku.data.authenticator.PreferenceAuthenticator

@@ -14,7 +14,7 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun NotifyCompat(state: SnackbarHostState) = run {
-    val isNativeSnackBar = vm.readable.isNativeSnackBar
+    val isNativeSnackBar = vm.readable.isExperimentMode
     if (isNativeSnackBar) SnackbarHost(state)
     else NotifyHolder(
         state = state,

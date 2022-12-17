@@ -1,8 +1,9 @@
-package com.linku.core.fs.impl
+package com.linku.core.fs
 
 import android.util.Log
+import com.linku.core.fs.logger.Logger
 
-object AndroidLogger : com.linku.core.fs.logger.Logger {
+object AndroidLogger : Logger {
     override fun log(s: String) {
         Log.d(TAG, s)
     }

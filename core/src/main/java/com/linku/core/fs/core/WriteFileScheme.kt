@@ -1,6 +1,6 @@
 @file:Suppress("unused")
 
-package com.linku.core.fs.fs
+package com.linku.core.fs.core
 
 import android.net.Uri
 import androidx.core.net.toUri

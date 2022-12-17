@@ -44,7 +44,7 @@ import coil.request.ImageRequest
 import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
 import com.bumble.appyx.navmodel.backstack.operation.singleTop
-import com.linku.core.ktx.ifTrue
+import com.linku.core.extension.ifTrue
 import com.linku.core.wrapper.Event
 import com.linku.im.BuildConfig
 import com.linku.im.R
@@ -55,7 +55,7 @@ import com.linku.im.screen.introduce.composable.Property
 import com.linku.im.screen.introduce.util.SquireCropImage
 import com.linku.im.ui.components.BottomSheetContent
 import com.linku.im.ui.components.Scrim
-import com.linku.im.ui.components.ToolBar
+import com.linku.im.ui.components.MaterialTopBar
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialIconButton
 import com.linku.im.ui.components.notify.NotifyCompat
@@ -491,7 +491,7 @@ private fun IntroduceTopBar(
     ownDropdown: @Composable ColumnScope.() -> Unit
 ) {
     val theme = LocalTheme.current
-    ToolBar(
+    MaterialTopBar(
         onNavClick = onNavClick,
         actions = {
             MaterialIconButton(

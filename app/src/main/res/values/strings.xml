@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">LinkU</string>
+    <string name="app_name">Msg</string>
     <string name="screen_login_title">电子邮箱登录</string>
     <string name="screen_login_tag_email">Email</string>
     <string name="screen_login_tag_password">密码</string>
@@ -109,4 +109,6 @@
     <string name="friendship_pending_sent">等待回应请求</string>
     <string name="friendship_completed">发送消息</string>
     <string name="signing">登录中…</string>
+    <string name="tab_main">主页</string>
+    <string name="gift">礼品码</string>
 </resources>

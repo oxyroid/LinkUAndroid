@@ -39,8 +39,8 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.im.LinkUEvent
 import com.linku.im.R
 import com.linku.im.ktx.runtime.LifecycleEffect
-import com.linku.im.ui.components.PasswordTextField
-import com.linku.im.ui.components.TextField
+import com.linku.im.ui.components.MaterialPasswordTextField
+import com.linku.im.ui.components.MaterialTextField
 import com.linku.im.ui.components.button.MaterialButton
 import com.linku.im.ui.components.button.MaterialPremiumButton
 import com.linku.im.ui.components.button.MaterialTextButton
@@ -176,7 +176,7 @@ fun SignScreen(
                             }
                         )
                 )
-                TextField(
+                MaterialTextField(
                     background = LocalTheme.current.surface,
                     textFieldValue = state.email,
                     onValueChange = { viewModel.onEvent(SignEvent.OnEmail(it)) },
@@ -197,7 +197,7 @@ fun SignScreen(
                         .height(LocalSpacing.current.medium)
                 )
 
-                PasswordTextField(
+                MaterialPasswordTextField(
                     textFieldValue = state.password,
                     onValueChange = { viewModel.onEvent(SignEvent.OnPassword(it)) },
                     placeholder = stringResource(id = R.string.screen_login_tag_password),

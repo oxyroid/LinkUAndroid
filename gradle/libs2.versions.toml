@@ -35,7 +35,7 @@ ksp = "1.7.20-1.0.8"
 kotlin = "1.7.20"
 
 [libraries]
-material = { group = "com.google.android.material", name = "material", version = "1.8.0-alpha02" }
+material = { group = "com.google.android.material", name = "material", version = "1.8.0-alpha03" }
 
 accompanist-insets = { group = "com.google.accompanist", name = "accompanist-insets", version.ref = "accompanist" }
 accompanist-insets-ui = { group = "com.google.accompanist", name = "accompanist-insets-ui", version.ref = "accompanist" }
@@ -90,13 +90,13 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 airbnb-android-lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie-compose" }
 yalantis-ucrop = { group = "com.github.yalantis", name = "ucrop", version.ref = "ucrop" }
 squareup-retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
-bumble-appyx-core = { group = "com.bumble.appyx", name = "core", version.ref = "appyx" }
+bumble-appyx-core = { group = "com.bumble.appyx", name = "core", version = "1.0.1" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 coil-gif = { group = "io.coil-kt", name = "coil-gif", version.ref = "coil" }
 tencent-mmkv = { group = "com.tencent", name = "mmkv", version.ref = "mmkv" }
 kotlin-serialization = { group = "org.jetbrains.kotlin", name = "kotlin-serialization", version.ref = "kotlin" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
-twitter-compose-rules-detekt = { group = "com.twitter.compose.rules", name = "detekt", version.ref = "twitter-compose-rules-detekt" }
+twitter-compose-rules-detekt = { group = "com.twitter.compose.rules", name = "detekt", version = "0.0.26" }
 arthenica-ffmpeg-kit-full = { group = "com.arthenica", name = "ffmpeg-kit-full", version = "5.1" }
 
 [bundles]

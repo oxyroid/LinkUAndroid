@@ -1,4 +1,4 @@
-package com.linku.core.fs.impl.crypto
+package com.linku.core.fs.crypto
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -10,7 +10,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 
-class AndroidCryptoManager : com.linku.core.fs.crypto.CryptoManager {
+class AndroidCryptoManager : CryptoManager {
     private val keyStore = KeyStore.getInstance("AndroidKeyStore").apply {
         load(null)
     }

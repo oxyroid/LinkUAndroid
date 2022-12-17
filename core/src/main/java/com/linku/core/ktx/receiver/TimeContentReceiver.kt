@@ -1,6 +1,6 @@
 package com.linku.core.ktx.receiver
 
-import com.linku.core.ktx.ifTrue
+import com.linku.core.extension.ifTrue
 import java.util.*
 
 object TimeContentReceiver

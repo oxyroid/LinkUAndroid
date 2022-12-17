@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object DexModule {
+object ToolingModule {
     @Provides
     @Singleton
     fun provideMMKV(): MMKV {

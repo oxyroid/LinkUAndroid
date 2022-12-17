@@ -54,7 +54,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun TextField(
+fun MaterialTextField(
     textFieldValue: TextFieldValue,
     modifier: Modifier = Modifier,
     background: Color = LocalTheme.current.surface,
@@ -153,7 +153,7 @@ fun TextField(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
-fun PasswordTextField(
+fun MaterialPasswordTextField(
     textFieldValue: TextFieldValue,
     modifier: Modifier = Modifier,
     background: Color = LocalTheme.current.surface,
@@ -188,8 +188,8 @@ fun PasswordTextField(
     val focusRequester = FocusRequester()
     val isFocused = remember { mutableStateOf(false) }
 
-    val fontSize = if (passwordVisibility.value) PasswordFontSizeDefaults.Minimize
-    else PasswordFontSizeDefaults.Default
+    val fontSize = if (passwordVisibility.value) MaterialPasswordTextFieldFontSizeDefaults.Minimize
+    else MaterialPasswordTextFieldFontSizeDefaults.Default
 
     BasicTextField(
         modifier = modifier
@@ -318,7 +318,7 @@ fun PasswordTextField(
 }
 
 
-private object PasswordFontSizeDefaults {
+private object MaterialPasswordTextFieldFontSizeDefaults {
     val Default = 18.sp
     val Minimize = 14.sp
 }

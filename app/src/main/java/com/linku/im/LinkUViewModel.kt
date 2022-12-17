@@ -116,9 +116,9 @@ class LinkUViewModel @Inject constructor(
             LinkUEvent.Premium -> {
                 onMessage(applications.getString(R.string.premium_unavailable))
             }
-            is LinkUEvent.OnNativeSnackBar -> {
+            is LinkUEvent.OnExperimentMode -> {
                 writable = readable.copy(
-                    isNativeSnackBar = event.target
+                    isExperimentMode = event.target
                 )
             }
         }

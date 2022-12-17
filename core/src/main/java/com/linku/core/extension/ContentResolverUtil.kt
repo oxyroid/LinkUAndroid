@@ -1,4 +1,4 @@
-package com.linku.core.util
+package com.linku.core.extension
 
 import android.content.ContentResolver
 import android.graphics.Bitmap
@@ -8,8 +8,8 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.core.graphics.decodeBitmap
 
-object ImageUtil {
-    fun decodeBitmap(contentResolver: ContentResolver, uri: Uri): Bitmap? {
+object ContentResolverUtil {
+    fun decodeToBitmap(contentResolver: ContentResolver, uri: Uri): Bitmap? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             ImageDecoder.createSource(contentResolver, uri).decodeBitmap { _, _ -> }
         } else {

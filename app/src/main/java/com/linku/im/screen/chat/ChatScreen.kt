@@ -57,8 +57,8 @@ import com.bumble.appyx.navmodel.backstack.operation.pop
 import com.bumble.appyx.navmodel.backstack.operation.push
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.linku.core.ktx.dsl.any
-import com.linku.core.ktx.ifTrue
-import com.linku.core.util.hasCache
+import com.linku.core.extension.ifTrue
+import com.linku.core.utils.hasCache
 import com.linku.domain.entity.Message
 import com.linku.im.R
 import com.linku.im.appyx.target.NavTarget
@@ -543,7 +543,6 @@ fun ChatScreen(
 
 
 @Composable
-@Suppress("LongParameterList")
 fun ListContent(
     listState: LazyListState,
     messages: MessageUIList,
@@ -633,7 +632,6 @@ fun ListContent(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-@Suppress("LongParameterList")
 fun BottomSheetContent(
     repliedMessage: Message?,
     hasScrolled: Boolean,
@@ -703,7 +701,7 @@ fun BottomSheetContent(
 }
 
 @Composable
-fun PreviewDialog(
+private fun PreviewDialog(
     uri: Uri?,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
@@ -714,8 +712,12 @@ fun PreviewDialog(
     val animateOffset by animateFloatAsState(offset)
     var pressed by remember { mutableStateOf(false) }
     val draggableState = rememberDraggableState { offset += it }
+
+    val uriRemembered by rememberUpdatedState(uri)
+    val onDismissRemembered by rememberUpdatedState(onDismiss)
+
     AnimatedVisibility(
-        visible = uri != null,
+        visible = uriRemembered != null,
         modifier = modifier
             .padding(LocalSpacing.current.extraSmall)
             .fillMaxWidth(),
@@ -737,7 +739,7 @@ fun PreviewDialog(
                     },
                     onDragStopped = {
                         if (offset > configuration.screenHeightDp * density / 4) {
-                            onDismiss()
+                            onDismissRemembered()
                         }
                         offset = 0f
                         pressed = false
@@ -745,9 +747,11 @@ fun PreviewDialog(
                 )
         ) {
             Box {
-                var realUrl by remember { mutableStateOf(Uri.EMPTY) }
-                LaunchedEffect(uri) {
-                    if (uri != null) realUrl = uri
+                var realUrl by remember {
+                    mutableStateOf(Uri.EMPTY)
+                }
+                LaunchedEffect(Unit) {
+                    if (uriRemembered != null) realUrl = uriRemembered
                 }
                 AsyncImage(
                     model = realUrl,
@@ -760,7 +764,7 @@ fun PreviewDialog(
 
                 MaterialIconButton(
                     icon = Icons.Rounded.ExpandCircleDown,
-                    onClick = { onDismiss() },
+                    onClick = { onDismissRemembered() },
                     modifier = Modifier.align(Alignment.TopEnd),
                     contentDescription = null
                 )

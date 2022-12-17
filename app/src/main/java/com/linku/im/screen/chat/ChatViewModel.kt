@@ -9,10 +9,10 @@ import com.linku.core.ktx.dsl.suggestAny
 import com.linku.core.ktx.receiver.isSameDay
 import com.linku.core.ktx.receiver.isToday
 import com.linku.core.ktx.receiver.withTimeContentReceiver
-import com.linku.core.util.LinkedNode
-import com.linku.core.util.forward
-import com.linku.core.util.remain
-import com.linku.core.util.remainIf
+import com.linku.core.utils.LinkedNode
+import com.linku.core.utils.forward
+import com.linku.core.utils.remain
+import com.linku.core.utils.remainIf
 import com.linku.core.wrapper.Resource
 import com.linku.core.wrapper.eventOf
 import com.linku.data.usecase.*
