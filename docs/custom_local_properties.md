@@ -1,4 +1,4 @@
-## Custom you local.properties
+## Custom your own local.properties
 
 1. Rebuild this project if you cannot find there is no `local.properties` in the root dir.
 2. Open [`local.properties`](../local.properties) file, add some properties:
