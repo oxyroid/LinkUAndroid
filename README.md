@@ -33,6 +33,6 @@ This repository is **Jetpack Compose** instant messaging android project.
 - Install latest **[Android Studio](https://developer.android.com/studio)**
 - Require JDK 11 and Kotlin 1.7.20
 - Clone this repository
-- Custom your own `local.properties` in rootDir (`base_url` and `ws_url` are required)
+- Custom your own `local.properties`, for [detail](docs/custom_local_properties.md)
 - Open project and build it, wait for all dependencies syncing finished
 - Connect a device, install and run it

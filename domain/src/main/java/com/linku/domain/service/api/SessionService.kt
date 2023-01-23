@@ -10,6 +10,11 @@ interface SessionService {
     fun onMessage(): Flow<Message>
 
     sealed class EndPoints(val url: String) {
+        /**
+         * Each online user maps a Websocket url
+         * If your ws_url is "ws://api.example.com/v1" and the userId is 4,
+         * the url will be "ws://api.example.com/v1/4"
+         */
         data class UIDSocket(val uid: Int) : EndPoints(BuildConfig.WS_URL + "/$uid")
     }
 
